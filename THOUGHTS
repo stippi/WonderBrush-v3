@@ -1,0 +1,19 @@
+Rendern mit Zoomstufe
+
+Rein-/Rauszoomen sind zwei völlig verschiedene Paar Schuhe. Wenn man reingezoomt ist, muss man einen geringen Ausschnitt des Dokuments in Originalauflösung berechnen und vergrößert darstellen. Wenn man rausgezoomt ist, muss man viel weniger Pixel berechnen, als für die Originalauflösung erforderlich. Würde man alle Pixel berechnen und dann nur lückenhaft darstellen, ergebe sich zudem eine hässliche Darstellung, da ist es doch viel einfacher, so zu tun, als wäre die Originalauflösung kleiner und das Dokument so zu berechnen. Photoshop scheint manche Zoomstufen zu filtern (25%, 50%), aber mit dem vorgeschlagenen Ansatz wäre jede Zoomstufe quasi "perfekt gefiltert".
+
+
+Blockweise Bitmaps und Caches
+
+Es ist sinnvoll, die Dokumentansicht zu einem bestimmten Objektlevel zu cachen. Vielleicht wäre es von Vorteil, wenn man diesen Cache in gleichmäßige Blöcke (Ausschnitte aus der Ansicht) unterteilt, die jeweils ein unterschiedliches Objektlevel enthalten können. Braucht man beim Rendern einen (Teil von einem) Cacheblock, stellt aber fest, dass dieser veraltet ist, so erweitert man das Rendering einfach um die Fläche des gesamten Blocks, so dass der Block beim nächsten Rendering komplett gültig vorliegt.
+
+
+Wie löst man das Konzept des Objektbaums?
+Gibt es "Spezialobjekte" an den Baumknoten die eine Bitmap zum Reinrendern haben?
+An welcher Stelle sind die Caches in diesem Szenario, auch jeweils an den Knoten?
+
+
+Inwiefern soll es auf Festplatte ausgelagerte Bitmapdaten geben?
+
+
+Wie funktioniert das gleichzeitige Rendering auf mehreren Ebenen? Beispielsweise wenn sich ein Pfad ändert, der durch mehere Objekte auf verschiedenen Ebenen instantiiert wird? Dann müssten mehrere Ebenenbitmaps neu berechnet werden, und zwar mit dem selben Dokumentzustand (Snapshot).
