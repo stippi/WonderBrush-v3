@@ -300,6 +300,15 @@ RenderThread::_RecursiveRender(LayerSnapshot* layer)
 //printf("rendering layer %p BRect(%.1f, %.1f, %.1f, %.1f)\n", layer->Layer(),
 //	area.left, area.top, area.right, area.bottom);
 
+	// TODO: this is not correct, since we need to blend from the
+	// bottom layer always!
+	// a dirty area in a sub-layer will always be dirty in the
+	// parent layer as well... so we could use this to only do this
+	// if we are down at the bottom with the recursive rendering,
+	// additionally the RenderManager could use this to only trigger rendering,
+	// if the notification for the bottom layer has arrived after any notifications
+	// of the sub-layers
+
 	BRect visuallyChangedArea = bitmap->Render(area, lowestChangedObject);
 
 	// transfer the final visually changed area to the display bitmap
