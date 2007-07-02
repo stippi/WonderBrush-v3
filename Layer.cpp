@@ -155,8 +155,19 @@ Layer::Invalidate(const BRect& area, int32 objectIndex)
 		listener->AreaInvalidated(this, area, objectIndex);
 	}
 
-	if (Parent())
-		Parent()->Invalidate(area, Parent()->IndexOf(this));
+	if (Parent()) {
+		// calculate the *visually changed area* from the lowest
+		// changed object to the top object, giving each object
+		// a chance to extend the area
+		// -> this is the area going to be dirty in the parent layer
+		BRect visuallyChangedArea = area;
+// TODO: make this possible
+//		for (int32 i = objectIndex; i < count; i++) {
+//			Object* object = ObjectAtFast(i);
+//			object->ExtendDirtyArea(visuallyChangedArea);
+//		}
+		Parent()->Invalidate(visuallyChangedArea, Parent()->IndexOf(this));
+	}
 }
 
 // AddListener
