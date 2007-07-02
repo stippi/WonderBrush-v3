@@ -22,7 +22,7 @@
 using std::nothrow;
 
 // constructor
-LayerSnapshot::LayerSnapshot(const Layer* layer)
+LayerSnapshot::LayerSnapshot(const ::Layer* layer)
 	: ObjectSnapshot(layer)
 	, fOriginal(layer)
 	, fObjects(20)

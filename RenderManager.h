@@ -12,6 +12,7 @@
 #include <Rect.h>
 
 #include "Document.h"
+#include "HashMap.h"
 #include "Layer.h"
 
 class BBitmap;
@@ -31,6 +32,11 @@ class RenderManager : Layer::Listener {
 	virtual						~RenderManager();
 
 	// Layer::Listener interface
+	virtual	void				ObjectAdded(Layer* layer, Object* object,
+									int32 index);
+	virtual	void				ObjectRemoved(Layer* layer, Object* object,
+									int32 index);
+
 	virtual	void				AreaInvalidated(Layer* layer, const BRect& area,
 									int32 objectIndex);
 
@@ -49,17 +55,38 @@ class RenderManager : Layer::Listener {
 
 			void				TransferClean(const BBitmap* bitmap,
 									const BRect& area);
+			void				RenderThreadDone(int32 threadIndex);
+
+			bool				GetDirtyInfoFor(int32 threadIndex,
+									const Layer* layer,
+									BRect& dirtyArea,
+									int32& lowestDirtyObject);
+
+			void				PrepareDirtyInfosForNextRender();
 
  private:
-			void				_QueueRedraw(const BRect& area,
-									int32 objectIndex);
+			void				_RecursiveAddListener(Layer* layer,
+									bool invalidate = true);
+			void				_RecursiveRemoveListener(Layer* layer);
 
+			void				_QueueRedraw(Layer* layer, const BRect& area,
+									int32 objectIndex);
+			bool				_HasDirtyLayers() const;
+			void				_TriggerRender();
 			void				_BackToDisplay(const BRect& area);
 
 			BBitmap*			fDisplayBitmap[2];
-			BRect				fDirtyArea;
+
 			BRect				fCleanArea;
-			int32				fLowestDirtyObject;
+
+			struct layer_dirty_info {
+									layer_dirty_info();
+				layer_dirty_info&	operator=(const layer_dirty_info& info);
+				BRect				dirtyArea[2];
+				int32				lowestDirtyObject[2];
+			};
+			typedef HashMap<HashKey32<const Layer*>, layer_dirty_info*> DirtyMap;
+			DirtyMap			fDirtyMap;
 
 			Document*			fDocument;
 			LayerSnapshot*		fSnapshot;

@@ -31,6 +31,16 @@ App::App(BRect bounds)
 		(rgb_color){ 255, 100, 50, 210 }));
 	fDocument->RootLayer()->AddObject(new Rect(BRect(200, 10, 280, 70),
 		(rgb_color){ 255, 200, 50, 80 }));
+
+	Layer* subLayer = new Layer(bounds);
+	fDocument->RootLayer()->AddObject(subLayer);
+
+	subLayer->AddObject(new Rect(BRect(150, 200, 210, 330),
+		(rgb_color){ 55, 120, 80, 120 }));
+	subLayer->AddObject(new Filter(20.0));
+
+	subLayer->AddObject(new Rect(BRect(120, 100, 510, 530),
+		(rgb_color){ 255, 180, 120, 40 }));
 }
 
 // MessageReceived

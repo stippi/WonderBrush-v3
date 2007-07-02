@@ -14,8 +14,9 @@
 
 
 class BBitmap;
-class RenderManager;
+class Layer;
 class LayerSnapshot;
+class RenderManager;
 
 class RenderThread : public BLooper {
  public:
@@ -26,17 +27,19 @@ class RenderThread : public BLooper {
 	virtual	void				MessageReceived(BMessage* message);
 
 	// RenderThread
-			void				Render(const BRect& area,
-									int32 lowestChangedObject);
+			void				Render();
 
  private:
 	class LayerBitmap;
 
-			void				_Render(BRect area, int32 lowestChangedObject);
-			BRect				_RecursiveRender(LayerSnapshot* layer, BRect area);
+			void				_Render();
+			void				_RecursiveRender(LayerSnapshot* layer);
+			LayerSnapshot*		_LayerSnapshotForLayer(LayerSnapshot* snapshot,
+									Layer* layer);
 			LayerBitmap*		_LayerBitmapFor(LayerSnapshot* layer);
 
 			RenderManager*		fRenderManager;
+			int32				fThreadIndex;
 			BBitmap*			fBitmap;
 
 			BList				fLayerBitmaps;

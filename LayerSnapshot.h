@@ -21,7 +21,7 @@ class ObjectSnapshot;
 
 class LayerSnapshot : public ObjectSnapshot {
  public:
-								LayerSnapshot(const Layer* layer);
+								LayerSnapshot(const ::Layer* layer);
 	virtual						~LayerSnapshot();
 
 	// ObjectSnapshot interface
@@ -31,6 +31,9 @@ class LayerSnapshot : public ObjectSnapshot {
 	virtual	void				Render(BBitmap* bitmap, BRect area) const;
 
 	// LayerSnapshot
+	inline	const ::Layer*		Layer() const
+									{ return fOriginal; }
+
 			BRect				Bounds() const;
 
 			BRect				Render(BRect area, int32 lowestObject,
@@ -47,7 +50,7 @@ class LayerSnapshot : public ObjectSnapshot {
 			void				_Sync();
 			void				_MakeEmpty();
 
-			const Layer*		fOriginal;
+			const ::Layer*		fOriginal;
 			BList				fObjects;
 			BBitmap*			fBitmap;
 };

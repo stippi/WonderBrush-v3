@@ -24,12 +24,31 @@
 
 using std::nothrow;
 
+RenderManager::layer_dirty_info::layer_dirty_info()
+{
+	dirtyArea[0] = dirtyArea[1] = BRect(LONG_MAX, LONG_MAX, LONG_MIN, LONG_MIN);
+	lowestDirtyObject[0] = lowestDirtyObject[1] = LONG_MAX;
+}
+
+RenderManager::layer_dirty_info&
+RenderManager::layer_dirty_info::operator=(const layer_dirty_info& info)
+{
+	dirtyArea[0] = info.dirtyArea[0];
+	dirtyArea[1] = info.dirtyArea[1];
+
+	lowestDirtyObject[0] = info.lowestDirtyObject[0];
+	lowestDirtyObject[1] = info.lowestDirtyObject[1];
+
+	return *this;
+}
+
+
+// #pragma mark -
+
 // constructor
 RenderManager::RenderManager(Document* document, const BRect& bounds)
 	: Layer::Listener()
-	, fDirtyArea(LONG_MAX, LONG_MAX, LONG_MIN, LONG_MIN)
 	, fCleanArea(LONG_MAX, LONG_MAX, LONG_MIN, LONG_MIN)
-	, fLowestDirtyObject(LONG_MAX)
 
 	, fDocument(document)
 	, fSnapshot(new (nothrow) LayerSnapshot(fDocument->RootLayer()))
@@ -60,9 +79,7 @@ RenderManager::RenderManager(Document* document, const BRect& bounds)
 		fRenderThreads[i]->Run();
 	}
 
-	fDocument->RootLayer()->AddListener(this);
-	// trigger the first rendering of the document
-	AreaInvalidated(fDocument->RootLayer(), bounds, 0);
+	_RecursiveAddListener(fDocument->RootLayer());
 }
 
 // destructor
@@ -80,10 +97,40 @@ RenderManager::~RenderManager()
 	delete fSnapshot;
 	delete fBitmapListener;
 
-	fDocument->RootLayer()->RemoveListener(this);
+	_RecursiveRemoveListener(fDocument->RootLayer());
+
+	DirtyMap::Iterator iterator = fDirtyMap.GetIterator();
+	while (iterator.HasNext())
+		delete iterator.Next().value;
 }
 
 // #pragma mark -
+
+// ObjectAdded
+void
+RenderManager::ObjectAdded(Layer* layer, Object* object, int32 index)
+{
+	// adding ourself as listener to layers without locking is
+	// ok, since this is a synchronous notification which is executed
+	// in the thread that added the layer
+	Layer* subLayer = dynamic_cast<Layer*>(object);
+	if (subLayer) {
+printf("RenderManager::ObjectAdded(%p)\n", subLayer);
+		_RecursiveAddListener(subLayer);
+	}
+}
+
+// ObjectRemoved
+void
+RenderManager::ObjectRemoved(Layer* layer, Object* object, int32 index)
+{
+	// see ObjectAdded on why it is ok to add listener without locking
+	Layer* subLayer = dynamic_cast<Layer*>(object);
+	if (subLayer) {
+printf("RenderManager::ObjectRemoved(%p)\n", subLayer);
+		_RecursiveRemoveListener(subLayer);
+	}
+}
 
 // AreaInvalidated
 void
@@ -92,7 +139,7 @@ RenderManager::AreaInvalidated(Layer* layer, const BRect& area,
 {
 	// this is a synchronous notification, therefor the document
 	// is already properly locked
-	_QueueRedraw(area, objectIndex);
+	_QueueRedraw(layer, area, objectIndex);
 }
 
 // #pragma mark -
@@ -160,6 +207,18 @@ RenderManager::TransferClean(const BBitmap* bitmap, const BRect& area)
 
 	fCleanArea = fCleanArea | area;
 
+	fRenderQueueLock.Unlock();
+}
+
+// RenderThreadDone
+void
+RenderManager::RenderThreadDone(int32 threadIndex)
+{
+	// executed in a rendering thread
+
+	if (!fRenderQueueLock.Lock())
+		return;
+
 	fRenderingThreads--;
 	if (fRenderingThreads == 0) {
 		_BackToDisplay(fCleanArea);
@@ -169,66 +228,168 @@ RenderManager::TransferClean(const BBitmap* bitmap, const BRect& area)
 	fRenderQueueLock.Unlock();
 }
 
+// GetDirtyInfoFor
+bool
+RenderManager::GetDirtyInfoFor(int32 threadIndex, const Layer* layer, 
+	BRect& dirtyArea, int32& lowestDirtyObject)
+{
+	// executed in a rendering thread, we need to lock, because
+	// items might be put into the hash by another thread
+	if (!fRenderQueueLock.Lock())
+		return false;
+
+	if (!fDirtyMap.ContainsKey(layer)) {
+		fRenderQueueLock.Unlock();
+		return false;
+	}
+	
+	layer_dirty_info* info = fDirtyMap.Get(layer);
+
+	dirtyArea = info->dirtyArea[0];
+	if (!dirtyArea.IsValid()) {
+		fRenderQueueLock.Unlock();
+		return false;
+	}
+
+	int32 width = dirtyArea.IntegerWidth();
+	int32 height = dirtyArea.IntegerHeight();
+
+	if (width > height) {
+		// split horizontally
+		dirtyArea.left = dirtyArea.left + threadIndex
+			* width / fRenderThreadCount;
+		dirtyArea.right = dirtyArea.left + width / fRenderThreadCount + 1;
+	} else {
+		// split vertically
+		dirtyArea.top = dirtyArea.top + threadIndex
+			* height / fRenderThreadCount;
+		dirtyArea.bottom = dirtyArea.top + height / fRenderThreadCount + 1;
+	}
+
+	lowestDirtyObject = info->lowestDirtyObject[0];
+
+	fRenderQueueLock.Unlock();
+	return true;
+}
+
+// PrepareDirtyInfosForNextRender
+void
+RenderManager::PrepareDirtyInfosForNextRender()
+{
+	DirtyMap::Iterator iterator = fDirtyMap.GetIterator();
+	while (iterator.HasNext()) {
+		layer_dirty_info* info = iterator.Next().value;
+		info->dirtyArea[0] = info->dirtyArea[1];
+		info->dirtyArea[1] = BRect(LONG_MAX, LONG_MAX, LONG_MIN, LONG_MIN);
+		info->lowestDirtyObject[0] = info->lowestDirtyObject[1];
+		info->lowestDirtyObject[1] = LONG_MAX;
+	}
+}
+
+
+// #pragma mark -
+
+// _RecursiveAddListener
+void
+RenderManager::_RecursiveAddListener(Layer* layer, bool invalidate)
+{
+	// the document is locked and/or this is executed from within
+	// a synchronous notification
+	int32 count = layer->CountObjects();
+	for (int32 i = 0; i < count; i++) {
+		Object* object = layer->ObjectAtFast(i);
+		Layer* subLayer = dynamic_cast<Layer*>(object);
+		if (subLayer)
+			_RecursiveAddListener(subLayer, invalidate);
+	}
+
+	layer->AddListener(this);
+
+	if (invalidate)
+		AreaInvalidated(layer, layer->Bounds(), 0);
+}
+
+// _RecursiveRemoveListener
+void
+RenderManager::_RecursiveRemoveListener(Layer* layer)
+{
+	// the document is locked and/or this is executed from within
+	// a synchronous notification
+	int32 count = layer->CountObjects();
+	for (int32 i = 0; i < count; i++) {
+		Object* object = layer->ObjectAtFast(i);
+		Layer* subLayer = dynamic_cast<Layer*>(object);
+		if (subLayer)
+			_RecursiveRemoveListener(subLayer);
+	}
+
+	layer->RemoveListener(this);
+}
+
 // #pragma mark -
 
 // _QueueRedraw
 void
-RenderManager::_QueueRedraw(const BRect& area, int32 objectIndex)
+RenderManager::_QueueRedraw(Layer* layer, const BRect& area, int32 objectIndex)
 {
 	if (!area.IsValid() || !fRenderQueueLock.Lock())
 		return;
 
-	fDirtyArea = (fDirtyArea | area) & Bounds();
-	fLowestDirtyObject = min_c(objectIndex, fLowestDirtyObject);
+	layer_dirty_info* info;
+	if (fDirtyMap.ContainsKey(layer)) {
+		info = fDirtyMap.Get(layer);
+	} else {
+		info = new (nothrow) layer_dirty_info();
+		if (!info || fDirtyMap.Put(layer, info) < B_OK) {
+			delete info;
+			printf("RenderManager::_QueueRedraw() - out of memory!\n");
+			fRenderQueueLock.Unlock();
+			return;
+		}
+	}
+
+	info->dirtyArea[1] = (info->dirtyArea[1] | area) & Bounds();
+	info->lowestDirtyObject[1] = min_c(objectIndex, info->lowestDirtyObject[1]);
 
 	if (fRenderingThreads > 0) {
 //		printf("rendering in progress\n");
 		// rendering in progress
 	} else {
 //		printf("triggering render\n");
-		// idle, trigger rendering:
-		// sync document and document clone
-		fSnapshot->Sync();
-		// split dirty area in part for each thread
-		// and dispatch rendering messages
-		int32 width = fDirtyArea.IntegerWidth();
-		int32 height = fDirtyArea.IntegerHeight();
-		if (width * height < 40 * 40) {
-			// rendering area too small, use just one thread
-			fRenderingThreads = 1;
-			fRenderThreads[0]->Render(fDirtyArea, fLowestDirtyObject);
-		} else {
-			fRenderingThreads = fRenderThreadCount;
-			if (width > height) {
-				// split horizontally
-				float left = fDirtyArea.left - 1;
-				for (int32 i = 0; i < fRenderThreadCount; i++) {
-					BRect part(fDirtyArea);
-					part.left = left + 1;
-					left = fDirtyArea.left + ((i + 1) * width)
-						/ fRenderThreadCount;
-					part.right = left;
-					fRenderThreads[i]->Render(part, fLowestDirtyObject);
-				}
-			} else {
-				// split vertically
-				float top = fDirtyArea.top - 1;
-				for (int32 i = 0; i < fRenderThreadCount; i++) {
-					BRect part(fDirtyArea);
-					part.top = top + 1;
-					top = fDirtyArea.top + ((i + 1) * height)
-						/ fRenderThreadCount;
-					part.bottom = top;
-					fRenderThreads[i]->Render(part, fLowestDirtyObject);
-				}
-			}
-		}
-
-		fDirtyArea.Set(LONG_MAX, LONG_MAX, LONG_MIN, LONG_MIN);
-		fLowestDirtyObject = LONG_MAX;
+		// idle, trigger rendering
+		_TriggerRender();
 	}
 
 	fRenderQueueLock.Unlock();
+}
+
+// _HasDirtyLayers
+bool
+RenderManager::_HasDirtyLayers() const
+{
+	DirtyMap::Iterator iterator = fDirtyMap.GetIterator();
+	while (iterator.HasNext()) {
+		layer_dirty_info* info = iterator.Next().value;
+		if (info->dirtyArea[1].IsValid())
+			return true;
+	}
+	return false;
+}
+
+// _TriggerRender
+void
+RenderManager::_TriggerRender()
+{
+	// move the dirty infos to the front
+	PrepareDirtyInfosForNextRender();
+	// sync document and document clone
+	fSnapshot->Sync();
+	// split dirty area in part for each thread
+	// and dispatch rendering messages
+	fRenderingThreads = fRenderThreadCount;
+	for (int32 i = 0; i < fRenderingThreads; i++) {
+		fRenderThreads[i]->Render();
+	}
 }
 
 // _BackToDisplay
@@ -245,8 +406,8 @@ RenderManager::_BackToDisplay(const BRect& area)
 		fBitmapListener->SendMessage(&message);
 	}
 
-	if (fDirtyArea.IsValid())
-		_QueueRedraw(fDirtyArea, fLowestDirtyObject);
+	if (_HasDirtyLayers())
+		_TriggerRender();
 }
 
 

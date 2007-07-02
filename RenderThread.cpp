@@ -221,6 +221,7 @@ RenderThread::LayerBitmap::Render(BRect area, int32 lowestChangedObject)
 RenderThread::RenderThread(RenderManager* manager, int32 index)
 	: BLooper("render thread")
 	, fRenderManager(manager)
+	, fThreadIndex(index)
 	, fBitmap(new BBitmap(manager->Bounds(), 0, B_RGBA32))
 {
 }
@@ -240,11 +241,7 @@ RenderThread::MessageReceived(BMessage* message)
 {
 	switch (message->what) {
 		case MSG_RENDER: {
-			BRect area;
-			int32 lowestChangedObject;
-			if (message->FindRect("area", &area) == B_OK
-				&& message->FindInt32("index", &lowestChangedObject) == B_OK)
-				_Render(area, lowestChangedObject);
+			_Render();
 			break;
 		}
 		default:
@@ -257,11 +254,9 @@ RenderThread::MessageReceived(BMessage* message)
 
 // Render
 void
-RenderThread::Render(const BRect& area, int32 lowestChangedObject)
+RenderThread::Render()
 {
 	BMessage message(MSG_RENDER);
-	message.AddRect("area", area);
-	message.AddInt32("index", lowestChangedObject);
 	PostMessage(&message);
 }
 
@@ -269,46 +264,69 @@ RenderThread::Render(const BRect& area, int32 lowestChangedObject)
 
 // _Render
 void
-RenderThread::_Render(BRect area, int32 lowestChangedObject)
+RenderThread::_Render()
 {
-	area = area & fBitmap->Bounds();
-	if (!area.IsValid()) {
-		fRenderManager->TransferClean(fBitmap, area);
-		return;
-	}
-//printf("\nrequest: "); area.PrintToStream();
-
-	LayerSnapshot* layer = fRenderManager->Snapshot();
-
-	BRect visuallyChangedArea = _RecursiveRender(layer, area);
-
-	// transfer the final visually changed area to the display bitmap
-	visuallyChangedArea = visuallyChangedArea & fBitmap->Bounds();
-	if (LayerBitmap* bitmap = _LayerBitmapFor(layer)) {
-		clear_area(fBitmap, (rgb_color){ 255, 255, 255, 255 },
-			visuallyChangedArea);
-		blend_area(bitmap->Bitmap(), fBitmap, visuallyChangedArea);
-	}
-
-	fRenderManager->TransferClean(fBitmap, visuallyChangedArea);
+	_RecursiveRender(fRenderManager->Snapshot());
+	fRenderManager->RenderThreadDone(fThreadIndex);
 }
 
 // _RecursiveRender
-BRect
-RenderThread::_RecursiveRender(LayerSnapshot* layer, BRect area)
+void
+RenderThread::_RecursiveRender(LayerSnapshot* layer)
 {
 	// make sure all the sub layers and their sub-sub layers are rendered first
-	BRect visuallyChanged(LONG_MAX, LONG_MAX, LONG_MIN, LONG_MIN);
 	int32 count = layer->CountObjects();
 	for (int32 i = 0; i < count; i++) {
 		LayerSnapshot* childLayer
 			= dynamic_cast<LayerSnapshot*>(layer->ObjectAtFast(i));
 		if (childLayer)
-			visuallyChanged = visuallyChanged | _RecursiveRender(childLayer, area);
+			_RecursiveRender(childLayer);
 	}
 
 	LayerBitmap* bitmap = _LayerBitmapFor(layer);
-	return visuallyChanged | bitmap->Render(area, 0);
+	if (!bitmap)
+		return;
+
+	BRect area;
+	int32 lowestChangedObject;
+
+	if (!fRenderManager->GetDirtyInfoFor(fThreadIndex, layer->Layer(),
+			area, lowestChangedObject)) {
+		// this layer is clean
+//printf("layer %p is clean\n", layer->Layer());
+		return;
+	}
+
+//printf("rendering layer %p BRect(%.1f, %.1f, %.1f, %.1f)\n", layer->Layer(),
+//	area.left, area.top, area.right, area.bottom);
+
+	BRect visuallyChangedArea = bitmap->Render(area, lowestChangedObject);
+
+	// transfer the final visually changed area to the display bitmap
+	visuallyChangedArea = visuallyChangedArea & fBitmap->Bounds();
+	clear_area(fBitmap, (rgb_color){ 255, 255, 255, 255 },
+		visuallyChangedArea);
+	blend_area(bitmap->Bitmap(), fBitmap, visuallyChangedArea);
+
+	fRenderManager->TransferClean(fBitmap, visuallyChangedArea);
+}
+
+// _LayerSnapshotForLayer
+LayerSnapshot*
+RenderThread::_LayerSnapshotForLayer(LayerSnapshot* snapshot, Layer* layer)
+{
+	if (snapshot->Original() == layer)
+		return snapshot;
+	int32 count = snapshot->CountObjects();
+	for (int32 i = 0; i < count; i++) {
+		ObjectSnapshot* object = snapshot->ObjectAtFast(i);
+		LayerSnapshot* subLayer = dynamic_cast<LayerSnapshot*>(object);
+		if (subLayer)
+			subLayer = _LayerSnapshotForLayer(subLayer, layer);
+		if (subLayer)
+			return subLayer;
+	}
+	return NULL;
 }
 
 // _LayerBitmapFor
