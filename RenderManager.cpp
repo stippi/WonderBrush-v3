@@ -490,7 +490,7 @@ RenderManager::_QueueRedraw(Layer* layer, const BRect& area)
 	if (fDocumentDirtyMap->ContainsKey(layer)) {
 		info = fDocumentDirtyMap->Get(layer);
 	} else {
-		info = new (nothrow) BRect();
+		info = new (nothrow) BRect(LONG_MAX, LONG_MAX, LONG_MIN, LONG_MIN);
 		if (!info || fDocumentDirtyMap->Put(layer, info) < B_OK) {
 			delete info;
 			printf("RenderManager::_QueueRedraw() - out of memory!\n");
