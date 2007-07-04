@@ -131,7 +131,9 @@ class RWLocker {
 													// count
 };
 
-typedef AutoLocker<RWLocker, AutoLockerReadLocking<RWLocker> > AutoReadLocker;
-typedef AutoLocker<RWLocker, AutoLockerWriteLocking<RWLocker> > AutoWriteLocker;
+typedef AutoLocker<RWLocker, BPrivate::AutoLockerReadLocking<RWLocker> >
+	AutoReadLocker;
+typedef AutoLocker<RWLocker, BPrivate::AutoLockerWriteLocking<RWLocker> >
+	AutoWriteLocker;
 
 #endif	// RW_LOCKER_H
