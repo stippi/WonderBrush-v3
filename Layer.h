@@ -27,8 +27,8 @@ class Layer : public Object {
 		virtual	void			ObjectRemoved(Layer* layer, Object* object,
 									int32 index);
 
-		virtual	void			AreaInvalidated(Layer* layer, const BRect& area,
-									int32 objectIndex);
+		virtual	void			AreaInvalidated(Layer* layer,
+									const BRect& area);
 	};
 
 								Layer(const BRect& bounds);

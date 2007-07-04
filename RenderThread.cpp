@@ -5,7 +5,7 @@
  * Authors:
  *		Stephan Aßmus <superstippi@gmx.de>
  */
-#define USE_CACHING 1
+#define USE_CACHING 0
 #define DEBUG_CACHING 0
 
 
@@ -123,7 +123,7 @@ class RenderThread::LayerBitmap {
 									{ return fLayer; }
 
 			status_t			InitCheck() const;
-			BRect				Render(BRect area, int32 lowestChangedObject);
+			BRect				Render(BRect area);
 
 			const BBitmap*		Bitmap() const
 									{ return &fLayerBitmap; }
@@ -202,7 +202,7 @@ RenderThread::LayerBitmap::InitCheck() const
 
 // Render
 BRect
-RenderThread::LayerBitmap::Render(BRect area, int32 lowestChangedObject)
+RenderThread::LayerBitmap::Render(BRect area)
 {
 #if USE_CACHING
 	return fLayer->Render(area, lowestChangedObject,
@@ -210,8 +210,7 @@ RenderThread::LayerBitmap::Render(BRect area, int32 lowestChangedObject)
 #else
 	BRegion dummyRegion;
 	int32 dummyLevel;
-	return fLayer->Render(area, lowestChangedObject,
-		&fLayerBitmap, NULL, dummyRegion, dummyLevel);
+	return fLayer->Render(area, &fLayerBitmap, NULL, dummyRegion, dummyLevel);
 #endif
 }
 
@@ -219,11 +218,12 @@ RenderThread::LayerBitmap::Render(BRect area, int32 lowestChangedObject)
 
 // constructor
 RenderThread::RenderThread(RenderManager* manager, int32 index)
-	: BLooper("render thread")
+	: fThread(-1)
 	, fRenderManager(manager)
 	, fThreadIndex(index)
-	, fBitmap(new BBitmap(manager->Bounds(), 0, B_RGBA32))
 {
+	// TODO: Move to Init() function and check errors!
+	fThread = spawn_thread(_WorkerLoopEntry, "render thread", B_LOW_PRIORITY, this);
 }
 
 // destructor
@@ -232,110 +232,65 @@ RenderThread::~RenderThread()
 	int32 count = fLayerBitmaps.CountItems();
 	for (int32 i = 0; i < count; i++)
 		delete (LayerBitmap*)fLayerBitmaps.ItemAtFast(i);
-	delete fBitmap;
-}
-
-// MessageReceived
-void
-RenderThread::MessageReceived(BMessage* message)
-{
-	switch (message->what) {
-		case MSG_RENDER: {
-			_Render();
-			break;
-		}
-		default:
-			BLooper::MessageReceived(message);
-			break;
-	}
 }
 
 // #pragma mark -
+
+// Run
+thread_id
+RenderThread::Run()
+{
+	if (fThread < 0)
+		return fThread;
+	status_t error = resume_thread(fThread);
+	return (error == B_OK ? fThread : error);
+}
+
+// WaitForThread
+void
+RenderThread::WaitForThread()
+{
+	if (fThread >= 0) {
+		status_t result;
+		while (wait_for_thread(fThread, &result) == B_INTERRUPTED);
+	}
+}
+
 
 // Render
+//
+// Called by the RenderManager, but in our own thread
+// (_WorkerLoop() -> RenderManager::DoNextRenderJob() -> Render()).
 void
-RenderThread::Render()
+RenderThread::Render(LayerSnapshot* layer, BRect area)
 {
-	BMessage message(MSG_RENDER);
-	PostMessage(&message);
-}
-
-// #pragma mark -
-
-// _Render
-void
-RenderThread::_Render()
-{
-	_RecursiveRender(fRenderManager->Snapshot());
-	fRenderManager->RenderThreadDone(fThreadIndex);
-}
-
-// _RecursiveRender
-void
-RenderThread::_RecursiveRender(LayerSnapshot* layer)
-{
-	// make sure all the sub layers and their sub-sub layers are rendered first
-	int32 count = layer->CountObjects();
-	for (int32 i = 0; i < count; i++) {
-		LayerSnapshot* childLayer
-			= dynamic_cast<LayerSnapshot*>(layer->ObjectAtFast(i));
-		if (childLayer)
-			_RecursiveRender(childLayer);
-	}
-
+//printf("RenderThread::Render(%p, (%f, %f, %f, %f))\n", layer, area.left, area.top, area.right, area.bottom);
 	LayerBitmap* bitmap = _LayerBitmapFor(layer);
 	if (!bitmap)
 		return;
 
-	BRect area;
-	int32 lowestChangedObject;
-
-	if (!fRenderManager->GetDirtyInfoFor(fThreadIndex, layer->Layer(),
-			area, lowestChangedObject)) {
-		// this layer is clean
-//printf("layer %p is clean\n", layer->Layer());
-		return;
-	}
-
 //printf("rendering layer %p BRect(%.1f, %.1f, %.1f, %.1f)\n", layer->Layer(),
 //	area.left, area.top, area.right, area.bottom);
 
-	// TODO: this is not correct, since we need to blend from the
-	// bottom layer always!
-	// a dirty area in a sub-layer will always be dirty in the
-	// parent layer as well... so we could use this to only do this
-	// if we are down at the bottom with the recursive rendering,
-	// additionally the RenderManager could use this to only trigger rendering,
-	// if the notification for the bottom layer has arrived after any notifications
-	// of the sub-layers
-
-	BRect visuallyChangedArea = bitmap->Render(area, lowestChangedObject);
-
-	// transfer the final visually changed area to the display bitmap
-	visuallyChangedArea = visuallyChangedArea & fBitmap->Bounds();
-	clear_area(fBitmap, (rgb_color){ 255, 255, 255, 255 },
-		visuallyChangedArea);
-	blend_area(bitmap->Bitmap(), fBitmap, visuallyChangedArea);
-
-	fRenderManager->TransferClean(fBitmap, visuallyChangedArea);
+	bitmap->Render(area);
 }
 
-// _LayerSnapshotForLayer
-LayerSnapshot*
-RenderThread::_LayerSnapshotForLayer(LayerSnapshot* snapshot, Layer* layer)
+// #pragma mark -
+
+// _WorkerLoopEntry
+status_t
+RenderThread::_WorkerLoopEntry(void* data)
 {
-	if (snapshot->Original() == layer)
-		return snapshot;
-	int32 count = snapshot->CountObjects();
-	for (int32 i = 0; i < count; i++) {
-		ObjectSnapshot* object = snapshot->ObjectAtFast(i);
-		LayerSnapshot* subLayer = dynamic_cast<LayerSnapshot*>(object);
-		if (subLayer)
-			subLayer = _LayerSnapshotForLayer(subLayer, layer);
-		if (subLayer)
-			return subLayer;
-	}
-	return NULL;
+	return static_cast<RenderThread*>(data)->_WorkerLoop();
+}
+
+// _WorkerLoop
+status_t
+RenderThread::_WorkerLoop()
+{
+	while (fRenderManager->DoNextRenderJob(this));
+
+	return B_OK;
 }
 
 // _LayerBitmapFor

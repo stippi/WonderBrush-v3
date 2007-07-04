@@ -19,6 +19,8 @@ class Filter : public Object {
 	// Object interface
 	virtual	ObjectSnapshot*		Snapshot() const;
 
+	virtual	void				ExtendDirtyArea(BRect& area) const;
+
 	// Filter
 	inline	float				FilterRadius() const
 									{ return fFilterRadius; }

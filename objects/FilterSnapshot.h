@@ -21,7 +21,6 @@ class FilterSnapshot : public ObjectSnapshot {
 	virtual	bool				Sync();
 
 	virtual	void				Render(BBitmap* bitmap, BRect area) const;
-	virtual	void				ExtendDirtyArea(BRect& area) const;
 	virtual	void				RebuildAreaForDirtyArea(BRect& area) const;
 
  private:

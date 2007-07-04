@@ -61,17 +61,6 @@ ObjectSnapshot::Render(BBitmap* bitmap, BRect area) const
 	// by extending this area.
 }
 
-// ExtendDirtyArea
-void
-ObjectSnapshot::ExtendDirtyArea(BRect& area) const
-{
-	// "area" is the dirty area "below" this object.
-	// This function should change the area so that
-	// it includes other pixels in the bitmap that are
-	// affected by this object, if pixels in the given
-	// "area" change.
-}
-
 // RebuildAreaForDirtyArea
 void
 ObjectSnapshot::RebuildAreaForDirtyArea(BRect& area) const

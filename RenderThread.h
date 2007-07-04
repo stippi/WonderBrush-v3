@@ -18,19 +18,22 @@ class Layer;
 class LayerSnapshot;
 class RenderManager;
 
-class RenderThread : public BLooper {
+class RenderThread {
  public:
 								RenderThread(RenderManager* manager,
 									int32 index);
 	virtual						~RenderThread();
 
-	virtual	void				MessageReceived(BMessage* message);
-
 	// RenderThread
-			void				Render();
+			thread_id			Run();
+			void				WaitForThread();
+			void				Render(LayerSnapshot* layer, BRect area);
 
  private:
 	class LayerBitmap;
+
+	static	status_t			_WorkerLoopEntry(void* data);
+			status_t			_WorkerLoop();
 
 			void				_Render();
 			void				_RecursiveRender(LayerSnapshot* layer);
@@ -38,6 +41,7 @@ class RenderThread : public BLooper {
 									Layer* layer);
 			LayerBitmap*		_LayerBitmapFor(LayerSnapshot* layer);
 
+			thread_id			fThread;
 			RenderManager*		fRenderManager;
 			int32				fThreadIndex;
 			BBitmap*			fBitmap;

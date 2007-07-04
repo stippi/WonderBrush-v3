@@ -38,8 +38,7 @@ Layer::Listener::ObjectRemoved(Layer* layer, Object* object, int32 index)
 
 // AreaInvalidated
 void
-Layer::Listener::AreaInvalidated(Layer* layer, const BRect& area,
-	int32 objectIndex)
+Layer::Listener::AreaInvalidated(Layer* layer, const BRect& area)
 {
 }
 
@@ -148,25 +147,25 @@ Layer::CountObjects() const
 void
 Layer::Invalidate(const BRect& area, int32 objectIndex)
 {
-	BList listeners(fListeners);
-	int32 count = listeners.CountItems();
-	for (int32 i = 0; i < count; i++) {
-		Listener* listener = (Listener*)listeners.ItemAtFast(i);
-		listener->AreaInvalidated(this, area, objectIndex);
+	// calculate the *visually changed area* from the lowest
+	// changed object to the top object, giving each object
+	// a chance to extend the area
+	BRect visuallyChangedArea = area;
+	int32 count = CountObjects();
+	for (int32 i = objectIndex; i < count; i++) {
+		Object* object = ObjectAtFast(i);
+		object->ExtendDirtyArea(visuallyChangedArea);
 	}
 
-	if (Parent()) {
-		// calculate the *visually changed area* from the lowest
-		// changed object to the top object, giving each object
-		// a chance to extend the area
-		// -> this is the area going to be dirty in the parent layer
-		BRect visuallyChangedArea = area;
-// TODO: make this possible
-//		for (int32 i = objectIndex; i < count; i++) {
-//			Object* object = ObjectAtFast(i);
-//			object->ExtendDirtyArea(visuallyChangedArea);
-//		}
+	if (Parent())
 		Parent()->Invalidate(visuallyChangedArea, Parent()->IndexOf(this));
+
+	// notify listeners
+	BList listeners(fListeners);
+	count = listeners.CountItems();
+	for (int32 i = 0; i < count; i++) {
+		Listener* listener = (Listener*)listeners.ItemAtFast(i);
+		listener->AreaInvalidated(this, visuallyChangedArea);
 	}
 }
 

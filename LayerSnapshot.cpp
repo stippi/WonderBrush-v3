@@ -21,6 +21,7 @@
 
 using std::nothrow;
 
+
 // constructor
 LayerSnapshot::LayerSnapshot(const ::Layer* layer)
 	: ObjectSnapshot(layer)
@@ -79,11 +80,9 @@ LayerSnapshot::Bounds() const
 	return BRect(0, 0, -1, -1);
 }
 
-
 // Render
 BRect
-LayerSnapshot::Render(BRect area, int32 lowestChangedObject,
-	BBitmap* bitmap, BBitmap* cacheBitmap,
+LayerSnapshot::Render(BRect area, BBitmap* bitmap, BBitmap* cacheBitmap,
 	BRegion& validCacheRegion, int32& cacheLevel) const
 {
 	area = area & bitmap->Bounds();
@@ -94,16 +93,9 @@ LayerSnapshot::Render(BRect area, int32 lowestChangedObject,
 	// extend the visually changed area, start with the lowest
 	// changed object
 	int32 count = CountObjects();
-	lowestChangedObject = max_c(0, min_c(count - 1, lowestChangedObject));
+//	lowestChangedObject = max_c(0, min_c(count - 1, lowestChangedObject));
 
-	// calculate the *visually changed area* from the lowest
-	// changed object to the top object, giving each object
-	// a chance to extend the area
 	BRect visuallyChangedArea = area;
-	for (int32 i = lowestChangedObject; i < count; i++) {
-		ObjectSnapshot* object = ObjectAtFast(i);
-		object->ExtendDirtyArea(visuallyChangedArea);
-	}
 
 	// calculate the required *rebuild area* at each object
 	// index, from the top object to the lowest object
@@ -120,34 +112,34 @@ LayerSnapshot::Render(BRect area, int32 lowestChangedObject,
 	rebuildArea = rebuildArea & bitmap->Bounds();
 	int32 firstObject = 0;
 
-	// figure out which until which object level we
-	// can reuse the cache bitmap, if at all
-	BRegion cacheTest(rebuildArea);
-	cacheTest.Exclude(&validCacheRegion);
-	bool canUseCache = false;
-	if (cacheLevel < lowestChangedObject && cacheTest.CountRects() == 0) {
-//printf("can use cache\n");
-		// we can use the cache
-		firstObject = cacheLevel + 1;
-		canUseCache = true;
-	} else {
-		// we need to build the cache
-		if (cacheLevel != lowestChangedObject - 1) {
-			cacheLevel = lowestChangedObject - 1;
-			validCacheRegion.MakeEmpty();
-//printf("start building cache\n");
-		} else {
-//printf("continue building cache\n");
-		}
-	}
+//	// figure out which until which object level we
+//	// can reuse the cache bitmap, if at all
+//	BRegion cacheTest(rebuildArea);
+//	cacheTest.Exclude(&validCacheRegion);
+//	bool canUseCache = false;
+//	if (cacheLevel < lowestChangedObject && cacheTest.CountRects() == 0) {
+////printf("can use cache\n");
+//		// we can use the cache
+//		firstObject = cacheLevel + 1;
+//		canUseCache = true;
+//	} else {
+//		// we need to build the cache
+//		if (cacheLevel != lowestChangedObject - 1) {
+//			cacheLevel = lowestChangedObject - 1;
+//			validCacheRegion.MakeEmpty();
+////printf("start building cache\n");
+//		} else {
+////printf("continue building cache\n");
+//		}
+//	}
 
 	// clear the bitmap, or transfer the area from the cache
 //printf("rebuild: "); rebuildArea.PrintToStream();
 
-	if (cacheBitmap && canUseCache) {
-		// use the cache
-		copy_area(cacheBitmap, bitmap, rebuildArea);
-	} else {
+//	if (cacheBitmap && canUseCache) {
+//		// use the cache
+//		copy_area(cacheBitmap, bitmap, rebuildArea);
+//	} else {
 		// start clean
 		uint8* bits = (uint8*)bitmap->Bits();
 		uint32 bytes = (rebuildArea.IntegerWidth() + 1) * 4;
@@ -162,7 +154,7 @@ LayerSnapshot::Render(BRect area, int32 lowestChangedObject,
 			memset(bits, 0, bytes);
 			bits += bpr;
 		}
-	}
+//	}
 
 	// render objects
 	BRect layerBounds = bitmap->Bounds();
@@ -171,10 +163,10 @@ LayerSnapshot::Render(BRect area, int32 lowestChangedObject,
 		ObjectSnapshot* object = ObjectAtFast(i);
 		object->PrepareRendering(layerBounds);
 		object->Render(bitmap, dirtyAreas[i]);
-		if (cacheBitmap && i == cacheLevel) {
-			copy_area(bitmap, cacheBitmap, dirtyAreas[i]);
-			validCacheRegion.Include(dirtyAreas[i]);
-		}
+//		if (cacheBitmap && i == cacheLevel) {
+//			copy_area(bitmap, cacheBitmap, dirtyAreas[i]);
+//			validCacheRegion.Include(dirtyAreas[i]);
+//		}
 	}
 
 	// return the final visually changed area

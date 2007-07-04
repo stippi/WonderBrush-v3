@@ -24,23 +24,97 @@
 
 using std::nothrow;
 
-RenderManager::layer_dirty_info::layer_dirty_info()
-{
-	dirtyArea[0] = dirtyArea[1] = BRect(LONG_MAX, LONG_MAX, LONG_MIN, LONG_MIN);
-	lowestDirtyObject[0] = lowestDirtyObject[1] = LONG_MAX;
-}
 
-RenderManager::layer_dirty_info&
-RenderManager::layer_dirty_info::operator=(const layer_dirty_info& info)
-{
-	dirtyArea[0] = info.dirtyArea[0];
-	dirtyArea[1] = info.dirtyArea[1];
+enum {
+	MIN_AREA_PER_THREAD = 2000
+};
 
-	lowestDirtyObject[0] = info.lowestDirtyObject[0];
-	lowestDirtyObject[1] = info.lowestDirtyObject[1];
 
-	return *this;
-}
+// RenderInfo
+struct RenderManager::RenderInfo {
+	LayerSnapshot*		layer;
+	int32				parent;
+	BRect*				dirtyArea;
+	int32				dirtySubLayers;
+	int32				splitCount;
+	int32				splitCountStarted;
+	int32				splitCountDone;
+	bool				splitHorizontally;
+};
+
+
+// LayerSnapshotVisitor
+class RenderManager::LayerSnapshotVisitor {
+public:
+	virtual ~LayerSnapshotVisitor()
+	{
+	}
+
+	virtual void Visit(LayerSnapshot* layer, int32 index,
+		int32 lastChildIndex, int32 previousSiblingIndex) = 0;
+};
+
+
+// RenderInfoInitVisitor
+class RenderManager::RenderInfoInitVisitor : public LayerSnapshotVisitor {
+public:
+	RenderInfoInitVisitor(RenderManager* manager)
+		: fManager(manager)
+	{
+	}
+
+	virtual void Visit(LayerSnapshot* layer, int32 index,
+		int32 lastChildIndex, int32 previousSiblingIndex)
+	{
+		RenderInfo& info = fManager->fRenderInfos[index];
+		info.layer = layer;
+		info.dirtyArea = fManager->fSnapshotDirtyMap->Get(layer->Layer());
+		if (info.dirtyArea) {
+			// determine split strategy
+			int32 width = info.dirtyArea->IntegerWidth() + 1;
+			int32 height = info.dirtyArea->IntegerHeight() + 1;
+			int64 area = int64(width) * height;
+			int64 splitCount = area / MIN_AREA_PER_THREAD;
+			splitCount = min_c(splitCount, fManager->fRenderThreadCount);
+
+			if (splitCount > 1)
+				info.splitCount = splitCount;
+			else
+				info.splitCount = 1;
+
+			info.splitCountStarted = 0;
+			info.splitCountDone = 0;
+			info.splitHorizontally = (width > height);
+		} else {
+			info.dirtySubLayers = 0;
+			info.splitCount = 0;
+		}
+
+		// We initialize info.parent with the index of our previous sibling,
+		// thus building a linked list of siblings. The Visit() for our parent
+		// (which is called later (that's why the parent index is not known
+		// yet)) will traverse this list and update info.parent with the correct
+		// value. The root layer doesn't have a sibling, so info.parent will be
+		// set to and remain -1.
+		info.parent = previousSiblingIndex;
+
+		// count the dirty child layers and update their info.parent
+		int32 dirtyChildCount = 0;
+		int32 childIndex = lastChildIndex;
+		while (childIndex >= 0) {
+			RenderInfo& childInfo = fManager->fRenderInfos[childIndex];
+			childIndex = childInfo.parent;
+			childInfo.parent = index;
+			if (childInfo.dirtyArea)
+				dirtyChildCount++;
+		}
+
+		info.dirtySubLayers = dirtyChildCount;
+	}
+
+private:
+	RenderManager*	fManager;
+};
 
 
 // #pragma mark -
@@ -56,13 +130,24 @@ RenderManager::RenderManager(Document* document, const BRect& bounds)
 	, fRenderThreads(NULL)
 	, fRenderThreadCount(0)
 
-	, fRenderingThreads(0)
+	, fRenderInfos(NULL)
+	, fRenderInfoCount(0)
+	, fRenderInfoCapacity(0)
+	, fCurrentRenderInfo(0)
+
+	, fWaitingRenderThreadsSem(-1)
+	, fWaitingRenderThreadCount(0)
+
 	, fRenderQueueLock("render queue lock")
 
 	, fBitmapListener(NULL)
 {
+// TODO: Move everything to Init() method and check errors!
 	fDisplayBitmap[0] = new (nothrow) BBitmap(bounds, 0, B_RGBA32);
 	fDisplayBitmap[1] = new (nothrow) BBitmap(bounds, 0, B_RGBA32);
+
+	fDocumentDirtyMap = new (nothrow) DirtyMap();
+	fSnapshotDirtyMap = new (nothrow) DirtyMap();
 
 #if 1
 	system_info info;
@@ -72,6 +157,8 @@ RenderManager::RenderManager(Document* document, const BRect& bounds)
 #else
 	fRenderThreadCount = 1;
 #endif
+
+	fWaitingRenderThreadsSem = create_sem(0, "wait for render task");
 
 	fRenderThreads = new (nothrow) RenderThread*[fRenderThreadCount];
 	for (int32 i = 0; i < fRenderThreadCount; i++) {
@@ -85,10 +172,11 @@ RenderManager::RenderManager(Document* document, const BRect& bounds)
 // destructor
 RenderManager::~RenderManager()
 {
-	for (int32 i = 0; i < fRenderThreadCount; i++) {
-		fRenderThreads[i]->Lock();
-		fRenderThreads[i]->Quit();
-	}
+	// this will unblock any waiting render threads
+	delete_sem(fWaitingRenderThreadsSem);
+
+	for (int32 i = 0; i < fRenderThreadCount; i++)
+		fRenderThreads[i]->WaitForThread();
 	delete[] fRenderThreads;
 
 	delete fDisplayBitmap[0];
@@ -99,10 +187,14 @@ RenderManager::~RenderManager()
 
 	_RecursiveRemoveListener(fDocument->RootLayer());
 
-	DirtyMap::Iterator iterator = fDirtyMap.GetIterator();
-	while (iterator.HasNext())
-		delete iterator.Next().value;
+	_ClearDirtyMap(fDocumentDirtyMap);
+	_ClearDirtyMap(fSnapshotDirtyMap);
+	delete fDocumentDirtyMap;
+	delete fSnapshotDirtyMap;
+
+	delete[] fRenderInfos;
 }
+
 
 // #pragma mark -
 
@@ -134,12 +226,11 @@ printf("RenderManager::ObjectRemoved(%p)\n", subLayer);
 
 // AreaInvalidated
 void
-RenderManager::AreaInvalidated(Layer* layer, const BRect& area,
-	int32 objectIndex)
+RenderManager::AreaInvalidated(Layer* layer, const BRect& area)
 {
-	// this is a synchronous notification, therefor the document
+	// this is a synchronous notification, therefore the document
 	// is already properly locked
-	_QueueRedraw(layer, area, objectIndex);
+	_QueueRedraw(layer, area);
 }
 
 // #pragma mark -
@@ -199,7 +290,9 @@ RenderManager::TransferClean(const BBitmap* bitmap, const BRect& area)
 	// it is ok to copy bitmap contents without holding the
 	// lock, since "flipping" is only done by which ever thread
 	// happens to be the *last* thread getting hold of the lock
-	copy_area(bitmap, BackBitmap(), area);
+	const BBitmap* targetBitmap = BackBitmap();
+	clear_area(targetBitmap, (rgb_color){ 255, 255, 255, 255 }, area);
+	blend_area(bitmap, targetBitmap, area);
 
 	// hold the lock in as short a time as possible
 	if (!fRenderQueueLock.Lock())
@@ -210,79 +303,136 @@ RenderManager::TransferClean(const BBitmap* bitmap, const BRect& area)
 	fRenderQueueLock.Unlock();
 }
 
-// RenderThreadDone
-void
-RenderManager::RenderThreadDone(int32 threadIndex)
-{
-	// executed in a rendering thread
-
-	if (!fRenderQueueLock.Lock())
-		return;
-
-	fRenderingThreads--;
-	if (fRenderingThreads == 0) {
-		_BackToDisplay(fCleanArea);
-		fCleanArea.Set(LONG_MAX, LONG_MAX, LONG_MIN, LONG_MIN);
-	}
-
-	fRenderQueueLock.Unlock();
-}
-
-// GetDirtyInfoFor
-bool
-RenderManager::GetDirtyInfoFor(int32 threadIndex, const Layer* layer, 
-	BRect& dirtyArea, int32& lowestDirtyObject)
-{
-	// executed in a rendering thread, we need to lock, because
-	// items might be put into the hash by another thread
-	if (!fRenderQueueLock.Lock())
-		return false;
-
-	if (!fDirtyMap.ContainsKey(layer)) {
-		fRenderQueueLock.Unlock();
-		return false;
-	}
-	
-	layer_dirty_info* info = fDirtyMap.Get(layer);
-
-	dirtyArea = info->dirtyArea[0];
-	if (!dirtyArea.IsValid()) {
-		fRenderQueueLock.Unlock();
-		return false;
-	}
-
-	int32 width = dirtyArea.IntegerWidth();
-	int32 height = dirtyArea.IntegerHeight();
-
-	if (width > height) {
-		// split horizontally
-		dirtyArea.left = dirtyArea.left + threadIndex
-			* width / fRenderThreadCount;
-		dirtyArea.right = dirtyArea.left + width / fRenderThreadCount + 1;
-	} else {
-		// split vertically
-		dirtyArea.top = dirtyArea.top + threadIndex
-			* height / fRenderThreadCount;
-		dirtyArea.bottom = dirtyArea.top + height / fRenderThreadCount + 1;
-	}
-
-	lowestDirtyObject = info->lowestDirtyObject[0];
-
-	fRenderQueueLock.Unlock();
-	return true;
-}
-
 // PrepareDirtyInfosForNextRender
 void
 RenderManager::PrepareDirtyInfosForNextRender()
 {
-	DirtyMap::Iterator iterator = fDirtyMap.GetIterator();
-	while (iterator.HasNext()) {
-		layer_dirty_info* info = iterator.Next().value;
-		info->dirtyArea[0] = info->dirtyArea[1];
-		info->dirtyArea[1] = BRect(LONG_MAX, LONG_MAX, LONG_MIN, LONG_MIN);
-		info->lowestDirtyObject[0] = info->lowestDirtyObject[1];
-		info->lowestDirtyObject[1] = LONG_MAX;
+	_ClearDirtyMap(fSnapshotDirtyMap);
+	DirtyMap* map = fSnapshotDirtyMap;
+	fSnapshotDirtyMap = fDocumentDirtyMap;
+	fDocumentDirtyMap = map;
+}
+
+// LockRenderInfo
+bool
+RenderManager::LockRenderInfo()
+{
+	return fRenderQueueLock.Lock();
+}
+
+// UnlockRenderInfo
+void
+RenderManager::UnlockRenderInfo()
+{
+	fRenderQueueLock.Unlock();
+}
+
+// DoNextRenderJob
+bool
+RenderManager::DoNextRenderJob(RenderThread* thread)
+{
+	AutoLocker<BLocker> locker(fRenderQueueLock);
+//printf("RenderManager::DoNextRenderJob(%p)\n", thread);
+
+	// iterate through the render infos and find the next open task
+	while (fCurrentRenderInfo < fRenderInfoCount) {
+		RenderInfo& info = fRenderInfos[fCurrentRenderInfo];
+		if (info.dirtyArea && info.dirtySubLayers == 0
+			&& info.splitCountStarted < info.splitCount) {
+			// found one -- get the area to render
+			int32 index = info.splitCountStarted;
+			BRect dirtyArea = *info.dirtyArea;
+			int32 width = dirtyArea.IntegerWidth() + 1;
+			int32 height = dirtyArea.IntegerHeight() + 1;
+
+			if (info.splitHorizontally) {
+				// split horizontally
+				dirtyArea.right = dirtyArea.left
+					+ (index + 1) * width / info.splitCount - 1;
+				dirtyArea.left = dirtyArea.left
+					+ index * width / info.splitCount;
+			} else {
+				// split vertically
+				dirtyArea.bottom = dirtyArea.top
+					+ (index + 1) * height / info.splitCount - 1;
+				dirtyArea.top = dirtyArea.top
+					+ index * height / info.splitCount;
+			}
+
+//printf("  -> rendering part %ld/%ld of render info %ld (/%ld)\n", index + 1,
+//info.splitCount, fCurrentRenderInfo, fRenderInfoCount);
+			info.splitCountStarted++;
+
+			// render
+			locker.Unlock();
+
+			thread->Render(info.layer, dirtyArea);
+
+			// If we rendered something for the root layer, we transfer it to
+			// the display bitmap.
+			if (info.layer == fSnapshot)
+				TransferClean(fSnapshot->Bitmap(), dirtyArea);
+
+			locker.Lock();
+
+			// post processing
+			info.splitCountDone++;
+			if (info.splitCountDone == info.splitCount) {
+				// We finished the last missing split area. This layer is clean,
+				// now. Update the parent.
+				if (info.parent >= 0) {
+					RenderInfo& parentInfo = fRenderInfos[info.parent];
+					parentInfo.dirtySubLayers--;
+					if (parentInfo.dirtySubLayers == 0) {
+						// The parent layer has got no more dirty sublayers. It
+						// can be rendered now.
+						if (fCurrentRenderInfo > info.parent)
+							fCurrentRenderInfo = info.parent;
+
+						// If any threads are waiting, they might find a task
+						// now.
+						WakeUpRenderThreads();
+					}
+				}
+			}
+
+			// another job well done
+			return true;
+		}
+
+		// no luck yet
+		fCurrentRenderInfo++;
+	}
+
+	// There's nothing we can do at the moment.
+	fWaitingRenderThreadCount++;
+	if (fWaitingRenderThreadCount == fRenderThreadCount) {
+		// All the other threads are waiting too, which means everything has
+		// been rendered.
+		_AllRenderThreadsDone();
+	}
+
+//printf("  -> nothing to do ATM, %ld/%ld threads waiting\n", fWaitingRenderThreadCount, fRenderThreadCount);
+	locker.Unlock();
+
+	status_t error;
+	do {
+		error = acquire_sem(fWaitingRenderThreadsSem);
+	} while (error == B_INTERRUPTED);
+
+	// If not OK, the semaphore has been destroyed. Our signal to quit.
+	return (error == B_OK);
+}
+
+// WakeUpRenderThreads
+void
+RenderManager::WakeUpRenderThreads()
+{
+	AutoLocker<BLocker> locker(fRenderQueueLock);
+	if (fWaitingRenderThreadCount > 0) {
+		release_sem_etc(fWaitingRenderThreadsSem, fWaitingRenderThreadCount,
+			B_DO_NOT_RESCHEDULE);
+		fWaitingRenderThreadCount = 0;
 	}
 }
 
@@ -306,7 +456,7 @@ RenderManager::_RecursiveAddListener(Layer* layer, bool invalidate)
 	layer->AddListener(this);
 
 	if (invalidate)
-		AreaInvalidated(layer, layer->Bounds(), 0);
+		AreaInvalidated(layer, layer->Bounds());
 }
 
 // _RecursiveRemoveListener
@@ -330,17 +480,18 @@ RenderManager::_RecursiveRemoveListener(Layer* layer)
 
 // _QueueRedraw
 void
-RenderManager::_QueueRedraw(Layer* layer, const BRect& area, int32 objectIndex)
+RenderManager::_QueueRedraw(Layer* layer, const BRect& area)
 {
 	if (!area.IsValid() || !fRenderQueueLock.Lock())
 		return;
+//printf("RenderManager::_QueueRedraw(%p, (%f, %f, %f, %f))\n", layer, area.left, area.top, area.right, area.bottom);
 
-	layer_dirty_info* info;
-	if (fDirtyMap.ContainsKey(layer)) {
-		info = fDirtyMap.Get(layer);
+	BRect* info;
+	if (fDocumentDirtyMap->ContainsKey(layer)) {
+		info = fDocumentDirtyMap->Get(layer);
 	} else {
-		info = new (nothrow) layer_dirty_info();
-		if (!info || fDirtyMap.Put(layer, info) < B_OK) {
+		info = new (nothrow) BRect();
+		if (!info || fDocumentDirtyMap->Put(layer, info) < B_OK) {
 			delete info;
 			printf("RenderManager::_QueueRedraw() - out of memory!\n");
 			fRenderQueueLock.Unlock();
@@ -348,10 +499,9 @@ RenderManager::_QueueRedraw(Layer* layer, const BRect& area, int32 objectIndex)
 		}
 	}
 
-	info->dirtyArea[1] = (info->dirtyArea[1] | area) & Bounds();
-	info->lowestDirtyObject[1] = min_c(objectIndex, info->lowestDirtyObject[1]);
+	*info = *info | (area & Bounds());
 
-	if (fRenderingThreads > 0) {
+	if (fWaitingRenderThreadCount < fRenderThreadCount) {
 //		printf("rendering in progress\n");
 		// rendering in progress
 	} else {
@@ -367,29 +517,35 @@ RenderManager::_QueueRedraw(Layer* layer, const BRect& area, int32 objectIndex)
 bool
 RenderManager::_HasDirtyLayers() const
 {
-	DirtyMap::Iterator iterator = fDirtyMap.GetIterator();
-	while (iterator.HasNext()) {
-		layer_dirty_info* info = iterator.Next().value;
-		if (info->dirtyArea[1].IsValid())
-			return true;
-	}
-	return false;
+	return (fDocumentDirtyMap->Size() > 0);
 }
 
 // _TriggerRender
 void
 RenderManager::_TriggerRender()
 {
+//printf("RenderManager::_TriggerRender()\n");
+
 	// move the dirty infos to the front
 	PrepareDirtyInfosForNextRender();
+
 	// sync document and document clone
 	fSnapshot->Sync();
-	// split dirty area in part for each thread
-	// and dispatch rendering messages
-	fRenderingThreads = fRenderThreadCount;
-	for (int32 i = 0; i < fRenderingThreads; i++) {
-		fRenderThreads[i]->Render();
-	}
+
+	// count sublayers
+	int32 count = 0;
+	_TraverseLayerSnapshots(NULL, fSnapshot, count, -1);
+
+	_ResizeRenderInfos(count);
+
+	// prepare render infos
+	RenderInfoInitVisitor visitor(this);
+	count = 0;
+	_TraverseLayerSnapshots(&visitor, fSnapshot, count, -1);
+	fCurrentRenderInfo = 0;
+
+	// and go
+	WakeUpRenderThreads();
 }
 
 // _BackToDisplay
@@ -405,10 +561,82 @@ RenderManager::_BackToDisplay(const BRect& area)
 		message.AddRect("area", area);
 		fBitmapListener->SendMessage(&message);
 	}
+}
+
+// _ClearDirtyMap
+void
+RenderManager::_ClearDirtyMap(DirtyMap* map)
+{
+	DirtyMap::Iterator iterator = map->GetIterator();
+	while (iterator.HasNext())
+		delete iterator.Next().value;
+	map->Clear();
+}
+
+// _ResizeRenderInfos
+bool
+RenderManager::_ResizeRenderInfos(int32 size)
+{
+	if (size > fRenderInfoCapacity) {
+		// delete old array
+		delete[] fRenderInfos;
+		fRenderInfoCapacity = 0;
+
+		// create new one
+		fRenderInfos = new(nothrow) RenderInfo[size];
+		if (!fRenderInfos)
+			return false;
+		fRenderInfoCapacity = size;
+	}
+
+	fRenderInfoCount = size;
+	return true;
+}
+
+// _TraverseLayerSnapshots
+/*!	Traverses the layer tree in post order.
+	\param visitor The visitor to notify.
+	\param layer The layer tree to be visited recursively. This layer will be
+		   visited after all its descendants.
+	\param count In/out parameter incremented whenever a layer has been visited.
+	\param previousSibling The index of the previous sibling visited. -1 if this
+		   is the first sibling.
+*/
+void
+RenderManager::_TraverseLayerSnapshots(LayerSnapshotVisitor* visitor,
+	LayerSnapshot* layer, int32& count, int32 previousSibling)
+{
+//printf("RenderManager::_TraverseLayerSnapshots(%p, %p, %ld, %ld)\n", visitor, layer, count, previousSibling);
+	// traverse sublayers
+	int32 lastChild = -1;
+	int32 objectCount = layer->CountObjects();
+	for (int32 i = 0; i < objectCount; i++) {
+		LayerSnapshot* child = dynamic_cast<LayerSnapshot*>(layer->ObjectAt(i));
+		if (child) {
+			_TraverseLayerSnapshots(visitor, child, count, lastChild);
+			lastChild = count - 1;
+		}
+	}
+
+	// visit this layer
+	if (visitor)
+		visitor->Visit(layer, count, lastChild, previousSibling);
+	count++;
+}
+
+// _AllRenderThreadsDone
+//
+// fRenderQueueLock must be locked.
+void
+RenderManager::_AllRenderThreadsDone()
+{
+	// executed in a rendering thread
+	if (fCleanArea.IsValid()) {
+		_BackToDisplay(fCleanArea);
+		fCleanArea.Set(LONG_MAX, LONG_MAX, LONG_MIN, LONG_MIN);
+	}
 
 	if (_HasDirtyLayers())
 		_TriggerRender();
 }
-
-
 

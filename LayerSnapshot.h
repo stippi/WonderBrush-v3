@@ -19,6 +19,7 @@ class BRegion;
 class Layer;
 class ObjectSnapshot;
 
+
 class LayerSnapshot : public ObjectSnapshot {
  public:
 								LayerSnapshot(const ::Layer* layer);
@@ -34,10 +35,10 @@ class LayerSnapshot : public ObjectSnapshot {
 	inline	const ::Layer*		Layer() const
 									{ return fOriginal; }
 
+			BBitmap*			Bitmap() const	 { return fBitmap; }
 			BRect				Bounds() const;
 
-			BRect				Render(BRect area, int32 lowestObject,
-									BBitmap* bitmap,
+			BRect				Render(BRect area, BBitmap* bitmap,
 									BBitmap* cacheBitmap,
 									BRegion& validCacheRegion,
 									int32& cacheLevel) const;

@@ -14,6 +14,7 @@
 #include "Document.h"
 #include "HashMap.h"
 #include "Layer.h"
+#include "LayerSnapshot.h"
 
 class BBitmap;
 class BMessenger;
@@ -25,6 +26,8 @@ enum {
 	MSG_BITMAP_CLEAN = 'bcln'
 };
 
+
+// RenderManager
 class RenderManager : Layer::Listener {
  public:
 								RenderManager(Document* document,
@@ -37,8 +40,8 @@ class RenderManager : Layer::Listener {
 	virtual	void				ObjectRemoved(Layer* layer, Object* object,
 									int32 index);
 
-	virtual	void				AreaInvalidated(Layer* layer, const BRect& area,
-									int32 objectIndex);
+	virtual	void				AreaInvalidated(Layer* layer,
+									const BRect& area);
 
 	// RenderManager
 			LayerSnapshot*		Snapshot() const
@@ -55,38 +58,49 @@ class RenderManager : Layer::Listener {
 
 			void				TransferClean(const BBitmap* bitmap,
 									const BRect& area);
-			void				RenderThreadDone(int32 threadIndex);
-
-			bool				GetDirtyInfoFor(int32 threadIndex,
-									const Layer* layer,
-									BRect& dirtyArea,
-									int32& lowestDirtyObject);
 
 			void				PrepareDirtyInfosForNextRender();
 
+			bool				LockRenderInfo();
+			void				UnlockRenderInfo();
+
+			bool				DoNextRenderJob(RenderThread* thread);
+			void				WakeUpRenderThreads();
+
  private:
+			typedef HashMap<HashKey32<const Layer*>, BRect*> DirtyMap;
+			struct RenderInfo;
+			class LayerSnapshotVisitor;
+			class RenderInfoInitVisitor;
+
+			friend class RenderInfoInitVisitor;
+
 			void				_RecursiveAddListener(Layer* layer,
 									bool invalidate = true);
 			void				_RecursiveRemoveListener(Layer* layer);
 
-			void				_QueueRedraw(Layer* layer, const BRect& area,
-									int32 objectIndex);
+			void				_QueueRedraw(Layer* layer, const BRect& area);
 			bool				_HasDirtyLayers() const;
 			void				_TriggerRender();
 			void				_BackToDisplay(const BRect& area);
 
+			void				_ClearDirtyMap(DirtyMap* map);
+
+			bool				_ResizeRenderInfos(int32 size);
+			void				_TraverseLayerSnapshots(
+									LayerSnapshotVisitor* visitor,
+									LayerSnapshot* layer,
+									int32& count, int32 previousSibling);
+
+			void				_AllRenderThreadsDone();
+
+private:
 			BBitmap*			fDisplayBitmap[2];
 
 			BRect				fCleanArea;
 
-			struct layer_dirty_info {
-									layer_dirty_info();
-				layer_dirty_info&	operator=(const layer_dirty_info& info);
-				BRect				dirtyArea[2];
-				int32				lowestDirtyObject[2];
-			};
-			typedef HashMap<HashKey32<const Layer*>, layer_dirty_info*> DirtyMap;
-			DirtyMap			fDirtyMap;
+			DirtyMap*			fDocumentDirtyMap;
+			DirtyMap*			fSnapshotDirtyMap;
 
 			Document*			fDocument;
 			LayerSnapshot*		fSnapshot;
@@ -94,10 +108,34 @@ class RenderManager : Layer::Listener {
 			RenderThread**		fRenderThreads;
 			int32				fRenderThreadCount;
 
-			vint32				fRenderingThreads;
+			RenderInfo*			fRenderInfos;
+			int32				fRenderInfoCount;
+			int32				fRenderInfoCapacity;
+			int32				fCurrentRenderInfo;
+
+			sem_id				fWaitingRenderThreadsSem;
+			int32				fWaitingRenderThreadCount;
+
 			BLocker				fRenderQueueLock;
 
 			BMessenger*			fBitmapListener;
 };
+
+// RenderInfoLocking
+class RenderInfoLocking {
+public:
+	inline bool Lock(RenderManager *lockable)
+	{
+		return lockable->LockRenderInfo();
+	}
+
+	inline void Unlock(RenderManager *lockable)
+	{
+		lockable->UnlockRenderInfo();
+	}
+};
+
+typedef AutoLocker<RenderInfoLocking> RenderInfoLocker;
+
 
 #endif // RENDER_MANAGER_H

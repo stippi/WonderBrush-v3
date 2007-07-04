@@ -36,3 +36,20 @@ Filter::Snapshot() const
 {
 	return new FilterSnapshot(this);
 }
+
+// ExtendDirtyArea
+void
+Filter::ExtendDirtyArea(BRect& area) const
+{
+	// "area" is the dirty area "below" this object.
+	// This function should change the area so that
+	// it includes other pixels in the bitmap that are
+	// affected by this object, if pixels in the given
+	// "area" change.
+
+	float extend = ceilf(fFilterRadius) + 3;
+		// + 1 to be on the save side with regards
+		// to pixel indices versus areas...
+	area.InsetBy(-extend, -extend);
+}
+

@@ -31,6 +31,12 @@ Object::SetParent(Layer* layer)
 	fParent = layer;
 }
 
+// ExtendDirtyArea
+void
+Object::ExtendDirtyArea(BRect& area) const
+{
+}
+
 // UpdateChangeCounter
 void
 Object::UpdateChangeCounter()

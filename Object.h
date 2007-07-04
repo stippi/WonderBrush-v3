@@ -24,6 +24,8 @@ class Object {
 	inline	Layer*				Parent() const
 									{ return fParent; }
 
+	virtual	void				ExtendDirtyArea(BRect& area) const;
+
 			void				UpdateChangeCounter();
 	inline	uint32				ChangeCounter() const
 									{ return fChangeCounter; }
