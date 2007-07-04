@@ -35,6 +35,11 @@ Object::SetParent(Layer* layer)
 void
 Object::ExtendDirtyArea(BRect& area) const
 {
+	// "area" is the dirty area "below" this object.
+	// This function should change the area so that
+	// it includes other pixels in the bitmap that are
+	// affected by this object, if pixels in the given
+	// "area" change.
 }
 
 // UpdateChangeCounter
@@ -45,4 +50,5 @@ Object::UpdateChangeCounter()
 		fParent->UpdateChangeCounter();
 	fChangeCounter++;
 }
+
 

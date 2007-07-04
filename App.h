@@ -5,6 +5,7 @@
 #include <Rect.h>
 
 class Document;
+class Layer;
 
 enum {
 	MSG_NEW_WINDOW	= 'nwnd'
@@ -21,6 +22,7 @@ class App : public BApplication {
 			void				_NewWindow();
 
 			Document*			fDocument;
+			Layer*				fEditLayer;
 
 			BRect				fWindowFrame;
 			int32				fWindowCount;

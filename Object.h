@@ -8,7 +8,7 @@
 #ifndef OBJECT_H
 #define OBJECT_H
 
-#include <SupportDefs.h>
+#include <Rect.h>
 
 class Layer;
 class ObjectSnapshot;
@@ -29,6 +29,7 @@ class Object {
 			void				UpdateChangeCounter();
 	inline	uint32				ChangeCounter() const
 									{ return fChangeCounter; }
+
  private:
 			uint32				fChangeCounter;
 			Layer*				fParent;

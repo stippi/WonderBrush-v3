@@ -20,7 +20,8 @@ enum {
 };
 
 // constructor
-Window::Window(BRect frame, const char* title, Document* document)
+Window::Window(BRect frame, const char* title, Document* document,
+			Layer* layer)
 	: BWindow(frame, title,
 		B_TITLED_WINDOW_LOOK, B_NORMAL_WINDOW_FEEL, B_ASYNCHRONOUS_CONTROLS)
 	, fDocument(document)
@@ -63,8 +64,7 @@ Window::Window(BRect frame, const char* title, Document* document)
 	AddChild(fView);
 	fView->MakeFocus(true);
 
-	fView->SetState(new PickToolState(fView, fDocument->RootLayer(),
-		fDocument));
+	fView->SetState(new PickToolState(fView, layer, fDocument));
 	fView->SetCommandStack(fDocument->CommandStack());
 
 	fDocument->CommandStack()->AddListener(&fCommandStackListener);

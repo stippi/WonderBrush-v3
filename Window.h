@@ -6,13 +6,14 @@
 #include "ListenerAdapter.h"
 
 class Document;
+class Layer;
 class RenderManager;
 class View;
 
 class Window : public BWindow {
  public:
 								Window(BRect frame, const char* title,
-									Document* document);
+									Document* document, Layer* layer);
 	virtual						~Window();
 
 	// BWindow interface

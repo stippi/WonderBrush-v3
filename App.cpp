@@ -26,21 +26,24 @@ App::App(BRect bounds)
 		(rgb_color){ 90, 0, 20, 210 }));
 	fDocument->RootLayer()->AddObject(new Rect(BRect(100, 140, 180, 170),
 		(rgb_color){ 255, 215, 20, 100 }));
+
+	Layer* subLayer = new Layer(bounds);
+	fDocument->RootLayer()->AddObject(subLayer);
+
 	fDocument->RootLayer()->AddObject(new Filter(5.0));
 	fDocument->RootLayer()->AddObject(new Shape(BRect(180, 40, 320, 170),
 		(rgb_color){ 255, 100, 50, 210 }));
 	fDocument->RootLayer()->AddObject(new Rect(BRect(200, 10, 280, 70),
 		(rgb_color){ 255, 200, 50, 80 }));
 
-	Layer* subLayer = new Layer(bounds);
-	fDocument->RootLayer()->AddObject(subLayer);
-
 	subLayer->AddObject(new Rect(BRect(150, 200, 210, 330),
 		(rgb_color){ 55, 120, 80, 120 }));
 	subLayer->AddObject(new Filter(20.0));
 
 	subLayer->AddObject(new Rect(BRect(120, 100, 510, 530),
-		(rgb_color){ 255, 180, 120, 40 }));
+		(rgb_color){ 55, 180, 120, 200 }));
+
+	fEditLayer = fDocument->RootLayer();
 }
 
 // MessageReceived
@@ -73,7 +76,8 @@ App::_NewWindow()
 	BString windowName("Document Framework ");
 	windowName << ++fWindowCount;
 
-	Window* window = new Window(fWindowFrame, windowName.String(), fDocument);
+	Window* window = new Window(fWindowFrame, windowName.String(),
+		fDocument, fEditLayer);
 	window->Show();
 }
 
