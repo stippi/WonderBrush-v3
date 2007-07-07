@@ -141,6 +141,13 @@ Layer::CountObjects() const
 	return fObjects.CountItems();
 }
 
+// HasObject
+bool
+Layer::HasObject(Object* object) const
+{
+	return fObjects.HasItem(object);
+}
+
 // #pragma mark -
 
 // Invalidate
@@ -184,3 +191,5 @@ Layer::RemoveListener(Listener* listener)
 {
 	fListeners.RemoveItem(listener);
 }
+
+

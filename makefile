@@ -33,6 +33,7 @@ TYPE= APP
 SRCS= App.cpp \
 	  Document.cpp \
 	  Layer.cpp \
+	  LayerObserver.cpp \
 	  LayerSnapshot.cpp \
 	  main.cpp \
 	  Object.cpp \
@@ -41,6 +42,25 @@ SRCS= App.cpp \
 	  RenderThread.cpp \
 	  View.cpp \
 	  Window.cpp \
+	  columntreeview/Column.cpp \
+	  columntreeview/ColumnHeader.cpp \
+	  columntreeview/ColumnHeaderView.cpp \
+	  columntreeview/ColumnHeaderViewStates.cpp \
+	  columntreeview/ColumnItem.cpp \
+	  columntreeview/ColumnListModel.cpp \
+	  columntreeview/ColumnTreeItem.cpp \
+	  columntreeview/ColumnTreeItemCompare.cpp \
+	  columntreeview/ColumnTreeItemHandle.cpp \
+	  columntreeview/ColumnTreeModel.cpp \
+	  columntreeview/ColumnTreeModelListener.cpp \
+	  columntreeview/ColumnTreeView.cpp \
+	  columntreeview/ColumnTreeViewColors.cpp \
+	  columntreeview/ColumnTreeViewStates.cpp \
+	  columntreeview/DefaultColumnTreeItemHandle.cpp \
+	  columntreeview/DefaultColumnTreeModel.cpp \
+	  columntreeview/EasyColumnTreeItem.cpp \
+	  columntreeview/LabelColumnHeader.cpp \
+	  columntreeview/TextColumnTreeItem.cpp \
 	  objects/Filter.cpp \
 	  objects/FilterSnapshot.cpp \
 	  objects/Rect.cpp \
@@ -50,6 +70,10 @@ SRCS= App.cpp \
 	  state_view/BackBufferedStateView.cpp \
 	  state_view/StateView.cpp \
 	  state_view/ViewState.cpp \
+	  scrollview/Scrollable.cpp \
+	  scrollview/ScrollableView.cpp \
+	  scrollview/Scroller.cpp \
+	  scrollview/ScrollView.cpp \
 	  support/AbstractLOAdapter.cpp \
 	  support/bitmap_support.cpp \
 	  support/Command.cpp \

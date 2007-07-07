@@ -23,6 +23,7 @@ class Object {
 	virtual	void				SetParent(Layer* layer);
 	inline	Layer*				Parent() const
 									{ return fParent; }
+			int32				Level() const;
 
 	virtual	void				ExtendDirtyArea(BRect& area) const;
 

@@ -120,7 +120,7 @@ private:
 // #pragma mark -
 
 // constructor
-RenderManager::RenderManager(Document* document, const BRect& bounds)
+RenderManager::RenderManager(Document* document)
 	: Layer::Listener()
 	, fCleanArea(LONG_MAX, LONG_MAX, LONG_MIN, LONG_MIN)
 
@@ -143,8 +143,8 @@ RenderManager::RenderManager(Document* document, const BRect& bounds)
 	, fBitmapListener(NULL)
 {
 // TODO: Move everything to Init() method and check errors!
-	fDisplayBitmap[0] = new (nothrow) BBitmap(bounds, 0, B_RGBA32);
-	fDisplayBitmap[1] = new (nothrow) BBitmap(bounds, 0, B_RGBA32);
+	fDisplayBitmap[0] = new (nothrow) BBitmap(document->Bounds(), 0, B_RGBA32);
+	fDisplayBitmap[1] = new (nothrow) BBitmap(document->Bounds(), 0, B_RGBA32);
 
 	fDocumentDirtyMap = new (nothrow) DirtyMap();
 	fSnapshotDirtyMap = new (nothrow) DirtyMap();

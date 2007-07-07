@@ -8,10 +8,16 @@
 #include "Window.h"
 
 #include "App.h"
+#include "Column.h"
+#include "ColumnTreeView.h"
 #include "CommandStack.h"
+#include "DefaultColumnTreeModel.h"
 #include "Document.h"
-#include "RenderManager.h"
+//#include "LayerTreeModel.h"
 #include "PickToolState.h"
+#include "RenderManager.h"
+#include "ScrollView.h"
+#include "TextColumnTreeItem.h"
 #include "View.h"
 
 enum {
@@ -27,6 +33,8 @@ Window::Window(BRect frame, const char* title, Document* document,
 	, fDocument(document)
 	, fRenderManager(NULL)
 	, fCommandStackListener(this)
+//	, fLayerTreeModel(new LayerTreeModel(fDocument))
+	, fLayerObserver(this)
 {
 	// TODO: fix for when document == NULL
 
@@ -58,8 +66,25 @@ Window::Window(BRect frame, const char* title, Document* document,
 	menuBar->ResizeToPreferred();
 	frame = Bounds();
 	frame.top = menuBar->Frame().bottom + 1;
+	frame.right = 200;
+	fLayerTreeView = new ColumnTreeView(frame);
 
-	fRenderManager = new RenderManager(fDocument, frame.OffsetToCopy(B_ORIGIN));
+	Column* column1 = new Column("Column 1", "column1", 150,
+								  COLUMN_MOVABLE | COLUMN_VISIBLE
+								  | COLUMN_SORT_KEYABLE);
+	fLayerTreeView->AddColumn(column1);
+
+//	fLayerTreeView->SetModel(fLayerTreeModel);
+	fLayerTreeView->SetModel(new DefaultColumnTreeModel);
+	ScrollView* scrollView = new ScrollView(fLayerTreeView,
+		SCROLL_HORIZONTAL | SCROLL_VERTICAL | SCROLL_HORIZONTAL_MAGIC
+		| SCROLL_VERTICAL_MAGIC, frame, "layer tree", 0, 0);
+
+	AddChild(scrollView);
+
+	frame.left = frame.right + 1;
+	frame.right = Bounds().right;
+	fRenderManager = new RenderManager(fDocument);
 	fView = new View(frame, fDocument, fRenderManager);
 	AddChild(fView);
 	fView->MakeFocus(true);
@@ -69,13 +94,17 @@ Window::Window(BRect frame, const char* title, Document* document,
 
 	fDocument->CommandStack()->AddListener(&fCommandStackListener);
 	_ObjectChanged(fDocument->CommandStack());
+	_RecursiveAddListener(fDocument->RootLayer());
+	_RecursiveAddItems(fDocument->RootLayer(), NULL);
 }
 
 // destructor
 Window::~Window()
 {
+	_RecursiveRemoveListener(fDocument->RootLayer());
 	fDocument->CommandStack()->RemoveListener(&fCommandStackListener);
 	delete fRenderManager;
+//	delete fLayerTreeModel;
 }
 
 // MessageReceived
@@ -96,6 +125,31 @@ Window::MessageReceived(BMessage* message)
 				_ObjectChanged(notifier);
 			break;
 		}
+
+		case LayerObserver::MSG_OBJECT_ADDED:
+		case LayerObserver::MSG_OBJECT_REMOVED:
+			if (fDocument->WriteLock()) {
+				Layer* layer;
+				Object* object;
+				int32 index;
+				if (message->FindPointer("layer", (void**)&layer) == B_OK
+					&& message->FindPointer("object", (void**)&object) == B_OK
+					&& message->FindInt32("index", &index) == B_OK) {
+					if (!fDocument->HasLayer(layer)) {
+						fDocument->WriteUnlock();
+						break;
+					}
+					if (message->what == LayerObserver::MSG_OBJECT_ADDED)
+						_ObjectAdded(layer, object, index);
+					else
+						_ObjectRemoved(layer, object, index);
+				}
+				fDocument->WriteUnlock();
+			}
+			break;
+		case LayerObserver::MSG_AREA_INVALIDATED:
+			// not interested
+			break;
 		default:
 			BWindow::MessageReceived(message);
 	}
@@ -146,3 +200,116 @@ Window::_ObjectChanged(const Notifier* object)
 			fRedoMI->SetLabel("<nothing to redo>");
 	}
 }
+
+class ObjectColumnTreeItem : public TextColumnTreeItem {
+ public:
+	Object*	object;
+
+			ObjectColumnTreeItem(float height, Object* object)
+				: TextColumnTreeItem(height)
+				, object(object)
+			{
+			}
+	virtual	~ObjectColumnTreeItem()
+			{
+			}
+};
+
+// _ObjectAdded
+void
+Window::_ObjectAdded(Layer* layer, Object* object, int32 index)
+{
+	if (!layer->HasObject(object))
+		return;
+
+	ObjectColumnTreeItem* parentItem = _FindLayerTreeViewItem(layer);
+
+	ObjectColumnTreeItem* item = new ObjectColumnTreeItem(20, object);
+	item->SetText("Object", 0);
+
+	fLayerTreeView->AddSubItem(parentItem, item, index);
+	fLayerTreeView->ExpandItem(item);
+
+	if (Layer* subLayer = dynamic_cast<Layer*>(object))
+		_RecursiveAddItems(subLayer, item);
+}
+
+// _ObjectRemoved
+void
+Window::_ObjectRemoved(Layer* layer, Object* object, int32 index)
+{
+}
+
+// _FindLayerTreeViewItem
+ObjectColumnTreeItem*
+Window::_FindLayerTreeViewItem(const Object* object)
+{
+	int32 count = fLayerTreeView->CountItems();
+	for (int32 i = 0; i < count; i++) {
+		ObjectColumnTreeItem* item = dynamic_cast<ObjectColumnTreeItem*>(
+			fLayerTreeView->ItemAt(i));
+		if (item && item->object == object)
+			return item;
+	}
+	return NULL;
+}
+
+// _RecursiveAddItems
+void
+Window::_RecursiveAddItems(Layer* layer, ObjectColumnTreeItem* layerItem)
+{
+	int32 count = layer->CountObjects();
+	for (int32 i = 0; i < count; i++) {
+		Object* object = layer->ObjectAtFast(i);
+		
+		ObjectColumnTreeItem* item = new ObjectColumnTreeItem(20, object);
+		item->SetText("Object", 0);
+
+		if (layerItem)
+			fLayerTreeView->AddSubItem(layerItem, item, i);
+		else
+			fLayerTreeView->AddItem(item, i);
+		fLayerTreeView->ExpandItem(item);
+
+		Layer* subLayer = dynamic_cast<Layer*>(object);
+		if (subLayer) {
+printf("sub layer!\n");
+			_RecursiveAddItems(subLayer, item);
+		}
+	}
+}
+
+// _RecursiveAddListener
+void
+Window::_RecursiveAddListener(Layer* layer)
+{
+	// the document is locked and/or this is executed from within
+	// a synchronous notification
+	int32 count = layer->CountObjects();
+	for (int32 i = 0; i < count; i++) {
+		Object* object = layer->ObjectAtFast(i);
+		Layer* subLayer = dynamic_cast<Layer*>(object);
+		if (subLayer)
+			_RecursiveAddListener(subLayer);
+	}
+
+	layer->AddListener(&fLayerObserver);
+}
+
+// _RecursiveRemoveListener
+void
+Window::_RecursiveRemoveListener(Layer* layer)
+{
+	// the document is locked and/or this is executed from within
+	// a synchronous notification
+	int32 count = layer->CountObjects();
+	for (int32 i = 0; i < count; i++) {
+		Object* object = layer->ObjectAtFast(i);
+		Layer* subLayer = dynamic_cast<Layer*>(object);
+		if (subLayer)
+			_RecursiveRemoveListener(subLayer);
+	}
+
+	layer->RemoveListener(&fLayerObserver);
+}
+

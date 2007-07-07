@@ -77,3 +77,33 @@ Document::RemoveListener(Listener* listener)
 {
 	fListeners.RemoveItem(listener);
 }
+
+// #pragma mark -
+
+// HasLayer
+bool
+Document::HasLayer(Layer* layer) const
+{
+	if (!layer)
+		return false;
+	return _HasLayer(fRootLayer, layer);
+}
+
+// _HasLayer
+bool
+Document::_HasLayer(Layer* parent, Layer* child) const
+{
+	if (parent == child)
+		return true;
+
+	int32 count = parent->CountObjects();
+	for (int32 i = 0; i < count; i++) {
+		Object* object = parent->ObjectAtFast(i);
+		Layer* subLayer = dynamic_cast<Layer*>(object);
+		if (subLayer && _HasLayer(subLayer, child))
+			return true;
+	}
+
+	return false;
+}
+

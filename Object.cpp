@@ -31,6 +31,15 @@ Object::SetParent(Layer* layer)
 	fParent = layer;
 }
 
+// Level
+int32
+Object::Level() const
+{
+	if (!fParent)
+		return 0;
+	return fParent->Level() + 1;
+}
+
 // ExtendDirtyArea
 void
 Object::ExtendDirtyArea(BRect& area) const

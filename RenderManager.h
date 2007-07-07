@@ -30,8 +30,7 @@ enum {
 // RenderManager
 class RenderManager : Layer::Listener {
  public:
-								RenderManager(Document* document,
-									const BRect& bounds);
+								RenderManager(Document* document);
 	virtual						~RenderManager();
 
 	// Layer::Listener interface

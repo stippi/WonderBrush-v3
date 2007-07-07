@@ -45,6 +45,7 @@ class Layer : public Object {
 			Object*				ObjectAtFast(int32 index) const;
 			int32				IndexOf(Object* object) const;
 			int32				CountObjects() const;
+			bool				HasObject(Object* object) const;
 
 			void				Invalidate(const BRect& area,
 									int32 objectIndex = 0);

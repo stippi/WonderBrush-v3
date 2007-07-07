@@ -40,8 +40,11 @@ class Document : public RWLocker {
 
 	inline	Layer*				RootLayer() const
 									{ return fRootLayer; }
+			bool				HasLayer(Layer* layer) const;
 
  private:
+			bool				_HasLayer(Layer* parent, Layer* child) const;
+
 			::CommandStack*		fCommandStack;
 			Layer*				fRootLayer;
 			BList				fListeners;
