@@ -480,11 +480,16 @@ RenderManager::_RecursiveRemoveListener(Layer* layer)
 
 // _QueueRedraw
 void
-RenderManager::_QueueRedraw(Layer* layer, const BRect& area)
+RenderManager::_QueueRedraw(Layer* layer, BRect area)
 {
 	if (!area.IsValid() || !fRenderQueueLock.Lock())
 		return;
 //printf("RenderManager::_QueueRedraw(%p, (%f, %f, %f, %f))\n", layer, area.left, area.top, area.right, area.bottom);
+
+	area.left = floorf(area.left);
+	area.top = floorf(area.top);
+	area.right = ceilf(area.right);
+	area.bottom = ceilf(area.bottom);
 
 	BRect* info;
 	if (fDocumentDirtyMap->ContainsKey(layer)) {

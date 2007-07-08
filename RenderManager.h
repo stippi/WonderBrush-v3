@@ -78,7 +78,7 @@ class RenderManager : Layer::Listener {
 									bool invalidate = true);
 			void				_RecursiveRemoveListener(Layer* layer);
 
-			void				_QueueRedraw(Layer* layer, const BRect& area);
+			void				_QueueRedraw(Layer* layer, BRect area);
 			bool				_HasDirtyLayers() const;
 			void				_TriggerRender();
 			void				_BackToDisplay(const BRect& area);

@@ -11,6 +11,8 @@
 
 #include <Bitmap.h>
 
+#include "support.h"
+
 #include "Rect.h"
 
 // constructor
@@ -58,7 +60,13 @@ RectSnapshot::Sync()
 void
 RectSnapshot::Render(BBitmap* bitmap, BRect area) const
 {
-	area = (area & fArea) & bitmap->Bounds();
+	BRect rectArea = fArea;
+	rectArea.left = roundf(rectArea.left);
+	rectArea.top = roundf(rectArea.top);
+	rectArea.right = roundf(rectArea.right);
+	rectArea.bottom = roundf(rectArea.bottom);
+
+	area = (area & rectArea) & bitmap->Bounds();
 	if (!area.IsValid())
 		return;
 
