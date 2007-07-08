@@ -1,5 +1,5 @@
 //----------------------------------------------------------------------------
-// Anti-Grain Geometry - Version 2.4
+// Anti-Grain Geometry - Version 2.3
 // Copyright (C) 2002-2005 Maxim Shemanarev (http://www.antigrain.com)
 //
 // Permission to copy, use, modify, sell and distribute this software 
@@ -16,7 +16,6 @@
 #ifndef AGG_BASICS_INCLUDED
 #define AGG_BASICS_INCLUDED
 
-#include <math.h>
 #include "agg_config.h"
 
 //-------------------------------------------------------- Default basic types
@@ -88,87 +87,6 @@ namespace agg
     typedef AGG_INT64  int64;        //----int64
     typedef AGG_INT64U int64u;       //----int64u
 
-#if defined(AGG_FISTP)
-#pragma warning(push)
-#pragma warning(disable : 4035) //Disable warning "no return value"
-    AGG_INLINE int iround(double v)              //-------iround
-    {
-        __asm fld   qword ptr [v]
-        __asm fistp dword ptr [ebp-8]
-        __asm mov eax, dword ptr [ebp-8]
-    }
-    AGG_INLINE unsigned uround(double v)         //-------uround
-    {
-        __asm fld   qword ptr [v]
-        __asm fistp dword ptr [ebp-8]
-        __asm mov eax, dword ptr [ebp-8]
-    }
-#pragma warning(pop)
-    AGG_INLINE unsigned ufloor(double v)         //-------ufloor
-    {
-        return unsigned(floor(v));
-    }
-    AGG_INLINE unsigned uceil(double v)          //--------uceil
-    {
-        return unsigned(ceil(v));
-    }
-#elif defined(AGG_QIFIST)
-    AGG_INLINE int iround(double v)
-    {
-        return int(v);
-    }
-    AGG_INLINE int uround(double v)
-    {
-        return unsigned(v);
-    }
-    AGG_INLINE unsigned ufloor(double v)
-    {
-        return unsigned(floor(v));
-    }
-    AGG_INLINE unsigned uceil(double v)
-    {
-        return unsigned(ceil(v));
-    }
-#else
-    AGG_INLINE int iround(double v)
-    {
-        return int((v < 0.0) ? v - 0.5 : v + 0.5);
-    }
-    AGG_INLINE int uround(double v)
-    {
-        return unsigned(v + 0.5);
-    }
-    AGG_INLINE unsigned ufloor(double v)
-    {
-        return unsigned(v);
-    }
-    AGG_INLINE unsigned uceil(double v)
-    {
-        return unsigned(ceil(v));
-    }
-#endif
-
-    //---------------------------------------------------------------saturation
-    template<int Limit> struct saturation
-    {
-        AGG_INLINE static int iround(double v)
-        {
-            if(v < double(-Limit)) return -Limit;
-            if(v > double( Limit)) return  Limit;
-            return agg::iround(v);
-        }
-    };
-
-    //------------------------------------------------------------------mul_one
-    template<unsigned Shift> struct mul_one
-    {
-        AGG_INLINE static unsigned mul(unsigned a, unsigned b)
-        {
-            register unsigned q = a * b + (1 << (Shift-1));
-            return (q + (q >> Shift)) >> Shift;
-        }
-    };
-
     //-------------------------------------------------------------------------
     typedef unsigned char cover_type;    //----cover_type
     enum cover_scale_e
@@ -180,18 +98,6 @@ namespace agg
         cover_full  = cover_mask         //----cover_full 
     };
 
-    //----------------------------------------------------poly_subpixel_scale_e
-    // These constants determine the subpixel accuracy, to be more precise, 
-    // the number of bits of the fractional part of the coordinates. 
-    // The possible coordinate capacity in bits can be calculated by formula:
-    // sizeof(int) * 8 - poly_subpixel_shift, i.e, for 32-bit integers and
-    // 8-bits fractional part the capacity is 24 bits.
-    enum poly_subpixel_scale_e
-    {
-        poly_subpixel_shift = 8,                      //----poly_subpixel_shift
-        poly_subpixel_scale = 1<<poly_subpixel_shift, //----poly_subpixel_scale 
-        poly_subpixel_mask  = poly_subpixel_scale-1,  //----poly_subpixel_mask 
-    };
 
     //-----------------------------------------------------------------------pi
     const double pi = 3.14159265358979323846;
@@ -275,8 +181,7 @@ namespace agg
         return r;
     }
 
-    typedef rect_base<int>    rect_i; //----rect_i
-    typedef rect_base<float>  rect_f; //----rect_f
+    typedef rect_base<int>    rect;   //----rect
     typedef rect_base<double> rect_d; //----rect_d
 
     //---------------------------------------------------------path_commands_e
@@ -419,30 +324,32 @@ namespace agg
         return clear_orientation(c) | o;
     }
 
-    //--------------------------------------------------------------point_base
-    template<class T> struct point_base
+    //--------------------------------------------------------------point_type
+    struct point_type
     {
-        typedef T value_type;
-        T x,y;
-        point_base() {}
-        point_base(T x_, T y_) : x(x_), y(y_) {}
-    };
-    typedef point_base<int>    point_i; //-----point_i
-    typedef point_base<float>  point_f; //-----point_f
-    typedef point_base<double> point_d; //-----point_d
+        double x, y;
 
-    //-------------------------------------------------------------vertex_base
-    template<class T> struct vertex_base
-    {
-        typedef T value_type;
-        T x,y;
-        unsigned cmd;
-        vertex_base() {}
-        vertex_base(T x_, T y_, unsigned cmd_) : x(x_), y(y_), cmd(cmd_) {}
+        point_type() {}
+        point_type(double x_, double y_) : x(x_), y(y_) {}
     };
-    typedef vertex_base<int>    vertex_i; //-----vertex_i
-    typedef vertex_base<float>  vertex_f; //-----vertex_f
-    typedef vertex_base<double> vertex_d; //-----vertex_d
+
+    //-------------------------------------------------------------vertex_type
+    struct vertex_type
+    {
+        double   x, y;
+        unsigned cmd;
+
+        vertex_type() {}
+        vertex_type(double x_, double y_, unsigned cmd_) : 
+            x(x_), y(y_), cmd(cmd_) {}
+    };
+
+
+    //------------------------------------------------------------is_equal_eps
+    template<class T> inline bool is_equal_eps(T v1, T v2, T epsilon)
+    {
+        return fabs(v1 - v2) <= double(epsilon);
+    }
 
 }
 

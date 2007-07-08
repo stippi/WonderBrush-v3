@@ -11,13 +11,15 @@
 #include <Rect.h>
 #include <String.h>
 
+#include "Transformable.h"
+
 
 class BBitmap;
 class Layer;
 class ObjectSnapshot;
 
 
-class Object {
+class Object : public Transformable {
  public:
 								Object();
 	virtual						~Object();
@@ -34,6 +36,8 @@ class Object {
 			const char*			Name() const;
 
 	virtual	bool				GetIcon(const BBitmap* bitmap) const;
+
+	virtual	Transformable		Transformation() const;
 
 	virtual	void				ExtendDirtyArea(BRect& area) const;
 

@@ -86,6 +86,7 @@ SRCS= App.cpp \
 	  support/RenderBuffer.cpp \
 	  support/RWLocker.cpp \
 	  support/StackBlurFilter.cpp \
+	  support/Transformable.cpp \
 	  tools/PickToolState.cpp \
 
 #	specify the resource files to use

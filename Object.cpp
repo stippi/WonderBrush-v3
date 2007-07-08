@@ -12,7 +12,8 @@
 
 // constructor
 Object::Object()
-	: fChangeCounter(0)
+	: Transformable()
+	, fChangeCounter(0)
 	, fParent(NULL)
 {
 }
@@ -68,6 +69,17 @@ bool
 Object::GetIcon(const BBitmap* bitmap) const
 {
 	return false;
+}
+
+// Transformation
+Transformable
+Object::Transformation() const
+{
+	Transformable t;
+	if (fParent)
+		t = fParent->Transformation();
+	t.Multiply(*this);
+	return t;
 }
 
 // #pragma mark -

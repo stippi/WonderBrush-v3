@@ -10,10 +10,12 @@
 
 #include <Rect.h>
 
+#include "Transformable.h"
+
 class BBitmap;
 class Object;
 
-class ObjectSnapshot {
+class ObjectSnapshot : public Transformable {
  public:
 								ObjectSnapshot(const Object* object);
 	virtual						~ObjectSnapshot();
