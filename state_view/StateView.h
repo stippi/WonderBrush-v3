@@ -13,6 +13,8 @@ class ViewState;
 struct mouse_info {
 	mouse_info();
 
+	mouse_info&			operator=(const mouse_info& other);
+
 	uint32				buttons;
 	BPoint				position;
 	uint32				transit;
@@ -38,26 +40,38 @@ class StateView : public BView {
 	virtual	void				MouseMoved(BPoint where, uint32 transit,
 										   const BMessage* dragMessage);
 	virtual	void				MouseUp(BPoint where);
-	virtual	void				NothingClicked();
 
 	virtual	void				KeyDown(const char* bytes, int32 numBytes);
 	virtual	void				KeyUp(const char* bytes, int32 numBytes);
 
 	// StateView interface
 			void				SetState(ViewState* state);
+			void				UpdateStateCursor();
+			BRect				ViewStateBounds();
+	virtual	void				ViewStateBoundsChanged();
 
 			void				Draw(BView* into, BRect updateRect);
 
-	virtual	bool				MouseWheelChanged(float x, float y);
+	virtual	bool				MouseWheelChanged(BPoint where,
+									float x, float y);
+	virtual	void				NothingClicked(BPoint where,
+									uint32 buttons, uint32 clicks);
 
-			bool				HandleKeyDown(const KeyEvent& event);
-			bool				HandleKeyUp(const KeyEvent& event);
+			bool				HandleKeyDown(const KeyEvent& event,
+									BHandler* originalTarget);
+			bool				HandleKeyUp(const KeyEvent& event,
+									BHandler* originalTarget);
 
+			const mouse_info*	LastMouseInfo() const
+									{ return &fLastMouseInfo; }
 			const mouse_info*	MouseInfo() const
 									{ return &fMouseInfo; }
 
-	virtual	void				ConvertFromCanvas(BPoint* point);
-	virtual	void				ConvertToCanvas(BPoint* point);
+	virtual	void				ConvertFromCanvas(BPoint* point) const;
+	virtual	void				ConvertToCanvas(BPoint* point) const;
+
+	virtual	void				ConvertFromCanvas(BRect* rect) const;
+	virtual	void				ConvertToCanvas(BRect* rect) const;
 
 	virtual	ViewState*			StateForDragMessage(const BMessage* message);
 
@@ -79,8 +93,10 @@ class StateView : public BView {
 			void				TriggerUpdate();
 
  protected:
-	virtual	bool				_HandleKeyDown(const KeyEvent& event);
-	virtual	bool				_HandleKeyUp(const KeyEvent& event);
+	virtual	bool				_HandleKeyDown(const KeyEvent& event,
+									BHandler* originalTarget);
+	virtual	bool				_HandleKeyUp(const KeyEvent& event,
+									BHandler* originalTarget);
 
 			void				_InstallEventFilter();
 			void				_RemoveEventFilter();
@@ -92,6 +108,7 @@ class StateView : public BView {
 				// used on top of the current state (it
 				// doesn't replace it)
 			mouse_info			fMouseInfo;
+			mouse_info			fLastMouseInfo;
 
 			::CommandStack*		fCommandStack;
 			RWLocker*			fLocker;

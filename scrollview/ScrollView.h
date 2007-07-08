@@ -17,6 +17,8 @@ enum {
 	SCROLL_HORIZONTAL_MAGIC					= 0x04,
 	SCROLL_VERTICAL_MAGIC					= 0x08,
 	SCROLL_VISIBLE_RECT_IS_CHILD_BOUNDS		= 0x10,
+	SCROLL_NO_FRAME							= 0x20,
+	SCROLL_LIST_FRAME						= 0x40,
 };
 
 class ScrollView : public BView, public Scroller {
@@ -52,6 +54,8 @@ class ScrollView : public BView, public Scroller {
 			float				HSmallStep() const;
 			float				VSmallStep() const;
 
+	virtual	bool				IsScrolling() const;
+
  protected:
 	virtual	void				DataRectChanged(BRect oldDataRect,
 												BRect newDataRect);
@@ -75,6 +79,7 @@ class ScrollView : public BView, public Scroller {
 			bool				fCornerVisible;	// scroll corner visible flag
 			bool				fWindowActive;
 			bool				fChildFocused;
+			bool				fScrolling;
 			float				fHSmallStep;
 			float				fVSmallStep;
 
@@ -95,6 +100,8 @@ private:
 			BRect				_ChildRect(bool hbar, bool vbar) const;
 			BRect				_GuessVisibleRect(bool hbar, bool vbar) const;
 			BRect				_MaxVisibleRect() const;
+
+			void				_SetScrolling(bool scrolling);
 
 	friend class InternalScrollBar;
 	friend class ScrollCorner;

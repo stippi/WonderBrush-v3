@@ -23,6 +23,8 @@ class Scroller {
 			BRect				VisibleBounds() const;
 			BRect				VisibleRect() const;
 
+	virtual	bool				IsScrolling() const;
+
 protected:
 	virtual	void				DataRectChanged(BRect oldDataRect,
 												BRect newDataRect);

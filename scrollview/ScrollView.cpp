@@ -1,6 +1,6 @@
 // ScrollView.cpp
 
-#include <algorithm>
+#include <algobase.h>
 #include <stdio.h>
 #include <string.h>
 
@@ -13,8 +13,6 @@
 #include "Scrollable.h"
 #include "ScrollCornerBitmaps.h"
 
-using std::max;
-using std::min;
 
 // InternalScrollBar
 
@@ -26,6 +24,9 @@ class InternalScrollBar : public BScrollBar {
 	virtual						~InternalScrollBar();
 
 	virtual	void				ValueChanged(float value);
+
+	virtual	void				MouseDown(BPoint where);
+	virtual	void				MouseUp(BPoint where);
 
  private:
 	ScrollView*					fScrollView;
@@ -52,6 +53,24 @@ InternalScrollBar::ValueChanged(float value)
 	// so that we can't check, if it really has changed.
 	if (fScrollView)
 		fScrollView->_ScrollValueChanged(this, value);
+}
+
+// MouseDown
+void
+InternalScrollBar::MouseDown(BPoint where)
+{
+	if (fScrollView)
+		fScrollView->_SetScrolling(true);
+	BScrollBar::MouseDown(where);
+}
+
+// MouseUp
+void
+InternalScrollBar::MouseUp(BPoint where)
+{
+	BScrollBar::MouseUp(where);
+	if (fScrollView)
+		fScrollView->_SetScrolling(false);
 }
 
 
@@ -269,6 +288,7 @@ ScrollView::ScrollView(BView* child, uint32 scrollingFlags, BRect frame,
 	  fCornerVisible(true),
 	  fWindowActive(false),
 	  fChildFocused(false),
+	  fScrolling(false),
 	  fHSmallStep(1),
 	  fVSmallStep(1)
 {
@@ -500,6 +520,13 @@ ScrollView::VSmallStep() const
 	return fVSmallStep;
 }
 
+// IsScrolling
+bool
+ScrollView::IsScrolling() const
+{
+	return fScrolling;
+}
+
 // DataRectChanged
 void
 ScrollView::DataRectChanged(BRect /*oldDataRect*/, BRect /*newDataRect*/)
@@ -597,9 +624,15 @@ ScrollView::_Layout(uint32 flags)
 	float innerHeight = childRect.Height();
 	BPoint scrollLT(_InnerRect().LeftTop());
 	BPoint scrollRB(childRect.RightBottom() + BPoint(1.0f, 1.0f));
+	if (fScrollingFlags & SCROLL_NO_FRAME) {
+		// cut off the top line and left line of the
+		// scroll bars, otherwise they are used for the
+		// frame appearance
+		scrollLT.x--;
+		scrollLT.y--;
+	}
 	// layout scroll bars and scroll corner
 	if (corner) {
-printf("layouting corner\n");
 		// In this case the scrollbars overlap one pixel.
 		fHScrollBar->MoveTo(scrollLT.x, scrollRB.y);
 		fHScrollBar->ResizeTo(innerWidth + 2.0, B_H_SCROLL_BAR_HEIGHT);
@@ -607,19 +640,14 @@ printf("layouting corner\n");
 		fVScrollBar->ResizeTo(B_V_SCROLL_BAR_WIDTH, innerHeight + 2.0);
 		fScrollCorner->MoveTo(childRect.right + 2.0, childRect.bottom + 2.0);
 	} else if (hbar) {
-printf("layouting horizontal bar\n");
 		fHScrollBar->MoveTo(scrollLT.x, scrollRB.y);
 		fHScrollBar->ResizeTo(innerWidth + 2.0, B_H_SCROLL_BAR_HEIGHT);
 	} else if (vbar) {
-printf("layouting vertical bar\n");
 		fVScrollBar->MoveTo(scrollRB.x, scrollLT.y);
 		fVScrollBar->ResizeTo(B_V_SCROLL_BAR_WIDTH, innerHeight + 2.0);
 	}
 	// layout child
 	if (fChild) {
-printf("layouting child\n");
-childRect.PrintToStream();
-Bounds().PrintToStream();
 		fChild->MoveTo(childRect.LeftTop());
 		fChild->ResizeTo(innerWidth, innerHeight);
 		if (VisibleRectIsChildBounds())
@@ -628,7 +656,7 @@ Bounds().PrintToStream();
 		// scroll bar isn't updated correctly.
 		// We force this manually: The position of hidden scroll bar isn't
 		// updated any longer, so we can't just invalidate it.
-		if (fChild->Parent()) {
+		if (fChild->Window()) {
 			if (flags & SCROLL_HORIZONTAL && !fHVisible)
 				fChild->Invalidate(fHScrollBar->Frame());
 			if (flags & SCROLL_VERTICAL && !fVVisible)
@@ -785,7 +813,9 @@ ScrollView::_UpdateScrollBarVisibility()
 BRect
 ScrollView::_InnerRect() const
 {
-	return Bounds().InsetByCopy(1.0f, 1.0f);
+	if (fScrollingFlags & SCROLL_NO_FRAME)
+		return Bounds();
+	return Bounds().InsetBySelf(1.0f, 1.0f);
 }
 
 // _ChildRect
@@ -808,16 +838,21 @@ BRect
 ScrollView::_ChildRect(bool hbar, bool vbar) const
 {
 	BRect rect(_InnerRect());
+	float frameWidth = (fScrollingFlags & SCROLL_NO_FRAME) ? 0.0 : 1.0;
+
 	if (hbar)
-		rect.bottom -= B_H_SCROLL_BAR_HEIGHT + 1.0;
+		rect.bottom -= B_H_SCROLL_BAR_HEIGHT + frameWidth;
 	else
-		rect.bottom -= 1.0;
-	if (vbar)
-		rect.right -= B_V_SCROLL_BAR_WIDTH + 1.0;
-	else
-		rect.right -= 1.0;
-	rect.top += 1.0f;
-	rect.left += 1.0f;
+		rect.bottom -= frameWidth;
+	if (vbar) {
+		if (fScrollingFlags & SCROLL_LIST_FRAME)
+			rect.right -= B_V_SCROLL_BAR_WIDTH + 1;
+		else
+			rect.right -= B_V_SCROLL_BAR_WIDTH + frameWidth;
+	} else
+		rect.right -= frameWidth;
+	rect.top += frameWidth;
+	rect.left += frameWidth;
 	return rect;
 }
 
@@ -847,4 +882,10 @@ ScrollView::_MaxVisibleRect() const
 	return _GuessVisibleRect(true, true);
 }
 
-
+// _SetScrolling
+void
+ScrollView::_SetScrolling(bool scrolling)
+{
+printf("ScrollView::_SetScrolling(%d)\n", scrolling);
+	fScrolling = scrolling;
+}

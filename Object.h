@@ -9,9 +9,13 @@
 #define OBJECT_H
 
 #include <Rect.h>
+#include <String.h>
 
+
+class BBitmap;
 class Layer;
 class ObjectSnapshot;
+
 
 class Object {
  public:
@@ -25,6 +29,12 @@ class Object {
 									{ return fParent; }
 			int32				Level() const;
 
+	virtual	const char*			DefaultName() const = 0;
+			void				SetName(const char* name);
+			const char*			Name() const;
+
+	virtual	bool				GetIcon(const BBitmap* bitmap) const;
+
 	virtual	void				ExtendDirtyArea(BRect& area) const;
 
 			void				UpdateChangeCounter();
@@ -34,6 +44,7 @@ class Object {
  private:
 			uint32				fChangeCounter;
 			Layer*				fParent;
+			BString				fName;
 };
 
 #endif // OBJECT_H

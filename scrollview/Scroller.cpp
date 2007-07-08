@@ -128,6 +128,12 @@ Scroller::VisibleRect() const
 	return BRect();
 }
 
+// IsScrolling
+bool
+Scroller::IsScrolling() const
+{
+	return false;
+}
 
 // hooks
 

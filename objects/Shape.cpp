@@ -67,6 +67,15 @@ Shape::Snapshot() const
 	return new ShapeSnapshot(this);
 }
 
+// DefaultName
+const char*
+Shape::DefaultName() const
+{
+	return "Shape";
+}
+
+// #pragma mark -
+
 // SetArea
 void
 Shape::SetArea(const BRect& area)

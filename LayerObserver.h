@@ -18,6 +18,7 @@ class LayerObserver : public Layer::Listener, public AbstractLOAdapter {
 	enum {
 		MSG_OBJECT_ADDED		= 'obja',
 		MSG_OBJECT_REMOVED		= 'objr',
+		MSG_OBJECT_CHANGED		= 'objc',
 		MSG_AREA_INVALIDATED	= 'ainv'
 	};
 
@@ -27,6 +28,8 @@ class LayerObserver : public Layer::Listener, public AbstractLOAdapter {
 	virtual	void			ObjectAdded(Layer* layer, Object* object,
 								int32 index);
 	virtual	void			ObjectRemoved(Layer* layer, Object* object,
+								int32 index);
+	virtual	void			ObjectChanged(Layer* layer, Object* object,
 								int32 index);
 
 	virtual	void			AreaInvalidated(Layer* layer,

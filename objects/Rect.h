@@ -38,6 +38,8 @@ class Rect : public Object {
 	// Object interface
 	virtual	ObjectSnapshot*		Snapshot() const;
 
+	virtual	const char*			DefaultName() const;
+
 	// Rect
 			void				SetArea(const BRect& area);
 			BRect				Area() const;

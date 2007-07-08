@@ -37,6 +37,13 @@ Filter::Snapshot() const
 	return new FilterSnapshot(this);
 }
 
+// DefaultName
+const char*
+Filter::DefaultName() const
+{
+	return "Gaussian Blur";
+}
+
 // ExtendDirtyArea
 void
 Filter::ExtendDirtyArea(BRect& area) const

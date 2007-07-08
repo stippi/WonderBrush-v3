@@ -13,6 +13,7 @@ class BackBufferedStateView : public StateView {
 	virtual						~BackBufferedStateView();
 
 	// StateView interface
+	virtual	void				AttachedToWindow();
 	virtual	void				FrameResized(float width, float height);
 	virtual	void				Draw(BRect updateRect);
 
@@ -26,6 +27,8 @@ class BackBufferedStateView : public StateView {
 									// onto the BView used to do the
 									// offscreen drawing
 
+			void				SetSyncToRetrace(bool sync);
+
  private:
 			void				_AllocBackBitmap(float width,
 												 float height);
@@ -34,6 +37,7 @@ class BackBufferedStateView : public StateView {
 
 	BBitmap*					fOffscreenBitmap;
 	BView*						fOffscreenView;
+	bool						fSyncToRetrace;
 };
 
 #endif // BACK_BUFFERED_STATE_VIEW_H

@@ -6,13 +6,13 @@
 #include "LayerObserver.h"
 #include "ListenerAdapter.h"
 
+class CanvasView;
 class ColumnTreeModel;
 class ColumnTreeView;
 class Document;
 class Layer;
 class ObjectColumnTreeItem;
 class RenderManager;
-class View;
 
 class Window : public BWindow {
  public:
@@ -29,9 +29,12 @@ class Window : public BWindow {
 
  private:
 			void				_ObjectChanged(const Notifier* object);
+
 			void				_ObjectAdded(Layer* layer, Object* object,
 									int32 index);
 			void				_ObjectRemoved(Layer* layer, Object* object,
+									int32 index);
+			void				_ObjectChanged(Layer* layer, Object* object,
 									int32 index);
 
 			ObjectColumnTreeItem* _FindLayerTreeViewItem(const Object* object);
@@ -45,7 +48,7 @@ class Window : public BWindow {
 			void				_RecursiveRemoveListener(Layer* layer);
 
 
-			View*				fView;
+			CanvasView*			fView;
 			Document*			fDocument;
 			RenderManager*		fRenderManager;
 			ListenerAdapter		fCommandStackListener;

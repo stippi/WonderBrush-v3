@@ -2,11 +2,11 @@
 
 #include <Message.h>
 
+#include "CanvasView.h"
 #include "ChangeAreaCommand.h"
 #include "CommandStack.h"
 #include "Document.h"
 #include "Layer.h"
-#include "View.h"
 
 enum {
 	DRAGGING_NONE = 0,
@@ -98,7 +98,8 @@ PickToolState::ShapeLOAdapater::Deleted(Shape* shape)
 // #pragma mark -
 
 // constructor
-PickToolState::PickToolState(View* parent, Layer* layer, Document* document)
+PickToolState::PickToolState(CanvasView* parent, Layer* layer,
+		Document* document)
 	: ViewState(parent)
 	, fDocument(document)
 	, fLayer(layer)
@@ -133,8 +134,9 @@ PickToolState::MessageReceived(BMessage* message, Command** _command)
 			BRect area;
 			if (message->FindPointer("rect", (void**)&rect) == B_OK
 				&& message->FindRect("area", &area) == B_OK)
-				if (rect == fRect)
-					fView->Invalidate(area);
+				if (rect == fRect) {
+					_Invalidate(area);
+				}
 			break;
 		}
 		case MSG_RECT_DELETED: {
@@ -150,8 +152,9 @@ PickToolState::MessageReceived(BMessage* message, Command** _command)
 			BRect area;
 			if (message->FindPointer("shape", (void**)&shape) == B_OK
 				&& message->FindRect("area", &area) == B_OK)
-				if (shape == fShape)
-					fView->Invalidate(area);
+				if (shape == fShape) {
+					_Invalidate(area);
+				}
 			break;
 		}
 		case MSG_SHAPE_DELETED: {
@@ -175,6 +178,8 @@ PickToolState::MouseDown(BPoint where, uint32 buttons, uint32 clicks)
 {
 	if (!fDocument->ReadLock())
 		return;
+
+	fView->ConvertToCanvas(&where);
 
 	fDragMode = DRAGGING_NONE;
 
@@ -242,6 +247,8 @@ PickToolState::MouseMoved(BPoint where, uint32 transit, const BMessage* dragMess
 	if (fDragMode == DRAGGING_NONE)
 		return;
 
+	fView->ConvertToCanvas(&where);
+
 	if (fRect) {
 		_DragObject(fRect, where);
 	} else if (fShape) {
@@ -267,13 +274,34 @@ PickToolState::Draw(BView* view, BRect updateRect)
 	if (!fDocument->ReadLock())
 		return;
 
-	if (fRect) {
-		view->StrokeRect(fRect->Area());
-	} else if (fShape) {
-		view->StrokeRect(fShape->Area());
+	BRect r;
+	if (fRect)
+		r = fRect->Area();
+	else if (fShape)
+		r = fShape->Area();
+
+	if (r.IsValid()) {
+		fView->ConvertFromCanvas(&r);
+		view->StrokeRect(r);
 	}
 
 	fDocument->ReadUnlock();
+}
+
+// Bounds
+BRect
+PickToolState::Bounds() const
+{
+	BRect r;
+	if (fRect)
+		r = fRect->Area();
+	else if (fShape)
+		r = fShape->Area();
+
+	if (r.IsValid())
+		fView->ConvertFromCanvas(&r);
+
+	return r;
 }
 
 // #pragma mark -
@@ -286,7 +314,7 @@ PickToolState::SetRect(Rect* rect)
 		return;
 
 	if (fRect) {
-		fView->Invalidate(fRect->Area());
+		_Invalidate(fRect->Area());
 		fRect->RemoveListener(&fRectLOAdapter);
 	}
 
@@ -296,7 +324,7 @@ PickToolState::SetRect(Rect* rect)
 		SetShape(NULL);
 
 		fRect->AddListener(&fRectLOAdapter);
-		fView->Invalidate(fRect->Area());
+		_Invalidate(fRect->Area());
 	}
 }
 
@@ -308,7 +336,7 @@ PickToolState::SetShape(Shape* shape)
 		return;
 
 	if (fShape) {
-		fView->Invalidate(fShape->Area());
+		_Invalidate(fShape->Area());
 		fShape->RemoveListener(&fShapeLOAdapter);
 	}
 
@@ -318,7 +346,7 @@ PickToolState::SetShape(Shape* shape)
 		SetRect(NULL);
 
 		fShape->AddListener(&fShapeLOAdapter);
-		fView->Invalidate(fShape->Area());
+		_Invalidate(fShape->Area());
 	}
 }
 
@@ -395,5 +423,13 @@ PickToolState::_DragObject(ObjectType* object, BPoint where)
 	ChangeAreaCommand<ObjectType>* command
 		= new ChangeAreaCommand<ObjectType>(fLayer, object, area);
 	fDocument->CommandStack()->Perform(command);
+}
+
+// _Invalidate
+void
+PickToolState::_Invalidate(BRect area)
+{
+	fView->ConvertFromCanvas(&area);
+	fView->Invalidate(area);
 }
 

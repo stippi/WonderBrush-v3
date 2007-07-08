@@ -9,6 +9,20 @@
 #include "RWLocker.h"
 #include "ViewState.h"
 
+
+mouse_info&
+mouse_info::operator=(const mouse_info& other)
+{
+	buttons = other.buttons;
+	position = other.position;
+	transit = other.transit;
+	modifiers = other.modifiers;
+	dragMessage = other.dragMessage;
+
+	return *this;
+}
+
+
 class EventFilter : public BMessageFilter {
  public:
 	EventFilter(StateView* target)
@@ -32,8 +46,8 @@ class EventFilter : public BMessageFilter {
 											  (int32*)&modifiers) >= B_OK
 						&& message->FindString("bytes", &bytes) == B_OK)
 						if (fTarget->HandleKeyDown(
-								StateView::KeyEvent(key, bytes,
-													strlen(bytes), modifiers)))
+								StateView::KeyEvent(key, bytes, strlen(bytes),
+									modifiers), *target))
 							result = B_SKIP_MESSAGE;
 					break;
 				}
@@ -46,8 +60,8 @@ class EventFilter : public BMessageFilter {
 											  (int32*)&modifiers) >= B_OK
 						&& message->FindString("bytes", &bytes) == B_OK)
 						if (fTarget->HandleKeyUp(
-								StateView::KeyEvent(key, bytes,
-													strlen(bytes), modifiers)))
+								StateView::KeyEvent(key, bytes, strlen(bytes),
+									modifiers), *target))
 							result = B_SKIP_MESSAGE;
 					break;
 
@@ -61,7 +75,8 @@ class EventFilter : public BMessageFilter {
 					float y;
 					if (message->FindFloat("be:wheel_delta_x", &x) >= B_OK
 						&& message->FindFloat("be:wheel_delta_y", &y) >= B_OK) {
-						if (fTarget->MouseWheelChanged(x, y))
+						if (fTarget->MouseWheelChanged(
+							fTarget->MouseInfo()->position, x, y))
 							result = B_SKIP_MESSAGE;
 					}
 					break;
@@ -85,6 +100,7 @@ StateView::StateView(BRect frame, const char* name,
 	  fDropAnticipatingState(NULL),
 
 	  fMouseInfo(),
+	  fLastMouseInfo(),
 
 	  fCommandStack(NULL),
 	  fLocker(NULL),
@@ -183,6 +199,16 @@ StateView::MessageReceived(BMessage* message)
 			}
 			break;
 		}
+		case B_MOUSE_WHEEL_CHANGED: {
+			float xDelta, yDelta;
+			if (message->FindFloat("be:wheel_delta_x", &xDelta) < B_OK)
+				xDelta = 0.0;
+			if (message->FindFloat("be:wheel_delta_y", &yDelta) < B_OK)
+				yDelta = 0.0;
+			if (xDelta != 0.0 || yDelta != 0.0)
+				MouseWheelChanged(MouseInfo()->position, xDelta, yDelta);
+			break;
+		}
 		default:
 			BView::MessageReceived(message);
 	}
@@ -239,6 +265,18 @@ StateView::MouseMoved(BPoint where, uint32 transit,
 		fDropAnticipatingState = NULL;
 	}
 
+	fLastMouseInfo = fMouseInfo;
+
+	// update mouse info
+	fMouseInfo.position = where;
+	fMouseInfo.transit = transit;
+	// cache drag message
+	if (dragMessage)
+		fMouseInfo.dragMessage = *dragMessage;
+	else
+		fMouseInfo.dragMessage.what = 0;
+
+
 	if (fDropAnticipatingState)
 		fDropAnticipatingState->MouseMoved(where, transit, dragMessage);
 	else {
@@ -249,14 +287,6 @@ StateView::MouseMoved(BPoint where, uint32 transit,
 		}
 	}
 
-	// update mouse info *after* having called the ViewState hook
-	fMouseInfo.position = where;
-	fMouseInfo.transit = transit;
-	// cache drag message
-	if (dragMessage)
-		fMouseInfo.dragMessage = *dragMessage;
-	else
-		fMouseInfo.dragMessage.what = 0;
 
 	if (fLocker)
 		fLocker->WriteUnlock();
@@ -292,12 +322,6 @@ StateView::MouseUp(BPoint where)
 		fLocker->WriteUnlock();
 }
 
-// NothingClicked
-void
-StateView::NothingClicked()
-{
-}
-
 // #pragma mark -
 
 // KeyDown
@@ -310,7 +334,7 @@ StateView::KeyDown(const char* bytes, int32 numBytes)
 	if (message
 		&& message->FindInt32("raw_char", (int32*)&key) >= B_OK
 		&& message->FindInt32("modifiers", (int32*)&modifiers) >= B_OK) {
-		if (HandleKeyDown(KeyEvent(key, bytes, numBytes, modifiers)))
+		if (HandleKeyDown(KeyEvent(key, bytes, numBytes, modifiers), this))
 			return;
 	}
 	BView::KeyDown(bytes, numBytes);
@@ -326,7 +350,7 @@ StateView::KeyUp(const char* bytes, int32 numBytes)
 	if (message
 		&& message->FindInt32("raw_char", (int32*)&key) >= B_OK
 		&& message->FindInt32("modifiers", (int32*)&modifiers) >= B_OK) {
-		if (HandleKeyUp(KeyEvent(key, bytes, numBytes, modifiers)))
+		if (HandleKeyUp(KeyEvent(key, bytes, numBytes, modifiers), this))
 			return;
 	}
 	BView::KeyUp(bytes, numBytes);
@@ -336,13 +360,25 @@ StateView::KeyUp(const char* bytes, int32 numBytes)
 
 // ConvertFromCanvas
 void
-StateView::ConvertFromCanvas(BPoint* point)
+StateView::ConvertFromCanvas(BPoint* point) const
 {
 }
 
 // ConvertToCanvas
 void
-StateView::ConvertToCanvas(BPoint* point)
+StateView::ConvertToCanvas(BPoint* point) const
+{
+}
+
+// ConvertFromCanvas
+void
+StateView::ConvertFromCanvas(BRect* rect) const
+{
+}
+
+// ConvertToCanvas
+void
+StateView::ConvertToCanvas(BRect* rect) const
 {
 }
 
@@ -365,6 +401,30 @@ StateView::SetState(ViewState* state)
 		fCurrentState->Init();
 }
 
+// UpdateStateCursor
+void
+StateView::UpdateStateCursor()
+{
+	if (!fCurrentState || !fCurrentState->UpdateCursor()) {
+		SetViewCursor(B_CURSOR_SYSTEM_DEFAULT, true);
+	}
+}
+
+// ViewStateBounds
+BRect
+StateView::ViewStateBounds()
+{
+	if (fCurrentState)
+		return fCurrentState->Bounds();
+	return BRect(0, 0, -1, -1);
+}
+
+// ViewStateBoundsChanged
+void
+StateView::ViewStateBoundsChanged()
+{
+}
+
 // Draw
 void
 StateView::Draw(BView* into, BRect updateRect)
@@ -385,20 +445,26 @@ StateView::Draw(BView* into, BRect updateRect)
 
 // MouseWheelChanged
 bool
-StateView::MouseWheelChanged(float x, float y)
+StateView::MouseWheelChanged(BPoint where, float x, float y)
 {
 	return false;
 }
 
+// NothingClicked
+void
+StateView::NothingClicked(BPoint where, uint32 buttons, uint32 clicks)
+{
+}
+
 // HandleKeyDown
 bool
-StateView::HandleKeyDown(const KeyEvent& event)
+StateView::HandleKeyDown(const KeyEvent& event, BHandler* originalTarget)
 {
 	AutoWriteLocker locker(fLocker);
 	if (fLocker && !locker.IsLocked())
 		return false;
 
-	if (_HandleKeyDown(event))
+	if (_HandleKeyDown(event, originalTarget))
 		return true;
 
 	if (fCurrentState) {
@@ -413,13 +479,13 @@ StateView::HandleKeyDown(const KeyEvent& event)
 
 // HandleKeyUp
 bool
-StateView::HandleKeyUp(const KeyEvent& event)
+StateView::HandleKeyUp(const KeyEvent& event, BHandler* originalTarget)
 {
 	AutoWriteLocker locker(fLocker);
 	if (fLocker && !locker.IsLocked())
 		return false;
 
-	if (_HandleKeyUp(event))
+	if (_HandleKeyUp(event, originalTarget))
 		return true;
 
 	if (fCurrentState) {
@@ -503,14 +569,14 @@ StateView::TriggerUpdate()
 
 // _HandleKeyDown
 bool
-StateView::_HandleKeyDown(const KeyEvent& event)
+StateView::_HandleKeyDown(const KeyEvent& event, BHandler* originalTarget)
 {
 	return false;
 }
 
 // _HandleKeyUp
 bool
-StateView::_HandleKeyUp(const KeyEvent& event)
+StateView::_HandleKeyUp(const KeyEvent& event, BHandler* originalTarget)
 {
 	return false;
 }

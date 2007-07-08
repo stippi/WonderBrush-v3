@@ -5,6 +5,7 @@
 
 #include <Bitmap.h>
 #include <Region.h>
+#include <Screen.h>
 
 using std::nothrow;
 
@@ -14,6 +15,7 @@ BackBufferedStateView::BackBufferedStateView(BRect frame, const char* name,
 	: StateView(frame, name, resizingMode, flags | B_FRAME_EVENTS)
 	, fOffscreenBitmap(NULL)
 	, fOffscreenView(NULL)
+	, fSyncToRetrace(false)
 {
 	SetViewColor(B_TRANSPARENT_COLOR);
 	_AllocBackBitmap(frame.Width(), frame.Height());
@@ -26,6 +28,14 @@ BackBufferedStateView::~BackBufferedStateView()
 }
 
 // #pragma mark -
+
+// AttachedToWindow
+void
+BackBufferedStateView::AttachedToWindow()
+{
+	SyncGraphicsState();
+	StateView::AttachedToWindow();
+}
 
 // FrameResized
 void
@@ -66,6 +76,10 @@ BackBufferedStateView::Draw(BRect updateRect)
 		bitmapRect.OffsetBy(-boundsLeftTop.x, -boundsLeftTop.y);
 
 		SetDrawingMode(B_OP_COPY);
+		if (fSyncToRetrace) {
+			BScreen screen(Window());
+			screen.WaitForRetrace();
+		}
 		DrawBitmap(fOffscreenBitmap, bitmapRect, updateRect);
 	}
 }
@@ -112,6 +126,13 @@ BackBufferedStateView::SyncGraphicsState()
 	fOffscreenView->Sync();
 
 	fOffscreenView->UnlockLooper();
+}
+
+// SetSyncToRetrace
+void
+BackBufferedStateView::SetSyncToRetrace(bool sync)
+{
+	fSyncToRetrace = sync;
 }
 
 // #pragma mark -

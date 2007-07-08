@@ -26,6 +26,8 @@ class Layer : public Object {
 									int32 index);
 		virtual	void			ObjectRemoved(Layer* layer, Object* object,
 									int32 index);
+		virtual	void			ObjectChanged(Layer* layer, Object* object,
+									int32 index);
 
 		virtual	void			AreaInvalidated(Layer* layer,
 									const BRect& area);
@@ -36,6 +38,8 @@ class Layer : public Object {
 
 	// Object interface
 	virtual	ObjectSnapshot*		Snapshot() const;
+
+	virtual	const char*			DefaultName() const;
 
 	// Layer
 			bool				AddObject(Object* object);
@@ -49,6 +53,7 @@ class Layer : public Object {
 
 			void				Invalidate(const BRect& area,
 									int32 objectIndex = 0);
+			void				ObjectChanged(Object* object);
 
 			bool				AddListener(Listener* listener);
 			void				RemoveListener(Listener* listener);

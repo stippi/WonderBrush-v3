@@ -36,6 +36,12 @@ Layer::Listener::ObjectRemoved(Layer* layer, Object* object, int32 index)
 {
 }
 
+// ObjectChanged
+void
+Layer::Listener::ObjectChanged(Layer* layer, Object* object, int32 index)
+{
+}
+
 // AreaInvalidated
 void
 Layer::Listener::AreaInvalidated(Layer* layer, const BRect& area)
@@ -64,6 +70,13 @@ ObjectSnapshot*
 Layer::Snapshot() const
 {
 	return new (nothrow) LayerSnapshot(this);
+}
+
+// DefaultName
+const char*
+Layer::DefaultName() const
+{
+	return "Layer";
 }
 
 // #pragma mark -
@@ -175,6 +188,24 @@ Layer::Invalidate(const BRect& area, int32 objectIndex)
 		listener->AreaInvalidated(this, visuallyChangedArea);
 	}
 }
+
+// ObjectChanged
+void
+Layer::ObjectChanged(Object* object)
+{
+	int32 index = IndexOf(object);
+	if (index < 0)
+		return;
+	// notify listeners
+	BList listeners(fListeners);
+	int32 count = listeners.CountItems();
+	for (int32 i = 0; i < count; i++) {
+		Listener* listener = (Listener*)listeners.ItemAtFast(i);
+		listener->ObjectChanged(this, object, index);
+	}
+}
+
+// #pragma mark -
 
 // AddListener
 bool

@@ -67,6 +67,15 @@ Rect::Snapshot() const
 	return new RectSnapshot(this);
 }
 
+// DefaultName
+const char*
+Rect::DefaultName() const
+{
+	return "Rect";
+}
+
+// #pragma mark -
+
 // SetArea
 void
 Rect::SetArea(const BRect& area)

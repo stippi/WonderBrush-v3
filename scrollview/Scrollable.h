@@ -19,7 +19,7 @@ class Scrollable {
 			void				SetDataRect(BRect dataRect);
 			BRect				DataRect() const;
 
-			void				SetScrollOffset(BPoint offset);
+	virtual	void				SetScrollOffset(BPoint offset);
 			BPoint				ScrollOffset() const;
 
 			void				SetVisibleSize(float width, float height);

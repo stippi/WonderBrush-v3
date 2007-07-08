@@ -44,6 +44,17 @@ LayerObserver::ObjectRemoved(Layer* layer, Object* object, int32 index)
 	DeliverMessage(message);
 }
 
+// ObjectChanged
+void
+LayerObserver::ObjectChanged(Layer* layer, Object* object, int32 index)
+{
+	BMessage message(MSG_OBJECT_CHANGED);
+	message.AddPointer("layer", layer);
+	message.AddPointer("object", object);
+	message.AddInt32("index", index);
+	DeliverMessage(message);
+}
+
 // AreaInvalidated
 void
 LayerObserver::AreaInvalidated(Layer* layer, const BRect& area)

@@ -9,7 +9,7 @@
 
 class Document;
 class Layer;
-class View;
+class CanvasView;
 
 
 class PickToolState : public ViewState {
@@ -40,7 +40,7 @@ class PickToolState : public ViewState {
 
 
  public:
-								PickToolState(View* parent,
+								PickToolState(CanvasView* parent,
 									Layer* layer, Document* document);
 	virtual						~PickToolState();
 
@@ -55,6 +55,8 @@ class PickToolState : public ViewState {
 	virtual Command*			MouseUp();
 
 	virtual void				Draw(BView* view, BRect updateRect);
+
+	virtual	BRect				Bounds() const;
 
 	// PickToolState
 			void				SetRect(Rect* rect);
@@ -71,6 +73,8 @@ class PickToolState : public ViewState {
 			template<class ObjectType>
 			void				_DetermineDragMode(ObjectType* object,
 									BPoint where);
+
+			void				_Invalidate(BRect area);
 
 			Document*			fDocument;
 			Layer*				fLayer;

@@ -1,24 +1,26 @@
+#include "Window.h"
+
 #include <Application.h>
+#include <Bitmap.h>
 #include <Menu.h>
 #include <MenuBar.h>
 #include <MenuItem.h>
 #include <Message.h>
+#include <ScrollBar.h>
 #include <String.h>
 
-#include "Window.h"
-
 #include "App.h"
+#include "CanvasView.h"
 #include "Column.h"
 #include "ColumnTreeView.h"
 #include "CommandStack.h"
 #include "DefaultColumnTreeModel.h"
 #include "Document.h"
+#include "EasyColumnTreeItem.h"
 //#include "LayerTreeModel.h"
 #include "PickToolState.h"
 #include "RenderManager.h"
 #include "ScrollView.h"
-#include "TextColumnTreeItem.h"
-#include "View.h"
 
 enum {
 	MSG_UNDO = 'undo',
@@ -69,24 +71,39 @@ Window::Window(BRect frame, const char* title, Document* document,
 	frame.right = 200;
 	fLayerTreeView = new ColumnTreeView(frame);
 
-	Column* column1 = new Column("Column 1", "column1", 150,
-								  COLUMN_MOVABLE | COLUMN_VISIBLE
-								  | COLUMN_SORT_KEYABLE);
-	fLayerTreeView->AddColumn(column1);
+	Column* nameColumn = new Column("Name", "name", 177,
+		COLUMN_MOVABLE | COLUMN_VISIBLE);
+	fLayerTreeView->AddColumn(nameColumn);
+
+	Column* iconColumn = new Column("", "icon", 18,
+		COLUMN_MOVABLE | COLUMN_VISIBLE);
+	fLayerTreeView->AddColumn(iconColumn);
+
 
 //	fLayerTreeView->SetModel(fLayerTreeModel);
 	fLayerTreeView->SetModel(new DefaultColumnTreeModel);
 	ScrollView* scrollView = new ScrollView(fLayerTreeView,
 		SCROLL_HORIZONTAL | SCROLL_VERTICAL | SCROLL_HORIZONTAL_MAGIC
-		| SCROLL_VERTICAL_MAGIC, frame, "layer tree", 0, 0);
+		| SCROLL_VERTICAL_MAGIC | SCROLL_VISIBLE_RECT_IS_CHILD_BOUNDS, 
+		frame, "layer tree", B_FOLLOW_LEFT | B_FOLLOW_TOP_BOTTOM,
+		B_WILL_DRAW | B_FRAME_EVENTS);
 
 	AddChild(scrollView);
 
 	frame.left = frame.right + 1;
 	frame.right = Bounds().right;
+	frame.right -= B_V_SCROLL_BAR_WIDTH;
+	frame.bottom -= B_H_SCROLL_BAR_HEIGHT;
 	fRenderManager = new RenderManager(fDocument);
-	fView = new View(frame, fDocument, fRenderManager);
-	AddChild(fView);
+	fView = new CanvasView(frame, fDocument, fRenderManager);
+	frame.right += B_V_SCROLL_BAR_WIDTH;
+	frame.bottom += B_H_SCROLL_BAR_HEIGHT;
+	scrollView = new ScrollView(fView,
+		SCROLL_HORIZONTAL | SCROLL_VERTICAL | SCROLL_NO_FRAME
+		| SCROLL_VISIBLE_RECT_IS_CHILD_BOUNDS, frame, "canvas",
+		B_FOLLOW_ALL, B_WILL_DRAW | B_FRAME_EVENTS);
+
+	AddChild(scrollView);
 	fView->MakeFocus(true);
 
 	fView->SetState(new PickToolState(fView, layer, fDocument));
@@ -128,6 +145,7 @@ Window::MessageReceived(BMessage* message)
 
 		case LayerObserver::MSG_OBJECT_ADDED:
 		case LayerObserver::MSG_OBJECT_REMOVED:
+		case LayerObserver::MSG_OBJECT_CHANGED:
 			if (fDocument->WriteLock()) {
 				Layer* layer;
 				Object* object;
@@ -141,8 +159,10 @@ Window::MessageReceived(BMessage* message)
 					}
 					if (message->what == LayerObserver::MSG_OBJECT_ADDED)
 						_ObjectAdded(layer, object, index);
-					else
+					else if (message->what == LayerObserver::MSG_OBJECT_REMOVED)
 						_ObjectRemoved(layer, object, index);
+					else
+						_ObjectChanged(layer, object, index);
 				}
 				fDocument->WriteUnlock();
 			}
@@ -201,17 +221,25 @@ Window::_ObjectChanged(const Notifier* object)
 	}
 }
 
-class ObjectColumnTreeItem : public TextColumnTreeItem {
+class ObjectColumnTreeItem : public EasyColumnTreeItem {
  public:
 	Object*	object;
 
 			ObjectColumnTreeItem(float height, Object* object)
-				: TextColumnTreeItem(height)
+				: EasyColumnTreeItem(height)
 				, object(object)
 			{
 			}
 	virtual	~ObjectColumnTreeItem()
 			{
+			}
+
+	void	Update()
+			{
+				BBitmap icon(BRect(0, 0, 15, 15), 0, B_RGBA32);
+				if (object->GetIcon(&icon))
+					SetContent(1, &icon);
+				SetContent(0, object->Name());
 			}
 };
 
@@ -225,7 +253,7 @@ Window::_ObjectAdded(Layer* layer, Object* object, int32 index)
 	ObjectColumnTreeItem* parentItem = _FindLayerTreeViewItem(layer);
 
 	ObjectColumnTreeItem* item = new ObjectColumnTreeItem(20, object);
-	item->SetText("Object", 0);
+	item->Update();
 
 	fLayerTreeView->AddSubItem(parentItem, item, index);
 	fLayerTreeView->ExpandItem(item);
@@ -238,6 +266,17 @@ Window::_ObjectAdded(Layer* layer, Object* object, int32 index)
 void
 Window::_ObjectRemoved(Layer* layer, Object* object, int32 index)
 {
+}
+
+// _ObjectChanged
+void
+Window::_ObjectChanged(Layer* layer, Object* object, int32 index)
+{
+	ObjectColumnTreeItem* item = _FindLayerTreeViewItem(object);
+	if (!item)
+		return;
+	item->Update();
+	fLayerTreeView->InvalidateItem(item);
 }
 
 // _FindLayerTreeViewItem
@@ -263,7 +302,7 @@ Window::_RecursiveAddItems(Layer* layer, ObjectColumnTreeItem* layerItem)
 		Object* object = layer->ObjectAtFast(i);
 		
 		ObjectColumnTreeItem* item = new ObjectColumnTreeItem(20, object);
-		item->SetText("Object", 0);
+		item->Update();
 
 		if (layerItem)
 			fLayerTreeView->AddSubItem(layerItem, item, i);
@@ -272,10 +311,8 @@ Window::_RecursiveAddItems(Layer* layer, ObjectColumnTreeItem* layerItem)
 		fLayerTreeView->ExpandItem(item);
 
 		Layer* subLayer = dynamic_cast<Layer*>(object);
-		if (subLayer) {
-printf("sub layer!\n");
+		if (subLayer)
 			_RecursiveAddItems(subLayer, item);
-		}
 	}
 }
 

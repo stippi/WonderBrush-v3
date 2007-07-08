@@ -38,6 +38,8 @@ class Shape : public Object {
 	// Object interface
 	virtual	ObjectSnapshot*		Snapshot() const;
 
+	virtual	const char*			DefaultName() const;
+
 	// Shape
 			void				SetArea(const BRect& area);
 			BRect				Area() const;

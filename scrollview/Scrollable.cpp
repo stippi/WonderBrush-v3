@@ -1,12 +1,10 @@
 // Scrollable.cpp
 
-#include <algorithm>
+#include <algobase.h>
 #include <stdio.h>
 
 #include "Scrollable.h"
 #include "Scroller.h"
-
-using std::max;
 
 // constructor
 Scrollable::Scrollable()

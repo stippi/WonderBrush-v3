@@ -40,6 +40,38 @@ Object::Level() const
 	return fParent->Level() + 1;
 }
 
+// #pragma mark -
+
+// SetName
+void
+Object::SetName(const char* name)
+{
+	if (!name || fName == name)
+		return;
+
+	fName = name;
+	if (fParent)
+		fParent->ObjectChanged(this);
+}
+
+// Name
+const char*
+Object::Name() const
+{
+	if (fName.Length() > 0)
+		return fName.String();
+	return DefaultName();
+}
+
+// GetIcon
+bool
+Object::GetIcon(const BBitmap* bitmap) const
+{
+	return false;
+}
+
+// #pragma mark -
+
 // ExtendDirtyArea
 void
 Object::ExtendDirtyArea(BRect& area) const

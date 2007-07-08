@@ -31,6 +31,7 @@ TYPE= APP
 #	are included from different directories.  Also note that spaces
 #	in folder names do not work well with this makefile.
 SRCS= App.cpp \
+	  CanvasView.cpp \
 	  Document.cpp \
 	  Layer.cpp \
 	  LayerObserver.cpp \
@@ -40,7 +41,6 @@ SRCS= App.cpp \
 	  ObjectSnapshot.cpp \
 	  RenderManager.cpp \
 	  RenderThread.cpp \
-	  View.cpp \
 	  Window.cpp \
 	  columntreeview/Column.cpp \
 	  columntreeview/ColumnHeader.cpp \

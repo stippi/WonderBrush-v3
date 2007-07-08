@@ -103,4 +103,16 @@ ViewState::HandleKeyUp(const StateView::KeyEvent& event,
 	return false;
 }
 
+// UpdateCursor
+bool
+ViewState::UpdateCursor()
+{
+	return false;
+}
 
+// Bounds
+BRect
+ViewState::Bounds() const
+{
+	return BRect(0, 0, -1, -1);
+}

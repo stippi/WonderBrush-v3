@@ -43,6 +43,9 @@ class ViewState {
 									Command** _command);
 
 
+	virtual	bool				UpdateCursor();
+	virtual	BRect				Bounds() const;
+
 	inline	uint32				PressedMouseButtons() const
 									{ return fMouseInfo->buttons; }
 
