@@ -54,6 +54,11 @@ App::MessageReceived(BMessage* message)
 		case MSG_NEW_WINDOW:
 			_NewWindow();
 			break;
+		case MSG_WINDOW_QUIT:
+			fWindowCount--;
+			if (fWindowCount == 0)
+				PostMessage(B_QUIT_REQUESTED, this);
+			break;
 		default:
 			BApplication::MessageReceived(message);
 			break;

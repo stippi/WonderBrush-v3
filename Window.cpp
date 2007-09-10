@@ -179,7 +179,7 @@ Window::MessageReceived(BMessage* message)
 bool
 Window::QuitRequested()
 {
-	be_app->PostMessage(B_QUIT_REQUESTED);
+	be_app->PostMessage(MSG_WINDOW_QUIT);
 	return true;
 }
 

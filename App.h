@@ -8,7 +8,8 @@ class Document;
 class Layer;
 
 enum {
-	MSG_NEW_WINDOW	= 'nwnd'
+	MSG_NEW_WINDOW	= 'nwnd',
+	MSG_WINDOW_QUIT	= 'wndq'
 };
 
 class App : public BApplication {

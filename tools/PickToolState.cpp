@@ -280,12 +280,16 @@ PickToolState::Draw(BView* view, BRect updateRect)
 	else if (fShape)
 		r = fShape->Area();
 
+	fDocument->ReadUnlock();
+
 	if (r.IsValid()) {
 		fView->ConvertFromCanvas(&r);
+		view->SetHighColor(0, 0, 0);
+		view->StrokeRect(r);
+		r.InsetBy(-1, -1);
+		view->SetHighColor(255, 255, 255);
 		view->StrokeRect(r);
 	}
-
-	fDocument->ReadUnlock();
 }
 
 // Bounds
@@ -293,13 +297,21 @@ BRect
 PickToolState::Bounds() const
 {
 	BRect r;
+
+	if (!fDocument->ReadLock())
+		return r;
+
 	if (fRect)
 		r = fRect->Area();
 	else if (fShape)
 		r = fShape->Area();
 
-	if (r.IsValid())
+	fDocument->ReadUnlock();
+
+	if (r.IsValid()) {
 		fView->ConvertFromCanvas(&r);
+		r.InsetBy(-1, -1);
+	}
 
 	return r;
 }
@@ -365,7 +377,7 @@ template<class ObjectType>
 void
 PickToolState::_DragObject(ObjectType* object, BPoint where)
 {
-	if (!fDocument->ReadLock())
+	if (!fDocument->WriteLock())
 		return;
 
 	BRect area = object->Area();
@@ -415,14 +427,13 @@ PickToolState::_DragObject(ObjectType* object, BPoint where)
 			fDragMode = DRAGGING_RIGHT_TOP;
 	}
 
-	fDocument->ReadUnlock();
-
 	// TODO: hold reference to "object"
-	// TODO: writelock before perform?
 
 	ChangeAreaCommand<ObjectType>* command
 		= new ChangeAreaCommand<ObjectType>(fLayer, object, area);
 	fDocument->CommandStack()->Perform(command);
+
+	fDocument->WriteUnlock();
 }
 
 // _Invalidate
@@ -430,6 +441,7 @@ void
 PickToolState::_Invalidate(BRect area)
 {
 	fView->ConvertFromCanvas(&area);
+	area.InsetBy(-1, -1);
 	fView->Invalidate(area);
 }
 
