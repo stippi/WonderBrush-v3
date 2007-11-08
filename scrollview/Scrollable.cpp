@@ -69,7 +69,7 @@ Scrollable::SetDataRect(BRect dataRect)
 		if (fScrollSource)
 			fScrollSource->DataRectChanged(oldDataRect, fDataRect);
 		// adjust the scroll offset, if necessary
-		BPoint offset = _ValidScrollOffsetFor(fScrollOffset);
+		BPoint offset = ValidScrollOffsetFor(fScrollOffset);
 		if (offset != fScrollOffset)
 			SetScrollOffset(offset);
 	}
@@ -91,7 +91,7 @@ void
 Scrollable::SetScrollOffset(BPoint offset)
 {
 	// adjust the supplied offset to be valid
-	offset = _ValidScrollOffsetFor(offset);
+	offset = ValidScrollOffsetFor(offset);
 	if (fScrollOffset != offset) {
 		BPoint oldOffset = fScrollOffset;
 		fScrollOffset = offset;
@@ -110,6 +110,26 @@ BPoint
 Scrollable::ScrollOffset() const
 {
 	return fScrollOffset;
+}
+
+// ValidScrollOffsetFor
+//
+// Returns the valid scroll offset next to the supplied offset.
+BPoint
+Scrollable::ValidScrollOffsetFor(BPoint offset) const
+{
+	float maxX = max(fDataRect.left, fDataRect.right - fVisibleWidth);
+	float maxY = max(fDataRect.top, fDataRect.bottom - fVisibleHeight);
+	// adjust the offset to be valid
+	if (offset.x < fDataRect.left)
+		offset.x = fDataRect.left;
+	else if (offset.x > maxX)
+		offset.x = maxX;
+	if (offset.y < fDataRect.top)
+		offset.y = fDataRect.top;
+	else if (offset.y > maxY)
+		offset.y = maxY;
+	return offset;
 }
 
 // SetVisibleSize
@@ -132,7 +152,7 @@ Scrollable::SetVisibleSize(float width, float height)
 											  fVisibleWidth, fVisibleHeight);
 		}
 		// adjust the scroll offset, if necessary
-		BPoint offset = _ValidScrollOffsetFor(fScrollOffset);
+		BPoint offset = ValidScrollOffsetFor(fScrollOffset);
 		if (offset != fScrollOffset)
 			SetScrollOffset(offset);
 	}
@@ -198,23 +218,4 @@ Scrollable::ScrollSourceChanged(Scroller* /*oldSource*/,
 {
 }
 
-// _ValidScrollOffsetFor
-//
-// Returns the valid scroll offset next to the supplied offset.
-BPoint
-Scrollable::_ValidScrollOffsetFor(BPoint offset) const
-{
-	float maxX = max(fDataRect.left, fDataRect.right - fVisibleWidth);
-	float maxY = max(fDataRect.top, fDataRect.bottom - fVisibleHeight);
-	// adjust the offset to be valid
-	if (offset.x < fDataRect.left)
-		offset.x = fDataRect.left;
-	else if (offset.x > maxX)
-		offset.x = maxX;
-	if (offset.y < fDataRect.top)
-		offset.y = fDataRect.top;
-	else if (offset.y > maxY)
-		offset.y = maxY;
-	return offset;
-}
 

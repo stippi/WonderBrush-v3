@@ -49,7 +49,7 @@ class PickToolState : public ViewState {
 									Command** _command);
 
 	virtual void				MouseDown(BPoint where, uint32 buttons,
-										  uint32 clicks);
+									uint32 clicks);
 	virtual void				MouseMoved(BPoint where, uint32 transit,
 									const BMessage* dragMessage);
 	virtual Command*			MouseUp();
@@ -59,6 +59,7 @@ class PickToolState : public ViewState {
 	virtual	BRect				Bounds() const;
 
 	// PickToolState
+			void				SetObject(Layer* layer, Object* object);
 			void				SetRect(Rect* rect);
 			void				SetShape(Shape* shape);
 

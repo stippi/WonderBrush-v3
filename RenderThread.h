@@ -9,7 +9,7 @@
 #define RENDER_THREAD_H
 
 #include <List.h>
-#include <Looper.h>
+#include <OS.h>
 #include <Region.h>
 
 
@@ -35,10 +35,6 @@ class RenderThread {
 	static	status_t			_WorkerLoopEntry(void* data);
 			status_t			_WorkerLoop();
 
-			void				_Render();
-			void				_RecursiveRender(LayerSnapshot* layer);
-			LayerSnapshot*		_LayerSnapshotForLayer(LayerSnapshot* snapshot,
-									Layer* layer);
 			LayerBitmap*		_LayerBitmapFor(LayerSnapshot* layer);
 
 			thread_id			fThread;

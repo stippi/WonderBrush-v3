@@ -25,6 +25,7 @@ agg_trans_affine.cpp \
 agg_trans_warp_magnifier.cpp \
 agg_trans_single_path.cpp \
 agg_trans_double_path.cpp \
+agg_trans_perspective.cpp \
 agg_vpgen_clip_polygon.cpp \
 agg_vpgen_clip_polyline.cpp \
 agg_vpgen_segmentator.cpp \

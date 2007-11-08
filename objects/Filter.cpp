@@ -44,6 +44,13 @@ Filter::DefaultName() const
 	return "Gaussian Blur";
 }
 
+// IsRegularTransformable
+bool
+Filter::IsRegularTransformable() const
+{
+	return false;
+}
+
 // ExtendDirtyArea
 void
 Filter::ExtendDirtyArea(BRect& area) const

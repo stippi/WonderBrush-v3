@@ -82,6 +82,13 @@ Object::Transformation() const
 	return t;
 }
 
+// IsRegularTransformable
+bool
+Object::IsRegularTransformable() const
+{
+	return true;
+}
+
 // #pragma mark -
 
 // ExtendDirtyArea

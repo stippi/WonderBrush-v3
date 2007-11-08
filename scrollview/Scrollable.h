@@ -21,6 +21,7 @@ class Scrollable {
 
 	virtual	void				SetScrollOffset(BPoint offset);
 			BPoint				ScrollOffset() const;
+			BPoint				ValidScrollOffsetFor(BPoint offset) const;
 
 			void				SetVisibleSize(float width, float height);
 			BRect				VisibleBounds() const;
@@ -44,8 +45,6 @@ protected:
 			float				fVisibleWidth;
 			float				fVisibleHeight;
 			Scroller*			fScrollSource;
-
-			BPoint				_ValidScrollOffsetFor(BPoint offset) const;
 };
 
 

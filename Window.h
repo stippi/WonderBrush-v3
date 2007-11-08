@@ -12,6 +12,7 @@ class ColumnTreeView;
 class Document;
 class Layer;
 class ObjectColumnTreeItem;
+class PickToolState;
 class RenderManager;
 
 class Window : public BWindow {
@@ -50,6 +51,7 @@ class Window : public BWindow {
 
 			CanvasView*			fView;
 			Document*			fDocument;
+			PickToolState*		fPickState;
 			RenderManager*		fRenderManager;
 			ListenerAdapter		fCommandStackListener;
 

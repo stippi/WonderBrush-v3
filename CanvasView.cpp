@@ -228,7 +228,7 @@ CanvasView::MouseMoved(BPoint where, uint32 transit, const BMessage* dragMessage
 		SetScrollOffset(fScrollOffsetStart - offset);
 	} else {
 		// normal mouse movement handled by BackBufferedStateView
-		if (!fSpaceHeldDown)
+//		if (!fSpaceHeldDown)
 			BackBufferedStateView::MouseMoved(where, transit, dragMessage);
 	}
 	_UpdateToolCursor();
@@ -320,12 +320,13 @@ CanvasView::SetScrollOffset(BPoint newOffset)
 
 	fInScrollTo = true;
 
-	BPoint offset = newOffset - LeftTop();
+	newOffset = ValidScrollOffsetFor(newOffset);
+	if (!fScrollTracking) {
+		BPoint mouseOffset = newOffset - ScrollOffset();
+		MouseMoved(fMouseInfo.position + mouseOffset, fMouseInfo.transit, NULL);
+	}
 
 	Scrollable::SetScrollOffset(newOffset);
-
-	if (!fScrollTracking)
-		MouseMoved(fMouseInfo.position + offset, fMouseInfo.transit, NULL);
 
 	fInScrollTo = false;
 }

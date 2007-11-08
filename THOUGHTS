@@ -8,12 +8,9 @@ Blockweise Bitmaps und Caches
 Es ist sinnvoll, die Dokumentansicht zu einem bestimmten Objektlevel zu cachen. Vielleicht wäre es von Vorteil, wenn man diesen Cache in gleichmäßige Blöcke (Ausschnitte aus der Ansicht) unterteilt, die jeweils ein unterschiedliches Objektlevel enthalten können. Braucht man beim Rendern einen (Teil von einem) Cacheblock, stellt aber fest, dass dieser veraltet ist, so erweitert man das Rendering einfach um die Fläche des gesamten Blocks, so dass der Block beim nächsten Rendering komplett gültig vorliegt.
 
 
-Wie löst man das Konzept des Objektbaums?
-Gibt es "Spezialobjekte" an den Baumknoten die eine Bitmap zum Reinrendern haben?
-An welcher Stelle sind die Caches in diesem Szenario, auch jeweils an den Knoten?
+An welcher Stelle sind die Caches im Objektbaum, auch jeweils an den Knoten?
 
 
 Inwiefern soll es auf Festplatte ausgelagerte Bitmapdaten geben?
 
 
-Wie funktioniert das gleichzeitige Rendering auf mehreren Ebenen? Beispielsweise wenn sich ein Pfad ändert, der durch mehere Objekte auf verschiedenen Ebenen instantiiert wird? Dann müssten mehrere Ebenenbitmaps neu berechnet werden, und zwar mit dem selben Dokumentzustand (Snapshot).

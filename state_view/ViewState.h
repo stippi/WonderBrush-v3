@@ -35,11 +35,9 @@ class ViewState {
 
 
 	// TODO: mouse wheel
-	virtual	bool				HandleKeyDown(
-									const StateView::KeyEvent& event,
+	virtual	bool				HandleKeyDown(const StateView::KeyEvent& event,
 									Command** _command);
-	virtual	bool				HandleKeyUp(
-									const StateView::KeyEvent& event,
+	virtual	bool				HandleKeyUp(const StateView::KeyEvent& event,
 									Command** _command);
 
 

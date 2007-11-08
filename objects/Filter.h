@@ -21,6 +21,8 @@ class Filter : public Object {
 
 	virtual	const char*			DefaultName() const;
 
+	virtual	bool				IsRegularTransformable() const;
+
 	virtual	void				ExtendDirtyArea(BRect& area) const;
 
 	// Filter

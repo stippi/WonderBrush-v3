@@ -73,6 +73,8 @@ class StateView : public BView {
 	virtual	void				ConvertFromCanvas(BRect* rect) const;
 	virtual	void				ConvertToCanvas(BRect* rect) const;
 
+	virtual	void				FilterMouse(BPoint* where) const;
+
 	virtual	ViewState*			StateForDragMessage(const BMessage* message);
 
 			void				SetLocker(RWLocker* locker);

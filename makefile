@@ -79,15 +79,24 @@ SRCS= App.cpp \
 	  support/Command.cpp \
 	  support/CommandStack.cpp \
 	  support/CompoundCommand.cpp \
+	  support/Debug.cpp \
 	  support/GaussFilter.cpp \
 	  support/Listener.cpp \
 	  support/ListenerAdapter.cpp \
 	  support/Notifier.cpp \
+	  support/ObjectTracker.cpp \
+	  support/Referenceable.cpp \
 	  support/RenderBuffer.cpp \
 	  support/RWLocker.cpp \
+	  support/Selectable.cpp \
+	  support/Selection.cpp \
 	  support/StackBlurFilter.cpp \
 	  support/Transformable.cpp \
+	  tools/ChannelTransform.cpp \
 	  tools/PickToolState.cpp \
+	  tools/TransformableGroup.cpp \
+#	  tools/TransformBox.cpp \
+#	  tools/TransformBoxStates.cpp \
 
 #	specify the resource files to use
 #	full path or a relative path to the resource file can be used.

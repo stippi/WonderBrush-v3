@@ -11,6 +11,7 @@
 #include <Rect.h>
 #include <String.h>
 
+#include "Referenceable.h"
 #include "Transformable.h"
 
 
@@ -19,7 +20,7 @@ class Layer;
 class ObjectSnapshot;
 
 
-class Object : public Transformable {
+class Object : public Transformable, public Referenceable {
  public:
 								Object();
 	virtual						~Object();
@@ -38,6 +39,9 @@ class Object : public Transformable {
 	virtual	bool				GetIcon(const BBitmap* bitmap) const;
 
 	virtual	Transformable		Transformation() const;
+			Transformable		LocalTransformation() const
+									{ return *this; }
+	virtual	bool				IsRegularTransformable() const;
 
 	virtual	void				ExtendDirtyArea(BRect& area) const;
 

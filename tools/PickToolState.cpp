@@ -318,6 +318,19 @@ PickToolState::Bounds() const
 
 // #pragma mark -
 
+// SetObject
+void
+PickToolState::SetObject(Layer* layer, Object* object)
+{
+	if (Rect* rect = dynamic_cast<Rect*>(object)) {
+		fLayer = layer;
+		SetRect(rect);
+	} else if (Shape* shape = dynamic_cast<Shape*>(object)) {
+		fLayer = layer;
+		SetShape(shape);
+	}
+}
+
 // SetRect
 void
 PickToolState::SetRect(Rect* rect)

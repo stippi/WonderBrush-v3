@@ -382,6 +382,12 @@ StateView::ConvertToCanvas(BRect* rect) const
 {
 }
 
+// FilterMouse
+void
+StateView::FilterMouse(BPoint* point) const
+{
+}
+
 // #pragma mark -
 
 // SetState

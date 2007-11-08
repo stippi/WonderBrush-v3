@@ -22,9 +22,32 @@
 #include "RenderManager.h"
 #include "ScrollView.h"
 
+class ObjectColumnTreeItem : public EasyColumnTreeItem {
+ public:
+	Object*	object;
+
+			ObjectColumnTreeItem(float height, Object* object)
+				: EasyColumnTreeItem(height)
+				, object(object)
+			{
+			}
+	virtual	~ObjectColumnTreeItem()
+			{
+			}
+
+	void	Update()
+			{
+				BBitmap icon(BRect(0, 0, 15, 15), 0, B_RGBA32);
+				if (object->GetIcon(&icon))
+					SetContent(1, &icon);
+				SetContent(0, object->Name());
+			}
+};
+
 enum {
-	MSG_UNDO = 'undo',
-	MSG_REDO = 'redo'
+	MSG_UNDO				= 'undo',
+	MSG_REDO				= 'redo',
+	MSG_SELECTION_CHANGED	= 'slch'
 };
 
 // constructor
@@ -90,6 +113,8 @@ Window::Window(BRect frame, const char* title, Document* document,
 
 	AddChild(scrollView);
 
+	fLayerTreeView->SetSelectionMessage(new BMessage(MSG_SELECTION_CHANGED));
+
 	frame.left = frame.right + 1;
 	frame.right = Bounds().right;
 	frame.right -= B_V_SCROLL_BAR_WIDTH;
@@ -106,7 +131,8 @@ Window::Window(BRect frame, const char* title, Document* document,
 	AddChild(scrollView);
 	fView->MakeFocus(true);
 
-	fView->SetState(new PickToolState(fView, layer, fDocument));
+	fPickState = new PickToolState(fView, layer, fDocument);
+	fView->SetState(fPickState);
 	fView->SetCommandStack(fDocument->CommandStack());
 
 	fDocument->CommandStack()->AddListener(&fCommandStackListener);
@@ -140,6 +166,23 @@ Window::MessageReceived(BMessage* message)
 			Notifier* notifier;
 			if (message->FindPointer("object", (void**)&notifier) == B_OK)
 				_ObjectChanged(notifier);
+			break;
+		}
+
+		case MSG_SELECTION_CHANGED: {
+			int32 index;
+			if (message->FindInt32("index", &index) == B_OK) {
+				ObjectColumnTreeItem* item
+					= dynamic_cast<ObjectColumnTreeItem*>(
+						fLayerTreeView->ItemAt(index));
+				if (item) {
+					Object* object = item->object;
+					Layer* layer = object->Parent();
+					if (!layer)
+						layer = fDocument->RootLayer();
+					fPickState->SetObject(layer, object);
+				}
+			}
 			break;
 		}
 
@@ -220,28 +263,6 @@ Window::_ObjectChanged(const Notifier* object)
 			fRedoMI->SetLabel("<nothing to redo>");
 	}
 }
-
-class ObjectColumnTreeItem : public EasyColumnTreeItem {
- public:
-	Object*	object;
-
-			ObjectColumnTreeItem(float height, Object* object)
-				: EasyColumnTreeItem(height)
-				, object(object)
-			{
-			}
-	virtual	~ObjectColumnTreeItem()
-			{
-			}
-
-	void	Update()
-			{
-				BBitmap icon(BRect(0, 0, 15, 15), 0, B_RGBA32);
-				if (object->GetIcon(&icon))
-					SetContent(1, &icon);
-				SetContent(0, object->Name());
-			}
-};
 
 // _ObjectAdded
 void
