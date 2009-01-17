@@ -11,12 +11,10 @@ class Document;
 class Layer;
 class CanvasView;
 
-
 class PickToolState : public ViewState {
-
 	class RectLOAdapater : public RectListener,
 						   public AbstractLOAdapter {
-	 public:
+	public:
 								RectLOAdapater(BHandler* handler);
 		virtual					~RectLOAdapater();
 	
@@ -28,7 +26,7 @@ class PickToolState : public ViewState {
 	
 	class ShapeLOAdapater : public ShapeListener,
 							public AbstractLOAdapter {
-	 public:
+	public:
 								ShapeLOAdapater(BHandler* handler);
 		virtual					~ShapeLOAdapater();
 	
@@ -39,7 +37,12 @@ class PickToolState : public ViewState {
 	};
 
 
- public:
+public:
+
+	enum {
+		MSG_OBJECT_PICKED	= 'objp'
+	};
+
 								PickToolState(CanvasView* parent,
 									Layer* layer, Document* document);
 	virtual						~PickToolState();
@@ -63,7 +66,10 @@ class PickToolState : public ViewState {
 			void				SetRect(Rect* rect);
 			void				SetShape(Shape* shape);
 
- private:
+private:
+			Object*				_PickObject(const Layer* layer,
+									BPoint where, bool recursive) const;
+
 			bool				_HitTest(const BPoint& where,
 									const BPoint& point);
 
@@ -76,6 +82,8 @@ class PickToolState : public ViewState {
 									BPoint where);
 
 			void				_Invalidate(BRect area);
+
+			void				_SendPickNotification();
 
 			Document*			fDocument;
 			Layer*				fLayer;

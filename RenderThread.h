@@ -1,9 +1,8 @@
 /*
- * Copyright 2007, Haiku. All rights reserved.
- * Distributed under the terms of the MIT License.
- *
- * Authors:
- *		Stephan Aßmus <superstippi@gmx.de>
+ * Copyright 2007, Stephan Aßmus <superstippi@gmx.de>
+ * Copyright 2007, Ingo Weinhold <ingo_weinhold@gmx.de>
+ * All rights reserved. Distributed under the terms of the MIT License.
+ *		
  */
 #ifndef RENDER_THREAD_H
 #define RENDER_THREAD_H
@@ -24,7 +23,6 @@ class RenderThread {
 									int32 index);
 	virtual						~RenderThread();
 
-	// RenderThread
 			thread_id			Run();
 			void				WaitForThread();
 			void				Render(LayerSnapshot* layer, BRect area);

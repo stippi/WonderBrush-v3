@@ -43,6 +43,15 @@ App::App(BRect bounds)
 	subLayer->AddObject(new Rect(BRect(120, 100, 510, 530),
 		(rgb_color){ 55, 180, 120, 200 }));
 
+	Layer* subSubLayer = new Layer(bounds);
+	subLayer->AddObject(subSubLayer);
+
+	subSubLayer->AddObject(new Rect(BRect(420, 320, 650, 390),
+		(rgb_color){ 185, 120, 120, 220 }));
+
+	subSubLayer->AddObject(new Shape(BRect(460, 185, 590, 300),
+		(rgb_color){ 255, 120, 180, 160 }));
+
 	fEditLayer = fDocument->RootLayer();
 }
 

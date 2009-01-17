@@ -1,6 +1,7 @@
 #include "PickToolState.h"
 
 #include <Message.h>
+#include <Window.h>
 
 #include "CanvasView.h"
 #include "ChangeAreaCommand.h"
@@ -204,35 +205,20 @@ PickToolState::MouseDown(BPoint where, uint32 buttons, uint32 clicks)
 		}
 	}
 	if (fDragMode == DRAGGING_NONE) {
-		int32 count = fLayer->CountObjects();
-		bool foundOther = false;
-		for (int32 i = count - 1; i >= 0; i--) {
-			Object* object = fLayer->ObjectAtFast(i);
-			Rect* rect = dynamic_cast<Rect*>(object);
-			if (rect) {
-				if (rect->Area().Contains(where)) {
-					SetRect(rect);
-					foundOther = true;
-					fLastDragPos = where;
-					fDragMode = DRAGGING_ALL;
-					break;
-				}
-			}
-			Shape* shape = dynamic_cast<Shape*>(object);
-			if (shape) {
-				if (shape->Area().Contains(where)) {
-					SetShape(shape);
-					foundOther = true;
-					fLastDragPos = where;
-					fDragMode = DRAGGING_ALL;
-					break;
-				}
-			}
+// This method would prefer picking objects on the same layer as
+// the current one.
+//		Object* pickedObject = _PickObject(fLayer, where, false);
+//		if (pickedObject == NULL)
+//			pickedObject = _PickObject(fDocument->RootLayer(), where, true);
+		Object* pickedObject = _PickObject(fDocument->RootLayer(), where, true);
+
+		Layer* layer = fLayer;
+		if (pickedObject) {
+			fDragMode = DRAGGING_ALL;
+			fLastDragPos = where;
+			layer = pickedObject->Parent();
 		}
-		if (!foundOther) {
-			SetRect(NULL);
-			SetShape(NULL);
-		}
+		SetObject(layer, pickedObject);
 	}
 
 	fDocument->ReadUnlock();
@@ -322,12 +308,14 @@ PickToolState::Bounds() const
 void
 PickToolState::SetObject(Layer* layer, Object* object)
 {
+	fLayer = layer;
 	if (Rect* rect = dynamic_cast<Rect*>(object)) {
-		fLayer = layer;
 		SetRect(rect);
 	} else if (Shape* shape = dynamic_cast<Shape*>(object)) {
-		fLayer = layer;
 		SetShape(shape);
+	} else {
+		SetRect(NULL);
+		SetShape(NULL);
 	}
 }
 
@@ -351,6 +339,8 @@ PickToolState::SetRect(Rect* rect)
 		fRect->AddListener(&fRectLOAdapter);
 		_Invalidate(fRect->Area());
 	}
+
+	_SendPickNotification();
 }
 
 // SetShape
@@ -373,9 +363,39 @@ PickToolState::SetShape(Shape* shape)
 		fShape->AddListener(&fShapeLOAdapter);
 		_Invalidate(fShape->Area());
 	}
+
+	_SendPickNotification();
 }
 
 // #pragma mark -
+
+// _PickObject
+Object*
+PickToolState::_PickObject(const Layer* layer, BPoint where,
+	bool recursive) const
+{
+	// search sublayers first
+	int32 count = layer->CountObjects();
+	for (int32 i = count - 1; i >= 0; i--) {
+		Object* object = layer->ObjectAtFast(i);
+		if (recursive) {
+			Layer* subLayer = dynamic_cast<Layer*>(object);
+			if (subLayer) {
+				Object* objectOnSubLayer = _PickObject(subLayer, where, true);
+				if (objectOnSubLayer)
+					return objectOnSubLayer;
+			}
+		}
+		Rect* rect = dynamic_cast<Rect*>(object);
+		if (rect && rect->Area().Contains(where))
+			return object;
+		Shape* shape = dynamic_cast<Shape*>(object);
+		if (shape && shape->Area().Contains(where))
+			return object;
+	}
+
+	return NULL;
+}
 
 // _HitTest
 bool
@@ -456,5 +476,23 @@ PickToolState::_Invalidate(BRect area)
 	fView->ConvertFromCanvas(&area);
 	area.InsetBy(-1, -1);
 	fView->Invalidate(area);
+}
+
+// _SendPickNotification
+void
+PickToolState::_SendPickNotification()
+{
+	if (!fView->Window())
+		return;
+
+	BMessage notification(MSG_OBJECT_PICKED);
+	if (fRect)
+		notification.AddPointer("object", (Object*)fRect);
+	else if (fShape)
+		notification.AddPointer("object", (Object*)fShape);
+	else
+		notification.AddPointer("object", (Object*)NULL);
+
+	fView->Window()->PostMessage(&notification);
 }
 

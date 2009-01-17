@@ -1,9 +1,8 @@
 /*
- * Copyright 2007, Haiku. All rights reserved.
- * Distributed under the terms of the MIT License.
- *
- * Authors:
- *		Stephan Aßmus <superstippi@gmx.de>
+ * Copyright 2007-2008, Stephan Aßmus <superstippi@gmx.de>
+ * Copyright 2007, Ingo Weinhold <ingo_weinhold@gmx.de>
+ * All rights reserved. Distributed under the terms of the MIT License.
+ *		
  */
 #define USE_CACHING 0
 #define DEBUG_CACHING 0
@@ -33,10 +32,6 @@
 
 
 using std::nothrow;
-
-enum {
-	MSG_RENDER = 'rndr'
-};
 
 
 #if DEBUG_CACHING

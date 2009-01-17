@@ -1,9 +1,8 @@
 /*
- * Copyright 2006, Haiku. All rights reserved.
- * Distributed under the terms of the MIT License.
- *
- * Authors:
- *		Stephan Aßmus <superstippi@gmx.de>
+ * Copyright 2006-2008, Stephan Aßmus <superstippi@gmx.de>
+ * Copyright 2007, Ingo Weinhold <ingo_weinhold@gmx.de>
+ * All rights reserved. Distributed under the terms of the MIT License.
+ *		
  */
 #include "RenderManager.h"
 

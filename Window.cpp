@@ -169,7 +169,8 @@ Window::MessageReceived(BMessage* message)
 			break;
 		}
 
-		case MSG_SELECTION_CHANGED: {
+		case MSG_SELECTION_CHANGED:
+		{
 			int32 index;
 			if (message->FindInt32("index", &index) == B_OK) {
 				ObjectColumnTreeItem* item
@@ -184,6 +185,21 @@ Window::MessageReceived(BMessage* message)
 				}
 			}
 			break;
+		}
+
+		case PickToolState::MSG_OBJECT_PICKED:
+		{
+message->PrintToStream();
+			Object* object;
+			if (message->FindPointer("object", (void**)&object) == B_OK) {
+				ColumnTreeItem* item = _FindLayerTreeViewItem(object);
+printf("item: %p\n", item);
+				if (item)
+					fLayerTreeView->Select(fLayerTreeView->IndexOf(item));
+					//item->SetSelected(true);
+				else
+					fLayerTreeView->DeselectAll();
+			}
 		}
 
 		case LayerObserver::MSG_OBJECT_ADDED:
