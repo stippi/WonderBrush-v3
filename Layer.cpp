@@ -177,9 +177,6 @@ Layer::Invalidate(const BRect& area, int32 objectIndex)
 		object->ExtendDirtyArea(visuallyChangedArea);
 	}
 
-	if (Parent())
-		Parent()->Invalidate(visuallyChangedArea, Parent()->IndexOf(this));
-
 	// notify listeners
 	BList listeners(fListeners);
 	count = listeners.CountItems();
@@ -187,6 +184,9 @@ Layer::Invalidate(const BRect& area, int32 objectIndex)
 		Listener* listener = (Listener*)listeners.ItemAtFast(i);
 		listener->AreaInvalidated(this, visuallyChangedArea);
 	}
+
+	if (Parent())
+		Parent()->Invalidate(visuallyChangedArea, Parent()->IndexOf(this));
 }
 
 // ObjectChanged
