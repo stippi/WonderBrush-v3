@@ -8,10 +8,10 @@
 
 class CanvasView;
 class ColumnTreeModel;
-class ColumnTreeView;
 class Document;
 class Layer;
 class ObjectColumnTreeItem;
+class ObjectTreeView;
 class PickToolState;
 class RenderManager;
 
@@ -58,7 +58,7 @@ class Window : public BWindow {
 			BMenuItem*			fUndoMI;
 			BMenuItem*			fRedoMI;
 
-			ColumnTreeView*		fLayerTreeView;
+			ObjectTreeView*		fLayerTreeView;
 			ColumnTreeModel*	fLayerTreeModel;
 			LayerObserver		fLayerObserver;
 };

@@ -12,37 +12,14 @@
 #include "App.h"
 #include "CanvasView.h"
 #include "Column.h"
-#include "ColumnTreeView.h"
 #include "CommandStack.h"
 #include "DefaultColumnTreeModel.h"
 #include "Document.h"
-#include "EasyColumnTreeItem.h"
 //#include "LayerTreeModel.h"
+#include "ObjectTreeView.h"
 #include "PickToolState.h"
 #include "RenderManager.h"
 #include "ScrollView.h"
-
-class ObjectColumnTreeItem : public EasyColumnTreeItem {
- public:
-	Object*	object;
-
-			ObjectColumnTreeItem(float height, Object* object)
-				: EasyColumnTreeItem(height)
-				, object(object)
-			{
-			}
-	virtual	~ObjectColumnTreeItem()
-			{
-			}
-
-	void	Update()
-			{
-				BBitmap icon(BRect(0, 0, 15, 15), 0, B_RGBA32);
-				if (object->GetIcon(&icon))
-					SetContent(1, &icon);
-				SetContent(0, object->Name());
-			}
-};
 
 enum {
 	MSG_UNDO				= 'undo',
@@ -92,7 +69,7 @@ Window::Window(BRect frame, const char* title, Document* document,
 	frame = Bounds();
 	frame.top = menuBar->Frame().bottom + 1;
 	frame.right = 200;
-	fLayerTreeView = new ColumnTreeView(frame);
+	fLayerTreeView = new ObjectTreeView(frame);
 
 	Column* nameColumn = new Column("Name", "name", 177,
 		COLUMN_MOVABLE | COLUMN_VISIBLE);
@@ -189,11 +166,9 @@ Window::MessageReceived(BMessage* message)
 
 		case PickToolState::MSG_OBJECT_PICKED:
 		{
-message->PrintToStream();
 			Object* object;
 			if (message->FindPointer("object", (void**)&object) == B_OK) {
 				ColumnTreeItem* item = _FindLayerTreeViewItem(object);
-printf("item: %p\n", item);
 				if (item)
 					fLayerTreeView->Select(fLayerTreeView->IndexOf(item));
 					//item->SetSelected(true);

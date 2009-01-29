@@ -61,6 +61,8 @@ SRCS= App.cpp \
 	  columntreeview/EasyColumnTreeItem.cpp \
 	  columntreeview/LabelColumnHeader.cpp \
 	  columntreeview/TextColumnTreeItem.cpp \
+	  gui/ObjectTreeView.cpp \
+	  gui/TextViewPopup.cpp \
 	  objects/Filter.cpp \
 	  objects/FilterSnapshot.cpp \
 	  objects/Rect.cpp \
