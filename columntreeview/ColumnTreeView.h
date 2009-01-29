@@ -88,6 +88,7 @@ class ColumnTreeView : public BView, public BInvoker, public Scrollable,
 			bool				IsEmpty() const;
 			BRect				ItemFrame(int32 index) const
 										{ return _ItemFrame(index); }
+			float				IndentationOf(ColumnTreeItem* item) const;
 	virtual	void				MakeEmpty();
 		// TODO: return value should be bool
 

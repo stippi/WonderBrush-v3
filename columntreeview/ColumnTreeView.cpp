@@ -697,6 +697,17 @@ ColumnTreeView::IsEmpty() const
 	return (CountItems() == 0);
 }
 
+// IndentationOf
+/*!	Returns the indentation of the given item.
+*/
+float
+ColumnTreeView::IndentationOf(ColumnTreeItem* item) const
+{
+	if (item && fModel && fItemHandle)
+		return fItemHandle->GetIndentation(fModel->LevelOf(item));
+	return 0.0f;
+}
+
 // MakeEmpty
 /*!	\brief Removes all (currently visible and invisible) items from the tree.
 	\return \c true, if everything went fine, \c false otherwise (e.g. if the
