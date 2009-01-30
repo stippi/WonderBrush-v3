@@ -106,8 +106,7 @@ ObjectTreeView::InitiateDrag(BPoint point, int32 index, bool wasSelected)
 //printf("ObjectTreeView::InitiateDrag(BPoint(%.1f, %.1f), index: %ld, %d)\n",
 //	point.x, point.y, index, wasSelected);
 	try {
-		BMessage* dragMessage = new BMessage(MSG_DRAG_SORT_OBJECTS);
-		ObjectDeleter<BMessage> messageDeleter(dragMessage);
+		BMessage dragMessage(MSG_DRAG_SORT_OBJECTS);
 		float totalHeight = -1.0f;
 		float maxHeight = 100.0f;
 		bool fadeOutAtBottom = false;
@@ -118,7 +117,7 @@ ObjectTreeView::InitiateDrag(BPoint point, int32 index, bool wasSelected)
 				ItemAt(CurrentSelection(i)));
 			if (item == NULL || item->object == NULL)
 				continue;
-			if (dragMessage->AddPointer("object", item->object) != B_OK)
+			if (dragMessage.AddPointer("object", item->object) != B_OK)
 				return false;
 			addedItems++;
 			if (!fadeOutAtBottom) {
@@ -169,8 +168,7 @@ ObjectTreeView::InitiateDrag(BPoint point, int32 index, bool wasSelected)
 			if (previousItemBottom > totalHeight)
 				break;
 		}
-		view->SetHighColor(0, 0, 0, 128);
-		view->SetDrawingMode(B_OP_COPY);
+		view->SetHighColor(tint_color(view->LowColor(), B_DARKEN_2_TINT));
 		view->StrokeRect(view->Bounds());
 		view->Sync();
 		dragBitmap->Unlock();
@@ -192,10 +190,9 @@ ObjectTreeView::InitiateDrag(BPoint point, int32 index, bool wasSelected)
 			row += bpr;
 		}
 
-		messageDeleter.Detach();
 		bitmapDeleter.Detach();
 
-		DragMessage(dragMessage, dragBitmap, B_OP_ALPHA, BPoint(point.x,
+		DragMessage(&dragMessage, dragBitmap, B_OP_ALPHA, BPoint(point.x,
 			0.0));
 		return true;
 
