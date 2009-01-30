@@ -94,7 +94,7 @@ public:
 	{
 		Unlock();
 		fLockable = lockable;
-		fLocked = alreadyLocked;
+		fLocked = (lockable && alreadyLocked);
 		if (!alreadyLocked && lockIfNotLocked)
 			Lock();
 	}
@@ -148,7 +148,7 @@ public:
 
 	inline operator bool() const	{ return fLocked; }
 
-private:
+protected:
 	Lockable	*fLockable;
 	bool		fLocked;
 	Locking		fLocking;
@@ -158,5 +158,7 @@ private:
 }	// namespace BPrivate
 
 using BPrivate::AutoLocker;
+using BPrivate::AutoLockerReadLocking;
+using BPrivate::AutoLockerWriteLocking;
 
 #endif	// _AUTO_LOCKER_H
