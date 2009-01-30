@@ -69,7 +69,7 @@ Window::Window(BRect frame, const char* title, Document* document,
 	frame = Bounds();
 	frame.top = menuBar->Frame().bottom + 1;
 	frame.right = 200;
-	fLayerTreeView = new ObjectTreeView(frame);
+	fLayerTreeView = new ObjectTreeView(frame, fDocument);
 
 	Column* nameColumn = new Column("Name", "name", 177,
 		COLUMN_MOVABLE | COLUMN_VISIBLE);

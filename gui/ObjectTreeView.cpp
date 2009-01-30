@@ -5,6 +5,8 @@
 #include <Bitmap.h>
 
 #include "Column.h"
+#include "CommandStack.h"
+#include "Document.h"
 #include "Object.h"
 #include "TextViewPopup.h"
 
@@ -39,8 +41,9 @@ enum {
 };
 
 
-ObjectTreeView::ObjectTreeView(BRect frame)
+ObjectTreeView::ObjectTreeView(BRect frame, Document* document)
 	: ColumnTreeView(frame)
+	, fDocument(document)
 {
 }
 
@@ -121,6 +124,8 @@ ObjectTreeView::_HandleRenameItem(int32 index)
 		// Hide the current name in order not to irritate during editing.
 		item->SetContent(0, "");
 
+		AutoReadLocker locker(fDocument);
+
 		new TextViewPopup(frame, item->object->Name(), message, this);
 	} catch (...) {
 		delete message;
@@ -152,8 +157,9 @@ ObjectTreeView::_HandleRenameObject(BMessage* message)
 		return;
 	}
 
+	AutoWriteLocker locker(fDocument);
+
 	// TODO: Action!
-	// TODO: Locking!
 	if (strcmp(object->Name(), name) == 0) {
 		// Happens when we use the TAB key to navigate without renaming
 		// In this case, the item needs to be invalidated too, because
@@ -166,6 +172,8 @@ ObjectTreeView::_HandleRenameObject(BMessage* message)
 		object->SetName(name);
 	}
 	object->RemoveReference();
+
+	locker.Unlock();
 
 	// Edit the name of the next item too?
 	int32 next;

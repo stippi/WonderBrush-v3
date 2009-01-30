@@ -5,6 +5,7 @@
 #include "EasyColumnTreeItem.h"
 
 
+class Document;
 class Object;
 
 
@@ -22,7 +23,7 @@ public:
 
 class ObjectTreeView : public ColumnTreeView {
 public:
-								ObjectTreeView(BRect frame);
+								ObjectTreeView(BRect frame, Document* document);
 	virtual						~ObjectTreeView();
 
 	virtual	void				MouseDown(BPoint where);
@@ -33,6 +34,9 @@ private:
 			void				_HandleRenameSelectedItem();
 			void				_HandleRenameItem(int32 index);
 			void				_HandleRenameObject(BMessage* message);
+
+private:
+			Document*			fDocument;
 };
 
 
