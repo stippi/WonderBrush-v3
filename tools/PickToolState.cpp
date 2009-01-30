@@ -463,7 +463,7 @@ PickToolState::_DragObject(ObjectType* object, BPoint where)
 	// TODO: hold reference to "object"
 
 	ChangeAreaCommand<ObjectType>* command
-		= new ChangeAreaCommand<ObjectType>(fLayer, object, area);
+		= new ChangeAreaCommand<ObjectType>(object, area);
 	fDocument->CommandStack()->Perform(command);
 
 	fDocument->WriteUnlock();

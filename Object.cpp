@@ -102,6 +102,14 @@ Object::ExtendDirtyArea(BRect& area) const
 	// "area" change.
 }
 
+// InvalidateParent
+void
+Object::InvalidateParent(const BRect& area)
+{
+	if (fParent)
+		fParent->Invalidate(area, fParent->IndexOf(this));
+}
+
 // UpdateChangeCounter
 void
 Object::UpdateChangeCounter()

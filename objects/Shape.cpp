@@ -87,6 +87,8 @@ Shape::SetArea(const BRect& area)
 	fArea = area;
 
 	_NotifyAreaChanged(oldArea, fArea);
+
+	InvalidateParent(oldArea | fArea);
 }
 
 // Area

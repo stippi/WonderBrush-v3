@@ -1,9 +1,6 @@
 /*
- * Copyright 2007, Haiku. All rights reserved.
- * Distributed under the terms of the MIT License.
- *
- * Authors:
- *		Stephan Aßmus <superstippi@gmx.de>
+ * Copyright 2007-2009, Stephan Aßmus <superstippi@gmx.de>.
+ * All rights reserved.
  */
 #include "Rect.h"
 
@@ -87,6 +84,8 @@ Rect::SetArea(const BRect& area)
 	fArea = area;
 
 	_NotifyAreaChanged(oldArea, fArea);
+
+	InvalidateParent(oldArea | fArea);
 }
 
 // Area

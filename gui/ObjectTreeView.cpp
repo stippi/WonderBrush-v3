@@ -1,3 +1,7 @@
+/*
+ * Copyright 2009, Stephan Aßmus <superstippi@gmx.de>.
+ * All rights reserved.
+ */
 #include "ObjectTreeView.h"
 
 #include <stdio.h>
@@ -8,6 +12,7 @@
 #include "CommandStack.h"
 #include "Document.h"
 #include "Object.h"
+#include "RenameObjectCommand.h"
 #include "TextViewPopup.h"
 
 
@@ -159,7 +164,6 @@ ObjectTreeView::_HandleRenameObject(BMessage* message)
 
 	AutoWriteLocker locker(fDocument);
 
-	// TODO: Action!
 	if (strcmp(object->Name(), name) == 0) {
 		// Happens when we use the TAB key to navigate without renaming
 		// In this case, the item needs to be invalidated too, because
@@ -169,7 +173,10 @@ ObjectTreeView::_HandleRenameObject(BMessage* message)
 			InvalidateItem(item);
 		}
 	} else {
-		object->SetName(name);
+		// rename via command
+		RenameObjectCommand* command = new (nothrow) RenameObjectCommand(object,
+			name);
+		fDocument->CommandStack()->Perform(command);
 	}
 	object->RemoveReference();
 

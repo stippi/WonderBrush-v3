@@ -45,6 +45,8 @@ class Object : public Transformable, public Referenceable {
 
 	virtual	void				ExtendDirtyArea(BRect& area) const;
 
+			void				InvalidateParent(const BRect& area);
+
 			void				UpdateChangeCounter();
 	inline	uint32				ChangeCounter() const
 									{ return fChangeCounter; }

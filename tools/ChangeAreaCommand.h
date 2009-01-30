@@ -1,9 +1,6 @@
 /*
- * Copyright 2007, Haiku.
- * Distributed under the terms of the MIT License.
- *
- * Authors:
- *		Stephan Aßmus <superstippi@gmx.de>
+ * Copyright 2007-2009, Stephan Aßmus <superstippi@gmx.de>.
+ * All rights reserved. Distributed under the terms of the MIT License.
  */
 #ifndef CHANGE_AREA_ACTION_H
 #define CHANGE_AREA_ACTION_H
@@ -11,14 +8,12 @@
 #include <Rect.h>
 
 #include "Command.h"
-#include "Layer.h"
 
 template<class ObjectType>
 class ChangeAreaCommand : public Command {
  public:
-	ChangeAreaCommand(Layer* layer, ObjectType* object, BRect newArea)
+	ChangeAreaCommand(ObjectType* object, BRect newArea)
 		: Command()
-		, fLayer(layer)
 		, fObject(object)
 		, fNewArea(newArea)
 	{
@@ -30,14 +25,13 @@ class ChangeAreaCommand : public Command {
 
 	virtual	status_t InitCheck()
 	{
-		return fLayer && fObject && fNewArea != fObject->Area() ? B_OK : B_ERROR;
+		return fObject && fNewArea != fObject->Area() ? B_OK : B_ERROR;
 	}
 
 	virtual	status_t Perform()
 	{
 		BRect oldArea = fObject->Area();
 		fObject->SetArea(fNewArea);
-		fLayer->Invalidate(oldArea | fNewArea, fLayer->IndexOf(fObject));
 		fNewArea = oldArea;
 	
 		return B_OK;
@@ -68,7 +62,6 @@ class ChangeAreaCommand : public Command {
 	}
 
  private:
-			Layer*				fLayer;
 			ObjectType*			fObject;
 			BRect				fNewArea;
 };

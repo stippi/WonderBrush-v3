@@ -137,7 +137,7 @@ SYSTEM_INCLUDE_PATHS = agg/include/
 #	additional paths to look for local headers
 #	thes use the form: #include "header"
 #	source file directories are automatically included
-LOCAL_INCLUDE_PATHS = 
+LOCAL_INCLUDE_PATHS = commands
 
 #	specify the level of optimization that you desire
 #	NONE, SOME, FULL
