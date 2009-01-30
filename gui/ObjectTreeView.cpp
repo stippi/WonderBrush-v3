@@ -108,7 +108,7 @@ ObjectTreeView::InitiateDrag(BPoint point, int32 index, bool wasSelected)
 	try {
 		BMessage* dragMessage = new BMessage(MSG_DRAG_SORT_OBJECTS);
 		ObjectDeleter<BMessage> messageDeleter(dragMessage);
-		float totalHeight = 0.0f;
+		float totalHeight = -1.0f;
 		float maxHeight = 100.0f;
 		bool fadeOutAtBottom = false;
 		int32 count = CountSelectedItems();
@@ -122,7 +122,7 @@ ObjectTreeView::InitiateDrag(BPoint point, int32 index, bool wasSelected)
 				return false;
 			addedItems++;
 			if (!fadeOutAtBottom) {
-				totalHeight += item->Height();
+				totalHeight += item->Height() + 1.0;
 				fadeOutAtBottom = totalHeight > maxHeight;
 			}
 		}
@@ -146,15 +146,15 @@ ObjectTreeView::InitiateDrag(BPoint point, int32 index, bool wasSelected)
 		GetFont(&font);
 		view->SetFont(&font);
 
-		float currentHeight = 0.0;
+		float previousItemBottom = -1.0;
 		for (int32 i = 0; i < count; i++) {
 			ColumnTreeItem* item = ItemAt(CurrentSelection(i));
 			if (item == NULL)
 				continue;
 
 			BRect itemRect(bitmapBounds);
-			itemRect.top = currentHeight;
-			itemRect.bottom = currentHeight + item->Height();
+			itemRect.top = previousItemBottom + 1.0;
+			itemRect.bottom = itemRect.top + item->Height();
 
 			for (int32 c = 0; c < CountColumns(); c++) {
 				Column* column = _VisibleColumnAt(c);
@@ -165,8 +165,8 @@ ObjectTreeView::InitiateDrag(BPoint point, int32 index, bool wasSelected)
 					0, &Colors()->item_colors);
 			}
 
-			currentHeight += item->Height();
-			if (currentHeight > totalHeight)
+			previousItemBottom = itemRect.bottom;
+			if (previousItemBottom > totalHeight)
 				break;
 		}
 		view->SetHighColor(0, 0, 0, 128);
