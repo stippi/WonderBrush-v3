@@ -117,7 +117,8 @@ class ColumnTreeView : public BView, public BInvoker, public Scrollable,
 			void				ItemChanged(ColumnTreeItem* item);
 			void				ScrollToItem(int32 index);
 	virtual	bool				InitiateDrag(BPoint point, int32 index,
-											 bool wasSelected);
+									bool wasSelected,
+									BMessage* _message = NULL);
 	virtual	void				ItemDoubleClicked(int32 index);
 
 	// item visibility
@@ -212,7 +213,7 @@ class ColumnTreeView : public BView, public BInvoker, public Scrollable,
 
  private:
 	friend class ColumnTreeViewStates::State;
-//	friend class ColumnTreeViewStates::DraggingState;
+	friend class ColumnTreeViewStates::DraggingState;
 	friend class ColumnTreeViewStates::IgnoreState;
 	friend class ColumnTreeViewStates::InsideState;
 	friend class ColumnTreeViewStates::OutsideState;
@@ -312,6 +313,7 @@ private:
 			Column*				fSecondarySortColumn;
 			BMessage*			fInvocationMessage;
 			BMessage*			fSelectionMessage;
+			BMessage*			fDragMessage;
 			int32				fSelectionDepth;	// to avoid multiple msgs
 			ColumnTreeViewStates::State*	fState;
 			column_tree_view_colors*	fColors;

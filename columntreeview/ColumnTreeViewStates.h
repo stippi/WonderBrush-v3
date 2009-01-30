@@ -42,6 +42,27 @@ class State {
 			BPoint				fStartPoint;
 };
 
+// DraggingState
+class DraggingState : public State {
+ public:
+								DraggingState(ColumnTreeView* listView,
+									BPoint point, const BMessage* message);
+	virtual						~DraggingState();
+
+	virtual	void				Moved(BPoint point, uint32 transit,
+									const BMessage* message);
+	virtual	void				Released(BPoint point, uint32 buttons,
+									uint32 modifiers);
+	virtual	void				Exited(BPoint point, const BMessage* message);
+
+ private:
+			void				_IndicateDropTarget(BPoint point);
+
+			BMessage			fDragMessage;
+			BRect				fDirtyArea;
+			int32				fItemIndex;
+};
+
 // IgnoreState
 class IgnoreState : public State {
  public:
@@ -49,6 +70,8 @@ class IgnoreState : public State {
 	virtual						~IgnoreState();
 
 	virtual	void				Exited(BPoint point, const BMessage* message);
+	virtual	void				Released(BPoint point, uint32 buttons,
+									uint32 modifiers);
 };
 
 // InsideState

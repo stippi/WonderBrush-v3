@@ -936,7 +936,8 @@ ColumnTreeView::ScrollToItem(int32 index)
 
 // InitiateDrag
 bool
-ColumnTreeView::InitiateDrag(BPoint point, int32 index, bool wasSelected)
+ColumnTreeView::InitiateDrag(BPoint point, int32 index, bool wasSelected,
+	BMessage* _message)
 {
 	return false;
 }

@@ -33,7 +33,8 @@ public:
 
 	// ColumnTreeView interface
 	virtual	bool				InitiateDrag(BPoint point, int32 index,
-									bool wasSelected);
+									bool wasSelected,
+									BMessage* _message = NULL);
 
 private:
 			void				_HandleRenameSelectedItem();

@@ -20,7 +20,7 @@ using namespace ColumnTreeViewStates;
 //#define ldebug	printf
 #define ldebug	nodebug
 
-// State
+// #pragma mark - State
 
 // constructor
 State::State(ColumnTreeView* listView, BPoint point)
@@ -116,7 +116,63 @@ State::ReleaseState(BPoint point)
 }
 
 
-// IgnoreState
+// #pragma mark - DraggingState
+
+// constructor
+DraggingState::DraggingState(ColumnTreeView* listView, BPoint point,
+		const BMessage* dragMessage)
+	: State(listView, point),
+	  fDragMessage(*dragMessage),
+	  fItemIndex(-2)
+{
+ldebug("DraggingState::DraggingState()\n");
+	_IndicateDropTarget(point);
+}
+
+// destructor
+DraggingState::~DraggingState()
+{
+	fListView->Invalidate(fDirtyArea);
+}
+
+// Moved
+void
+DraggingState::Moved(BPoint point, uint32 transit, const BMessage* message)
+{
+	_IndicateDropTarget(point);
+}
+
+// Released
+void
+DraggingState::Released(BPoint point, uint32 buttons, uint32 modifiers)
+{
+	ReleaseState(point);
+}
+
+// Exited
+void
+DraggingState::Exited(BPoint point, const BMessage* message)
+{
+	fListView->_ChangeState(new OutsideState(fListView));
+}
+
+void
+DraggingState::_IndicateDropTarget(BPoint point)
+{
+	// TODO: For real...
+	int32 index = fListView->IndexOf(point);
+	if (index != fItemIndex) {
+		fItemIndex = index;
+		BRect frame = fListView->ItemFrame(fItemIndex);
+		fListView->SetHighColor(255, 0, 0);
+		fListView->StrokeRect(frame);
+
+		fListView->Invalidate(fDirtyArea);
+		fDirtyArea = frame;
+	}
+}
+
+// #pragma mark - IgnoreState
 
 // constructor
 IgnoreState::IgnoreState(ColumnTreeView* listView)
@@ -137,8 +193,14 @@ IgnoreState::Exited(BPoint point, const BMessage* message)
 	fListView->_ChangeState(new OutsideState(fListView));
 }
 
+// Released
+void
+IgnoreState::Released(BPoint point, uint32 buttons, uint32 modifiers)
+{
+	ReleaseState(point);
+}
 
-// InsideState
+// #pragma mark - InsideState
 
 // constructor
 InsideState::InsideState(ColumnTreeView* listView, BPoint point)
@@ -223,7 +285,7 @@ InsideState::Pressed(BPoint point, uint32 buttons, uint32 modifiers,
 }
 
 
-// OutsideState
+// #pragma mark - OutsideState
 
 // constructor
 OutsideState::OutsideState(ColumnTreeView* listView)
@@ -244,16 +306,18 @@ OutsideState::Entered(BPoint point, const BMessage* message)
 	uint32 buttons = 0;
 	int32 clicks = 1;
 	GetMouseButtons(&buttons, &clicks);
-//	if ((buttons & (B_PRIMARY_MOUSE_BUTTON | B_SECONDARY_MOUSE_BUTTON |
-//					B_TERTIARY_MOUSE_BUTTON)) ||
-//		message) {
-//		fListView->_ChangeState(new IgnoreState(fListView));
-//	} else
+	if (buttons != 0) {
+		if (message) {
+			fListView->_ChangeState(new DraggingState(fListView, point,
+				message));
+		} else
+			fListView->_ChangeState(new IgnoreState(fListView));
+	} else
 		fListView->_ChangeState(new InsideState(fListView, point));
 }
 
 
-// PressedState
+// #pragma mark - PressedState
 
 // constructor
 PressedState::PressedState(ColumnTreeView* listView, BPoint point,
@@ -283,7 +347,13 @@ PressedState::Moved(BPoint point, uint32 transit, const BMessage* message)
 	if (fItemIndex >= 0 &&
 		fabs(fStartPoint.x - point.x) + fabs(fStartPoint.y - point.y) > 2.0) {
 		// initiate dragging
-		fListView->InitiateDrag(point, fItemIndex, fWasSelected);
+		BMessage message;
+		if (fListView->InitiateDrag(point, fItemIndex, fWasSelected,
+			&message)) {
+			fListView->_ChangeState(new DraggingState(fListView, point,
+				&message));
+			return;
+		}
 		ReleaseState(point);
 	}
 }

@@ -101,10 +101,9 @@ ObjectTreeView::MessageReceived(BMessage* message)
 
 
 bool
-ObjectTreeView::InitiateDrag(BPoint point, int32 index, bool wasSelected)
+ObjectTreeView::InitiateDrag(BPoint point, int32 index, bool wasSelected,
+	BMessage* _message)
 {
-//printf("ObjectTreeView::InitiateDrag(BPoint(%.1f, %.1f), index: %ld, %d)\n",
-//	point.x, point.y, index, wasSelected);
 	try {
 		BMessage dragMessage(MSG_DRAG_SORT_OBJECTS);
 		float totalHeight = -1.0f;
@@ -180,7 +179,7 @@ ObjectTreeView::InitiateDrag(BPoint point, int32 index, bool wasSelected)
 		int32 height = bitmapBounds.IntegerHeight() + 1;
 		for (int32 y = 0; y < height; y++) {
 			uint8* p = row;
-			uint8 alpha = 190;
+			uint8 alpha = 110;
 			if (fadeOutAtBottom && y >= height - 40)
 				alpha = alpha * (height - y) / 40;
 			for (int32 x = 0; x < width; x++) {
@@ -193,7 +192,11 @@ ObjectTreeView::InitiateDrag(BPoint point, int32 index, bool wasSelected)
 		bitmapDeleter.Detach();
 
 		DragMessage(&dragMessage, dragBitmap, B_OP_ALPHA, BPoint(point.x,
-			0.0));
+			point.y - ItemFrame(CurrentSelection(0)).top));
+		
+		if (_message)
+			*_message = dragMessage;
+
 		return true;
 
 	} catch (...) {
