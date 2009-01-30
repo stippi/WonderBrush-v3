@@ -2212,16 +2212,16 @@ void
 ColumnTreeView::_DrawItem(ColumnTreeItem* item, BView* view, int32 firstColumn,
 						  int32 lastColumn, BRect updateRect)
 {
-printf("ColumnTreeView::_DrawItem(..., %ld, %ld,...)\n", firstColumn,
-lastColumn);
+//printf("ColumnTreeView::_DrawItem(..., %ld, %ld,...)\n", firstColumn,
+//lastColumn);
 	if (!item || !fModel)
 		return;
 	BRect itemRect(_ItemFrame(item));
 	int32 level = fModel->LevelOf(item);
-printf("  item level: %ld\n", level);
+//printf("  item level: %ld\n", level);
 	// draw the first column separately, if the item level is greate 0
 	if (firstColumn == 0 && level > 0) {
-printf("  draw first column\n");
+//printf("  draw first column\n");
 		Column* column = _VisibleColumnAt(firstColumn);
 		firstColumn++;
 		BRect columnRect(_VisibleColumnFrame(column) & itemRect);
@@ -2230,8 +2230,8 @@ printf("  draw first column\n");
 		// draw the item
 		BRect indentedColumnRect(columnRect.LeftTop() + BPoint(indentation, 0),
 								 columnRect.RightBottom());
-printf("  indentedColumnRect");
-indentedColumnRect.PrintToStream();
+//printf("  indentedColumnRect");
+//indentedColumnRect.PrintToStream();
 		item->Draw(view, column, indentedColumnRect,
 				   indentedColumnRect & updateRect,
 				   item->Flags(), &fColors->item_colors);

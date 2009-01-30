@@ -172,12 +172,12 @@ InsideState::Pressed(BPoint point, uint32 buttons, uint32 modifiers,
 			// clicked outside of the items rect: deselect all
 			fListView->DeselectAll();
 		} else {
-printf("item frame:        ");
-fListView->_ItemFrame(index).PrintToStream();
-printf("item handle frame: ");
-fListView->_ItemHandleFrame(index).PrintToStream();
-printf("column 0 frame:    ");
-fListView->_VisibleColumnFrame(0L).PrintToStream();
+//printf("item frame:        ");
+//fListView->_ItemFrame(index).PrintToStream();
+//printf("item handle frame: ");
+//fListView->_ItemHandleFrame(index).PrintToStream();
+//printf("column 0 frame:    ");
+//fListView->_VisibleColumnFrame(0L).PrintToStream();
 			if (fListView->_ItemHandleFrame(index).Contains(point)) {
 				// hit the item handle: toggle expanded state
 				if (ColumnTreeItem* item = fListView->ItemAt(index)) {
