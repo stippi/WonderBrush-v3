@@ -138,12 +138,13 @@ ObjectTreeView::InitiateDrag(BPoint point, int32 index, bool wasSelected)
 		if (!dragBitmap->Lock())
 			return false;
 
-		view->SetLowColor(Colors()->background);
-printf("low color: %d, %d, %d, %d\n", LowColor().red, LowColor().green,
-	LowColor().blue, LowColor().alpha);
-		view->FillRect(bitmapBounds, B_SOLID_LOW);
-		view->SetHighColor(255, 0, 0);
-		view->StrokeLine(view->Bounds().LeftTop(), view->Bounds().RightBottom());
+		// configure view to match ourself
+		view->SetDrawingMode(DrawingMode());
+		view->SetLowColor(LowColor());
+		view->SetHighColor(HighColor());
+		BFont font;
+		GetFont(&font);
+		view->SetFont(&font);
 
 		float currentHeight = 0.0;
 		for (int32 i = 0; i < count; i++) {
@@ -154,13 +155,12 @@ printf("low color: %d, %d, %d, %d\n", LowColor().red, LowColor().green,
 			BRect itemRect(bitmapBounds);
 			itemRect.top = currentHeight;
 			itemRect.bottom = currentHeight + item->Height();
-itemRect.PrintToStream();
 
 			for (int32 c = 0; c < CountColumns(); c++) {
 				Column* column = _VisibleColumnAt(c);
-				BRect columnRect(_VisibleColumnFrame(column) & itemRect);
-printf("  ");
-columnRect.PrintToStream();
+				BRect columnRect = _VisibleColumnFrame(column);
+				columnRect.top = itemRect.top;
+				columnRect.bottom = itemRect.bottom;
 				item->Draw(view, column, columnRect, columnRect,
 					0, &Colors()->item_colors);
 			}
@@ -169,10 +169,28 @@ columnRect.PrintToStream();
 			if (currentHeight > totalHeight)
 				break;
 		}
+		view->SetHighColor(0, 0, 0, 128);
+		view->SetDrawingMode(B_OP_COPY);
+		view->StrokeRect(view->Bounds());
 		view->Sync();
 		dragBitmap->Unlock();
 
-		// TODO: Fade out at bottom
+		// Mess with the alpha channel
+		uint8* row = (uint8*)dragBitmap->Bits();
+		int32 bpr = dragBitmap->BytesPerRow();
+		int32 width = bitmapBounds.IntegerWidth() + 1;
+		int32 height = bitmapBounds.IntegerHeight() + 1;
+		for (int32 y = 0; y < height; y++) {
+			uint8* p = row;
+			uint8 alpha = 190;
+			if (fadeOutAtBottom && y >= height - 40)
+				alpha = alpha * (height - y) / 40;
+			for (int32 x = 0; x < width; x++) {
+				p[3] = (p[3] * alpha) >> 8;
+				p += 4;
+			}
+			row += bpr;
+		}
 
 		messageDeleter.Detach();
 		bitmapDeleter.Detach();
