@@ -2219,7 +2219,7 @@ ColumnTreeView::_DrawItem(ColumnTreeItem* item, BView* view, int32 firstColumn,
 	BRect itemRect(_ItemFrame(item));
 	int32 level = fModel->LevelOf(item);
 //printf("  item level: %ld\n", level);
-	// draw the first column separately, if the item level is greate 0
+	// draw the first column separately, if the item level is greater than 0
 	if (firstColumn == 0 && level > 0) {
 //printf("  draw first column\n");
 		Column* column = _VisibleColumnAt(firstColumn);

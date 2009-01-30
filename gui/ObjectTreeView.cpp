@@ -8,7 +8,9 @@
 
 #include <Bitmap.h>
 
+#include "AutoDeleter.h"
 #include "Column.h"
+#include "ColumnTreeViewColors.h"
 #include "CommandStack.h"
 #include "Document.h"
 #include "Object.h"
@@ -42,7 +44,8 @@ ObjectColumnTreeItem::Update()
 
 
 enum {
-	MSG_RENAME_OBJECT	= 'rnoj'
+	MSG_RENAME_OBJECT		= 'rnoj',
+	MSG_DRAG_SORT_OBJECTS	= 'drgo'
 };
 
 
@@ -95,6 +98,96 @@ ObjectTreeView::MessageReceived(BMessage* message)
 		ColumnTreeView::MessageReceived(message);
 	}
 }
+
+
+bool
+ObjectTreeView::InitiateDrag(BPoint point, int32 index, bool wasSelected)
+{
+//printf("ObjectTreeView::InitiateDrag(BPoint(%.1f, %.1f), index: %ld, %d)\n",
+//	point.x, point.y, index, wasSelected);
+	try {
+		BMessage* dragMessage = new BMessage(MSG_DRAG_SORT_OBJECTS);
+		ObjectDeleter<BMessage> messageDeleter(dragMessage);
+		float totalHeight = 0.0f;
+		float maxHeight = 100.0f;
+		bool fadeOutAtBottom = false;
+		int32 count = CountSelectedItems();
+		int32 addedItems = 0;
+		for (int32 i = 0; i < count; i++) {
+			ObjectColumnTreeItem* item = dynamic_cast<ObjectColumnTreeItem*>(
+				ItemAt(CurrentSelection(i)));
+			if (item == NULL || item->object == NULL)
+				continue;
+			if (dragMessage->AddPointer("object", item->object) != B_OK)
+				return false;
+			addedItems++;
+			if (!fadeOutAtBottom) {
+				totalHeight += item->Height();
+				fadeOutAtBottom = totalHeight > maxHeight;
+			}
+		}
+		if (addedItems == 0)
+			return false;
+
+		BRect bitmapBounds(0, 0, Bounds().Width(), totalHeight);
+		BBitmap* dragBitmap = new BBitmap(bitmapBounds, B_BITMAP_ACCEPTS_VIEWS,
+			B_RGBA32);
+		ObjectDeleter<BBitmap> bitmapDeleter(dragBitmap);
+		BView* view = new BView(bitmapBounds, "offscreen", 0, 0);
+		dragBitmap->AddChild(view);
+		if (!dragBitmap->Lock())
+			return false;
+
+		view->SetLowColor(Colors()->background);
+printf("low color: %d, %d, %d, %d\n", LowColor().red, LowColor().green,
+	LowColor().blue, LowColor().alpha);
+		view->FillRect(bitmapBounds, B_SOLID_LOW);
+		view->SetHighColor(255, 0, 0);
+		view->StrokeLine(view->Bounds().LeftTop(), view->Bounds().RightBottom());
+
+		float currentHeight = 0.0;
+		for (int32 i = 0; i < count; i++) {
+			ColumnTreeItem* item = ItemAt(CurrentSelection(i));
+			if (item == NULL)
+				continue;
+
+			BRect itemRect(bitmapBounds);
+			itemRect.top = currentHeight;
+			itemRect.bottom = currentHeight + item->Height();
+itemRect.PrintToStream();
+
+			for (int32 c = 0; c < CountColumns(); c++) {
+				Column* column = _VisibleColumnAt(c);
+				BRect columnRect(_VisibleColumnFrame(column) & itemRect);
+printf("  ");
+columnRect.PrintToStream();
+				item->Draw(view, column, columnRect, columnRect,
+					0, &Colors()->item_colors);
+			}
+
+			currentHeight += item->Height();
+			if (currentHeight > totalHeight)
+				break;
+		}
+		view->Sync();
+		dragBitmap->Unlock();
+
+		// TODO: Fade out at bottom
+
+		messageDeleter.Detach();
+		bitmapDeleter.Detach();
+
+		DragMessage(dragMessage, dragBitmap, B_OP_ALPHA, BPoint(point.x,
+			0.0));
+		return true;
+
+	} catch (...) {
+	}
+	return false;
+}
+
+
+// #pragma mark -
 
 
 void

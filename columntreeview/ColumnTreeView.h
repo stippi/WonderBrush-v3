@@ -221,7 +221,7 @@ class ColumnTreeView : public BView, public BInvoker, public Scrollable,
 
 	class ItemCompare;
 
- private:
+private:
 			Column*				_RemoveOrderedColumn(int32 index);
 			void				_HideOrderedColumn(int32 index);
 			void				_HideOrderedColumn(Column* column);
@@ -238,6 +238,7 @@ class ColumnTreeView : public BView, public BInvoker, public Scrollable,
 			void				_AddVisibleColumn(Column* column);
 			void				_RemoveVisibleColumn(Column* column);
 
+protected:
 			Column*				_VisibleColumnAt(int32 index) const;
 			int32				_VisibleColumnIndexOf(Column* column) const;
 			int32				_VisibleColumnIndexOf(BPoint point) const;
@@ -249,6 +250,7 @@ class ColumnTreeView : public BView, public BInvoker, public Scrollable,
 			BRect				_VisibleColumnFrame(int32 index) const;
 			BRect				_VisibleColumnFrame(Column* column) const;
 
+private:
 			BPoint				_ItemPosition(int32 index) const;
 			BPoint				_ItemPosition(ColumnTreeItem* item) const;
 			BRect				_ItemFrame(int32 index) const;

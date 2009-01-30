@@ -26,9 +26,14 @@ public:
 								ObjectTreeView(BRect frame, Document* document);
 	virtual						~ObjectTreeView();
 
+	// BView interface
 	virtual	void				MouseDown(BPoint where);
 	virtual	void				KeyDown(const char* bytes, int32 numBytes);
 	virtual	void				MessageReceived(BMessage* message);
+
+	// ColumnTreeView interface
+	virtual	bool				InitiateDrag(BPoint point, int32 index,
+									bool wasSelected);
 
 private:
 			void				_HandleRenameSelectedItem();
