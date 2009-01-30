@@ -153,7 +153,7 @@ TextViewPopup::TextViewPopup(BRect frame, const BString& text,
 							 BMessage* message, BHandler* target)
 	: fMessage(message)
 	, fTarget(target)
-	, fCanceled(false)
+	, fMessageSent(false)
 {
 	fPopupWindow = new BWindow(frame, "text edit popup",
 							   B_BORDERED_WINDOW_LOOK,
@@ -178,8 +178,9 @@ TextViewPopup::~TextViewPopup()
 void
 TextViewPopup::TextEdited(const char* text, int32 next)
 {
-	if (fCanceled)
+	if (fMessageSent)
 		return;
+	fMessageSent = true;
 
 	if (fMessage && fTarget.IsValid()) {
 		fMessage->AddString("text", text);
@@ -194,7 +195,10 @@ TextViewPopup::TextEdited(const char* text, int32 next)
 void
 TextViewPopup::Cancel()
 {
-	fCanceled = true;
+	if (fMessageSent)
+		return;
+	fMessageSent = true;
+
 	if (fMessage && fTarget.IsValid()) {
 		fTarget.SendMessage(fMessage);
 	}

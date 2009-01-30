@@ -1,5 +1,7 @@
 #include "ObjectTreeView.h"
 
+#include <stdio.h>
+
 #include <Bitmap.h>
 
 #include "Column.h"
@@ -105,8 +107,9 @@ ObjectTreeView::_HandleRenameItem(int32 index)
 
 	item->object->AddReference();
 
+	BMessage* message = NULL;
 	try {
-		BMessage* message = new BMessage(MSG_RENAME_OBJECT);
+		message = new BMessage(MSG_RENAME_OBJECT);
 		message->AddPointer("object", item->object);
 		message->AddPointer("item", item);
 		message->AddInt32("index", index);
@@ -120,6 +123,7 @@ ObjectTreeView::_HandleRenameItem(int32 index)
 
 		new TextViewPopup(frame, item->object->Name(), message, this);
 	} catch (...) {
+		delete message;
 		item->object->RemoveReference();
 	}
 }
@@ -150,7 +154,17 @@ ObjectTreeView::_HandleRenameObject(BMessage* message)
 
 	// TODO: Action!
 	// TODO: Locking!
-	object->SetName(name);
+	if (strcmp(object->Name(), name) == 0) {
+		// Happens when we use the TAB key to navigate without renaming
+		// In this case, the item needs to be invalidated too, because
+		// the name was hidden.
+		if (HasItem(item)) {
+			item->SetContent(0, object->Name());
+			InvalidateItem(item);
+		}
+	} else {
+		object->SetName(name);
+	}
 	object->RemoveReference();
 
 	// Edit the name of the next item too?

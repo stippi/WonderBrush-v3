@@ -31,7 +31,7 @@ class TextViewPopup {
 			BWindow*			fPopupWindow;
 			BMessage*			fMessage;
 			BMessenger			fTarget;
-			bool				fCanceled;
+			bool				fMessageSent;
 };
 
 #endif // TEXT_VIEW_POPUP_H
