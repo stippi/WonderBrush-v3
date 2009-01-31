@@ -68,7 +68,7 @@ LayerSnapshot::Layout(LayoutContext& context, uint32 flags)
 {
 	int32 count = CountObjects();
 	for (int32 i = 0; i < count; i++) {
-		ObjectSnapshot* snapshot = ObjectAt(i);
+		ObjectSnapshot* snapshot = ObjectAtFast(i);
 		snapshot->Layout(context, flags);
 	}
 }
@@ -193,14 +193,14 @@ LayerSnapshot::Render(RenderEngine& engine, BRect area, BBitmap* bitmap,
 ObjectSnapshot*
 LayerSnapshot::ObjectAt(int32 index) const
 {
-	return (ObjectSnapshot*)fObjects.ItemAt(index);
+	return reinterpret_cast<ObjectSnapshot*>(fObjects.ItemAt(index));
 }
 
 // ObjectAtFast
 ObjectSnapshot*
 LayerSnapshot::ObjectAtFast(int32 index) const
 {
-	return (ObjectSnapshot*)fObjects.ItemAtFast(index);
+	return reinterpret_cast<ObjectSnapshot*>(fObjects.ItemAtFast(index));
 }
 
 // CountObjects

@@ -130,14 +130,14 @@ Layer::RemoveObject(int32 index)
 Object*
 Layer::ObjectAt(int32 index) const
 {
-	return (Object*)fObjects.ItemAt(index);
+	return reinterpret_cast<Object*>(fObjects.ItemAt(index));
 }
 
 // ObjectAtFast
 Object*
 Layer::ObjectAtFast(int32 index) const
 {
-	return (Object*)fObjects.ItemAtFast(index);
+	return reinterpret_cast<Object*>(fObjects.ItemAtFast(index));
 }
 
 // IndexOf
