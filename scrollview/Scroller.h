@@ -23,6 +23,10 @@ class Scroller {
 			BRect				VisibleBounds() const;
 			BRect				VisibleRect() const;
 
+	virtual	void				SetScrollingEnabled(bool enabled);
+			bool				IsScrollingEnabled() const
+									{ return fScrollingEnabled; }
+
 	virtual	bool				IsScrolling() const;
 
 protected:
@@ -39,6 +43,7 @@ protected:
 
  protected:
 			Scrollable*			fScrollTarget;
+			bool				fScrollingEnabled;
 
 	friend class Scrollable;
 };

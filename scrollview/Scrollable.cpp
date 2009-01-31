@@ -58,7 +58,7 @@ Scrollable::ScrollSource() const
 //
 // Sets the data rect.
 void
-Scrollable::SetDataRect(BRect dataRect)
+Scrollable::SetDataRect(BRect dataRect, bool validateScrollOffset)
 {
 	if (fDataRect != dataRect && dataRect.IsValid()) {
 		BRect oldDataRect = fDataRect;
@@ -69,9 +69,11 @@ Scrollable::SetDataRect(BRect dataRect)
 		if (fScrollSource)
 			fScrollSource->DataRectChanged(oldDataRect, fDataRect);
 		// adjust the scroll offset, if necessary
-		BPoint offset = ValidScrollOffsetFor(fScrollOffset);
-		if (offset != fScrollOffset)
-			SetScrollOffset(offset);
+		if (validateScrollOffset) {
+			BPoint offset = ValidScrollOffsetFor(fScrollOffset);
+			if (offset != fScrollOffset)
+				SetScrollOffset(offset);
+		}
 	}
 }
 
@@ -112,21 +114,57 @@ Scrollable::ScrollOffset() const
 	return fScrollOffset;
 }
 
+// SetDataRect
+//
+// Sets the data rect.
+void
+Scrollable::SetDataRectAndScrollOffset(BRect dataRect, BPoint offset)
+{
+	if (fDataRect != dataRect && dataRect.IsValid()) {
+
+		BRect oldDataRect = fDataRect;
+		fDataRect = dataRect;
+		// notify ourselves
+		DataRectChanged(oldDataRect, fDataRect);
+		// notify scroller
+		if (fScrollSource) {
+			fScrollSource->SetScrollingEnabled(false);
+			fScrollSource->DataRectChanged(oldDataRect, fDataRect);
+		}
+		// adjust the scroll offset, if necessary
+		offset = ValidScrollOffsetFor(offset);
+		if (offset != fScrollOffset)
+			SetScrollOffset(offset);
+
+		if (fScrollSource)
+			fScrollSource->SetScrollingEnabled(true);
+	}
+}
+
 // ValidScrollOffsetFor
 //
 // Returns the valid scroll offset next to the supplied offset.
 BPoint
 Scrollable::ValidScrollOffsetFor(BPoint offset) const
 {
-	float maxX = max(fDataRect.left, fDataRect.right - fVisibleWidth);
-	float maxY = max(fDataRect.top, fDataRect.bottom - fVisibleHeight);
+	return ValidScrollOffsetFor(offset, fDataRect);
+}
+
+// ValidScrollOffsetFor
+//
+// Returns the valid scroll offset next to the supplied offset.
+BPoint
+Scrollable::ValidScrollOffsetFor(BPoint offset, const BRect& dataRect) const
+{
+	float maxX = max(dataRect.left, dataRect.right - fVisibleWidth);
+	float maxY = max(dataRect.top, dataRect.bottom - fVisibleHeight);
 	// adjust the offset to be valid
-	if (offset.x < fDataRect.left)
-		offset.x = fDataRect.left;
+	if (offset.x < dataRect.left)
+		offset.x = dataRect.left;
 	else if (offset.x > maxX)
 		offset.x = maxX;
-	if (offset.y < fDataRect.top)
-		offset.y = fDataRect.top;
+	if (offset.y < dataRect.top)
+		offset.y = dataRect.top;
 	else if (offset.y > maxY)
 		offset.y = maxY;
 	return offset;

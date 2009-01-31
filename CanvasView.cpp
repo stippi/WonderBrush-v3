@@ -124,8 +124,10 @@ CanvasView::AttachedToWindow()
 		(dataRect.top + dataRect.bottom) / 2);
 	BPoint boundsCenter((bounds.left + bounds.right) / 2,
 		(bounds.top + bounds.bottom) / 2);
-	SetScrollOffset(ScrollOffset() + BPoint(dataRectCenter.x - boundsCenter.x,
-		dataRectCenter.y - boundsCenter.y));
+	BPoint offset = ScrollOffset();
+	offset.x = roundf(offset.x + dataRectCenter.x - boundsCenter.x);
+	offset.y = roundf(offset.y + dataRectCenter.y - boundsCenter.y);
+	SetScrollOffset(offset);
 }
 
 // FrameResized
@@ -244,7 +246,7 @@ CanvasView::MouseWheelChanged(BPoint where, float x, float y)
 		return false;
 
 	if (y > 0.0) {
-		SetZoomLevel(NextZoomOutLevel(fZoomLevel));
+		SetZoomLevel(NextZoomOutLevel(fZoomLevel), true);
 		return true;
 	} else if (y < 0.0) {
 		SetZoomLevel(NextZoomInLevel(fZoomLevel), true);
@@ -336,7 +338,6 @@ void
 CanvasView::ScrollOffsetChanged(BPoint oldOffset, BPoint newOffset)
 {
 	BPoint offset = newOffset - oldOffset;
-//printf("CanvasView::ScrollOffsetChanged(%.1f, %.1f)\n", offset.x, offset.y);
 
 	if (offset == B_ORIGIN)
 		// prevent circular code (MouseMoved might call ScrollBy...)
@@ -426,27 +427,32 @@ CanvasView::SetZoomLevel(double zoomLevel, bool mouseIsAnchor)
 	if (fZoomLevel == zoomLevel)
 		return;
 
-	// zoom into center of view
-	BRect bounds(Bounds());
 	BPoint anchor;
-	anchor.x = (bounds.left + bounds.right + 1) / 2.0;
-	anchor.y = (bounds.top + bounds.bottom + 1) / 2.0;
+	if (mouseIsAnchor) {
+		// zoom into mouse position
+		anchor = MouseInfo()->position;
+	} else {
+		// zoom into center of view
+		BRect bounds(Bounds());
+		anchor.x = (bounds.left + bounds.right + 1) / 2.0;
+		anchor.y = (bounds.top + bounds.bottom + 1) / 2.0;
+	}
 
 	BPoint canvasAnchor = anchor;
 	ConvertToCanvas(&canvasAnchor);
 
 	fZoomLevel = zoomLevel;
-	SetDataRect(_LayoutCanvas());
+	BRect dataRect = _LayoutCanvas();
 
 	ConvertFromCanvas(&canvasAnchor);
 
-	BPoint offset;
-	offset.x = roundf(canvasAnchor.x - anchor.x);
-	offset.y = roundf(canvasAnchor.y - anchor.y);
-
-	SetScrollOffset(ScrollOffset() + offset);
+	BPoint offset = ScrollOffset();
+	offset.x = roundf(offset.x + canvasAnchor.x - anchor.x);
+	offset.y = roundf(offset.y + canvasAnchor.y - anchor.y);
 
 	Invalidate();
+		// Cause the (Haiku) app_server to skip visual scrolling
+	SetDataRectAndScrollOffset(dataRect, offset);
 }
 
 // SetAutoScrolling

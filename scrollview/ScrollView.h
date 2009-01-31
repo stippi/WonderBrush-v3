@@ -55,6 +55,7 @@ class ScrollView : public BView, public Scroller {
 			float				VSmallStep() const;
 
 	virtual	bool				IsScrolling() const;
+	virtual	void				SetScrollingEnabled(bool enabled);
 
  protected:
 	virtual	void				DataRectChanged(BRect oldDataRect,

@@ -527,6 +527,14 @@ ScrollView::IsScrolling() const
 	return fScrolling;
 }
 
+void
+ScrollView::SetScrollingEnabled(bool enabled)
+{
+	Scroller::SetScrollingEnabled(enabled);
+	if (IsScrollingEnabled())
+		SetScrollOffset(ScrollOffset());
+}
+
 // DataRectChanged
 void
 ScrollView::DataRectChanged(BRect /*oldDataRect*/, BRect /*newDataRect*/)
@@ -584,6 +592,9 @@ ScrollView::ScrollTargetChanged(Scrollable* /*oldTarget*/,
 void
 ScrollView::_ScrollValueChanged(InternalScrollBar* scrollBar, float value)
 {
+	if (!IsScrollingEnabled())
+		return;
+
 	switch (scrollBar->Orientation()) {
 		case B_HORIZONTAL:
 			if (fHScrollBar)
@@ -886,6 +897,5 @@ ScrollView::_MaxVisibleRect() const
 void
 ScrollView::_SetScrolling(bool scrolling)
 {
-printf("ScrollView::_SetScrolling(%d)\n", scrolling);
 	fScrolling = scrolling;
 }

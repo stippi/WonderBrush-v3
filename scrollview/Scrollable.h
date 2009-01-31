@@ -16,12 +16,19 @@ class Scrollable {
 			void				SetScrollSource(Scroller* source);
 			Scroller*			ScrollSource() const;
 
-			void				SetDataRect(BRect dataRect);
+			void				SetDataRect(BRect dataRect,
+									bool validateScrollOffset = true);
 			BRect				DataRect() const;
 
 	virtual	void				SetScrollOffset(BPoint offset);
 			BPoint				ScrollOffset() const;
+
+			void				SetDataRectAndScrollOffset(BRect dataRect,
+									BPoint offset);
+
 			BPoint				ValidScrollOffsetFor(BPoint offset) const;
+			BPoint				ValidScrollOffsetFor(BPoint offset,
+									const BRect& dataRect) const;
 
 			void				SetVisibleSize(float width, float height);
 			BRect				VisibleBounds() const;

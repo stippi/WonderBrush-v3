@@ -10,7 +10,8 @@
 
 // constructor
 Scroller::Scroller()
-	: fScrollTarget(NULL)
+	: fScrollTarget(NULL),
+	  fScrollingEnabled(true)
 {
 }
 
@@ -126,6 +127,13 @@ Scroller::VisibleRect() const
 	if (fScrollTarget)
 		return 	fScrollTarget->VisibleRect();
 	return BRect();
+}
+
+// SetScrollingEnabled
+void
+Scroller::SetScrollingEnabled(bool enabled)
+{
+	fScrollingEnabled = enabled;
 }
 
 // IsScrolling
