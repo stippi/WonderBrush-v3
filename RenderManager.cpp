@@ -129,7 +129,8 @@ RenderManager::RenderManager(Document* document)
 	, fDocument(document)
 	, fSnapshot(new (nothrow) LayerSnapshot(fDocument->RootLayer()))
 
-	, fLayoutContext()
+	, fInitialLayoutState()
+	, fLayoutContext(&fInitialLayoutState)
 	, fLayoutDirtyFlags(0)
 
 	, fRenderThreads(NULL)

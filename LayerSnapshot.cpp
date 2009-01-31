@@ -16,6 +16,7 @@
 #include "bitmap_support.h"
 
 #include "Layer.h"
+#include "LayoutContext.h"
 #include "Object.h"
 
 
@@ -66,11 +67,19 @@ LayerSnapshot::Sync()
 void
 LayerSnapshot::Layout(LayoutContext& context, uint32 flags)
 {
+	LayoutState state(context.State());
+	context.PushState(&state);
+
+	// TODO: Keep Transformable as a member, don't inherit it.
+	context.SetTransformation(*this);
+
 	int32 count = CountObjects();
 	for (int32 i = 0; i < count; i++) {
 		ObjectSnapshot* snapshot = ObjectAtFast(i);
 		snapshot->Layout(context, flags);
 	}
+
+	context.PopState();
 }
 
 // Render

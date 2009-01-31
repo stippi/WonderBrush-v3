@@ -36,6 +36,7 @@ SRCS= App.cpp \
 	  Layer.cpp \
 	  LayerObserver.cpp \
 	  LayoutContext.cpp \
+	  LayoutState.cpp \
 	  LayerSnapshot.cpp \
 	  main.cpp \
 	  Object.cpp \

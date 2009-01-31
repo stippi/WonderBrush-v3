@@ -15,6 +15,7 @@
 #include "Layer.h"
 #include "LayerSnapshot.h"
 #include "LayoutContext.h"
+#include "LayoutState.h"
 
 class BBitmap;
 class BMessenger;
@@ -106,6 +107,7 @@ private:
 			Document*			fDocument;
 			LayerSnapshot*		fSnapshot;
 
+			LayoutState			fInitialLayoutState;
 			LayoutContext		fLayoutContext;
 			uint32				fLayoutDirtyFlags;
 
