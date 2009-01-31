@@ -123,8 +123,14 @@ RenderManager::RenderManager(Document* document)
 	: Layer::Listener()
 	, fCleanArea(LONG_MAX, LONG_MAX, LONG_MIN, LONG_MIN)
 
+	, fDocumentDirtyMap(new (nothrow) DirtyMap())
+	, fSnapshotDirtyMap(new (nothrow) DirtyMap())
+
 	, fDocument(document)
 	, fSnapshot(new (nothrow) LayerSnapshot(fDocument->RootLayer()))
+
+	, fLayoutContext()
+	, fLayoutDirtyFlags(0)
 
 	, fRenderThreads(NULL)
 	, fRenderThreadCount(0)
@@ -141,12 +147,23 @@ RenderManager::RenderManager(Document* document)
 
 	, fBitmapListener(NULL)
 {
-// TODO: Move everything to Init() method and check errors!
-	fDisplayBitmap[0] = new (nothrow) BBitmap(document->Bounds(), 0, B_RGBA32);
-	fDisplayBitmap[1] = new (nothrow) BBitmap(document->Bounds(), 0, B_RGBA32);
+	fDisplayBitmap[0] = NULL;
+	fDisplayBitmap[1] = NULL;
+}
 
-	fDocumentDirtyMap = new (nothrow) DirtyMap();
-	fSnapshotDirtyMap = new (nothrow) DirtyMap();
+// Init
+status_t
+RenderManager::Init()
+{
+// TODO: Move everything to Init() method and check errors!
+	fDisplayBitmap[0] = new (nothrow) BBitmap(fDocument->Bounds(), 0, B_RGBA32);
+	fDisplayBitmap[1] = new (nothrow) BBitmap(fDocument->Bounds(), 0, B_RGBA32);
+
+	if (fDisplayBitmap[0] == NULL || !fDisplayBitmap[0]->IsValid()
+		|| fDisplayBitmap[1] == NULL || !fDisplayBitmap[1]->IsValid()
+		|| fDocumentDirtyMap == NULL || fSnapshotDirtyMap == NULL) {
+		return B_NO_MEMORY;
+	}
 
 #if 1
 	system_info info;
@@ -158,16 +175,29 @@ RenderManager::RenderManager(Document* document)
 #endif
 
 	fWaitingRenderThreadsSem = create_sem(0, "wait for render task");
+	if (fWaitingRenderThreadsSem < 0)
+		return fWaitingRenderThreadsSem;
 
 	fRenderThreads = new (nothrow) RenderThread*[fRenderThreadCount];
+	if (fRenderThreads == NULL)
+		return B_NO_MEMORY;
+
+	memset(fRenderThreads, 0, sizeof(RenderThread*) * fRenderThreadCount);
+
 	for (int32 i = 0; i < fRenderThreadCount; i++) {
-		fRenderThreads[i] = new (nothrow) RenderThread(this, i);
+		fRenderThreads[i] = new (nothrow) RenderThread(this);
+		if (fRenderThreads[i] == NULL || fRenderThreads[i]->Init() != B_OK) {
+			delete fRenderThreads[i];
+			fRenderThreads[i] = NULL;
+			return B_NO_MEMORY;
+		}
 		fRenderThreads[i]->Run();
 	}
 
 	_RecursiveAddListener(fDocument->RootLayer());
-}
 
+	return B_OK;
+}
 // destructor
 RenderManager::~RenderManager()
 {
@@ -175,7 +205,7 @@ RenderManager::~RenderManager()
 	delete_sem(fWaitingRenderThreadsSem);
 
 	for (int32 i = 0; i < fRenderThreadCount; i++)
-		fRenderThreads[i]->WaitForThread();
+		delete fRenderThreads[i];
 	delete[] fRenderThreads;
 
 	delete fDisplayBitmap[0];
@@ -535,6 +565,9 @@ RenderManager::_TriggerRender()
 
 	// sync document and document clone
 	fSnapshot->Sync();
+
+	// do layout pass
+	fSnapshot->Layout(fLayoutContext, fLayoutDirtyFlags);
 
 	// count sublayers
 	int32 count = 0;

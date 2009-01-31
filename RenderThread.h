@@ -11,6 +11,8 @@
 #include <OS.h>
 #include <Region.h>
 
+#include "RenderEngine.h"
+
 
 class BBitmap;
 class Layer;
@@ -19,10 +21,10 @@ class RenderManager;
 
 class RenderThread {
  public:
-								RenderThread(RenderManager* manager,
-									int32 index);
+								RenderThread(RenderManager* manager);
 	virtual						~RenderThread();
 
+			status_t			Init();
 			thread_id			Run();
 			void				WaitForThread();
 			void				Render(LayerSnapshot* layer, BRect area);
@@ -37,8 +39,7 @@ class RenderThread {
 
 			thread_id			fThread;
 			RenderManager*		fRenderManager;
-			int32				fThreadIndex;
-			BBitmap*			fBitmap;
+			RenderEngine		fEngine;
 
 			BList				fLayerBitmaps;
 };

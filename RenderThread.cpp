@@ -118,7 +118,7 @@ class RenderThread::LayerBitmap {
 									{ return fLayer; }
 
 			status_t			InitCheck() const;
-			BRect				Render(BRect area);
+			BRect				Render(RenderEngine& engine, BRect area);
 
 			const BBitmap*		Bitmap() const
 									{ return &fLayerBitmap; }
@@ -197,7 +197,7 @@ RenderThread::LayerBitmap::InitCheck() const
 
 // Render
 BRect
-RenderThread::LayerBitmap::Render(BRect area)
+RenderThread::LayerBitmap::Render(RenderEngine& engine, BRect area)
 {
 #if USE_CACHING
 	return fLayer->Render(area, lowestChangedObject,
@@ -205,31 +205,40 @@ RenderThread::LayerBitmap::Render(BRect area)
 #else
 	BRegion dummyRegion;
 	int32 dummyLevel;
-	return fLayer->Render(area, &fLayerBitmap, NULL, dummyRegion, dummyLevel);
+	return fLayer->Render(engine, area, &fLayerBitmap, NULL,
+		dummyRegion, dummyLevel);
 #endif
 }
 
 // #pragma mark -
 
 // constructor
-RenderThread::RenderThread(RenderManager* manager, int32 index)
+RenderThread::RenderThread(RenderManager* manager)
 	: fThread(-1)
 	, fRenderManager(manager)
-	, fThreadIndex(index)
+	, fEngine()
 {
-	// TODO: Move to Init() function and check errors!
-	fThread = spawn_thread(_WorkerLoopEntry, "render thread", B_LOW_PRIORITY, this);
 }
 
 // destructor
 RenderThread::~RenderThread()
 {
+	WaitForThread();
+
 	int32 count = fLayerBitmaps.CountItems();
 	for (int32 i = 0; i < count; i++)
 		delete (LayerBitmap*)fLayerBitmaps.ItemAtFast(i);
 }
 
 // #pragma mark -
+
+status_t
+RenderThread::Init()
+{
+	fThread = spawn_thread(_WorkerLoopEntry, "render thread", B_LOW_PRIORITY,
+		this);
+	return fThread >= 0 ? B_OK : B_ERROR;
+}
 
 // Run
 thread_id
@@ -267,7 +276,7 @@ RenderThread::Render(LayerSnapshot* layer, BRect area)
 //printf("rendering layer %p BRect(%.1f, %.1f, %.1f, %.1f)\n", layer->Layer(),
 //	area.left, area.top, area.right, area.bottom);
 
-	bitmap->Render(area);
+	bitmap->Render(fEngine, area);
 }
 
 // #pragma mark -
@@ -285,6 +294,7 @@ RenderThread::_WorkerLoop()
 {
 	while (fRenderManager->DoNextRenderJob(this));
 
+	fThread = B_BAD_THREAD_ID;
 	return B_OK;
 }
 

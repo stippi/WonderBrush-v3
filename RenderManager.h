@@ -14,6 +14,7 @@
 #include "HashMap.h"
 #include "Layer.h"
 #include "LayerSnapshot.h"
+#include "LayoutContext.h"
 
 class BBitmap;
 class BMessenger;
@@ -31,6 +32,8 @@ class RenderManager : Layer::Listener {
  public:
 								RenderManager(Document* document);
 	virtual						~RenderManager();
+
+			status_t			Init();
 
 	// Layer::Listener interface
 	virtual	void				ObjectAdded(Layer* layer, Object* object,
@@ -102,6 +105,9 @@ private:
 
 			Document*			fDocument;
 			LayerSnapshot*		fSnapshot;
+
+			LayoutContext		fLayoutContext;
+			uint32				fLayoutDirtyFlags;
 
 			RenderThread**		fRenderThreads;
 			int32				fRenderThreadCount;

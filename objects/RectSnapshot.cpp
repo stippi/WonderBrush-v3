@@ -58,7 +58,7 @@ RectSnapshot::Sync()
 
 // Render
 void
-RectSnapshot::Render(BBitmap* bitmap, BRect area) const
+RectSnapshot::Render(RenderEngine& engine, BBitmap* bitmap, BRect area) const
 {
 	BRect rectArea = fArea;
 	rectArea.left = roundf(rectArea.left);

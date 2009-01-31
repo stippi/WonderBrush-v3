@@ -20,7 +20,8 @@ class FilterSnapshot : public ObjectSnapshot {
 	virtual	const Object*		Original() const;
 	virtual	bool				Sync();
 
-	virtual	void				Render(BBitmap* bitmap, BRect area) const;
+	virtual	void				Render(RenderEngine& engine, BBitmap* bitmap,
+									BRect area) const;
 	virtual	void				RebuildAreaForDirtyArea(BRect& area) const;
 
  private:

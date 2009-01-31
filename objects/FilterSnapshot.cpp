@@ -52,7 +52,8 @@ FilterSnapshot::Sync()
 
 // Render
 void
-FilterSnapshot::Render(BBitmap* bitmap, BRect area) const
+FilterSnapshot::Render(RenderEngine& engine, BBitmap* bitmap,
+	BRect area) const
 {
 	float extend = ceilf(fFilterRadius) + 3;
 	BRect source = area;

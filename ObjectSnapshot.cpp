@@ -1,9 +1,6 @@
 /*
- * Copyright 2007, Haiku. All rights reserved.
- * Distributed under the terms of the MIT License.
- *
- * Authors:
- *		Stephan Aßmus <superstippi@gmx.de>
+ * Copyright 2007 - 2009, Stephan Aßmus <superstippi@gmx.de>.
+ * All rights reserved.
  */
 #include "ObjectSnapshot.h"
 
@@ -35,6 +32,12 @@ ObjectSnapshot::Sync()
 	return true;
 }
 
+// Layout
+void
+ObjectSnapshot::Layout(LayoutContext& context, uint32 flags)
+{
+}
+
 // PrepareRendering
 void
 ObjectSnapshot::PrepareRendering(BRect documentBounds)
@@ -52,7 +55,8 @@ ObjectSnapshot::PrepareRendering(BRect documentBounds)
 
 // Render
 void
-ObjectSnapshot::Render(BBitmap* bitmap, BRect area) const
+ObjectSnapshot::Render(RenderEngine& engine, BBitmap* bitmap,
+	BRect area) const
 {
 	// "area" is the area previously given in
 	// RebuildAreaForDirtyArea()
@@ -72,7 +76,12 @@ ObjectSnapshot::RebuildAreaForDirtyArea(BRect& area) const
 	// This function should change the area so that
 	// it includes all pixels outside the given area which
 	// are required by this object to render the given area
-	// correctly.
+	// correctly. For example, a filter may need pixels outside
+	// "area" to compute the pixels inside "area". Thus, it should
+	// extend "area" accordingly. During the render pass, this
+	// object will be asked to produce all pixels within the
+	// original area again, but it can assume the surface pixels
+	// outside that area, to be valid.
 }
 
 

@@ -21,7 +21,8 @@ class RectSnapshot : public ObjectSnapshot {
 	virtual	const Object*		Original() const;
 	virtual	bool				Sync();
 
-	virtual	void				Render(BBitmap* bitmap, BRect area) const;
+	virtual	void				Render(RenderEngine& engine, BBitmap* bitmap,
+									BRect area) const;
 
  private:
 			const Rect*			fOriginal;

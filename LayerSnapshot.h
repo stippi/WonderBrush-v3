@@ -29,7 +29,10 @@ class LayerSnapshot : public ObjectSnapshot {
 	virtual	const Object*		Original() const;
 	virtual	bool				Sync();
 
-	virtual	void				Render(BBitmap* bitmap, BRect area) const;
+	virtual	void				Layout(LayoutContext& context, uint32 flags);
+
+	virtual	void				Render(RenderEngine& engine,
+									BBitmap* bitmap, BRect area) const;
 
 	// LayerSnapshot
 	inline	const ::Layer*		Layer() const
@@ -38,7 +41,8 @@ class LayerSnapshot : public ObjectSnapshot {
 			BBitmap*			Bitmap() const	 { return fBitmap; }
 			BRect				Bounds() const;
 
-			BRect				Render(BRect area, BBitmap* bitmap,
+			BRect				Render(RenderEngine& engine, BRect area,
+									BBitmap* bitmap,
 									BBitmap* cacheBitmap,
 									BRegion& validCacheRegion,
 									int32& cacheLevel) const;

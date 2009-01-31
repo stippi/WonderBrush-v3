@@ -97,6 +97,8 @@ Window::Window(BRect frame, const char* title, Document* document,
 	frame.right -= B_V_SCROLL_BAR_WIDTH;
 	frame.bottom -= B_H_SCROLL_BAR_HEIGHT;
 	fRenderManager = new RenderManager(fDocument);
+	// TODO: Check error
+	fRenderManager->Init();
 	fView = new CanvasView(frame, fDocument, fRenderManager);
 	frame.right += B_V_SCROLL_BAR_WIDTH;
 	frame.bottom += B_H_SCROLL_BAR_HEIGHT;

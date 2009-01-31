@@ -105,7 +105,8 @@ printf("PrepareRendering(): %lld\n", system_time() - now);
 
 // Render
 void
-ShapeSnapshot::Render(BBitmap* bitmap, BRect area) const
+ShapeSnapshot::Render(RenderEngine& engine, BBitmap* bitmap,
+	BRect area) const
 {
 	area = (area & fArea) & bitmap->Bounds();
 	if (!area.IsValid())

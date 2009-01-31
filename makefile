@@ -35,10 +35,12 @@ SRCS= App.cpp \
 	  Document.cpp \
 	  Layer.cpp \
 	  LayerObserver.cpp \
+	  LayoutContext.cpp \
 	  LayerSnapshot.cpp \
 	  main.cpp \
 	  Object.cpp \
 	  ObjectSnapshot.cpp \
+	  RenderEngine.cpp \
 	  RenderManager.cpp \
 	  RenderThread.cpp \
 	  Window.cpp \

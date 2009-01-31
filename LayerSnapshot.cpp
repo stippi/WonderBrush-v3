@@ -62,9 +62,20 @@ LayerSnapshot::Sync()
 
 // #pragma mark -
 
+// Layout
+void
+LayerSnapshot::Layout(LayoutContext& context, uint32 flags)
+{
+	int32 count = CountObjects();
+	for (int32 i = 0; i < count; i++) {
+		ObjectSnapshot* snapshot = ObjectAt(i);
+		snapshot->Layout(context, flags);
+	}
+}
+
 // Render
 void
-LayerSnapshot::Render(BBitmap* bitmap, BRect area) const
+LayerSnapshot::Render(RenderEngine& engine, BBitmap* bitmap, BRect area) const
 {
 	blend_area(fBitmap, bitmap, area);
 }
@@ -82,8 +93,8 @@ LayerSnapshot::Bounds() const
 
 // Render
 BRect
-LayerSnapshot::Render(BRect area, BBitmap* bitmap, BBitmap* cacheBitmap,
-	BRegion& validCacheRegion, int32& cacheLevel) const
+LayerSnapshot::Render(RenderEngine& engine, BRect area, BBitmap* bitmap,
+	BBitmap* cacheBitmap, BRegion& validCacheRegion, int32& cacheLevel) const
 {
 	area = area & bitmap->Bounds();
 	if (!area.IsValid())
@@ -112,8 +123,8 @@ LayerSnapshot::Render(BRect area, BBitmap* bitmap, BBitmap* cacheBitmap,
 	rebuildArea = rebuildArea & bitmap->Bounds();
 	int32 firstObject = 0;
 
-//	// figure out which until which object level we
-//	// can reuse the cache bitmap, if at all
+//	// Figure out until which object level we can reuse the cache bitmap,
+//	// if at all.
 //	BRegion cacheTest(rebuildArea);
 //	cacheTest.Exclude(&validCacheRegion);
 //	bool canUseCache = false;
@@ -162,7 +173,7 @@ LayerSnapshot::Render(BRect area, BBitmap* bitmap, BBitmap* cacheBitmap,
 	for (int32 i = firstObject; i < count; i++) {
 		ObjectSnapshot* object = ObjectAtFast(i);
 		object->PrepareRendering(layerBounds);
-		object->Render(bitmap, dirtyAreas[i]);
+		object->Render(engine, bitmap, dirtyAreas[i]);
 //		if (cacheBitmap && i == cacheLevel) {
 //			copy_area(bitmap, cacheBitmap, dirtyAreas[i]);
 //			validCacheRegion.Include(dirtyAreas[i]);

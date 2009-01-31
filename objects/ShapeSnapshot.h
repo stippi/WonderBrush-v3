@@ -45,7 +45,8 @@ class ShapeSnapshot : public ObjectSnapshot {
 	virtual	bool				Sync();
 
 	virtual	void				PrepareRendering(BRect documentBounds);
-	virtual	void				Render(BBitmap* bitmap, BRect area) const;
+	virtual	void				Render(RenderEngine& engine, BBitmap* bitmap,
+									BRect area) const;
 
  private:
 			void				_RasterizeShape(Rasterizer& rasterizer,
