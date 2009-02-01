@@ -32,15 +32,9 @@ TYPE= APP
 #	in folder names do not work well with this makefile.
 SRCS= App.cpp \
 	  CanvasView.cpp \
-	  Document.cpp \
-	  Layer.cpp \
-	  LayerObserver.cpp \
 	  LayoutContext.cpp \
 	  LayoutState.cpp \
-	  LayerSnapshot.cpp \
 	  main.cpp \
-	  Object.cpp \
-	  ObjectSnapshot.cpp \
 	  RenderEngine.cpp \
 	  RenderManager.cpp \
 	  RenderThread.cpp \
@@ -66,19 +60,25 @@ SRCS= App.cpp \
 	  columntreeview/TextColumnTreeItem.cpp \
 	  gui/ObjectTreeView.cpp \
 	  gui/TextViewPopup.cpp \
+	  objects/Document.cpp \
 	  objects/Filter.cpp \
-	  objects/FilterSnapshot.cpp \
+	  objects/Layer.cpp \
+	  objects/LayerObserver.cpp \
+	  objects/Object.cpp \
 	  objects/Rect.cpp \
-	  objects/RectSnapshot.cpp \
 	  objects/Shape.cpp \
-	  objects/ShapeSnapshot.cpp \
-	  state_view/BackBufferedStateView.cpp \
-	  state_view/StateView.cpp \
-	  state_view/ViewState.cpp \
 	  scrollview/Scrollable.cpp \
 	  scrollview/ScrollableView.cpp \
 	  scrollview/Scroller.cpp \
 	  scrollview/ScrollView.cpp \
+	  snapshots/FilterSnapshot.cpp \
+	  snapshots/LayerSnapshot.cpp \
+	  snapshots/ObjectSnapshot.cpp \
+	  snapshots/RectSnapshot.cpp \
+	  snapshots/ShapeSnapshot.cpp \
+	  state_view/BackBufferedStateView.cpp \
+	  state_view/StateView.cpp \
+	  state_view/ViewState.cpp \
 	  support/AbstractLOAdapter.cpp \
 	  support/bitmap_support.cpp \
 	  support/Command.cpp \
