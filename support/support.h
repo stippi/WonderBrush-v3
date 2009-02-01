@@ -19,23 +19,26 @@ constrain(float& value, float min, float max)
 		value = max;
 }
 
-// constrain_int32_0_255_asm
 inline int32
-constrain_int32_0_255_asm(int32 value) {
-    asm("movl  $0,    %%ecx;
-         movl  $255,  %%edx;
-         cmpl  %%ecx, %%eax;
-         cmovl %%ecx, %%eax;
-         cmpl  %%edx, %%eax;
-         cmovg %%edx, %%eax"
+constrain_int32_0_255_asm(int32 value)
+{
+    __asm__ __volatile__ (
+    	"movl  $0,    %%ecx;"
+		"movl  $255,  %%edx;"
+		"cmpl  %%ecx, %%eax;"
+		"cmovl %%ecx, %%eax;"
+		"cmpl  %%edx, %%eax;"
+		"cmovg %%edx, %%eax"
        : "=a" (value)
        : "a" (value) 
-       : "%ecx", "%edx" );
-    return value;
+       : "%ecx", "%edx");
+	return value;
 }
 
+
 inline int32
-constrain_int32_0_255_c(int32 value) {
+constrain_int32_0_255_c(int32 value)
+{
     return max_c(0, min_c(255, value));
 }
 

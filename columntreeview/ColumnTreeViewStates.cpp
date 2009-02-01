@@ -1,6 +1,6 @@
 // ColumnTreeViewStates.cpp
 
-#include <algobase.h>
+//#include <algobase.h>
 #include <stdio.h>
 
 #include <InterfaceDefs.h>
@@ -261,8 +261,8 @@ InsideState::Pressed(BPoint point, uint32 buttons, uint32 modifiers,
 			// shift
 			if (modifiers & B_SHIFT_KEY && !selectionEmpty
 				&& fListView->SelectionMode() == CLV_MULTIPLE_SELECTION) {
-				firstSelected = min(firstSelected, index);
-				lastSelected = max(lastSelected, index);
+				firstSelected = MIN(firstSelected, index);
+				lastSelected = MAX(lastSelected, index);
 				fListView->Select(firstSelected, lastSelected, true);
 			// option
 			} else if (modifiers & B_OPTION_KEY) {

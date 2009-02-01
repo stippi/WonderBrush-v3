@@ -125,6 +125,8 @@ private:
 			BLocker				fRenderQueueLock;
 
 			BMessenger*			fBitmapListener;
+
+			bigtime_t			fLastRenderStartTime;
 };
 
 // RenderInfoLocking

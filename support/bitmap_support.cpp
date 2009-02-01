@@ -21,7 +21,6 @@ clear_area(const BBitmap* bitmap, rgb_color color, BRect area)
 		return;
 
 	uint8* src = (uint8*)bitmap->Bits();
-	uint32 bytes = (area.IntegerWidth() + 1) * 4;
 	uint32 height = area.IntegerHeight() + 1;
 	uint32 bpr = bitmap->BytesPerRow();
 	int32 left = (int32)area.left;
@@ -32,7 +31,7 @@ clear_area(const BBitmap* bitmap, rgb_color color, BRect area)
 
 	for (uint32 y = 0; y < height; y++) {
 		uint8* d = src;
-		for (uint32 x = left; x <= right; x++) {
+		for (int32 x = left; x <= right; x++) {
 			d[0] = color.blue;
 			d[1] = color.green;
 			d[2] = color.blue;
@@ -83,7 +82,6 @@ blend_area(const BBitmap* source, const BBitmap* dest, BRect area)
 
 	uint8* src = (uint8*)source->Bits();
 	uint8* dst = (uint8*)dest->Bits();
-	uint32 bytes = (area.IntegerWidth() + 1) * 4;
 	uint32 height = area.IntegerHeight() + 1;
 	uint32 bpr = source->BytesPerRow();
 	int32 left = (int32)area.left;
@@ -96,7 +94,7 @@ blend_area(const BBitmap* source, const BBitmap* dest, BRect area)
 	for (uint32 y = 0; y < height; y++) {
 		uint8* d = dst;
 		uint8* s = src;
-		for (uint32 x = left; x <= right; x++) {
+		for (int32 x = left; x <= right; x++) {
 
 			uint8 alpha = 255 - s[3];
 			d[0] = (uint8)((((int32)d[0] * alpha) >> 8) + s[0]);
@@ -122,7 +120,6 @@ demultiply_area(const BBitmap* bitmap, BRect area)
 		return;
 
 	uint8* src = (uint8*)bitmap->Bits();
-	uint32 bytes = (area.IntegerWidth() + 1) * 4;
 	uint32 height = area.IntegerHeight() + 1;
 	uint32 bpr = bitmap->BytesPerRow();
 	int32 left = (int32)area.left;
@@ -133,7 +130,7 @@ demultiply_area(const BBitmap* bitmap, BRect area)
 
 	for (uint32 y = 0; y < height; y++) {
 		uint8* d = src;
-		for (uint32 x = left; x <= right; x++) {
+		for (int32 x = left; x <= right; x++) {
 			if (d[3]) {
 				d[0] = (uint8)((int32)d[0] * 255 / d[3]);
 				d[1] = (uint8)((int32)d[1] * 255 / d[3]);

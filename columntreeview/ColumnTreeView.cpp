@@ -1,6 +1,7 @@
 // ColumnTreeView.cpp
 
-#include <algobase.h>
+//#include <algobase.h>
+#include <new>
 #include <stdio.h>
 
 #include <Message.h>
@@ -21,6 +22,7 @@
 #include "ColumnListModel.h"
 
 using namespace ColumnTreeViewStates;
+using std::nothrow;
 
 // ItemCompare
 
@@ -220,7 +222,7 @@ ColumnTreeView::Draw(BView* view, BRect updateRect)
 			BRect rect(updateRect);
 			rect.top = itemsRect.bottom + 1.0f;
 			// don't draw more than necessary:
-			rect.right = min(rect.right, itemsRect.right);
+			rect.right = MIN(rect.right, itemsRect.right);
 			if (rect.IsValid()) {
 				view->SetHighColor(fColors->background);
 				view->FillRect(rect);
@@ -1369,8 +1371,8 @@ ColumnTreeView::MoveVisibleColumns(int32 index, int32 dest, int32 count)
 		} else
 			fColumns.AddList(&columns, 0);
 		// Update the graphics stuff.
-		int32 first = min(index, dest);
-//		int32 last = max(index, dest) + count - 1;
+		int32 first = MIN(index, dest);
+//		int32 last = MAX(index, dest) + count - 1;
 		_UpdateColumnXOffsets(first, true);
 		// move header
 		fHeaderView->MoveHeaders(index, dest, count);
@@ -1436,7 +1438,7 @@ ColumnTreeView::ItemsRemoved(ColumnTreeModel* model, ColumnTreeItem* super,
 void
 ColumnTreeView::ItemExpanded(ColumnTreeModel* model, ColumnTreeItem* item)
 {
-printf("ColumnTreeView::ItemExpanded(%p)\n", item);
+//printf("ColumnTreeView::ItemExpanded(%p)\n", item);
 	_InvalidateItems(fModel->VisibleIndexOf(item), 1);
 }
 
@@ -1444,7 +1446,7 @@ printf("ColumnTreeView::ItemExpanded(%p)\n", item);
 void
 ColumnTreeView::ItemCollapsed(ColumnTreeModel* model, ColumnTreeItem* item)
 {
-printf("ColumnTreeView::ItemCollapsed(%p)\n", item);
+//printf("ColumnTreeView::ItemCollapsed(%p)\n", item);
 	_InvalidateItems(fModel->VisibleIndexOf(item), 1);
 }
 
@@ -1452,7 +1454,7 @@ printf("ColumnTreeView::ItemCollapsed(%p)\n", item);
 void
 ColumnTreeView::ItemsShown(ColumnTreeModel* model, int32 index, int32 count)
 {
-printf("ColumnTreeView::ItemsShown(%ld, %ld)\n", index, count);
+//printf("ColumnTreeView::ItemsShown(%ld, %ld)\n", index, count);
 	// keep the selection in sync
 	_ReindexSelectedItems(index, count);
 	_UpdateItemYOffsets(index, false);
@@ -1464,7 +1466,7 @@ void
 ColumnTreeView::ItemsHidden(ColumnTreeModel* model, int32 index, int32 count,
 							bool before)
 {
-printf("ColumnTreeView::ItemsHidden(%ld, %ld, %d)\n", index, count, before);
+//printf("ColumnTreeView::ItemsHidden(%ld, %ld, %d)\n", index, count, before);
 	if (before) {
 		// keep the selection in sync
 		int32 first = _FindSelectionInsertionIndex(index);
@@ -1488,7 +1490,7 @@ printf("ColumnTreeView::ItemsHidden(%ld, %ld, %d)\n", index, count, before);
 void
 ColumnTreeView::ItemsSorted(ColumnTreeModel* model)
 {
-printf("ColumnTreeView::ItemsSorted()\n");
+//printf("ColumnTreeView::ItemsSorted()\n");
 	_RebuildSelectionList();
 	_UpdateItemYOffsets(0, false);
 	Invalidate();
@@ -2299,7 +2301,7 @@ ColumnTreeView::_HeaderViewRect() const
 {
 	BRect rect;
 	rect.left = -fCurrentScrollOffset.x;
-	rect.right = rect.left + max(DataRect().Width(), Bounds().Width());
+	rect.right = rect.left + MAX(DataRect().Width(), Bounds().Width());
 	rect.top = 0.0f;
 	rect.bottom = rect.top + fHeaderView->Height();
 	return rect;
@@ -2330,8 +2332,8 @@ ColumnTreeView::_ActualItemsRect() const
 	} else {
 		Column* lastColumn = _VisibleColumnAt(_CountVisibleColumns() - 1);
 		ColumnTreeItem* lastItem = ItemAt(CountItems() - 1);
-		rect.right = min(rect.right, _VisibleColumnFrame(lastColumn).right);
-		rect.bottom = min(rect.bottom, _ItemFrame(lastItem).bottom);
+		rect.right = MIN(rect.right, _VisibleColumnFrame(lastColumn).right);
+		rect.bottom = MIN(rect.bottom, _ItemFrame(lastItem).bottom);
 	}
 	return rect;
 }

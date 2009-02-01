@@ -98,7 +98,7 @@ DefaultColumnTreeModel::Node::~Node()
 void
 DefaultColumnTreeModel::Node::SetVisible(bool visible)
 {
-printf("%p->Node::SetVisible(%d)\n", this, visible);
+//printf("%p->Node::SetVisible(%d)\n", this, visible);
 	if (fItem && visible != IsVisible()) {
 		const bool childrenVisible = AreChildrenVisible();
 		fItem->SetVisible(visible);
@@ -120,7 +120,7 @@ DefaultColumnTreeModel::Node::IsVisible() const
 void
 DefaultColumnTreeModel::Node::SetExpanded(bool expanded)
 {
-printf("%p->Node::SetExpanded(%d)\n", this, expanded);
+//printf("%p->Node::SetExpanded(%d)\n", this, expanded);
 	if (fItem && expanded != IsExpanded()) {
 		const bool childrenVisible = AreChildrenVisible();
 		fItem->SetExpanded(expanded);
@@ -510,13 +510,13 @@ DefaultColumnTreeModel::HasItem(ColumnTreeItem* item)
 bool
 DefaultColumnTreeModel::AddSubItem(ColumnTreeItem* super, ColumnTreeItem* item)
 {
-printf("DefaultColumnTreeModel::AddSubItem(%p, %p)\n", super, item);
+//printf("DefaultColumnTreeModel::AddSubItem(%p, %p)\n", super, item);
 	if (!item)
 		return false;
 	if (Node* parent = _GetNode(super))
 		return AddSubItem(super, item, parent->CountChildren());
-else
-printf("Couldn't get parent node\n");
+//else
+//printf("Couldn't get parent node\n");
 	return false;
 }
 
@@ -525,13 +525,13 @@ bool
 DefaultColumnTreeModel::AddSubItem(ColumnTreeItem* super, ColumnTreeItem* item,
 								   int32 index)
 {
-printf("DefaultColumnTreeModel::AddSubItem(%p, %p, %ld)\n", super, item, index);
+//printf("DefaultColumnTreeModel::AddSubItem(%p, %p, %ld)\n", super, item, index);
 	if (!item)
 		return false;
 	Node* parent = _GetNode(super);
 	if (!parent)
 {
-printf("  couldn't get parent node\n");
+//printf("  couldn't get parent node\n");
 		return false;
 }
 	// check index
@@ -542,7 +542,7 @@ printf("  couldn't get parent node\n");
 	if (GetSortCompareFunction())
 {
 		index = _FindSortedInsertionIndex(parent, item);
-printf("  sorted insertion at: %ld\n", index);
+//printf("  sorted insertion at: %ld\n", index);
 }
 	// prepare the item: clear non-user flags
 	item->ClearFlags(~COLUMN_TREE_ITEM_USER_FLAGS);
@@ -553,11 +553,11 @@ printf("  sorted insertion at: %ld\n", index);
 		return false;
 	bool result = parent->AddChild(node, index);
 	if (result) {
-printf("  item successfully added\n");
-printf("  parent: expanded: %d, visible: %d\n", parent->IsExpanded(),
-parent->IsVisible());
-printf("  node:   expanded: %d, visible: %d\n", node->IsExpanded(),
-node->IsVisible());
+//printf("  item successfully added\n");
+//printf("  parent: expanded: %d, visible: %d\n", parent->IsExpanded(),
+//parent->IsVisible());
+//printf("  node:   expanded: %d, visible: %d\n", node->IsExpanded(),
+//node->IsVisible());
 		fItemCount++;
 		item->SetModelData(node);
 		FireItemsAdded(super, index, 1);
@@ -565,7 +565,7 @@ node->IsVisible());
 			FireItemsShown(VisibleIndexOf(item), 1);
 	} else
 {
-printf("  parent->AddChild(node, index) failed\n");
+//printf("  parent->AddChild(node, index) failed\n");
 		delete node;
 }
 	return result;

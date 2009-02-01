@@ -258,7 +258,7 @@ ColumnListModel::_Sort()
 	ColumnTreeItem** items = new ColumnTreeItem*[count];
 	for (int32 i = 0; i < count; i++)
 		items[i] = ItemAt(i);
-	sort(items, items + count, sorter);
+	std::sort(items, items + count, sorter);
 	// update the items list
 	for (int32 i = 0; i < count; i++)
 		fItems.ReplaceItem(i, (void*)items[i]);

@@ -1,6 +1,6 @@
 // ScrollView.cpp
 
-#include <algobase.h>
+//#include <algobase.h>
 #include <stdio.h>
 #include <string.h>
 
@@ -691,14 +691,14 @@ ScrollView::_UpdateScrollBars()
 		dataRect.Set(0.0, 0.0, 0.0, 0.0);
 		visibleBounds.Set(0.0, 0.0, 0.0, 0.0);
 	}
-	float hProportion = min(1.0f, (visibleBounds.Width() + 1.0f) /
-								  (dataRect.Width() + 1.0f));
-	float hMaxValue = max(dataRect.left,
-						  dataRect.right - visibleBounds.Width());
-	float vProportion = min(1.0f, (visibleBounds.Height() + 1.0f) /
-								  (dataRect.Height() + 1.0f));
-	float vMaxValue = max(dataRect.top,
-						  dataRect.bottom - visibleBounds.Height());
+	float hProportion = min_c(1.0f, (visibleBounds.Width() + 1.0f) /
+		(dataRect.Width() + 1.0f));
+	float hMaxValue = max_c(dataRect.left,
+		dataRect.right - visibleBounds.Width());
+	float vProportion = min_c(1.0f, (visibleBounds.Height() + 1.0f) /
+		(dataRect.Height() + 1.0f));
+	float vMaxValue = max_c(dataRect.top,
+		dataRect.bottom - visibleBounds.Height());
 	// update horizontal scroll bar
 	if (fHScrollBar) {
 		fHScrollBar->SetProportion(hProportion);

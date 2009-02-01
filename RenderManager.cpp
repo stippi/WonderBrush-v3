@@ -147,6 +147,8 @@ RenderManager::RenderManager(Document* document)
 	, fRenderQueueLock("render queue lock")
 
 	, fBitmapListener(NULL)
+
+	, fLastRenderStartTime(-1)
 {
 	fDisplayBitmap[0] = NULL;
 	fDisplayBitmap[1] = NULL;
@@ -560,6 +562,7 @@ void
 RenderManager::_TriggerRender()
 {
 //printf("RenderManager::_TriggerRender()\n");
+	fLastRenderStartTime = system_time();
 
 	// move the dirty infos to the front
 	PrepareDirtyInfosForNextRender();
@@ -673,6 +676,9 @@ RenderManager::_AllRenderThreadsDone()
 		_BackToDisplay(fCleanArea);
 		fCleanArea.Set(LONG_MAX, LONG_MAX, LONG_MIN, LONG_MIN);
 	}
+
+	if (fLastRenderStartTime > 0)
+		printf("render pass: %lld\n", system_time() - fLastRenderStartTime);
 
 	if (_HasDirtyLayers())
 		_TriggerRender();

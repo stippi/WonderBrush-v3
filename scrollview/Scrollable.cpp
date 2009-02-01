@@ -1,6 +1,6 @@
 // Scrollable.cpp
 
-#include <algobase.h>
+//#include <algobase.h>
 #include <stdio.h>
 
 #include "Scrollable.h"
@@ -156,8 +156,8 @@ Scrollable::ValidScrollOffsetFor(BPoint offset) const
 BPoint
 Scrollable::ValidScrollOffsetFor(BPoint offset, const BRect& dataRect) const
 {
-	float maxX = max(dataRect.left, dataRect.right - fVisibleWidth);
-	float maxY = max(dataRect.top, dataRect.bottom - fVisibleHeight);
+	float maxX = max_c(dataRect.left, dataRect.right - fVisibleWidth);
+	float maxY = max_c(dataRect.top, dataRect.bottom - fVisibleHeight);
 	// adjust the offset to be valid
 	if (offset.x < dataRect.left)
 		offset.x = dataRect.left;

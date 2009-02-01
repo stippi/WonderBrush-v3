@@ -4,6 +4,7 @@
  */
 #include "ObjectTreeView.h"
 
+#include <new>
 #include <stdio.h>
 
 #include <Bitmap.h>
@@ -16,6 +17,8 @@
 #include "Object.h"
 #include "RenameObjectCommand.h"
 #include "TextViewPopup.h"
+
+using std::nothrow;
 
 
 ObjectColumnTreeItem::ObjectColumnTreeItem(float height, Object* object)

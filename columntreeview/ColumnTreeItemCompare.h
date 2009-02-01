@@ -11,7 +11,7 @@ public:
 	virtual						~ColumnTreeItemCompare();
 
 	virtual	bool				operator()(const ColumnTreeItem* item1,
-										   const ColumnTreeItem* item1)
+										   const ColumnTreeItem* item2)
 									const = 0;
 };
 

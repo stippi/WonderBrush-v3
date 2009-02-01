@@ -1,5 +1,7 @@
 #include "StateView.h"
 
+#include <new>
+
 #include <Message.h>
 #include <MessageFilter.h>
 #include <Window.h>
@@ -8,6 +10,8 @@
 #include "CommandStack.h"
 #include "RWLocker.h"
 #include "ViewState.h"
+
+using std::nothrow;
 
 
 mouse_info&

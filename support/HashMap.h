@@ -1,6 +1,6 @@
 // HashMap.h
 // 
-// Copyright (c) 2004, Ingo Weinhold (bonefish@cs.tu-berlin.de)
+// Copyright (c) 2004-2007, Ingo Weinhold (bonefish@cs.tu-berlin.de)
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a
 // copy of this software and associated documentation files (the "Software"),
@@ -127,7 +127,7 @@ public:
 	
 	private:
 		Iterator(const HashMap<Key, Value>* map)
-			: fMap(map),
+			: fMap(const_cast<HashMap<Key, Value>*>(map)),
 			  fIndex(0),
 			  fElement(NULL),
 			  fLastElement(NULL)
@@ -152,7 +152,7 @@ public:
 	private:
 		friend class HashMap<Key, Value>;
 	
-		const HashMap<Key, Value>*	fMap;
+		HashMap<Key, Value>*	fMap;
 		int32					fIndex;
 		Element*				fElement;
 		Element*				fLastElement;
@@ -190,8 +190,8 @@ protected:
 template<typename Key, typename Value>
 class SynchronizedHashMap : public BLocker {
 public:
-	typedef HashMap<Key, Value>::Entry Entry;
-	typedef HashMap<Key, Value>::Iterator Iterator;
+	typedef struct HashMap<Key, Value>::Entry Entry;
+	typedef struct HashMap<Key, Value>::Iterator Iterator;
 
 	SynchronizedHashMap() : BLocker("synchronized hash map")	{}
 	~SynchronizedHashMap()	{ Lock(); }
@@ -420,7 +420,7 @@ HashMap<Key, Value>::Size() const
 
 // GetIterator
 template<typename Key, typename Value>
-HashMap<Key, Value>::Iterator
+struct HashMap<Key, Value>::Iterator
 HashMap<Key, Value>::GetIterator() const
 {
 	return Iterator(this);
@@ -428,7 +428,7 @@ HashMap<Key, Value>::GetIterator() const
 
 // _FindElement
 template<typename Key, typename Value>
-HashMap<Key, Value>::Element *
+struct HashMap<Key, Value>::Element *
 HashMap<Key, Value>::_FindElement(const Key& key) const
 {
 	Element* element = fTable.FindFirst(key.GetHashCode());

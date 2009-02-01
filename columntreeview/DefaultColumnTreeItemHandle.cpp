@@ -105,7 +105,7 @@ DefaultColumnTreeItemHandle::_GetHandleRect(BRect frame, int32 level)
 				  - kHandleTriangleHeightDiff1;
 	frame.right = frame.left + kHandleWidth - 1;
 	int32 height = (int32)frame.bottom - (int32)frame.top + 1;
-	int32 handleHeight = min((int32)height, (int32)kHandleWidth);
+	int32 handleHeight = MIN((int32)height, (int32)kHandleWidth);
 	frame.top += (height - handleHeight) / 2;
 	frame.bottom = frame.top + kHandleWidth - 1;
 	return frame;

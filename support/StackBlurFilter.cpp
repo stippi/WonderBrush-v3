@@ -56,11 +56,14 @@ uint8 const stack_blur_tables<T>::g_stack_blur8_shr[255] =
 	 24, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24
 };
 
+
+#if __GNUC__ < 4
 static inline float
 roundf(float v)
 {
 	return floorf(v + 0.5);
 }
+#endif
 
 
 StackBlurFilter::StackBlurFilter()
