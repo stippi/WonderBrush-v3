@@ -19,9 +19,18 @@
 #include <agg_rendering_buffer.h>
 #include <agg_renderer_scanline.h>
 #include <agg_path_storage.h>
-#include <agg_scanline_p.h>
 
+#include "ObjectCache.h"
 #include "ObjectSnapshot.h"
+
+#define USE_OBJECT_CACHE 1
+
+#if USE_OBJECT_CACHE
+#include "Scanline.h"
+#else
+#include <agg_scanline_p.h>
+typedef agg::scanline_p8					Scanline;
+#endif
 
 class Shape;
 
@@ -31,7 +40,6 @@ typedef agg::renderer_base<PixelFormat>		BaseRenderer;
 typedef agg::renderer_scanline_aa_solid<BaseRenderer>
 											Renderer;
 
-typedef agg::scanline_p8					Scanline;
 typedef agg::rasterizer_scanline_aa<>		Rasterizer;
 typedef agg::path_storage					Path;
 
@@ -61,7 +69,15 @@ class ShapeSnapshot : public ObjectSnapshot {
 	volatile bool				fNeedsRasterizing;
 
 			Rasterizer			fRasterizer;
+
+#if USE_OBJECT_CACHE
+	typedef ObjectCache<Scanline> ScanlineContainer;
+			ScanlineContainer	fScanlines2;
+			CoverAllocator		fCoverAllocator;
+			SpanAllocator		fSpanAllocator;
+#else
 			BList				fScanlines;
+#endif
 };
 
 #endif // SHAPE_SNAPSHOT_H
