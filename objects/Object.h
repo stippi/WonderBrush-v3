@@ -18,7 +18,7 @@ class ObjectSnapshot;
 
 
 class Object : public Transformable, public Referenceable {
- public:
+public:
 								Object();
 	virtual						~Object();
 
@@ -48,7 +48,7 @@ class Object : public Transformable, public Referenceable {
 	inline	uint32				ChangeCounter() const
 									{ return fChangeCounter; }
 
- private:
+private:
 			uint32				fChangeCounter;
 			Layer*				fParent;
 			BString				fName;
