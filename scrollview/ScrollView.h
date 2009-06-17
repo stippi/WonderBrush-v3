@@ -21,19 +21,41 @@ enum {
 	SCROLL_LIST_FRAME						= 0x40,
 };
 
+enum {
+	BORDER_LEFT		= 0x01,
+	BORDER_TOP		= 0x02,
+	BORDER_RIGHT	= 0x04,
+	BORDER_BOTTOM	= 0x08,
+	BORDER_ALL		= BORDER_LEFT | BORDER_TOP | BORDER_RIGHT | BORDER_BOTTOM
+};
+
+
 class ScrollView : public BView, public Scroller {
- public:
-								ScrollView(BView* child,
-										   uint32 scrollingFlags,
-										   BRect frame,
-										   const char *name,
-										   uint32 resizingMode, uint32 flags);
+public:
+								ScrollView(BView* child, uint32 scrollingFlags,
+									BRect frame, const char *name,
+									uint32 resizingMode, uint32 viewFlags,
+									uint32 borderStyle = B_FANCY_BORDER,
+									uint32 borderFlags = BORDER_ALL);
+#ifdef __HAIKU__
+								ScrollView(BView* child, uint32 scrollingFlags,
+									const char *name, uint32 viewFlags,
+									uint32 borderStyle = B_FANCY_BORDER,
+									uint32 borderFlags = BORDER_ALL);
+#endif // __HAIKU__
 	virtual						~ScrollView();
 
 	virtual	void				AllAttached();
 	virtual	void				Draw(BRect updateRect);
 	virtual	void				FrameResized(float width, float height);
 	virtual	void				WindowActivated(bool activated);
+
+#ifdef __HAIKU__
+
+	virtual	BSize				MinSize();
+	virtual	BSize				PreferredSize();
+
+#endif // __HAIKU__
 
 			uint32				ScrollingFlags() const;
 			void				SetVisibleRectIsChildBounds(bool flag);
@@ -84,6 +106,12 @@ class ScrollView : public BView, public Scroller {
 			float				fHSmallStep;
 			float				fVSmallStep;
 
+			uint32				fBorderStyle;
+			uint32				fBorderFlags;
+
+			void				_Init(BView* child, uint32 scrollingFlags,
+									uint32 borderStyle, uint32 borderFlags);
+
 			void				_ScrollValueChanged(
 										InternalScrollBar* scrollBar,
 										float value);
@@ -101,6 +129,9 @@ private:
 			BRect				_ChildRect(bool hbar, bool vbar) const;
 			BRect				_GuessVisibleRect(bool hbar, bool vbar) const;
 			BRect				_MaxVisibleRect() const;
+#ifdef __HAIKU__
+	virtual	BSize				_Size(BSize childSize);
+#endif
 
 			void				_SetScrolling(bool scrolling);
 
