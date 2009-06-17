@@ -4,6 +4,9 @@
 
 #include <Bitmap.h>
 #include <Cursor.h>
+#ifdef __HAIKU__
+#	include <LayoutUtils.h>
+#endif
 #include <Message.h>
 #include <MessageRunner.h>
 #include <Messenger.h>
@@ -29,20 +32,21 @@ enum {
 
 // constructor
 CanvasView::CanvasView(BRect frame, Document* document, RenderManager* manager)
-	: BackBufferedStateView(frame, "canvas view", B_FOLLOW_NONE,
-			B_WILL_DRAW | B_FRAME_EVENTS)
-	, fDocument(document)
-	, fRenderManager(manager)
+	:
+	BackBufferedStateView(frame, "canvas view", B_FOLLOW_NONE,
+		B_WILL_DRAW | B_FRAME_EVENTS),
+	fDocument(document),
+	fRenderManager(manager),
 
-	, fZoomLevel(1.0)
+	fZoomLevel(1.0),
 
-	, fSpaceHeldDown(false)
-	, fScrollTracking(false)
-	, fInScrollTo(false)
-	, fScrollTrackingStart(0.0, 0.0)
-	, fScrollOffsetStart(0.0, 0.0)
+	fSpaceHeldDown(false),
+	fScrollTracking(false),
+	fInScrollTo(false),
+	fScrollTrackingStart(0.0, 0.0),
+	fScrollOffsetStart(0.0, 0.0),
 
-	, fAutoScroller(NULL)
+	fAutoScroller(NULL)
 {
 	SetViewColor(B_TRANSPARENT_32_BIT);
 	SetHighColor(kStripeLight);
@@ -50,6 +54,34 @@ CanvasView::CanvasView(BRect frame, Document* document, RenderManager* manager)
 		// used for drawing the stripes pattern
 	SetSyncToRetrace(true);
 }
+
+#ifdef __HAIKU__
+
+// constructor
+CanvasView::CanvasView(Document* document, RenderManager* manager)
+	:
+	BackBufferedStateView("canvas view", B_WILL_DRAW | B_FRAME_EVENTS),
+	fDocument(document),
+	fRenderManager(manager),
+
+	fZoomLevel(1.0),
+
+	fSpaceHeldDown(false),
+	fScrollTracking(false),
+	fInScrollTo(false),
+	fScrollTrackingStart(0.0, 0.0),
+	fScrollOffsetStart(0.0, 0.0),
+
+	fAutoScroller(NULL)
+{
+	SetViewColor(B_TRANSPARENT_32_BIT);
+	SetHighColor(kStripeLight);
+	SetLowColor(kStripeDark);
+		// used for drawing the stripes pattern
+	SetSyncToRetrace(true);
+}
+
+#endif // __HAIKU__
 
 // destructor
 CanvasView::~CanvasView()
@@ -136,6 +168,27 @@ CanvasView::FrameResized(float width, float height)
 {
 	BackBufferedStateView::FrameResized(width, height);
 }
+
+void
+CanvasView::GetPreferredSize(float* _width, float* _height)
+{
+	if (_width != NULL)
+		*_width = 100;
+	if (_height != NULL)
+		*_height = 100;
+}
+
+#ifdef __HAIKU__
+
+BSize
+CanvasView::MaxSize()
+{
+	return BLayoutUtils::ComposeSize(ExplicitMaxSize(),
+		BSize(B_SIZE_UNLIMITED, B_SIZE_UNLIMITED));
+}
+
+#endif // __HAIKU__
+
 
 // DrawInto
 void
@@ -309,6 +362,13 @@ CanvasView::ConvertToCanvas(BRect* r) const
 	r->right /= fZoomLevel;
 	r->top /= fZoomLevel;
 	r->bottom /= fZoomLevel;
+}
+
+// ZoomLevel
+float
+CanvasView::ZoomLevel() const
+{
+	return fZoomLevel;
 }
 
 // #pragma mark -

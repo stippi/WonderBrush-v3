@@ -20,7 +20,7 @@ TYPE= APP
 #	to fill in generic makefile
 
 #%{
-# @src->@ 
+# @src->@
 
 #	specify the source files to use
 #	full paths or paths relative to the makefile can be included
@@ -58,8 +58,11 @@ SRCS= App.cpp \
 	  columntreeview/EasyColumnTreeItem.cpp \
 	  columntreeview/LabelColumnHeader.cpp \
 	  columntreeview/TextColumnTreeItem.cpp \
+	  gui/IconButton.cpp \
+	  gui/IconOptionsControl.cpp \
 	  gui/ObjectTreeView.cpp \
 	  gui/TextViewPopup.cpp \
+	  gui/ToolConfigView.cpp \
 	  objects/Document.cpp \
 	  objects/Filter.cpp \
 	  objects/Layer.cpp \
@@ -98,16 +101,20 @@ SRCS= App.cpp \
 	  support/StackBlurFilter.cpp \
 	  support/Transformable.cpp \
 	  tools/ChannelTransform.cpp \
+	  tools/DragStateViewState.cpp \
 	  tools/PickToolState.cpp \
+	  tools/Tool.cpp \
 	  tools/TransformableGroup.cpp \
+	  tools/TransformToolState.cpp \
+	  tools/TransformViewState.cpp \
 #	  tools/TransformBox.cpp \
 #	  tools/TransformBoxStates.cpp \
 
 #	specify the resource files to use
 #	full path or a relative path to the resource file can be used.
-RSRCS= 
+RSRCS=
 
-# @<-src@ 
+# @<-src@
 #%}
 
 #	end support for Pe and Eddie
@@ -117,12 +124,12 @@ RSRCS=
 #	-	if your library follows the naming pattern of:
 #		libXXX.so or libXXX.a you can simply specify XXX
 #		library: libbe.so entry: be
-#		
+#
 #	- 	if your library does not follow the standard library
 #		naming scheme you need to specify the path to the library
 #		and it's name
 #		library: my_lib.a entry: my_lib.a or path/my_lib.a
-LIBS= be agg/src/libagg.a
+LIBS= be translation agg/src/libagg.a
 
 #	specify additional paths to directories following the standard
 #	libXXX.so or libXXX.a naming scheme.  You can specify full paths
@@ -130,7 +137,7 @@ LIBS= be agg/src/libagg.a
 #	be recursive, so include all of the paths where libraries can
 #	be found.  Directories where source files are found are
 #	automatically included.
-LIBPATHS= 
+LIBPATHS=
 
 #	additional paths to look for system headers
 #	thes use the form: #include <header>
@@ -151,7 +158,7 @@ OPTIMIZE= FULL
 #	to use.  For example, setting DEFINES to "DEBUG=1" will cause the
 #	compiler option "-DDEBUG=1" to be used.  Setting DEFINES to "DEBUG"
 #	would pass "-DDEBUG" on the compiler's command line.
-DEFINES= 
+DEFINES=
 
 #	specify special warning levels
 #	if unspecified default warnings will be used
@@ -162,12 +169,12 @@ WARNINGS = ALL
 #	specify whether image symbols will be created
 #	so that stack crawls in the debugger are meaningful
 #	if TRUE symbols will be created
-SYMBOLS = 
+SYMBOLS =
 
 #	specify debug settings
 #	if TRUE will allow application to be run from a source-level
 #	debugger.  Note that this will disable all optimzation.
-DEBUGGER = 
+DEBUGGER =
 
 #	specify additional compiler flags for all files
 COMPILER_FLAGS = #-finstrument-functions
@@ -176,16 +183,16 @@ COMPILER_FLAGS = #-finstrument-functions
 LINKER_FLAGS =
 
 #	specify the version of this particular item
-#	(for example, -app 3 4 0 d 0 -short 340 -long "340 "`echo -n -e '\302\251'`"1999 GNU GPL") 
+#	(for example, -app 3 4 0 d 0 -short 340 -long "340 "`echo -n -e '\302\251'`"1999 GNU GPL")
 #	This may also be specified in a resource.
-APP_VERSION = 
+APP_VERSION =
 
 #	(for TYPE == DRIVER only) Specify desired location of driver in the /dev
 #	hierarchy. Used by the driverinstall rule. E.g., DRIVER_PATH = video/usb will
 #	instruct the driverinstall rule to place a symlink to your driver's binary in
 #	~/add-ons/kernel/drivers/dev/video/usb, so that your driver will appear at
 #	/dev/video/usb when loaded. Default is "misc".
-DRIVER_PATH = 
+DRIVER_PATH =
 
 ## include the makefile-engine
 include $(BUILDHOME)/etc/makefile-engine

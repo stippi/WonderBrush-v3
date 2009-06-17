@@ -2,6 +2,9 @@
 
 #include <Application.h>
 #include <Bitmap.h>
+#include <Box.h>
+#include <GroupLayoutBuilder.h>
+#include <LayoutUtils.h>
 #include <Menu.h>
 #include <MenuBar.h>
 #include <MenuItem.h>
@@ -15,11 +18,13 @@
 #include "CommandStack.h"
 #include "DefaultColumnTreeModel.h"
 #include "Document.h"
+#include "IconOptionsControl.h"
 //#include "LayerTreeModel.h"
 #include "ObjectTreeView.h"
 #include "PickToolState.h"
 #include "RenderManager.h"
 #include "ScrollView.h"
+#include "TransformToolState.h"
 
 enum {
 	MSG_UNDO				= 'undo',
@@ -27,22 +32,84 @@ enum {
 	MSG_SELECTION_CHANGED	= 'slch'
 };
 
+
+class SeparatorView : public BView {
+public:
+								SeparatorView(enum orientation orientation);
+	virtual						~SeparatorView();
+
+	virtual	BSize				MinSize();
+	virtual	BSize				PreferredSize();
+	virtual	BSize				MaxSize();
+private:
+			enum orientation	fOrientation;
+};
+
+
+SeparatorView::SeparatorView(enum orientation orientation)
+	:
+	BView("separator", 0),
+	fOrientation(orientation)
+{
+	SetViewColor(tint_color(ui_color(B_PANEL_BACKGROUND_COLOR),
+		B_DARKEN_2_TINT));
+}
+
+
+SeparatorView::~SeparatorView()
+{
+}
+
+
+BSize
+SeparatorView::MinSize()
+{
+	return BLayoutUtils::ComposeSize(ExplicitMinSize(), BSize(0, 0));
+}
+
+
+BSize
+SeparatorView::MaxSize()
+{
+	BSize size(0, 0);
+	if (fOrientation == B_VERTICAL)
+		size.height = B_SIZE_UNLIMITED;
+	else
+		size.width = B_SIZE_UNLIMITED;
+
+	return BLayoutUtils::ComposeSize(ExplicitMaxSize(), size);
+}
+
+
+BSize
+SeparatorView::PreferredSize()
+{
+	BSize size(0, 0);
+	if (fOrientation == B_VERTICAL)
+		size.height = 10;
+	else
+		size.width = 10;
+
+	return BLayoutUtils::ComposeSize(ExplicitPreferredSize(), size);
+}
+
 // constructor
 Window::Window(BRect frame, const char* title, Document* document,
 			Layer* layer)
-	: BWindow(frame, title,
-		B_TITLED_WINDOW_LOOK, B_NORMAL_WINDOW_FEEL, B_ASYNCHRONOUS_CONTROLS)
-	, fDocument(document)
-	, fRenderManager(NULL)
-	, fCommandStackListener(this)
-//	, fLayerTreeModel(new LayerTreeModel(fDocument))
-	, fLayerObserver(this)
+	:
+	BWindow(frame, title, B_DOCUMENT_WINDOW_LOOK, B_NORMAL_WINDOW_FEEL,
+		B_ASYNCHRONOUS_CONTROLS | B_AUTO_UPDATE_SIZE_LIMITS),
+	fDocument(document),
+	fRenderManager(NULL),
+	fCommandStackListener(this),
+//	fLayerTreeModel(new LayerTreeModel(fDocument)),
+	fLayerObserver(this)
 {
+	SetLayout(new BGroupLayout(B_VERTICAL));
+
 	// TODO: fix for when document == NULL
 
-	frame.OffsetTo(B_ORIGIN);
-	frame.bottom = 15;
-	BMenuBar* menuBar = new BMenuBar(frame, "main menu");
+	BMenuBar* menuBar = new BMenuBar("main menu");
 	BMenu* fileMenu = new BMenu("File");
 	menuBar->AddItem(fileMenu);
 	BMenuItem* newWindowMI = new BMenuItem("New Window",
@@ -65,11 +132,7 @@ Window::Window(BRect frame, const char* title, Document* document,
 	editMenu->SetTargetForItems(this);
 	newWindowMI->SetTarget(be_app);
 
-	menuBar->ResizeToPreferred();
-	frame = Bounds();
-	frame.top = menuBar->Frame().bottom + 1;
-	frame.right = 200;
-	fLayerTreeView = new ObjectTreeView(frame, fDocument);
+	fLayerTreeView = new ObjectTreeView(fDocument);
 
 	Column* nameColumn = new Column("Name", "name", 177,
 		COLUMN_MOVABLE | COLUMN_VISIBLE);
@@ -79,39 +142,50 @@ Window::Window(BRect frame, const char* title, Document* document,
 		COLUMN_MOVABLE | COLUMN_VISIBLE);
 	fLayerTreeView->AddColumn(iconColumn);
 
-
 //	fLayerTreeView->SetModel(fLayerTreeModel);
 	fLayerTreeView->SetModel(new DefaultColumnTreeModel);
-	ScrollView* scrollView = new ScrollView(fLayerTreeView,
+	ScrollView* objectTreeScrollView = new ScrollView(fLayerTreeView,
 		SCROLL_HORIZONTAL | SCROLL_VERTICAL | SCROLL_HORIZONTAL_MAGIC
-		| SCROLL_VERTICAL_MAGIC | SCROLL_VISIBLE_RECT_IS_CHILD_BOUNDS, 
-		frame, "layer tree", B_FOLLOW_LEFT | B_FOLLOW_TOP_BOTTOM,
-		B_WILL_DRAW | B_FRAME_EVENTS);
-
-	AddChild(scrollView);
+		| SCROLL_VERTICAL_MAGIC | SCROLL_VISIBLE_RECT_IS_CHILD_BOUNDS,
+		"layer tree", B_WILL_DRAW | B_FRAME_EVENTS, B_PLAIN_BORDER,
+		BORDER_TOP);
+	objectTreeScrollView->SetExplicitMinSize(BSize(150, B_SIZE_UNSET));
+	objectTreeScrollView->SetExplicitMaxSize(BSize(250, B_SIZE_UNSET));
 
 	fLayerTreeView->SetSelectionMessage(new BMessage(MSG_SELECTION_CHANGED));
 
-	frame.left = frame.right + 1;
-	frame.right = Bounds().right;
-	frame.right -= B_V_SCROLL_BAR_WIDTH;
-	frame.bottom -= B_H_SCROLL_BAR_HEIGHT;
 	fRenderManager = new RenderManager(fDocument);
 	// TODO: Check error
 	fRenderManager->Init();
-	fView = new CanvasView(frame, fDocument, fRenderManager);
-	frame.right += B_V_SCROLL_BAR_WIDTH;
-	frame.bottom += B_H_SCROLL_BAR_HEIGHT;
-	scrollView = new ScrollView(fView,
+	fView = new CanvasView(fDocument, fRenderManager);
+	ScrollView* canvasScrollView = new ScrollView(fView,
 		SCROLL_HORIZONTAL | SCROLL_VERTICAL | SCROLL_NO_FRAME
-		| SCROLL_VISIBLE_RECT_IS_CHILD_BOUNDS, frame, "canvas",
-		B_FOLLOW_ALL, B_WILL_DRAW | B_FRAME_EVENTS);
+		| SCROLL_VISIBLE_RECT_IS_CHILD_BOUNDS, "canvas",
+		B_WILL_DRAW | B_FRAME_EVENTS, B_NO_BORDER);
 
-	AddChild(scrollView);
+	IconOptionsControl* iconBar = new IconOptionsControl();
+
+	AddChild(BGroupLayoutBuilder(B_HORIZONTAL)
+		.Add(BGroupLayoutBuilder(B_VERTICAL, 5)
+			.Add(iconBar)
+			.Add(objectTreeScrollView)
+			.SetInsets(0, 5, 0, 0), 0.2
+		)
+		.Add(new SeparatorView(B_VERTICAL))
+		.Add(canvasScrollView)
+	);
+
 	fView->MakeFocus(true);
 
 	fPickState = new PickToolState(fView, layer, fDocument);
-	fView->SetState(fPickState);
+//	fView->SetState(fPickState);
+TransformToolState* state = new TransformToolState(fView,
+	BRect(150, 150, 280, 250));
+Transformable t;
+t.ScaleBy(BPoint(220, 200), 1.2, 1.5);
+t.RotateBy(BPoint(200, 200), 10);
+state->SetObjectToCanvasTransformation(t);
+fView->SetState(state);
 	fView->SetCommandStack(fDocument->CommandStack());
 
 	fDocument->CommandStack()->AddListener(&fCommandStackListener);
@@ -314,7 +388,7 @@ Window::_RecursiveAddItems(Layer* layer, ObjectColumnTreeItem* layerItem)
 	int32 count = layer->CountObjects();
 	for (int32 i = 0; i < count; i++) {
 		Object* object = layer->ObjectAtFast(i);
-		
+
 		ObjectColumnTreeItem* item = new ObjectColumnTreeItem(20, object);
 		item->Update();
 

@@ -11,16 +11,27 @@ class Document;
 class RenderManager;
 
 class CanvasView : public BackBufferedStateView, public Scrollable {
- public:
+public:
 								CanvasView(BRect frame,
 									Document* document,
 									RenderManager* manager);
+
+#ifdef __HAIKU__
+								CanvasView(Document* document,
+									RenderManager* manager);
+#endif // __HAIKU__
+
 	virtual						~CanvasView();
 
 	// BackBufferedStateView interface
 	virtual	void				MessageReceived(BMessage* message);
 	virtual	void				AttachedToWindow();
 	virtual	void				FrameResized(float width, float height);
+	virtual	void				GetPreferredSize(float* _width,
+									float* _height);
+#ifdef __HAIKU__
+	virtual	BSize				MaxSize();
+#endif
 	virtual	void				DrawInto(BView* view, BRect updateRect);
 
 	virtual	void				MouseDown(BPoint where);
@@ -39,8 +50,10 @@ class CanvasView : public BackBufferedStateView, public Scrollable {
 	virtual	void				ConvertFromCanvas(BRect* rect) const;
 	virtual	void				ConvertToCanvas(BRect* rect) const;
 
+	virtual	float				ZoomLevel() const;
+
 	// Scrollable interface
- protected:
+protected:
 	virtual	void				SetScrollOffset(BPoint offset);
 
 	virtual	void				ScrollOffsetChanged(BPoint oldOffset,
@@ -50,25 +63,23 @@ class CanvasView : public BackBufferedStateView, public Scrollable {
 												   float newWidth,
 												   float newHeight);
 	// CanvasView
- public:
+public:
 			double				NextZoomInLevel(double zoom) const;
 			double				NextZoomOutLevel(double zoom) const;
 			void				SetZoomLevel(double zoomLevel,
 										 bool mouseIsAnchor = true);
-	inline	float				ZoomLevel() const
-									{ return fZoomLevel; }
 
 			void				SetAutoScrolling(bool scroll);
 
 	// StateView interface
- protected:
+protected:
 	virtual	bool				_HandleKeyDown(const StateView::KeyEvent& event,
 									BHandler* originalHandler);
 	virtual	bool				_HandleKeyUp(const StateView::KeyEvent& event,
 									BHandler* originalHandler);
 
 	//CanvasView
- private:
+private:
 			BRect				_CanvasRect() const;
 			BRect				_LayoutCanvas();
 
