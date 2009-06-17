@@ -97,25 +97,51 @@ class EventFilter : public BMessageFilter {
 // #pragma mark -
 
 // constructor
-StateView::StateView(BRect frame, const char* name,
-					 uint32 resizingMode, uint32 flags)
-	: BView(frame, name, resizingMode, flags),
-	  fCurrentState(NULL),
-	  fDropAnticipatingState(NULL),
+StateView::StateView(BRect frame, const char* name, uint32 resizingMode,
+		uint32 flags)
+	:
+	BView(frame, name, resizingMode, flags),
+	fCurrentState(NULL),
+	fDropAnticipatingState(NULL),
 
-	  fMouseInfo(),
-	  fLastMouseInfo(),
+	fMouseInfo(),
+	fLastMouseInfo(),
 
-	  fCommandStack(NULL),
-	  fLocker(NULL),
+	fCommandStack(NULL),
+	fLocker(NULL),
 
-	  fEventFilter(NULL),
-	  fCatchAllEvents(false),
+	fEventFilter(NULL),
+	fCatchAllEvents(false),
 
-	  fUpdateTarget(NULL),
-	  fUpdateCommand(0)
+	fUpdateTarget(NULL),
+	fUpdateCommand(0)
 {
 }
+
+#ifdef __HAIKU__
+
+// constructor
+StateView::StateView(const char* name, uint32 flags)
+	:
+	BView(name, flags),
+	fCurrentState(NULL),
+	fDropAnticipatingState(NULL),
+
+	fMouseInfo(),
+	fLastMouseInfo(),
+
+	fCommandStack(NULL),
+	fLocker(NULL),
+
+	fEventFilter(NULL),
+	fCatchAllEvents(false),
+
+	fUpdateTarget(NULL),
+	fUpdateCommand(0)
+{
+}
+
+#endif // __HAIKU__
 
 // destructor
 StateView::~StateView()
@@ -384,6 +410,13 @@ StateView::ConvertFromCanvas(BRect* rect) const
 void
 StateView::ConvertToCanvas(BRect* rect) const
 {
+}
+
+// ZoomLevel
+float
+StateView::ZoomLevel() const
+{
+	return 1.0f;
 }
 
 // FilterMouse

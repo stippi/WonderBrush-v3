@@ -23,11 +23,14 @@ struct mouse_info {
 };
 
 class StateView : public BView {
- public:
+public:
 	class KeyEvent;
 
 								StateView(BRect frame, const char* name,
-										  uint32 resizingMode, uint32 flags);
+									uint32 resizingMode, uint32 flags);
+#ifdef __HAIKU__
+								StateView(const char* name, uint32 flags);
+#endif
 	virtual						~StateView();
 
 	// BView interface
@@ -73,6 +76,8 @@ class StateView : public BView {
 	virtual	void				ConvertFromCanvas(BRect* rect) const;
 	virtual	void				ConvertToCanvas(BRect* rect) const;
 
+	virtual	float				ZoomLevel() const;
+
 	virtual	void				FilterMouse(BPoint* where) const;
 
 	virtual	ViewState*			StateForDragMessage(const BMessage* message);
@@ -94,7 +99,7 @@ class StateView : public BView {
 
 			void				TriggerUpdate();
 
- protected:
+protected:
 	virtual	bool				_HandleKeyDown(const KeyEvent& event,
 									BHandler* originalTarget);
 	virtual	bool				_HandleKeyUp(const KeyEvent& event,
@@ -123,7 +128,7 @@ class StateView : public BView {
 };
 
 class StateView::KeyEvent {
- public:
+public:
 								KeyEvent(uint32 key, const char* bytes,
 										 size_t length, uint32 modifiers)
 									: key(key),

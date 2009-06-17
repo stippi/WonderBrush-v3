@@ -21,6 +21,20 @@ BackBufferedStateView::BackBufferedStateView(BRect frame, const char* name,
 	_AllocBackBitmap(frame.Width(), frame.Height());
 }
 
+#ifdef __HAIKU__
+
+// constructor
+BackBufferedStateView::BackBufferedStateView(const char* name, uint32 flags)
+	: StateView(name, flags | B_FRAME_EVENTS)
+	, fOffscreenBitmap(NULL)
+	, fOffscreenView(NULL)
+	, fSyncToRetrace(false)
+{
+	SetViewColor(B_TRANSPARENT_COLOR);
+}
+
+#endif // __HAIKU__
+
 // destructor
 BackBufferedStateView::~BackBufferedStateView()
 {
@@ -62,7 +76,7 @@ BackBufferedStateView::Draw(BRect updateRect)
 			BRegion clipping;
 			GetClippingRegion(&clipping);
 			fOffscreenView->ConstrainClippingRegion(&clipping);
-	
+
 			DrawBackgroundInto(fOffscreenView, updateRect);
 			DrawInto(fOffscreenView, updateRect);
 
