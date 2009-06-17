@@ -64,6 +64,13 @@ State::Released(BPoint point, uint32 buttons, uint32 modifiers)
 {
 }
 
+// ItemFlags
+uint32
+State::ItemFlags(ColumnTreeItem* item)
+{
+	return item->Flags();
+}
+
 // GetMouseButtons
 void
 State::GetMouseButtons(uint32 *buttons, int32* clicks) const
@@ -204,7 +211,11 @@ IgnoreState::Released(BPoint point, uint32 buttons, uint32 modifiers)
 
 // constructor
 InsideState::InsideState(ColumnTreeView* listView, BPoint point)
-	: State(listView, point)
+	:
+	State(listView, point),
+	fItem(NULL),
+	fHoverIndex(-1),
+	fItemHandleHover(false)
 {
 ldebug("InsideState::InsideState()\n");
 }
@@ -212,6 +223,29 @@ ldebug("InsideState::InsideState()\n");
 // destructor
 InsideState::~InsideState()
 {
+}
+
+// Moved
+void
+InsideState::Moved(BPoint point, uint32 transit, const BMessage* message)
+{
+	int32 index = fListView->IndexOf(point);
+	// Take care of invalidating the item handle on hover events
+	BRect itemHandleFrame = fListView->_ItemHandleFrame(index);
+	bool itemHandleHover = itemHandleFrame.Contains(point);
+	if (itemHandleHover != fItemHandleHover) {
+		fItemHandleHover = itemHandleHover;
+		fListView->Invalidate(itemHandleFrame);
+		if (fHoverIndex != index)
+			fListView->Invalidate(fListView->_ItemHandleFrame(fHoverIndex));
+	}
+
+	ColumnTreeItem* item = fListView->ItemAt(index);
+	if (fItem != item) {
+		fItem = item;
+		fHoverIndex = index;
+		// TODO: we could generally invalidate on hover enter/exit
+	}
 }
 
 // Exited
@@ -284,6 +318,16 @@ InsideState::Pressed(BPoint point, uint32 buttons, uint32 modifiers,
 	}
 }
 
+
+// ItemFlags
+uint32
+InsideState::ItemFlags(ColumnTreeItem* item)
+{
+	uint32 flags = State::ItemFlags(item);
+	if (item == fItem && fItemHandleHover)
+		flags |= COLUMN_TREE_ITEM_HANDLE_HOVER;
+	return flags;
+}
 
 // #pragma mark - OutsideState
 

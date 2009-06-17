@@ -7,13 +7,14 @@
 
 class BMessage;
 
+class ColumnTreeItem;
 class ColumnTreeView;
 
 namespace ColumnTreeViewStates {
 
 // State
 class State {
- public:
+public:
 								State(ColumnTreeView* listView,
 									  BPoint point);
 	virtual						~State();
@@ -26,6 +27,7 @@ class State {
 										uint32 modifiers, int32 clicks);
 	virtual	void				Released(BPoint point, uint32 buttons,
 										 uint32 modifiers);
+	virtual	uint32				ItemFlags(ColumnTreeItem* item);
 
 			void				GetMouseButtons(uint32 *buttons,
 												int32* clicks) const;
@@ -34,17 +36,17 @@ class State {
 			bool				IsClick(bigtime_t first, bigtime_t second);
 
 			bool				IsOverView(BPoint point) const;
-			
+
 			void				ReleaseState(BPoint point);
 
- protected:
+protected:
 			ColumnTreeView*		fListView;
 			BPoint				fStartPoint;
 };
 
 // DraggingState
 class DraggingState : public State {
- public:
+public:
 								DraggingState(ColumnTreeView* listView,
 									BPoint point, const BMessage* message);
 	virtual						~DraggingState();
@@ -55,7 +57,7 @@ class DraggingState : public State {
 									uint32 modifiers);
 	virtual	void				Exited(BPoint point, const BMessage* message);
 
- private:
+private:
 			void				_IndicateDropTarget(BPoint point);
 
 			BMessage			fDragMessage;
@@ -65,7 +67,7 @@ class DraggingState : public State {
 
 // IgnoreState
 class IgnoreState : public State {
- public:
+public:
 								IgnoreState(ColumnTreeView* listView);
 	virtual						~IgnoreState();
 
@@ -76,21 +78,27 @@ class IgnoreState : public State {
 
 // InsideState
 class InsideState : public State {
- public:
+public:
 								InsideState(ColumnTreeView* listView,
 											BPoint point);
 	virtual						~InsideState();
 
+	virtual	void				Moved(BPoint point, uint32 transit,
+									  const BMessage* message);
 	virtual	void				Exited(BPoint point, const BMessage* message);
 	virtual	void				Pressed(BPoint point, uint32 buttons,
 										uint32 modifiers, int32 clicks);
+	virtual	uint32				ItemFlags(ColumnTreeItem* item);
 
- private:
+private:
+			ColumnTreeItem*		fItem;
+			int32				fHoverIndex;
+			bool				fItemHandleHover;
 };
 
 // OutsideState
 class OutsideState : public State {
- public:
+public:
 								OutsideState(ColumnTreeView* listView);
 	virtual						~OutsideState();
 
@@ -99,7 +107,7 @@ class OutsideState : public State {
 
 // PressedState
 class PressedState : public State {
- public:
+public:
 								PressedState(ColumnTreeView* listView,
 											 BPoint point, int32 index,
 											 bool wasSelected,
@@ -113,7 +121,7 @@ class PressedState : public State {
 	virtual	void				Released(BPoint point, uint32 buttons,
 										 uint32 modifiers);
 
- private:
+private:
 			int32				fItemIndex;
 			bool				fWasSelected;
 			bool				fSelectOnRelease;

@@ -2,6 +2,9 @@
 
 #include <algorithm>
 
+#ifdef __HAIKU__
+#	include <ControlLook.h>
+#endif
 #include <View.h>
 
 #include "ColumnTreeItem.h"
@@ -12,14 +15,14 @@
 // TODO: That's not nice. We assume how much e.g. the text is indented in
 // text items.
 static const int32 kInItemIndentation		= 8;
-static const int32 kHandleTriangleWidth		= 9;
-static const int32 kHandleTriangleHeight	= 5;
+static const int32 kHandleTriangleWidth		= 11;
+static const int32 kHandleTriangleHeight	= 7;
 static const int32 kHandleTriangleHeightDiff1
 	= (kHandleTriangleWidth - kHandleTriangleHeight) / 2;
 static const int32 kHandleTriangleHeightDiff2
 	= (kHandleTriangleWidth - kHandleTriangleHeight)
 	  - kHandleTriangleHeightDiff1;
-static const int32 kHandleTriangleInset		= 1;
+static const int32 kHandleTriangleInset		= 2;
 static const int32 kHandleWidth				= kHandleTriangleWidth
 											  + 2 * kHandleTriangleInset;
 static const int32 kIndentationPerLevel		= kInItemIndentation
@@ -56,43 +59,56 @@ DefaultColumnTreeItemHandle::GetHandleRect(ColumnTreeItem* item, BRect frame)
 // Draw
 void
 DefaultColumnTreeItemHandle::Draw(BView* view, ColumnTreeItem* item,
-								  Column* column, BRect frame,
-								  BRect updateRect, uint32 flags,
-								  const column_tree_item_colors* colors)
+	Column* column, BRect frame, BRect updateRect, uint32 flags,
+	const column_tree_item_colors* colors)
 {
-	if (item) {
-		// draw the background
-		item->DrawBackground(view, column, frame, updateRect, item->Flags(),
-							 colors);
-		// draw the handle, if any
-		if (fModel && fModel->CountSubItems(item)) {
-			BRect handleRect = _GetHandleRect(frame, fModel->LevelOf(item));
-			int32 left = int32(handleRect.left + kHandleTriangleInset);
-			int32 right = int32(handleRect.right - kHandleTriangleInset);
-			int32 top = int32(handleRect.top + kHandleTriangleInset);
-			int32 bottom = int32(handleRect.bottom - kHandleTriangleInset);
+	if (item == NULL)
+		return;
+
+	// draw the background
+	item->DrawBackground(view, column, frame, updateRect, item->Flags(),
+		colors);
+
+	// draw the handle, if any
+	if (fModel == NULL || fModel->CountSubItems(item) == 0)
+		return;
+
+	BRect handleRect = _GetHandleRect(frame, fModel->LevelOf(item));
+
+	if (be_control_look != NULL) {
+		handleRect.InsetBy(1, 1);
+		uint32 arrowDirection = item->IsExpanded()
+			? BControlLook::B_UP_ARROW : BControlLook::B_DOWN_ARROW;
+		float tint = (flags & COLUMN_TREE_ITEM_HANDLE_HOVER) != 0
+			? B_DARKEN_3_TINT : B_NO_TINT;
+		be_control_look->DrawArrowShape(view, handleRect, updateRect,
+			colors->shadow, arrowDirection, 0, tint);
+	} else {
+		int32 left = int32(handleRect.left + kHandleTriangleInset);
+		int32 right = int32(handleRect.right - kHandleTriangleInset);
+		int32 top = int32(handleRect.top + kHandleTriangleInset);
+		int32 bottom = int32(handleRect.bottom - kHandleTriangleInset);
 // TODO: Fix the colors.
-			if (item->IsExpanded()) {
-				top += kHandleTriangleHeightDiff1;
-				bottom -= kHandleTriangleHeightDiff2;
-				BPoint p1(left, top);
-				BPoint p2(right, top);
-				BPoint p3((left + right) / 2, bottom);
-				view->SetHighColor(colors->shadow);
-				view->FillTriangle(p1, p2, p3);
-				view->SetHighColor(colors->foreground);
-				view->StrokeTriangle(p1, p2, p3);
-			} else {
-				left += kHandleTriangleHeightDiff1;
-				right -= kHandleTriangleHeightDiff2;
-				BPoint p1(left, top);
-				BPoint p2(right, (top + bottom) / 2);
-				BPoint p3(left, bottom);
-				view->SetHighColor(colors->shadow);
-				view->FillTriangle(p1, p2, p3);
-				view->SetHighColor(colors->foreground);
-				view->StrokeTriangle(p1, p2, p3);
-			}
+		if (item->IsExpanded()) {
+			top += kHandleTriangleHeightDiff1;
+			bottom -= kHandleTriangleHeightDiff2;
+			BPoint p1(left, top);
+			BPoint p2(right, top);
+			BPoint p3((left + right) / 2, bottom);
+			view->SetHighColor(colors->shadow);
+			view->FillTriangle(p1, p2, p3);
+			view->SetHighColor(colors->foreground);
+			view->StrokeTriangle(p1, p2, p3);
+		} else {
+			left += kHandleTriangleHeightDiff1;
+			right -= kHandleTriangleHeightDiff2;
+			BPoint p1(left, top);
+			BPoint p2(right, (top + bottom) / 2);
+			BPoint p3(left, bottom);
+			view->SetHighColor(colors->shadow);
+			view->FillTriangle(p1, p2, p3);
+			view->SetHighColor(colors->foreground);
+			view->StrokeTriangle(p1, p2, p3);
 		}
 	}
 }

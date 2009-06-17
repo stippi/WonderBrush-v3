@@ -30,8 +30,11 @@ enum selection_mode {
 
 class ColumnTreeView : public BView, public BInvoker, public Scrollable,
 					   private ColumnTreeModelListener {
- public:
+public:
 								ColumnTreeView(BRect frame);
+#ifdef __HAIKU__
+								ColumnTreeView();
+#endif
 	virtual						~ColumnTreeView();
 
 	virtual	void				AttachedToWindow();
@@ -44,6 +47,13 @@ class ColumnTreeView : public BView, public BInvoker, public Scrollable,
 	virtual	void				MouseMoved(BPoint point, uint32 transit,
 										   const BMessage* message);
 	virtual	void				MouseUp(BPoint point);
+
+	virtual	void				GetPreferredSize(float* _width,
+									float* _height);
+
+#ifdef __HAIKU__
+	virtual	BSize				MaxSize();
+#endif
 
 //	virtual	status_t			Invoke(BMessage* message = NULL);
 
@@ -223,6 +233,8 @@ class ColumnTreeView : public BView, public BInvoker, public Scrollable,
 	class ItemCompare;
 
 private:
+			void				_Init();
+
 			Column*				_RemoveOrderedColumn(int32 index);
 			void				_HideOrderedColumn(int32 index);
 			void				_HideOrderedColumn(Column* column);

@@ -5,6 +5,9 @@
 #include <stdio.h>
 
 #include <Message.h>
+#ifdef __HAIKU__
+#	include <LayoutUtils.h>
+#endif
 #include <Window.h>
 
 #include "ColumnTreeView.h"
@@ -120,47 +123,38 @@ ColumnTreeView::ItemCompare::operator()(const ColumnTreeItem* item1,
 
 // constructor
 ColumnTreeView::ColumnTreeView(BRect frame)
-	: BView(frame, NULL, B_FOLLOW_NONE,
-			B_WILL_DRAW | B_FRAME_EVENTS | B_NAVIGABLE),
-	  BInvoker(new BMessage(B_SIMPLE_DATA), this),
-	  Scrollable(),	// DataRect == (0, 0, 0, 0), ScrollOffset = (0, 0)
-	  ColumnTreeModelListener(),
-	  fColumns(20),
-	  fVisibleColumns(20),
-//	  fItems(100),
-	  fModel(NULL),
-	  fSelectedItems(100),
-	  fHeaderView(NULL),
-	  fItemHandle(new(nothrow) DefaultColumnTreeItemHandle),
-	  fCurrentScrollOffset(0, 0),
-	  fScrollingEnabled(true),
-	  fPrimarySortColumn(NULL),
-	  fSecondarySortColumn(NULL),
-	  fInvocationMessage(NULL),
-	  fSelectionMessage(NULL),
-	  fSelectionDepth(0),
-	  fState(new OutsideState(this)),
-	  fColors(new column_tree_view_colors(kDefaultColumnTreeViewColors)),
-	  fCompareFunction(NULL),
-	  fItemCompare(NULL),
-	  fSelectionMode(CLV_MULTIPLE_SELECTION),
-	  fLastClickedIndex(-1),
-	  fLastClickTime(system_time()),
-	  fDoubleClickTime(500000)
+	:
+	BView(frame, NULL, B_FOLLOW_NONE,
+		B_WILL_DRAW | B_FRAME_EVENTS | B_NAVIGABLE),
+	BInvoker(new BMessage(B_SIMPLE_DATA), this),
+	Scrollable(),	// DataRect == (0, 0, 0, 0), ScrollOffset = (0, 0)
+	ColumnTreeModelListener(),
+	fColumns(20),
+	fVisibleColumns(20),
+//	fItems(100),
+	fSelectedItems(100)
 {
-	fHeaderView = new ColumnHeaderView();
-	fHeaderView->SetParentView(this);
-	fHeaderView->SetColors(&fColors->header_view_colors);
-	AddChild(fHeaderView);
-	_Layout();
-	SetViewColor(B_TRANSPARENT_32_BIT);
-	if (get_click_speed(&fDoubleClickTime) != B_OK)
-		fDoubleClickTime = 500000;
-	// set default model
-	// TODO: replace with DefaultColumnTreeModel
-	SetModel(new ColumnListModel);
-	fItemCompare = new ItemCompare;
+	_Init();
 }
+
+#ifdef __HAIKU__
+
+// constructor
+ColumnTreeView::ColumnTreeView()
+	:
+	BView(NULL, B_WILL_DRAW | B_FRAME_EVENTS | B_NAVIGABLE),
+	BInvoker(new BMessage(B_SIMPLE_DATA), this),
+	Scrollable(),	// DataRect == (0, 0, 0, 0), ScrollOffset = (0, 0)
+	ColumnTreeModelListener(),
+	fColumns(20),
+	fVisibleColumns(20),
+//	fItems(100),
+	fSelectedItems(100)
+{
+	_Init();
+}
+
+#endif // __HAIKU__
 
 // destructor
 ColumnTreeView::~ColumnTreeView()
@@ -193,40 +187,41 @@ ColumnTreeView::Draw(BRect updateRect)
 void
 ColumnTreeView::Draw(BView* view, BRect updateRect)
 {
-	if (view) {
-		BRect itemsRect(_ActualItemsRect());
-		// let the items draw themselves
-		BRect itemsUpdateRect(updateRect & itemsRect);
-		if (itemsUpdateRect.IsValid()) {
-			// some items have to be updated
-			int32 first = IndexOf(itemsUpdateRect.top);
-			int32 last = IndexOf(itemsUpdateRect.bottom);
-			int32 firstColumn = _VisibleColumnIndexOf(itemsUpdateRect.left);
-			int32 lastColumn = _VisibleColumnIndexOf(itemsUpdateRect.right);
-			for (int32 i = first; i <= last; i++) {
-				if (ColumnTreeItem* item = ItemAt(i))
-					_DrawItem(item, view, firstColumn, lastColumn,
-							  itemsUpdateRect);
-			}
+	if (view == NULL)
+		return;
+
+	BRect itemsRect(_ActualItemsRect());
+	// let the items draw themselves
+	BRect itemsUpdateRect(updateRect & itemsRect);
+	if (itemsUpdateRect.IsValid()) {
+		// some items have to be updated
+		int32 first = IndexOf(itemsUpdateRect.top);
+		int32 last = IndexOf(itemsUpdateRect.bottom);
+		int32 firstColumn = _VisibleColumnIndexOf(itemsUpdateRect.left);
+		int32 lastColumn = _VisibleColumnIndexOf(itemsUpdateRect.right);
+		for (int32 i = first; i <= last; i++) {
+			if (ColumnTreeItem* item = ItemAt(i))
+				_DrawItem(item, view, firstColumn, lastColumn,
+						  itemsUpdateRect);
 		}
-		// draw the background
-		if (updateRect.right > itemsRect.right) {
-			BRect rect(updateRect);
-			rect.left = itemsRect.right + 1.0f;
-			if (rect.IsValid()) {
-				view->SetHighColor(fColors->background);
-				view->FillRect(rect);
-			}
+	}
+	// draw the background
+	if (updateRect.right > itemsRect.right) {
+		BRect rect(updateRect);
+		rect.left = itemsRect.right + 1.0f;
+		if (rect.IsValid()) {
+			view->SetHighColor(fColors->background);
+			view->FillRect(rect);
 		}
-		if (updateRect.bottom > itemsRect.bottom) {
-			BRect rect(updateRect);
-			rect.top = itemsRect.bottom + 1.0f;
-			// don't draw more than necessary:
-			rect.right = MIN(rect.right, itemsRect.right);
-			if (rect.IsValid()) {
-				view->SetHighColor(fColors->background);
-				view->FillRect(rect);
-			}
+	}
+	if (updateRect.bottom > itemsRect.bottom) {
+		BRect rect(updateRect);
+		rect.top = itemsRect.bottom + 1.0f;
+		// don't draw more than necessary:
+		rect.right = MIN(rect.right, itemsRect.right);
+		if (rect.IsValid()) {
+			view->SetHighColor(fColors->background);
+			view->FillRect(rect);
 		}
 	}
 }
@@ -365,6 +360,29 @@ ColumnTreeView::MouseUp(BPoint point)
 	Window()->CurrentMessage()->FindInt32("modifiers", (int32 *)&modifiers);
 	fState->Released(point, buttons, modifiers);
 }
+
+void
+ColumnTreeView::GetPreferredSize(float* _width, float* _height)
+{
+	if (_width != NULL) {
+		*_width = 100;
+	}
+	if (_height != NULL) {
+		*_height = fHeaderView->Bounds().Height() + 50;
+	}
+}
+
+#ifdef __HAIKU__
+
+BSize
+ColumnTreeView::MaxSize()
+{
+	return BLayoutUtils::ComposeSize(ExplicitMaxSize(),
+		BSize(B_SIZE_UNLIMITED, B_SIZE_UNLIMITED));
+}
+
+#endif // __HAIKU__
+
 
 // Invoke
 /*status_t
@@ -1131,7 +1149,7 @@ ColumnTreeView::SetInvocationMessage(BMessage* message)
 {
 	delete fInvocationMessage;
 	fInvocationMessage = message;
-		
+
 }
 
 // InvocationMessage
@@ -1494,6 +1512,43 @@ ColumnTreeView::ItemsSorted(ColumnTreeModel* model)
 	_RebuildSelectionList();
 	_UpdateItemYOffsets(0, false);
 	Invalidate();
+}
+
+// _Init
+void
+ColumnTreeView::_Init()
+{
+	fModel = NULL;
+	fItemHandle = new(nothrow) DefaultColumnTreeItemHandle;
+	fCurrentScrollOffset = B_ORIGIN;
+	fScrollingEnabled = true;
+	fPrimarySortColumn = NULL;
+	fSecondarySortColumn = NULL;
+	fInvocationMessage = NULL;
+	fSelectionMessage = NULL;
+	fSelectionDepth = 0;
+	fState = new(nothrow) OutsideState(this);
+	fColors
+		= new(nothrow) column_tree_view_colors(kDefaultColumnTreeViewColors);
+	fCompareFunction = NULL;
+	fItemCompare = NULL;
+	fSelectionMode = CLV_MULTIPLE_SELECTION;
+	fLastClickedIndex = -1;
+	fLastClickTime = system_time();
+	fDoubleClickTime = 500000;
+
+	fHeaderView = new ColumnHeaderView();
+	fHeaderView->SetParentView(this);
+	fHeaderView->SetColors(&fColors->header_view_colors);
+	AddChild(fHeaderView);
+	_Layout();
+	SetViewColor(B_TRANSPARENT_32_BIT);
+	if (get_click_speed(&fDoubleClickTime) != B_OK)
+		fDoubleClickTime = 500000;
+	// set default model
+	// TODO: replace with DefaultColumnTreeModel
+	SetModel(new ColumnListModel);
+	fItemCompare = new ItemCompare;
 }
 
 // _RemoveOrderedColumn
@@ -2242,14 +2297,14 @@ ColumnTreeView::_DrawItem(ColumnTreeItem* item, BView* view, int32 firstColumn,
 		BRect indentationArea(columnRect.left, columnRect.top,
 							  indentedColumnRect.left - 1, columnRect.bottom);
 		if (indentationArea.IsValid()) {
+			uint32 flags = fState->ItemFlags(item);
 			if (fItemHandle) {
 				fItemHandle->Draw(view, item, column, indentationArea,
-								  indentationArea & updateRect, item->Flags(),
-								  &fColors->item_colors);
+					indentationArea & updateRect, flags,
+					&fColors->item_colors);
 			} else {
 				item->DrawBackground(view, column, indentedColumnRect,
-									 indentationArea, item->Flags(),
-									 &fColors->item_colors);
+					indentationArea, flags, &fColors->item_colors);
 			}
 		}
 /*
