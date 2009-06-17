@@ -24,6 +24,9 @@ public:
 class ObjectTreeView : public ColumnTreeView {
 public:
 								ObjectTreeView(BRect frame, Document* document);
+#ifdef __HAIKU__
+								ObjectTreeView(Document* document);
+#endif
 	virtual						~ObjectTreeView();
 
 	// BView interface

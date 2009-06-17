@@ -53,11 +53,22 @@ enum {
 
 
 ObjectTreeView::ObjectTreeView(BRect frame, Document* document)
-	: ColumnTreeView(frame)
-	, fDocument(document)
+	:
+	ColumnTreeView(frame),
+	fDocument(document)
 {
 }
 
+#ifdef __HAIKU__
+
+ObjectTreeView::ObjectTreeView(Document* document)
+	:
+	ColumnTreeView(),
+	fDocument(document)
+{
+}
+
+#endif // __HAIKU__
 
 ObjectTreeView::~ObjectTreeView()
 {
@@ -196,7 +207,7 @@ ObjectTreeView::InitiateDrag(BPoint point, int32 index, bool wasSelected,
 
 		DragMessage(&dragMessage, dragBitmap, B_OP_ALPHA, BPoint(point.x,
 			point.y - ItemFrame(CurrentSelection(0)).top));
-		
+
 		if (_message)
 			*_message = dragMessage;
 
@@ -235,7 +246,7 @@ ObjectTreeView::_HandleRenameItem(int32 index)
 		message->AddPointer("object", item->object);
 		message->AddPointer("item", item);
 		message->AddInt32("index", index);
-	
+
 		BRect frame(ItemFrame(index));
 		frame.left += IndentationOf(item) + 9.0;
 		ConvertToScreen(&frame);
