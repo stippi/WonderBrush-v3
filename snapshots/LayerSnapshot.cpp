@@ -28,7 +28,8 @@ LayerSnapshot::LayerSnapshot(const ::Layer* layer)
 	: ObjectSnapshot(layer)
 	, fOriginal(layer)
 	, fObjects(20)
-	, fBitmap(new (nothrow) BBitmap(layer->Bounds(), 0, B_RGBA32))
+	, fBitmap(new (nothrow) BBitmap(layer->Bounds(), B_BITMAP_NO_SERVER_LINK,
+		B_RGBA32))
 {
 	_Sync();
 }
@@ -251,7 +252,8 @@ LayerSnapshot::_Sync()
 
 	if (!fBitmap || fOriginal->Bounds() != fBitmap->Bounds()) {
 		delete fBitmap;
-		fBitmap = new (nothrow) BBitmap(fOriginal->Bounds(), 0, B_RGBA32);
+		fBitmap = new (nothrow) BBitmap(fOriginal->Bounds(),
+			B_BITMAP_NO_SERVER_LINK, B_RGBA32);
 	}
 }
 
