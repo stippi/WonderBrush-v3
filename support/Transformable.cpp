@@ -144,7 +144,7 @@ Transformable::Transform(BPoint* point) const
 		double y = point->y;
 
 		transform(&x, &y);
-	
+
 		point->x = x;
 		point->y = y;
 	}
@@ -175,7 +175,7 @@ Transformable::InverseTransform(BPoint* point) const
 		double y = point->y;
 
 		inverse_transform(&x, &y);
-	
+
 		point->x = x;
 		point->y = y;
 	}
@@ -199,12 +199,12 @@ Transformable::TransformBounds(BRect bounds) const
 		BPoint rt(bounds.right, bounds.top);
 		BPoint lb(bounds.left, bounds.bottom);
 		BPoint rb(bounds.right, bounds.bottom);
-	
+
 		Transform(&lt);
 		Transform(&rt);
 		Transform(&lb);
 		Transform(&rb);
-	
+
 		return BRect(floorf(min4(lt.x, rt.x, lb.x, rb.x)),
 					 floorf(min4(lt.y, rt.y, lb.y, rb.y)),
 					 ceilf(max4(lt.x, rt.x, lb.x, rb.x)),
@@ -221,6 +221,74 @@ Transformable::TranslateBy(BPoint offset)
 		multiply(agg::trans_affine_translation(offset.x, offset.y));
 		TransformationChanged();
 	}
+}
+
+// GetAffineParameters
+bool
+Transformable::GetAffineParameters(double* _translationX,
+	double* _translationY, double* _rotation, double* _scaleX, double* _scaleY,
+	double* _skewX, double* _skewY) const
+{
+	if (_translationX != NULL)
+		*_translationX = tx;
+	if (_translationY != NULL)
+		*_translationY = ty;
+
+	double r = rotation();
+	if (_rotation != NULL)
+		*_rotation = r;
+
+	// skew
+	double x1 = 0.0;
+	double y1 = 0.0;
+	double x2 = 1.0;
+	double y2 = 0.0;
+	double x3 = 0.0;
+	double y3 = 1.0;
+
+	Transformable t(*this);
+	t.multiply(agg::trans_affine_rotation(-r));
+		// undo effects of rotation
+
+	t.transform(&x1, &y1);
+	t.transform(&x2, &y2);
+	t.transform(&x3, &y3);
+
+	double skewX = y2 - y1;
+	double skewY = x3 - x1;
+
+	// scale
+	x1 = 0.0;
+	y1 = 0.0;
+	x2 = 1.0;
+	y2 = 0.0;
+	x3 = 0.0;
+	y3 = 1.0;
+	t.multiply_inv(agg::trans_affine_skewing(skewX, skewY));
+		// undo effects of skew
+
+	t.transform(&x1, &y1);
+	t.transform(&x2, &y2);
+	t.transform(&x3, &y3);
+
+	double scaleX = x2 - x1;
+	double scaleY = y3 - y1;
+
+	if (_scaleX != NULL)
+		*_scaleX = scaleX;
+
+	if (_scaleY != NULL)
+		*_scaleY = scaleY;
+
+	// Since we figured out the scale last, the skew values are still scaled.
+	if (scaleX != 0.0 && scaleY != 0.0) {
+		if (_skewX != NULL)
+		  *_skewX = skewX / scaleX;
+		if (_skewY != NULL)
+		  *_skewY = skewY / scaleY;
+		return true;
+	}
+	return false;
 }
 
 // RotateBy

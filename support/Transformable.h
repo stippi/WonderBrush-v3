@@ -45,7 +45,13 @@ class Transformable : public agg::trans_perspective {
 								// some convenience functions
 	virtual	void				TranslateBy(BPoint offset);
 	virtual	void				RotateBy(BPoint origin, double degrees);
-	virtual	void				ScaleBy(BPoint origin, double xScale, double yScale);
+	virtual	void				ScaleBy(BPoint origin, double scaleX,
+									double scaleY);
+
+			bool				GetAffineParameters(double* translationX,
+									double* translationY, double* rotation,
+									double* scaleX, double* scaleY,
+									double* skewX, double* skewY) const;
 
 	virtual	void				TransformationChanged() {}
 };
