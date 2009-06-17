@@ -23,11 +23,11 @@ class TransformBox;
 #define MOVE 0
 #define SCALE 0
 #define MOVE_PIVOT 0
-// 
+//
 
 // base class
 class DragState {
- public:
+public:
 								DragState(TransformBox* parent);
 	virtual						~DragState() {}
 
@@ -38,7 +38,7 @@ class DragState {
 	virtual	const char*			ActionName() const;
 	virtual	uint32				ActionNameIndex() const;
 
- protected:
+protected:
 			void				_SetViewCursor(BView* view,
 											   const uchar* cursorData) const;
 

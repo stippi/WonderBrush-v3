@@ -168,8 +168,6 @@ TransformBox::MouseDown(BPoint where, uint32 buttons, uint32 clicks)
 		fCurrentCommand = MakeCommand(fCurrentState->ActionName(),
 									  fCurrentState->ActionNameIndex());
 	}
-
-	return;
 }
 
 // MouseMoved
@@ -293,7 +291,7 @@ TransformBox::HandleKeyDown(uint32 key, uint32 modifiers, Command** _command)
 		case B_RIGHT_ARROW:
 			translation.x = offset;
 			break;
-	
+
 		default:
 			handled = false;
 			break;
