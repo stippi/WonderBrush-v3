@@ -169,43 +169,13 @@ namespace agg
         }
 
         //--------------------------------------------------------------------
-        const self_type& operator = (const self_type& other)
-        {
-            if(other.m_max_len > m_max_len)
-            {
-                delete [] m_spans;
-                delete [] m_covers;
-                m_covers  = new cover_type [other.m_max_len];
-                m_spans   = new span [other.m_max_len];
-                m_max_len = other.m_max_len;
-            }
-            if (m_max_len > 0)
-            {
-			    memcpy(m_covers, other.m_covers, sizeof(cover_type) * m_max_len);
-			    memcpy(m_spans, other.m_spans, sizeof(span) * m_max_len);
-            }
-            else
-            {
-                m_covers = NULL;
-                m_spans = NULL;
-            }
-
-            m_last_x    = other.m_last_x;
-            m_y			= other.m_y;
-            m_cover_ptr = m_covers;
-            m_cur_span  = m_spans;
-            m_cur_span->len = 0;
-
-            return *this;
-        }
-
-        //--------------------------------------------------------------------
         int            y()         const { return m_y; }
         unsigned       num_spans() const { return unsigned(m_cur_span - m_spans); }
         const_iterator begin()     const { return m_spans + 1; }
 
     private:
         scanline_p8(const self_type&);
+		const self_type& operator = (const self_type& other);
 
         unsigned    m_max_len;
         int         m_last_x;
