@@ -99,7 +99,7 @@ PickToolState::ShapeLOAdapater::Deleted(Shape* shape)
 // #pragma mark -
 
 // constructor
-PickToolState::PickToolState(CanvasView* parent, Layer* layer,
+PickToolState::PickToolState(StateView* parent, Layer* layer,
 		Document* document)
 	: ViewState(parent)
 	, fDocument(document)

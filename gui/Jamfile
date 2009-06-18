@@ -1,0 +1,5 @@
+SubDir WONDERBRUSH_TOP gui ;
+
+SubInclude WONDERBRUSH_TOP gui columntreeview ;
+SubInclude WONDERBRUSH_TOP gui scrollview ;
+SubInclude WONDERBRUSH_TOP gui stateview ;

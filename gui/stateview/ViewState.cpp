@@ -40,12 +40,14 @@ ViewState::~ViewState()
 void
 ViewState::Init()
 {
+	UpdateBounds();
 }
 
 // Cleanup
 void
 ViewState::Cleanup()
 {
+	UpdateBounds();
 }
 
 // #pragma mark -

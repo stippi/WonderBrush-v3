@@ -3,6 +3,8 @@
 
 #include "ColumnTreeView.h"
 #include "EasyColumnTreeItem.h"
+#include "LayerObserver.h"
+#include "ListenerAdapter.h"
 
 
 class Document;
@@ -41,13 +43,31 @@ public:
 									bool wasSelected,
 									BMessage* _message = NULL);
 
+	// ObjectTreeView
+			void				SelectItem(Object* object);
+
 private:
 			void				_HandleRenameSelectedItem();
 			void				_HandleRenameItem(int32 index);
 			void				_HandleRenameObject(BMessage* message);
 
+			void				_ObjectAdded(Layer* layer, Object* object,
+									int32 index);
+			void				_ObjectRemoved(Layer* layer, Object* object,
+									int32 index);
+			void				_ObjectChanged(Layer* layer, Object* object,
+									int32 index);
+
+			ObjectColumnTreeItem* _FindLayerTreeViewItem(const Object* object);
+
+			void				_RecursiveAddItems(Layer* layer,
+									ObjectColumnTreeItem* item);
+			void				_RecursiveRemoveItems(Layer* layer,
+									ObjectColumnTreeItem* item);
+
 private:
 			Document*			fDocument;
+			LayerObserver		fLayerObserver;
 };
 
 

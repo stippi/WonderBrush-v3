@@ -32,6 +32,7 @@ for sysIncludeDir in $(sysIncludeDirs) {
 SubDirHdrs [ FDirName $(WONDERBRUSH_TOP) columntreeview ] ;
 SubDirHdrs [ FDirName $(WONDERBRUSH_TOP) commands ] ;
 SubDirHdrs [ FDirName $(WONDERBRUSH_TOP) gui ] ;
+SubDirHdrs [ FDirName $(WONDERBRUSH_TOP) gui icons ] ;
 SubDirHdrs [ FDirName $(WONDERBRUSH_TOP) gui columntreeview ] ;
 SubDirHdrs [ FDirName $(WONDERBRUSH_TOP) gui scrollview ] ;
 SubDirHdrs [ FDirName $(WONDERBRUSH_TOP) gui stateview ] ;
@@ -101,11 +102,13 @@ Application WonderBrush :
 	# tools
 	ChannelTransform.cpp
 	DragStateViewState.cpp
+	PickTool.cpp
 	PickToolState.cpp
 	Tool.cpp
 	TransformableGroup.cpp
-#	TransformBox.cpp
-#	TransformBoxStates.cpp
+	#TransformBox.cpp
+	#TransformBoxStates.cpp
+	TransformTool.cpp
 	TransformToolState.cpp
 	TransformViewState.cpp
 

@@ -58,6 +58,11 @@ class Layer : public Object {
 			bool				AddListener(Listener* listener);
 			void				RemoveListener(Listener* listener);
 
+	static	bool				AddListenerRecursive(Layer* layer,
+									Listener* listener);
+	static	void				RemoveListenerRecursive(Layer* layer,
+									Listener* listener);
+
 			BRect				Bounds() const
 									{ return fBounds; }
  private:

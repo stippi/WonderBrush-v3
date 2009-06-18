@@ -9,7 +9,6 @@
 
 class Document;
 class Layer;
-class CanvasView;
 
 class PickToolState : public ViewState {
 	class RectLOAdapater : public RectListener,
@@ -17,19 +16,19 @@ class PickToolState : public ViewState {
 	public:
 								RectLOAdapater(BHandler* handler);
 		virtual					~RectLOAdapater();
-	
+
 		virtual	void			AreaChanged(Rect* rect,
 									const BRect& oldArea,
 									const BRect& newArea);
 		virtual	void			Deleted(Rect* rect);
 	};
-	
+
 	class ShapeLOAdapater : public ShapeListener,
 							public AbstractLOAdapter {
 	public:
 								ShapeLOAdapater(BHandler* handler);
 		virtual					~ShapeLOAdapater();
-	
+
 		virtual	void			AreaChanged(Shape* shape,
 									const BRect& oldArea,
 									const BRect& newArea);
@@ -43,7 +42,7 @@ public:
 		MSG_OBJECT_PICKED	= 'objp'
 	};
 
-								PickToolState(CanvasView* parent,
+								PickToolState(StateView* parent,
 									Layer* layer, Document* document);
 	virtual						~PickToolState();
 

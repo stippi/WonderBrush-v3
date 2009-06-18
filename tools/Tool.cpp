@@ -13,6 +13,7 @@
 Tool::Tool(const char* name)
 	:
 	BHandler(name),
+	fViewState(NULL),
 	fConfigView(NULL),
 	fIcon(NULL)
 {
@@ -21,6 +22,7 @@ Tool::Tool(const char* name)
 // destructor
 Tool::~Tool()
 {
+	delete fViewState;
 	// NOTE: the GUI stuff is deleted by the window
 	// to which it has been attached
 }
@@ -46,6 +48,15 @@ Tool::LoadSettings(BMessage* message)
 }
 
 // #pragma mark -
+
+// ToolViewState
+ViewState*
+Tool::ToolViewState(StateView* view, Document* document)
+{
+	if (fViewState == NULL)
+		fViewState = MakeViewState(view, document);
+	return fViewState;
+}
 
 // ConfigView
 ToolConfigView*

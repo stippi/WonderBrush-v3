@@ -9,14 +9,16 @@
 class CanvasView;
 class ColumnTreeModel;
 class Document;
+class IconOptionsControl;
 class Layer;
 class ObjectColumnTreeItem;
 class ObjectTreeView;
 class PickToolState;
 class RenderManager;
+class Tool;
 
 class Window : public BWindow {
- public:
+public:
 								Window(BRect frame, const char* title,
 									Document* document, Layer* layer);
 	virtual						~Window();
@@ -28,26 +30,12 @@ class Window : public BWindow {
 	// Window
 			void				SetDocument(Document* document);
 
- private:
+			void				AddTool(Tool* tool);
+
+private:
+			void				_InitTools();
+
 			void				_ObjectChanged(const Notifier* object);
-
-			void				_ObjectAdded(Layer* layer, Object* object,
-									int32 index);
-			void				_ObjectRemoved(Layer* layer, Object* object,
-									int32 index);
-			void				_ObjectChanged(Layer* layer, Object* object,
-									int32 index);
-
-			ObjectColumnTreeItem* _FindLayerTreeViewItem(const Object* object);
-
-			void				_RecursiveAddItems(Layer* layer,
-									ObjectColumnTreeItem* item);
-			void				_RecursiveRemoveItems(Layer* layer,
-									ObjectColumnTreeItem* item);
-
-			void				_RecursiveAddListener(Layer* layer);
-			void				_RecursiveRemoveListener(Layer* layer);
-
 
 			CanvasView*			fView;
 			Document*			fDocument;
@@ -61,6 +49,9 @@ class Window : public BWindow {
 			ObjectTreeView*		fLayerTreeView;
 			ColumnTreeModel*	fLayerTreeModel;
 			LayerObserver		fLayerObserver;
+			IconOptionsControl*	fToolIconControl;
+
+			BList				fTools;
 };
 
 #endif // WINDOW_H

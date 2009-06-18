@@ -18,18 +18,21 @@
 #include "CommandStack.h"
 #include "DefaultColumnTreeModel.h"
 #include "Document.h"
+#include "IconButton.h"
 #include "IconOptionsControl.h"
 //#include "LayerTreeModel.h"
 #include "ObjectTreeView.h"
+#include "PickTool.h"
+#include "TransformTool.h"
 #include "PickToolState.h"
 #include "RenderManager.h"
 #include "ScrollView.h"
-#include "TransformToolState.h"
 
 enum {
 	MSG_UNDO				= 'undo',
 	MSG_REDO				= 'redo',
-	MSG_SELECTION_CHANGED	= 'slch'
+	MSG_SELECTION_CHANGED	= 'slch',
+	MSG_SET_TOOL			= 'sltl'
 };
 
 
@@ -163,11 +166,11 @@ Window::Window(BRect frame, const char* title, Document* document,
 		| SCROLL_VISIBLE_RECT_IS_CHILD_BOUNDS, "canvas",
 		B_WILL_DRAW | B_FRAME_EVENTS, B_NO_BORDER);
 
-	IconOptionsControl* iconBar = new IconOptionsControl();
+	fToolIconControl = new IconOptionsControl();
 
 	AddChild(BGroupLayoutBuilder(B_HORIZONTAL)
 		.Add(BGroupLayoutBuilder(B_VERTICAL, 5)
-			.Add(iconBar)
+			.Add(fToolIconControl)
 			.Add(objectTreeScrollView)
 			.SetInsets(0, 5, 0, 0), 0.2
 		)
@@ -177,30 +180,26 @@ Window::Window(BRect frame, const char* title, Document* document,
 
 	fView->MakeFocus(true);
 
-	fPickState = new PickToolState(fView, layer, fDocument);
-//	fView->SetState(fPickState);
-TransformToolState* state = new TransformToolState(fView,
-	BRect(150, 150, 280, 250));
-Transformable t;
-t.ScaleBy(BPoint(220, 200), 1.2, 1.5);
-t.RotateBy(BPoint(200, 200), 10);
-state->SetObjectToCanvasTransformation(t);
-fView->SetState(state);
+	_InitTools();
+
 	fView->SetCommandStack(fDocument->CommandStack());
 
 	fDocument->CommandStack()->AddListener(&fCommandStackListener);
 	_ObjectChanged(fDocument->CommandStack());
-	_RecursiveAddListener(fDocument->RootLayer());
-	_RecursiveAddItems(fDocument->RootLayer(), NULL);
+	Layer::AddListenerRecursive(fDocument->RootLayer(), &fLayerObserver);
 }
 
 // destructor
 Window::~Window()
 {
-	_RecursiveRemoveListener(fDocument->RootLayer());
+	Layer::RemoveListenerRecursive(fDocument->RootLayer(), &fLayerObserver);
 	fDocument->CommandStack()->RemoveListener(&fCommandStackListener);
 	delete fRenderManager;
 //	delete fLayerTreeModel;
+
+	fView->SetState(NULL);
+	for (int32 i = fTools.CountItems() - 1; i >= 0; i--)
+		delete (Tool*)fTools.ItemAtFast(i);
 }
 
 // MessageReceived
@@ -240,46 +239,22 @@ Window::MessageReceived(BMessage* message)
 			break;
 		}
 
+		case MSG_SET_TOOL: {
+			int32 index;
+			if (message->FindInt32("tool", &index) == B_OK) {
+				if (Tool* tool = (Tool*)fTools.ItemAt(index))
+					fView->SetState(tool->ToolViewState(fView, fDocument));
+			}
+			break;
+		}
+
 		case PickToolState::MSG_OBJECT_PICKED:
 		{
 			Object* object;
-			if (message->FindPointer("object", (void**)&object) == B_OK) {
-				ColumnTreeItem* item = _FindLayerTreeViewItem(object);
-				if (item)
-					fLayerTreeView->Select(fLayerTreeView->IndexOf(item));
-					//item->SetSelected(true);
-				else
-					fLayerTreeView->DeselectAll();
-			}
+			if (message->FindPointer("object", (void**)&object) == B_OK)
+				fLayerTreeView->SelectItem(object);
 		}
 
-		case LayerObserver::MSG_OBJECT_ADDED:
-		case LayerObserver::MSG_OBJECT_REMOVED:
-		case LayerObserver::MSG_OBJECT_CHANGED:
-			if (fDocument->WriteLock()) {
-				Layer* layer;
-				Object* object;
-				int32 index;
-				if (message->FindPointer("layer", (void**)&layer) == B_OK
-					&& message->FindPointer("object", (void**)&object) == B_OK
-					&& message->FindInt32("index", &index) == B_OK) {
-					if (!fDocument->HasLayer(layer)) {
-						fDocument->WriteUnlock();
-						break;
-					}
-					if (message->what == LayerObserver::MSG_OBJECT_ADDED)
-						_ObjectAdded(layer, object, index);
-					else if (message->what == LayerObserver::MSG_OBJECT_REMOVED)
-						_ObjectRemoved(layer, object, index);
-					else
-						_ObjectChanged(layer, object, index);
-				}
-				fDocument->WriteUnlock();
-			}
-			break;
-		case LayerObserver::MSG_AREA_INVALIDATED:
-			// not interested
-			break;
 		default:
 			BWindow::MessageReceived(message);
 	}
@@ -303,7 +278,50 @@ Window::SetDocument(Document* document)
 	// TODO: handle to View
 }
 
+// AddTool
+void
+Window::AddTool(Tool* tool)
+{
+	if (tool == NULL)
+		return;
+
+	int32 count = fTools.CountItems();
+		// check the count before adding tool
+
+	if (!fTools.AddItem((void*)tool)) {
+		delete tool;
+		return;
+	}
+
+	// add the tools icon
+	IconButton* icon = tool->Icon();
+	BMessage* message = new BMessage(MSG_SET_TOOL);
+	message->AddInt32("tool", count);
+	icon->SetMessage(message);
+	fToolIconControl->AddOption(icon);
+
+//	if (count == 0) {
+//		// this was the first tool
+//		fTimelineView->SetTool(tool);
+//	}
+}
+
 // #pragma mark -
+
+// _InitTools
+void
+Window::_InitTools()
+{
+	// create canvas tools
+	PickTool* pickTool = new(std::nothrow) PickTool();
+	// TODO: Remove test code...
+	fPickState = dynamic_cast<PickToolState*>(
+		pickTool->ToolViewState(fView, fDocument));
+	fView->SetState(fPickState);
+
+	AddTool(pickTool);
+	AddTool(new(std::nothrow) TransformTool());
+}
 
 // _ObjectChanged
 void
@@ -330,111 +348,3 @@ Window::_ObjectChanged(const Notifier* object)
 			fRedoMI->SetLabel("<nothing to redo>");
 	}
 }
-
-// _ObjectAdded
-void
-Window::_ObjectAdded(Layer* layer, Object* object, int32 index)
-{
-	if (!layer->HasObject(object))
-		return;
-
-	ObjectColumnTreeItem* parentItem = _FindLayerTreeViewItem(layer);
-
-	ObjectColumnTreeItem* item = new ObjectColumnTreeItem(20, object);
-	item->Update();
-
-	fLayerTreeView->AddSubItem(parentItem, item, index);
-	fLayerTreeView->ExpandItem(item);
-
-	if (Layer* subLayer = dynamic_cast<Layer*>(object))
-		_RecursiveAddItems(subLayer, item);
-}
-
-// _ObjectRemoved
-void
-Window::_ObjectRemoved(Layer* layer, Object* object, int32 index)
-{
-}
-
-// _ObjectChanged
-void
-Window::_ObjectChanged(Layer* layer, Object* object, int32 index)
-{
-	ObjectColumnTreeItem* item = _FindLayerTreeViewItem(object);
-	if (!item)
-		return;
-	item->Update();
-	fLayerTreeView->InvalidateItem(item);
-}
-
-// _FindLayerTreeViewItem
-ObjectColumnTreeItem*
-Window::_FindLayerTreeViewItem(const Object* object)
-{
-	int32 count = fLayerTreeView->CountItems();
-	for (int32 i = 0; i < count; i++) {
-		ObjectColumnTreeItem* item = dynamic_cast<ObjectColumnTreeItem*>(
-			fLayerTreeView->ItemAt(i));
-		if (item && item->object == object)
-			return item;
-	}
-	return NULL;
-}
-
-// _RecursiveAddItems
-void
-Window::_RecursiveAddItems(Layer* layer, ObjectColumnTreeItem* layerItem)
-{
-	int32 count = layer->CountObjects();
-	for (int32 i = 0; i < count; i++) {
-		Object* object = layer->ObjectAtFast(i);
-
-		ObjectColumnTreeItem* item = new ObjectColumnTreeItem(20, object);
-		item->Update();
-
-		if (layerItem)
-			fLayerTreeView->AddSubItem(layerItem, item, i);
-		else
-			fLayerTreeView->AddItem(item, i);
-		fLayerTreeView->ExpandItem(item);
-
-		Layer* subLayer = dynamic_cast<Layer*>(object);
-		if (subLayer)
-			_RecursiveAddItems(subLayer, item);
-	}
-}
-
-// _RecursiveAddListener
-void
-Window::_RecursiveAddListener(Layer* layer)
-{
-	// the document is locked and/or this is executed from within
-	// a synchronous notification
-	int32 count = layer->CountObjects();
-	for (int32 i = 0; i < count; i++) {
-		Object* object = layer->ObjectAtFast(i);
-		Layer* subLayer = dynamic_cast<Layer*>(object);
-		if (subLayer)
-			_RecursiveAddListener(subLayer);
-	}
-
-	layer->AddListener(&fLayerObserver);
-}
-
-// _RecursiveRemoveListener
-void
-Window::_RecursiveRemoveListener(Layer* layer)
-{
-	// the document is locked and/or this is executed from within
-	// a synchronous notification
-	int32 count = layer->CountObjects();
-	for (int32 i = 0; i < count; i++) {
-		Object* object = layer->ObjectAtFast(i);
-		Layer* subLayer = dynamic_cast<Layer*>(object);
-		if (subLayer)
-			_RecursiveRemoveListener(subLayer);
-	}
-
-	layer->RemoveListener(&fLayerObserver);
-}
-

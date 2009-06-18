@@ -223,4 +223,41 @@ Layer::RemoveListener(Listener* listener)
 	fListeners.RemoveItem(listener);
 }
 
+// AddListenerRecursive
+bool
+Layer::AddListenerRecursive(Layer* layer, Listener* listener)
+{
+	// the document is locked and/or this is executed from within
+	// a synchronous notification
+	int32 count = layer->CountObjects();
+	for (int32 i = 0; i < count; i++) {
+		Object* object = layer->ObjectAtFast(i);
+		Layer* subLayer = dynamic_cast<Layer*>(object);
+		if (subLayer != NULL) {
+			if (!AddListenerRecursive(subLayer, listener))
+				return false;
+		}
+	}
+
+	return layer->AddListener(listener);
+}
+
+// RemoveListenerRecursive
+void
+Layer::RemoveListenerRecursive(Layer* layer, Listener* listener)
+{
+	// the document is locked and/or this is executed from within
+	// a synchronous notification
+	int32 count = layer->CountObjects();
+	for (int32 i = 0; i < count; i++) {
+		Object* object = layer->ObjectAtFast(i);
+		Layer* subLayer = dynamic_cast<Layer*>(object);
+		if (subLayer != NULL)
+			RemoveListenerRecursive(subLayer, listener);
+	}
+
+	layer->RemoveListener(listener);
+}
+
+
 

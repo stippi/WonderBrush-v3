@@ -54,38 +54,46 @@ enum {
 };
 
 
+// constructor
 ObjectTreeView::ObjectTreeView(BRect frame, Document* document)
 	:
 	ColumnTreeView(frame),
-	fDocument(document)
+	fDocument(document),
+	fLayerObserver(this)
 {
+	_RecursiveAddItems(fDocument->RootLayer(), NULL);
 }
 
 #ifdef __HAIKU__
 
+// constructor
 ObjectTreeView::ObjectTreeView(Document* document)
 	:
 	ColumnTreeView(),
-	fDocument(document)
+	fDocument(document),
+	fLayerObserver(this)
 {
 }
 
 #endif // __HAIKU__
 
+// destructor
 ObjectTreeView::~ObjectTreeView()
 {
 }
 
-
+// AttachedToWindow
 void
 ObjectTreeView::AttachedToWindow()
 {
 	ColumnTreeView::AttachedToWindow();
 	Window()->AddShortcut('e', B_COMMAND_KEY,
 		new BMessage(MSG_RENAME_SELECTED_ITEM), this);
+
+	_RecursiveAddItems(fDocument->RootLayer(), NULL);
 }
 
-
+// DetachedFromWindow
 void
 ObjectTreeView::DetachedFromWindow()
 {
@@ -93,7 +101,7 @@ ObjectTreeView::DetachedFromWindow()
 	ColumnTreeView::DetachedFromWindow();
 }
 
-
+// MouseDown
 void
 ObjectTreeView::MouseDown(BPoint where)
 {
@@ -101,7 +109,7 @@ ObjectTreeView::MouseDown(BPoint where)
 	ColumnTreeView::MouseDown(where);
 }
 
-
+// KeyDown
 void
 ObjectTreeView::KeyDown(const char* bytes, int32 numBytes)
 {
@@ -132,7 +140,7 @@ ObjectTreeView::KeyDown(const char* bytes, int32 numBytes)
 	}
 }
 
-
+// MessageReceived
 void
 ObjectTreeView::MessageReceived(BMessage* message)
 {
@@ -143,12 +151,41 @@ ObjectTreeView::MessageReceived(BMessage* message)
 		case MSG_RENAME_OBJECT:
 			_HandleRenameObject(message);
 			break;
+
+		case LayerObserver::MSG_OBJECT_ADDED:
+		case LayerObserver::MSG_OBJECT_REMOVED:
+		case LayerObserver::MSG_OBJECT_CHANGED:
+			if (fDocument->WriteLock()) {
+				Layer* layer;
+				Object* object;
+				int32 index;
+				if (message->FindPointer("layer", (void**)&layer) == B_OK
+					&& message->FindPointer("object", (void**)&object) == B_OK
+					&& message->FindInt32("index", &index) == B_OK) {
+					if (!fDocument->HasLayer(layer)) {
+						fDocument->WriteUnlock();
+						break;
+					}
+					if (message->what == LayerObserver::MSG_OBJECT_ADDED)
+						_ObjectAdded(layer, object, index);
+					else if (message->what == LayerObserver::MSG_OBJECT_REMOVED)
+						_ObjectRemoved(layer, object, index);
+					else
+						_ObjectChanged(layer, object, index);
+				}
+				fDocument->WriteUnlock();
+			}
+			break;
+		case LayerObserver::MSG_AREA_INVALIDATED:
+			// not interested
+			break;
+
 		default:
 			ColumnTreeView::MessageReceived(message);
 	}
 }
 
-
+// InitiateDrag
 bool
 ObjectTreeView::InitiateDrag(BPoint point, int32 index, bool wasSelected,
 	BMessage* _message)
@@ -253,17 +290,27 @@ ObjectTreeView::InitiateDrag(BPoint point, int32 index, bool wasSelected,
 	return false;
 }
 
+// SelectItem
+void
+ObjectTreeView::SelectItem(Object* object)
+{
+	ColumnTreeItem* item = _FindLayerTreeViewItem(object);
+	if (item != NULL)
+		Select(IndexOf(item));
+	else
+		DeselectAll();
+}
 
 // #pragma mark -
 
-
+// _HandleRenameSelectedItem
 void
 ObjectTreeView::_HandleRenameSelectedItem()
 {
 	_HandleRenameItem(CurrentSelection(0));
 }
 
-
+// _HandleRenameItem
 void
 ObjectTreeView::_HandleRenameItem(int32 index)
 {
@@ -298,7 +345,7 @@ ObjectTreeView::_HandleRenameItem(int32 index)
 	}
 }
 
-
+// _HandleRenameObject
 void
 ObjectTreeView::_HandleRenameObject(BMessage* message)
 {
@@ -355,3 +402,81 @@ ObjectTreeView::_HandleRenameObject(BMessage* message)
 	_HandleRenameItem(index + next);
 }
 
+// _ObjectAdded
+void
+ObjectTreeView::_ObjectAdded(Layer* layer, Object* object, int32 index)
+{
+	if (!layer->HasObject(object))
+		return;
+
+	ObjectColumnTreeItem* parentItem = _FindLayerTreeViewItem(layer);
+
+	ObjectColumnTreeItem* item = new ObjectColumnTreeItem(20, object);
+	item->Update();
+
+	AddSubItem(parentItem, item, index);
+	ExpandItem(item);
+
+	if (Layer* subLayer = dynamic_cast<Layer*>(object)) {
+		subLayer->AddListener(&fLayerObserver);
+		_RecursiveAddItems(subLayer, item);
+	}
+}
+
+// _ObjectRemoved
+void
+ObjectTreeView::_ObjectRemoved(Layer* layer, Object* object, int32 index)
+{
+	// TODO ...
+}
+
+// _ObjectChanged
+void
+ObjectTreeView::_ObjectChanged(Layer* layer, Object* object, int32 index)
+{
+	ObjectColumnTreeItem* item = _FindLayerTreeViewItem(object);
+	if (!item)
+		return;
+	item->Update();
+	InvalidateItem(item);
+}
+
+// _FindLayerTreeViewItem
+ObjectColumnTreeItem*
+ObjectTreeView::_FindLayerTreeViewItem(const Object* object)
+{
+	int32 count = CountItems();
+	for (int32 i = 0; i < count; i++) {
+		ObjectColumnTreeItem* item = dynamic_cast<ObjectColumnTreeItem*>(
+			ItemAt(i));
+		if (item && item->object == object)
+			return item;
+	}
+	return NULL;
+}
+
+// _RecursiveAddItems
+void
+ObjectTreeView::_RecursiveAddItems(Layer* layer,
+	ObjectColumnTreeItem* layerItem)
+{
+	int32 count = layer->CountObjects();
+	for (int32 i = 0; i < count; i++) {
+		Object* object = layer->ObjectAtFast(i);
+
+		ObjectColumnTreeItem* item = new ObjectColumnTreeItem(20, object);
+		item->Update();
+
+		if (layerItem)
+			AddSubItem(layerItem, item, i);
+		else
+			AddItem(item, i);
+		ExpandItem(item);
+
+		Layer* subLayer = dynamic_cast<Layer*>(object);
+		if (subLayer) {
+			subLayer->AddListener(&fLayerObserver);
+			_RecursiveAddItems(subLayer, item);
+		}
+	}
+}

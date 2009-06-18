@@ -9,9 +9,10 @@
 #include <Handler.h>
 
 class BMessage;
-class ToolConfigView;
+class Document;
 class IconButton;
 class StateView;
+class ToolConfigView;
 class ViewState;
 
 // NOTE: A Tool object is added to the MainWindow,
@@ -29,6 +30,8 @@ public:
 	virtual	status_t			LoadSettings(BMessage* message);
 
 	// GUI
+			ViewState*			ToolViewState(StateView* view,
+									Document* document);
 			ToolConfigView*		ConfigView();
 			IconButton*			Icon();
 
@@ -40,9 +43,12 @@ public:
 	virtual	status_t			Cancel();
 
 protected:
+	virtual	ViewState*			MakeViewState(StateView* view,
+									Document* document) = 0;
 	virtual	ToolConfigView*		MakeConfigView() = 0;
 	virtual	IconButton*			MakeIcon() = 0;
 
+			ViewState*			fViewState;
 			ToolConfigView*		fConfigView;
 			IconButton*			fIcon;
 };
