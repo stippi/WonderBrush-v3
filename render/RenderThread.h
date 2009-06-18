@@ -2,7 +2,7 @@
  * Copyright 2007, Stephan Aßmus <superstippi@gmx.de>
  * Copyright 2007, Ingo Weinhold <ingo_weinhold@gmx.de>
  * All rights reserved. Distributed under the terms of the MIT License.
- *		
+ *
  */
 #ifndef RENDER_THREAD_H
 #define RENDER_THREAD_H
@@ -20,7 +20,7 @@ class LayerSnapshot;
 class RenderManager;
 
 class RenderThread {
- public:
+public:
 								RenderThread(RenderManager* manager);
 	virtual						~RenderThread();
 
@@ -29,7 +29,7 @@ class RenderThread {
 			void				WaitForThread();
 			void				Render(LayerSnapshot* layer, BRect area);
 
- private:
+private:
 	class LayerBitmap;
 
 	static	status_t			_WorkerLoopEntry(void* data);

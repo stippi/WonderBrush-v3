@@ -13,4 +13,30 @@ An welcher Stelle sind die Caches im Objektbaum, auch jeweils an den Knoten?
 
 Inwiefern soll es auf Festplatte ausgelagerte Bitmapdaten geben?
 
+BitmapData
+	-> Repräsentation von BitmapDaten
+	-> nur eine globale Instanz derselben Daten
+	-> referenzierbar
+
+BitmapManager
+	-> Managed BitmapData Objekte
+	-> Applikationsweit nur eine Instanz
+
+BitmapObjekt
+	-> neue Objekte kreieren neue BitmapData Instanz und übergibt an
+	   BitmapManager
+	-> referenziert BitmapData
+	-> eigentlich RechteckObjekt mit Bitmap-Füllung
+
+
+Applikationsweiter "StyleCache", könnte auch BitmapManager beinhalten. Bitmaps werden allerdings immer gemeinsam benutzt.
+
+Fill
+FillColor
+FillGradient
+FillBitmap
+
+Objekte können privaten Style haben oder Style kann öffentlich werden und dann von anderen Objekten benutzt werden. Die Änderungen an dem Style durch irgendeines der Objekte werden in allen Objekten sichtbar.
+
+Füllungen müssen optional einen Alphakanal (Bitmap) unterstützen. Jedenfalls so, dass man mit dem Fülleimer ins Bild klicken kann und dann nicht nur mit einer Farbe, sondern auch mit allen anderen Fülltypen füllen kann.
 

@@ -2,7 +2,7 @@
  * Copyright 2007-2008, Stephan Aßmus <superstippi@gmx.de>
  * Copyright 2007, Ingo Weinhold <ingo_weinhold@gmx.de>
  * All rights reserved. Distributed under the terms of the MIT License.
- *		
+ *
  */
 #ifndef RENDER_MANAGER_H
 #define RENDER_MANAGER_H
@@ -30,7 +30,7 @@ enum {
 
 // RenderManager
 class RenderManager : Layer::Listener {
- public:
+public:
 								RenderManager(Document* document);
 	virtual						~RenderManager();
 
@@ -69,7 +69,7 @@ class RenderManager : Layer::Listener {
 			bool				DoNextRenderJob(RenderThread* thread);
 			void				WakeUpRenderThreads();
 
- private:
+private:
 			typedef HashMap<HashKey32<const Layer*>, BRect*> DirtyMap;
 			struct RenderInfo;
 			class LayerSnapshotVisitor;

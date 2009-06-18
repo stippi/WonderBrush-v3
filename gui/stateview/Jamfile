@@ -1,7 +1,7 @@
-SubDir WONDERBRUSH_TOP state_view ;
+SubDir WONDERBRUSH_TOP gui stateview ;
 
 # <pe-inc>
-SubDirHdrs $(WONDERBRUSH_TOP) state_view ;
+SubDirHdrs $(WONDERBRUSH_TOP) gui stateview ;
 SubDirHdrs $(WONDERBRUSH_TOP) support ;
 # </pe-inc>
 

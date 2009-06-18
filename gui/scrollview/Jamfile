@@ -1,7 +1,7 @@
-SubDir WONDERBRUSH_TOP scrollview ;
+SubDir WONDERBRUSH_TOP gui scrollview ;
 
 # <pe-inc>
-SubDirHdrs $(WONDERBRUSH_TOP) scrollview ;
+SubDirHdrs $(WONDERBRUSH_TOP) gui scrollview ;
 # </pe-inc>
 
 # <pe-src>
