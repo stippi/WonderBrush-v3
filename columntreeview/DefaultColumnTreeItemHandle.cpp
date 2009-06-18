@@ -80,9 +80,11 @@ DefaultColumnTreeItemHandle::Draw(BView* view, ColumnTreeItem* item,
 		uint32 arrowDirection = item->IsExpanded()
 			? BControlLook::B_UP_ARROW : BControlLook::B_DOWN_ARROW;
 		float tint = (flags & COLUMN_TREE_ITEM_HANDLE_HOVER) != 0
-			? B_DARKEN_3_TINT : B_NO_TINT;
+			? B_DARKEN_4_TINT : B_DARKEN_2_TINT;
+		const rgb_color& color = (flags & COLUMN_TREE_ITEM_SELECTED) != 0
+			? colors->selected_background : colors->background;
 		be_control_look->DrawArrowShape(view, handleRect, updateRect,
-			colors->shadow, arrowDirection, 0, tint);
+			color, arrowDirection, 0, tint);
 	} else {
 		int32 left = int32(handleRect.left + kHandleTriangleInset);
 		int32 right = int32(handleRect.right - kHandleTriangleInset);

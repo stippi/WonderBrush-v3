@@ -1,0 +1,136 @@
+SubDir WONDERBRUSH_TOP ;
+
+# source directories
+local sourceDirs =
+	commands
+	gui
+	objects
+	snapshots
+	support
+	tools
+;
+
+local sourceDir ;
+for sourceDir in $(sourceDirs) {
+	SEARCH_SOURCE += [ FDirName $(WONDERBRUSH_TOP) $(sourceDir) ] ;
+}
+
+# system include directories
+local sysIncludeDirs =
+	agg/include
+;
+
+local sysIncludeDir ;
+for sysIncludeDir in $(sysIncludeDirs) {
+	SubDirSysHdrs [ FDirName $(WONDERBRUSH_TOP) $(sysIncludeDir) ] ;
+}
+
+# locak include directories
+
+# <pe-inc>
+SubDirHdrs [ FDirName $(WONDERBRUSH_TOP) columntreeview ] ;
+SubDirHdrs [ FDirName $(WONDERBRUSH_TOP) commands ] ;
+SubDirHdrs [ FDirName $(WONDERBRUSH_TOP) gui ] ;
+SubDirHdrs [ FDirName $(WONDERBRUSH_TOP) objects ] ;
+SubDirHdrs [ FDirName $(WONDERBRUSH_TOP) scrollview ] ;
+SubDirHdrs [ FDirName $(WONDERBRUSH_TOP) snapshots ] ;
+SubDirHdrs [ FDirName $(WONDERBRUSH_TOP) state_view ] ;
+SubDirHdrs [ FDirName $(WONDERBRUSH_TOP) support ] ;
+SubDirHdrs [ FDirName $(WONDERBRUSH_TOP) tools ] ;
+SubDirSysHdrs [ FDirName $(WONDERBRUSH_TOP) agg/include ] ;
+# </pe-inc>
+
+
+
+# <pe-src>
+Application WonderBrush :
+
+	# gui
+	IconButton.cpp
+	IconOptionsControl.cpp
+	ObjectTreeView.cpp
+	TextViewPopup.cpp
+	ToolConfigView.cpp
+
+	# objects
+	Document.cpp
+	Filter.cpp
+	Layer.cpp
+	LayerObserver.cpp
+	Object.cpp
+	Rect.cpp
+	Shape.cpp
+
+	# snapshots
+	FilterSnapshot.cpp
+	LayerSnapshot.cpp
+	ObjectSnapshot.cpp
+	RectSnapshot.cpp
+	ShapeSnapshot.cpp
+
+	# support
+	AbstractLOAdapter.cpp
+	bitmap_support.cpp
+	Command.cpp
+	CommandStack.cpp
+	CompoundCommand.cpp
+	Debug.cpp
+	GaussFilter.cpp
+	Listener.cpp
+	ListenerAdapter.cpp
+	Notifier.cpp
+	ObjectTracker.cpp
+	Referenceable.cpp
+	RenderBuffer.cpp
+	RWLocker.cpp
+	Selectable.cpp
+	Selection.cpp
+	StackBlurFilter.cpp
+	Transformable.cpp
+
+	# tools
+	ChannelTransform.cpp
+	DragStateViewState.cpp
+	PickToolState.cpp
+	Tool.cpp
+	TransformableGroup.cpp
+#	TransformBox.cpp
+#	TransformBoxStates.cpp
+	TransformToolState.cpp
+	TransformViewState.cpp
+
+	# .
+	App.cpp
+	CanvasView.cpp
+	LayoutContext.cpp
+	LayoutState.cpp
+	main.cpp
+	RenderEngine.cpp
+	RenderManager.cpp
+	RenderThread.cpp
+	Window.cpp
+
+	:
+		libscrollview.a
+		libcolumntreeview.a
+		libstateview.a
+
+		libagg.a
+
+		tracker
+		$(STDC++LIB)
+		translation
+		be
+	;
+# </pe-src>
+
+SubInclude WONDERBRUSH_TOP agg ;
+SubInclude WONDERBRUSH_TOP columntreeview ;
+SubInclude WONDERBRUSH_TOP scrollview ;
+SubInclude WONDERBRUSH_TOP state_view ;
+
+
+Distro distro ;
+
+FullDistro fulldistro ;
+

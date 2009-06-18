@@ -1,7 +1,7 @@
-SubDir CLOCKWERK_TOP src third_party agg ;
+SubDir WONDERBRUSH_TOP agg ;
 
 SubDirHdrs [ FDirName $(SUBDIR) include ] ;
-#SubDirHdrs [ FDirName $(CLOCKWERK_TOP) include freetype ] ;
+#SubDirHdrs [ FDirName $(SUBDIR) include freetype ] ;
 
 SubDirCcFlags -w ;
 SubDirC++Flags -w ;
@@ -9,7 +9,8 @@ SubDirC++Flags -w ;
 SEARCH_SOURCE += [ FDirName $(SUBDIR) font_freetype ] ;
 SEARCH_SOURCE += [ FDirName $(SUBDIR) src ] ;
 
-StaticLibrary libagg.a : 
+# <pe-src>
+StaticLibrary libagg.a :
 	# font_freetype
 #	agg_font_freetype.cpp
 
@@ -28,6 +29,7 @@ StaticLibrary libagg.a :
 	agg_sqrt_tables.cpp
 	agg_trans_affine.cpp
 	agg_trans_double_path.cpp
+	agg_trans_perspective.cpp
 	agg_trans_single_path.cpp
 	agg_trans_warp_magnifier.cpp
 	agg_vcgen_bspline.cpp
@@ -40,3 +42,7 @@ StaticLibrary libagg.a :
 	agg_vpgen_clip_polyline.cpp
 	agg_vpgen_segmentator.cpp
 ;
+# </pe-src>
+
+MakeLocate libagg.a : [ FDirName $(OBJECTS_DIR) lib ] ;
+

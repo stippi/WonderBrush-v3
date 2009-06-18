@@ -1,0 +1,16 @@
+SubDir WONDERBRUSH_TOP state_view ;
+
+# <pe-inc>
+SubDirHdrs $(WONDERBRUSH_TOP) state_view ;
+SubDirHdrs $(WONDERBRUSH_TOP) support ;
+# </pe-inc>
+
+# <pe-src>
+StaticLibrary libstateview.a :
+	BackBufferedStateView.cpp
+	StateView.cpp
+	ViewState.cpp
+;
+# </pe-src>
+
+MakeLocate libstateview.a : [ FDirName $(OBJECTS_DIR) lib ] ;

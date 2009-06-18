@@ -1,0 +1,5 @@
+SubDir WONDERBRUSH_TOP commands ;
+
+# <pe-inc>
+SubDirHdrs $(WONDERBRUSH_TOP) commands ;
+# </pe-inc>

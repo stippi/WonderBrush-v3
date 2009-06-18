@@ -1,0 +1,157 @@
+# BuildSettings
+#
+# Setup global variables.
+
+# C and C++ flags
+if $(OSPLAT) = PPC {
+	# filter out -nosyspath
+	CFLAGS = [ FFilter $(CFLAGS) : -nosyspath ] ;
+	C++FLAGS = [ FFilter $(C++FLAGS) : -nosyspath ] ;
+	LINKFLAGS += -warn -export pragma ;
+}
+
+PLATFORM = r5 ;
+COMMON_FOLDER = /boot/home/config ;
+
+LIBNETAPI = netapi ;	# default, may be changed to bnetapi (see below)
+
+if $(OSPLAT) = X86 {
+	# check for Haiku...
+	local haveHaiku = [ GLOB /boot/develop/headers/posix/arpa : inet.h ] ;
+	if $(haveHaiku)	{
+		CCFLAGS += -DCLOCKWERK_FOR_BONE -DCLOCKWERK_FOR_HAIKU ;
+		C++FLAGS += -DCLOCKWERK_FOR_BONE -DCLOCKWERK_FOR_HAIKU ;
+		NETWORK_LIBS += network ;
+		PLATFORM = haiku ;
+		COMMON_FOLDER = /boot/common ;
+	}
+	# check for BONE...
+	local haveBone = [ GLOB /boot/develop/headers/be/bone/arpa : inet.h ] ;
+	if $(haveBone)	{
+		CCFLAGS += -DCLOCKWERK_FOR_BONE ;
+		C++FLAGS += -DCLOCKWERK_FOR_BONE ;
+		SYSHDRS += /boot/develop/headers/be/bone /boot/develop/headers/be/bone/sys ;
+		NETWORK_LIBS += socket bind ;
+		PLATFORM = bone ;
+	}
+	# check for Zeta...
+	local haveZeta = [ GLOB /boot/beos/system/lib : libzeta.so ] ;
+	if $(haveZeta)	{
+		LINKLIBS += -lzeta ;
+		CCFLAGS += -DCLOCKWERK_FOR_ZETA -D_ZETA_USING_DEPRECATED_API_ ;
+		C++FLAGS += -DCLOCKWERK_FOR_ZETA -D_ZETA_USING_DEPRECATED_API_ ;
+		SYSHDRS += /boot/develop/headers/liblayout /boot/develop/headers/pcre ;
+		PLATFORM = zeta ;
+	}
+	# check for libbnetapi...
+	local haveLibbnetapi = [ GLOB /boot/develop/lib/x86 : libbnetapi.so ] ;
+	if $(haveLibbnetapi) {
+		LIBNETAPI = bnetapi ;
+	}
+}
+
+# Use copyattr for copying.
+CP = copyattr --data ;
+
+# Default paths for bison and flex:
+BISON = bison ;
+LEX = flex ;
+
+# mkdir shall not fail, if the directory already exists.
+MKDIR = mkdir -p ;
+
+# by default we do not strip and do not build tests:
+STRIP_APPS ?= 0 ;
+BUILD_TESTS ?= 0 ;
+# For consistency, we evaluate BUILD_DEBUG, too:
+DEBUG ?= $(BUILD_DEBUG) ;
+
+rule SetUpSubDirBuildSettings {
+	# SetUpSubDirBuildSettings <dir> ;
+	#
+	# Sets up the compiler flags and defines based on the WARNINGS, DEBUG, and
+	# OPTIMIZE variables. Also sets the locations for the targets (objects,
+	# libraries and executables).
+	#
+	# <dir>: Parameters as passed to the SubDir rule, i.e. the name of the
+	#        TOP variable and the subdir tokens.
+	#
+	local dir = $(1) ;
+
+	# warnings settings
+	if $(WARNINGS) != 0 {
+		if $(OSPLAT) = X86 {
+			CCFLAGS += -Wall -Wno-multichar -Wmissing-prototypes
+						  -Wpointer-arith -Wcast-align -Wsign-compare ;
+			C++FLAGS += -Wall -Wno-multichar -Wmissing-prototypes
+							-Wno-ctor-dtor-privacy -Woverloaded-virtual
+							-Wconversion -Wpointer-arith -Wstrict-prototypes
+							-Wcast-align -Wsign-compare -Wno-reorder
+							-Wno-unknown-pragmas ;
+		} else {
+			CCFLAGS += -w on -requireprotos ;
+		}
+	}
+
+	# debugging settings
+	if $(DEBUG) && $(DEBUG) != 0 {
+		OPTIMIZE = 0 ;
+		STRIP_APPS = 0 ;
+		DEFINES += DEBUG=$(DEBUG) BM_REF_DEBUGGING ;
+		CCFLAGS += -g ;
+		C++FLAGS += -g -fno-inline ;
+		LINKFLAGS += -g ;
+		DISTRO_DIR			= [ FDirName $(TOP) generated distro-debug-$(PLATFORM) ] ;
+		OBJECTS_DIR			= [ FDirName $(TOP) generated objects-debug-$(PLATFORM) ] ;
+	}
+	else
+	{
+		DISTRO_DIR			= [ FDirName $(TOP) generated distro-$(PLATFORM) ] ;
+		OBJECTS_DIR			= [ FDirName $(TOP) generated objects-$(PLATFORM) ] ;
+	}
+
+	# optimization settings
+	if $(OPTIMIZE) = 0 {
+		if $(OSPLAT) = X86 {
+			OPTIM = -O0 ;
+		} else {
+			OPTIM = -O0 ;
+		}
+	} else {
+		if $(OSPLAT) = X86 {
+			OPTIM ?= -O3 -fstrict-aliasing ;
+		} else {
+			OPTIM ?= -O7 ;
+		}
+	}
+
+	# setup objects location
+	local objdir = [ FDirName $(OBJECTS_DIR) $(dir[2-]) ] ;
+	SEARCH_SOURCE += $(objdir) ;
+	LOCATE_SOURCE = $(objdir) ;
+	LOCATE_TARGET = $(objdir) ;
+
+	# setup main targets location
+	LOCATE_MAIN_TARGET ?= [ FDirName $(DISTRO_DIR) ] ;
+}
+
+# The LOCATE_MAIN_TARGET variable shall be reset for each subdirectory.
+AUTO_SET_UP_CONFIG_VARIABLES += LOCATE_MAIN_TARGET ;
+
+# Add the rules setting up the build settings for a subdirectory to the
+# rules invoked by SubDir.
+SUBDIRRULES += SetUpSubDirBuildSettings ;
+
+# Where to find the 3rd party libraries
+LIBCRYPTLIB			= libcl.so.3.2.2 ;
+LIBCRYPTLIB_DEBUG	= libcl-debug.so.3.2.2 ;
+LIBFREETYPE			= libfreetype.so ;
+LIBLAYOUT			= liblayout.so ;
+LIBXERCES			= libxerces-c1_5.so ;
+#LIBXERCES			= libxerces-c.so.26.0 ;
+
+SEARCH on $(LIBCRYPTLIB) $(LIBCRYPTLIB_DEBUG) $(LIBFREETYPE) $(LIBLAYOUT)
+	$(LIBXERCES) = [ FDirName $(WONDERBRUSH_TOP) lib ] ;
+
+CRYPTLIB_HEADERS	= [ FDirName $(WONDERBRUSH_TOP) include cryptlib ] ;
+

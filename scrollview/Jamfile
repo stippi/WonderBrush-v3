@@ -1,0 +1,16 @@
+SubDir WONDERBRUSH_TOP scrollview ;
+
+# <pe-inc>
+SubDirHdrs $(WONDERBRUSH_TOP) scrollview ;
+# </pe-inc>
+
+# <pe-src>
+StaticLibrary libscrollview.a :
+	Scrollable.cpp
+	ScrollableView.cpp
+	Scroller.cpp
+	ScrollView.cpp
+;
+# </pe-src>
+
+MakeLocate libscrollview.a : [ FDirName $(OBJECTS_DIR) lib ] ;
