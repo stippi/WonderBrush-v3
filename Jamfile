@@ -5,6 +5,7 @@ local sourceDirs =
 	commands
 	gui
 	objects
+	render
 	snapshots
 	support
 	tools
@@ -32,6 +33,7 @@ SubDirHdrs [ FDirName $(WONDERBRUSH_TOP) columntreeview ] ;
 SubDirHdrs [ FDirName $(WONDERBRUSH_TOP) commands ] ;
 SubDirHdrs [ FDirName $(WONDERBRUSH_TOP) gui ] ;
 SubDirHdrs [ FDirName $(WONDERBRUSH_TOP) objects ] ;
+SubDirHdrs [ FDirName $(WONDERBRUSH_TOP) render ] ;
 SubDirHdrs [ FDirName $(WONDERBRUSH_TOP) scrollview ] ;
 SubDirHdrs [ FDirName $(WONDERBRUSH_TOP) snapshots ] ;
 SubDirHdrs [ FDirName $(WONDERBRUSH_TOP) state_view ] ;
@@ -52,21 +54,26 @@ Application WonderBrush :
 	TextViewPopup.cpp
 	ToolConfigView.cpp
 
-	# objects
+	# objects/snapshots
 	Document.cpp
 	Filter.cpp
+	FilterSnapshot.cpp
 	Layer.cpp
 	LayerObserver.cpp
-	Object.cpp
-	Rect.cpp
-	Shape.cpp
-
-	# snapshots
-	FilterSnapshot.cpp
 	LayerSnapshot.cpp
+	Object.cpp
 	ObjectSnapshot.cpp
+	Rect.cpp
 	RectSnapshot.cpp
+	Shape.cpp
 	ShapeSnapshot.cpp
+
+	# render
+	LayoutContext.cpp
+	LayoutState.cpp
+	RenderEngine.cpp
+	RenderManager.cpp
+	RenderThread.cpp
 
 	# support
 	AbstractLOAdapter.cpp
@@ -102,12 +109,7 @@ Application WonderBrush :
 	# .
 	App.cpp
 	CanvasView.cpp
-	LayoutContext.cpp
-	LayoutState.cpp
 	main.cpp
-	RenderEngine.cpp
-	RenderManager.cpp
-	RenderThread.cpp
 	Window.cpp
 
 	:
