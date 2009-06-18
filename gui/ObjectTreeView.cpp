@@ -8,6 +8,7 @@
 #include <stdio.h>
 
 #include <Bitmap.h>
+#include <Window.h>
 
 #include "AutoDeleter.h"
 #include "Column.h"
@@ -47,8 +48,9 @@ ObjectColumnTreeItem::Update()
 
 
 enum {
-	MSG_RENAME_OBJECT		= 'rnoj',
-	MSG_DRAG_SORT_OBJECTS	= 'drgo'
+	MSG_RENAME_OBJECT			= 'rnoj',
+	MSG_RENAME_SELECTED_ITEM	= 'rnit',
+	MSG_DRAG_SORT_OBJECTS		= 'drgo'
 };
 
 
@@ -76,6 +78,23 @@ ObjectTreeView::~ObjectTreeView()
 
 
 void
+ObjectTreeView::AttachedToWindow()
+{
+	ColumnTreeView::AttachedToWindow();
+	Window()->AddShortcut('e', B_COMMAND_KEY,
+		new BMessage(MSG_RENAME_SELECTED_ITEM), this);
+}
+
+
+void
+ObjectTreeView::DetachedFromWindow()
+{
+	Window()->RemoveShortcut('e', B_COMMAND_KEY);
+	ColumnTreeView::DetachedFromWindow();
+}
+
+
+void
 ObjectTreeView::MouseDown(BPoint where)
 {
 	MakeFocus(true);
@@ -87,16 +106,29 @@ void
 ObjectTreeView::KeyDown(const char* bytes, int32 numBytes)
 {
 	switch (bytes[0]) {
-	// TODO: Some re-configurable global short cut handling...
-	case 'e':
-	case 'E':
-	case B_F2_KEY:
-		_HandleRenameSelectedItem();
-		break;
+		// TODO: Some re-configurable global short cut handling...
+		case 'e':
+		case 'E':
+			_HandleRenameSelectedItem();
+			break;
+		case B_FUNCTION_KEY:
+			if (BMessage* message = Window()->CurrentMessage()) {
+				int32 key;
+				if (message->FindInt32("key", &key) == B_OK) {
+					switch (key) {
+						case B_F2_KEY:
+							_HandleRenameSelectedItem();
+							break;
+						default:
+							break;
+					}
+				}
+			}
+			break;
 
-	default:
-		ColumnTreeView::KeyDown(bytes, numBytes);
-		break;
+		default:
+			ColumnTreeView::KeyDown(bytes, numBytes);
+			break;
 	}
 }
 
@@ -105,11 +137,14 @@ void
 ObjectTreeView::MessageReceived(BMessage* message)
 {
 	switch (message->what) {
-	case MSG_RENAME_OBJECT:
-		_HandleRenameObject(message);
-		break;
-	default:
-		ColumnTreeView::MessageReceived(message);
+		case MSG_RENAME_SELECTED_ITEM:
+			_HandleRenameSelectedItem();
+			break;
+		case MSG_RENAME_OBJECT:
+			_HandleRenameObject(message);
+			break;
+		default:
+			ColumnTreeView::MessageReceived(message);
 	}
 }
 

@@ -30,6 +30,8 @@ public:
 	virtual						~ObjectTreeView();
 
 	// BView interface
+	virtual	void				AttachedToWindow();
+	virtual	void				DetachedFromWindow();
 	virtual	void				MouseDown(BPoint where);
 	virtual	void				KeyDown(const char* bytes, int32 numBytes);
 	virtual	void				MessageReceived(BMessage* message);
