@@ -1,5 +1,7 @@
 SubDir WONDERBRUSH_TOP gui ;
 
+SubInclude WONDERBRUSH_TOP gui colorpicker ;
 SubInclude WONDERBRUSH_TOP gui columntreeview ;
+#SubInclude WONDERBRUSH_TOP gui popupcontrol ;
 SubInclude WONDERBRUSH_TOP gui scrollview ;
 SubInclude WONDERBRUSH_TOP gui stateview ;

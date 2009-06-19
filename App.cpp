@@ -86,7 +86,7 @@ void
 App::_NewWindow()
 {
 	fWindowFrame.OffsetBy(30, 30);
-	
+
 	BString windowName("Document Framework ");
 	windowName << ++fWindowCount;
 

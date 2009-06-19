@@ -97,10 +97,17 @@ blend_area(const BBitmap* source, const BBitmap* dest, BRect area)
 		for (int32 x = left; x <= right; x++) {
 
 			uint8 alpha = 255 - s[3];
+#if 0
 			d[0] = (uint8)((((int32)d[0] * alpha) >> 8) + s[0]);
 			d[1] = (uint8)((((int32)d[1] * alpha) >> 8) + s[1]);
 			d[2] = (uint8)((((int32)d[2] * alpha) >> 8) + s[2]);
 			d[3] = (uint8)(255 - (((int32)alpha * (255 - d[3])) >> 8));
+#else
+			d[0] = (uint8)((((int32)d[0] * alpha) / 255) + s[0]);
+			d[1] = (uint8)((((int32)d[1] * alpha) / 255) + s[1]);
+			d[2] = (uint8)((((int32)d[2] * alpha) / 255) + s[2]);
+			d[3] = (uint8)(255 - (((int32)alpha * (255 - d[3])) / 255));
+#endif
 
 			d += 4;
 			s += 4;

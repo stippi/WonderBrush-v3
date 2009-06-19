@@ -1,0 +1,19 @@
+SubDir WONDERBRUSH_TOP gui popupcontrol ;
+
+# <pe-inc>
+SubDirHdrs $(WONDERBRUSH_TOP) gui ;
+SubDirHdrs $(WONDERBRUSH_TOP) support ;
+# </pe-inc>
+
+# <pe-src>
+StaticLibrary libpopupcontrol.a :
+	InputSlider.cpp
+	PopupControl.cpp
+	PopupSlider.cpp
+	PopupView.cpp
+	PopupWindow.cpp
+	SliderView.cpp
+;
+# </pe-src>
+
+MakeLocate libpopupcontrol.a : [ FDirName $(OBJECTS_DIR) lib ] ;

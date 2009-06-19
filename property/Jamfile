@@ -1,0 +1,58 @@
+SubDir WONDERBRUSH_TOP property ;
+
+# <pe-inc>
+SubDirHdrs $(WONDERBRUSH_TOP) gui misc ;
+SubDirHdrs $(WONDERBRUSH_TOP) gui scrollview ;
+SubDirHdrs $(WONDERBRUSH_TOP) property ;
+SubDirHdrs $(WONDERBRUSH_TOP) property specific_properties ;
+SubDirHdrs $(WONDERBRUSH_TOP) property view ;
+SubDirHdrs $(WONDERBRUSH_TOP) property view specific_properties ;
+SubDirHdrs $(WONDERBRUSH_TOP) support ;
+# </pe-inc>
+
+# source directories
+local sourceDirs =
+	specific_properties
+	view
+	view/specific_properties
+;
+
+local sourceDir ;
+for sourceDir in $(sourceDirs) {
+	SEARCH_SOURCE += [ FDirName $(WONDERBRUSH_TOP) property $(sourceDir) ] ;
+}
+
+# <pe-src>
+StaticLibrary libproperty.a :
+	# specific_properties
+	ColorProperty.cpp
+	IconProperty.cpp
+	Int64Property.cpp
+	OptionProperty.cpp
+
+	# view
+	PropertyEditorFactory.cpp
+	PropertyEditorView.cpp
+	PropertyItemView.cpp
+	PropertyListView.cpp
+
+	# view/specific_properties
+	BoolValueView.cpp
+	ColorValueView.cpp
+	FloatValueView.cpp
+	IconValueView.cpp
+	Int64ValueView.cpp
+	IntValueView.cpp
+	OptionValueView.cpp
+	StringValueView.cpp
+	SwatchValueView.cpp
+	TextInputValueView.cpp
+
+	# property
+	CommonPropertyIDs.cpp
+	Property.cpp
+	PropertyObject.cpp
+;
+# </pe-src>
+
+MakeLocate libproperty.a : [ FDirName $(OBJECTS_DIR) lib ] ;

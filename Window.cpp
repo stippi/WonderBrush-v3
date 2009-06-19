@@ -186,13 +186,13 @@ Window::Window(BRect frame, const char* title, Document* document,
 
 	fDocument->CommandStack()->AddListener(&fCommandStackListener);
 	_ObjectChanged(fDocument->CommandStack());
-	Layer::AddListenerRecursive(fDocument->RootLayer(), &fLayerObserver);
+//	Layer::AddListenerRecursive(fDocument->RootLayer(), &fLayerObserver);
 }
 
 // destructor
 Window::~Window()
 {
-	Layer::RemoveListenerRecursive(fDocument->RootLayer(), &fLayerObserver);
+//	Layer::RemoveListenerRecursive(fDocument->RootLayer(), &fLayerObserver);
 	fDocument->CommandStack()->RemoveListener(&fCommandStackListener);
 	delete fRenderManager;
 //	delete fLayerTreeModel;

@@ -1,0 +1,21 @@
+SubDir WONDERBRUSH_TOP gui colorpicker ;
+
+# <pe-inc>
+SubDirHdrs $(WONDERBRUSH_TOP) gui ;
+SubDirHdrs $(WONDERBRUSH_TOP) gui colorpicker ;
+SubDirHdrs $(WONDERBRUSH_TOP) gui misc ;
+SubDirHdrs $(WONDERBRUSH_TOP) support ;
+# </pe-inc>
+
+# <pe-src>
+StaticLibrary libcolorpicker.a :
+	AlphaSlider.cpp
+	ColorField.cpp
+	ColorPickerPanel.cpp
+	ColorPickerView.cpp
+	ColorPreview.cpp
+	ColorSlider.cpp
+;
+# </pe-src>
+
+MakeLocate libcolorpicker.a : [ FDirName $(OBJECTS_DIR) lib ] ;

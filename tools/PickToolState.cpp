@@ -466,6 +466,8 @@ PickToolState::_DragObject(ObjectType* object, BPoint where)
 		= new ChangeAreaCommand<ObjectType>(object, area);
 	fDocument->CommandStack()->Perform(command);
 
+	UpdateBounds();
+
 	fDocument->WriteUnlock();
 }
 
