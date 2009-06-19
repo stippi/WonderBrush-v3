@@ -29,14 +29,29 @@ BitmapObjekt
 	-> eigentlich RechteckObjekt mit Bitmap-Füllung
 
 
-Applikationsweiter "StyleCache", könnte auch BitmapManager beinhalten. Bitmaps werden allerdings immer gemeinsam benutzt.
+Applikationsweiter "FillCache", könnte auch BitmapManager beinhalten. Bitmaps werden allerdings immer gemeinsam benutzt.
 
 Fill
 FillColor
 FillGradient
 FillBitmap
 
-Objekte können privaten Style haben oder Style kann öffentlich werden und dann von anderen Objekten benutzt werden. Die Änderungen an dem Style durch irgendeines der Objekte werden in allen Objekten sichtbar.
+Ein "Style" ist nicht wie bei Icon-O-Matic die Füllung, sondern eine Art Container für verschiedene Eigenschaften. Nicht gesetzte Eigenschaften könnten hierarchisch vererbt werden.
+
+Objekte können einen privaten Style haben oder der Style kann öffentlich werden und dann von anderen Objekten benutzt werden. Die Änderungen an dem Style durch irgendeines der Objekte werden in allen Objekten sichtbar.
+
+Wie in Icon-O-Matic könnte man nicht nur globale Styles, sondern auch Füllungen und Pfade verfügbar machen. Allerdings optional, nicht standardmäßig bei neuen Objekten.
 
 Füllungen müssen optional einen Alphakanal (Bitmap) unterstützen. Jedenfalls so, dass man mit dem Fülleimer ins Bild klicken kann und dann nicht nur mit einer Farbe, sondern auch mit allen anderen Fülltypen füllen kann.
 
+Füllfarben sollten auch als "Schattierung" einer anderen Farbe auftreten können. Wenn die Hauptfarbe gelöscht wird, erscheint ein Bestätigungsdialog, ob alle Schattierungen in normale Farben umgewandelt werden sollen. Alternativ könnte man auch eine zusätzliche Eigenschaft im Style verwalten, die dafür sorgt, dass eine Füllung abgedunkelt oder sonst wie verändert wird.
+
+
+
+PropertyObject Interface erweitern:
+	-> Abfrage nach Anzahl von "PropertyObjects" order "PropertyCategory" order
+	   "Sub-PropertyObject" (nested PropertyObjects?)
+	-> einklappbare Abschnitte für jede einzelne PropertyCategory in ListView
+	-> PropertyCategory unterstützt Hinzufügen von Properties.
+	-> So wird dann beispielsweise der Style eines Objects im selben
+	   PropertyListView anzeig- und editierbar.
