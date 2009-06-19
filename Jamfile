@@ -86,11 +86,14 @@ Application WonderBrush :
 	ShapeSnapshot.cpp
 
 	# render
+	GaussFilter.cpp
 	LayoutContext.cpp
 	LayoutState.cpp
+	RenderBuffer.cpp
 	RenderEngine.cpp
 	RenderManager.cpp
 	RenderThread.cpp
+	StackBlurFilter.cpp
 	VectorPath.cpp
 	VertexSource.cpp
 
@@ -101,17 +104,14 @@ Application WonderBrush :
 	CommandStack.cpp
 	CompoundCommand.cpp
 	Debug.cpp
-	GaussFilter.cpp
 	Listener.cpp
 	ListenerAdapter.cpp
 	Notifier.cpp
 	ObjectTracker.cpp
 	Referenceable.cpp
-	RenderBuffer.cpp
 	RWLocker.cpp
 	Selectable.cpp
 	Selection.cpp
-	StackBlurFilter.cpp
 	support.cpp
 	support_settings.cpp
 	support_ui.cpp
