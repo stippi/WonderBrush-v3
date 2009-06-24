@@ -1,4 +1,6 @@
-// Referenceable.cpp
+/*
+ * Copyright 2005-2007 Ingo Weinhold <ingo_weinhold@gmx.de>
+ */
 
 #include "Debug.h"
 #include "Referenceable.h"

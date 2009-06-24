@@ -1,19 +1,19 @@
-// Referenceable.h
+/*
+ * Copyright 2005-2007 Ingo Weinhold <ingo_weinhold@gmx.de>
+ */
 
-#ifndef USERLAND_FS_REFERENCEABLE_H
-#define USERLAND_FS_REFERENCEABLE_H
+#ifndef REFERENCEABLE_H
+#define REFERENCEABLE_H
 
 #include <SupportDefs.h>
 
 #include "ObjectTracker.h"
 
-namespace UserlandFSUtil {
-
 // Referenceable
 class Referenceable ONLY_OBJECT_TRACKABLE_BASE_CLASS {
 public:
 								Referenceable(
-									bool deleteWhenUnreferenced = false);
+									bool deleteWhenUnreferenced = true);
 	virtual						~Referenceable();
 
 			void				AddReference();
@@ -47,7 +47,7 @@ public:
 		SetTo(other.fObject);
 	}
 
-	~Reference()
+	virtual ~Reference()
 	{
 		Unset();
 	}
@@ -92,7 +92,8 @@ public:
 
 	Reference& operator=(const Reference<Type>& other)
 	{
-		SetTo(other.fObject);
+		if (&other != this)
+			SetTo(other.fObject);
 		return *this;
 	}
 
@@ -110,9 +111,4 @@ private:
 	Type*	fObject;
 };
 
-}	// namespace UserlandFSUtil
-
-using UserlandFSUtil::Referenceable;
-using UserlandFSUtil::Reference;
-
-#endif	// USERLAND_FS_REFERENCEABLE_H
+#endif	// REFERENCEABLE_H
