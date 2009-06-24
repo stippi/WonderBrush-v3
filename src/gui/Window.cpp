@@ -8,7 +8,7 @@
 #include <Application.h>
 #include <Bitmap.h>
 #include <Box.h>
-#include <GroupLayoutBuilder.h>
+#include <LayoutBuilder.h>
 #include <LayoutUtils.h>
 #include <Menu.h>
 #include <MenuBar.h>
@@ -24,6 +24,7 @@
 #include "Document.h"
 #include "IconButton.h"
 #include "IconOptionsControl.h"
+#include "InspectorView.h"
 //#include "LayerTreeModel.h"
 #include "ObjectTreeView.h"
 #include "PickTool.h"
@@ -101,6 +102,10 @@ SeparatorView::PreferredSize()
 	return BLayoutUtils::ComposeSize(ExplicitPreferredSize(), size);
 }
 
+
+// #pragma mark -
+
+
 // constructor
 Window::Window(BRect frame, const char* title, Document* document,
 			Layer* layer)
@@ -113,32 +118,33 @@ Window::Window(BRect frame, const char* title, Document* document,
 //	fLayerTreeModel(new LayerTreeModel(fDocument)),
 	fLayerObserver(this)
 {
-	SetLayout(new BGroupLayout(B_VERTICAL));
-
 	// TODO: fix for when document == NULL
 
 	BMenuBar* menuBar = new BMenuBar("main menu");
-	BMenu* fileMenu = new BMenu("File");
-	menuBar->AddItem(fileMenu);
+	fFileMenu = new BMenu("File");
+	menuBar->AddItem(fFileMenu);
 	BMenuItem* newWindowMI = new BMenuItem("New Window",
 		new BMessage(MSG_NEW_WINDOW), 'N');
-	fileMenu->AddItem(newWindowMI);
-	fileMenu->AddItem(new BMenuItem("Quit",
+	fFileMenu->AddItem(newWindowMI);
+	fFileMenu->AddItem(new BMenuItem("Quit",
 		new BMessage(B_QUIT_REQUESTED), 'Q'));
 
-	BMenu* editMenu = new BMenu("Edit");
+	fEditMenu = new BMenu("Edit");
+	menuBar->AddItem(fEditMenu);
 	BMessage* message = new BMessage(MSG_UNDO);
 	fUndoMI = new BMenuItem("Undo", message);
-	editMenu->AddItem(fUndoMI);
+	fEditMenu->AddItem(fUndoMI);
 	message = new BMessage(MSG_REDO);
 	fRedoMI = new BMenuItem("Undo", message);
-	editMenu->AddItem(fRedoMI);
-	menuBar->AddItem(editMenu);
+	fEditMenu->AddItem(fRedoMI);
 
-	AddChild(menuBar);
-	fileMenu->SetTargetForItems(this);
-	editMenu->SetTargetForItems(this);
-	newWindowMI->SetTarget(be_app);
+	BMenuBar* objectMenuBar = new BMenuBar("object menu");
+	fObjectMenu = new BMenu("Object");
+	objectMenuBar->AddItem(fObjectMenu);
+
+	BMenuBar* propertyMenuBar = new BMenuBar("property menu");
+	fPropertyMenu = new BMenu("Property");
+	propertyMenuBar->AddItem(fPropertyMenu);
 
 	fLayerTreeView = new ObjectTreeView(fDocument);
 
@@ -156,7 +162,7 @@ Window::Window(BRect frame, const char* title, Document* document,
 		SCROLL_HORIZONTAL | SCROLL_VERTICAL | SCROLL_HORIZONTAL_MAGIC
 		| SCROLL_VERTICAL_MAGIC | SCROLL_VISIBLE_RECT_IS_CHILD_BOUNDS,
 		"layer tree", B_WILL_DRAW | B_FRAME_EVENTS, B_PLAIN_BORDER,
-		BORDER_TOP);
+		BORDER_BOTTOM);
 	objectTreeScrollView->SetExplicitMinSize(BSize(150, B_SIZE_UNSET));
 	objectTreeScrollView->SetExplicitMaxSize(BSize(250, B_SIZE_UNSET));
 
@@ -173,17 +179,55 @@ Window::Window(BRect frame, const char* title, Document* document,
 
 	fToolIconControl = new IconOptionsControl();
 
-	AddChild(BGroupLayoutBuilder(B_HORIZONTAL)
-		.Add(BGroupLayoutBuilder(B_VERTICAL, 5)
-			.Add(fToolIconControl)
-			.Add(objectTreeScrollView)
-			.SetInsets(0, 5, 0, 0), 0.2
-		)
-		.Add(new SeparatorView(B_VERTICAL))
-		.Add(canvasScrollView)
-	);
+	fInspectorView = new InspectorView();
+	fInspectorView->SetMenu(fPropertyMenu);
+
+	BLayoutBuilder::Group<>(this, B_VERTICAL)
+		.Add(menuBar)
+		.AddGroup(B_HORIZONTAL)
+			.AddSplit(B_VERTICAL)
+				.AddGroup(B_VERTICAL)
+					.AddStrut(5)
+					.Add(fToolIconControl)
+					.AddStrut(5)
+					.Add(new SeparatorView(B_HORIZONTAL))
+					.Add(objectMenuBar)
+					.Add(objectTreeScrollView)
+				.End()
+				.AddGroup(B_VERTICAL, 0.0f, 0.35f)
+					.Add(new SeparatorView(B_HORIZONTAL))
+					.Add(propertyMenuBar)
+					.Add(fInspectorView)
+				.End()
+			.End()
+			.Add(new SeparatorView(B_VERTICAL))
+			.Add(canvasScrollView)
+		.End();
+
+
+//	SetLayout(new BGroupLayout(B_VERTICAL));
+//	AddChild(menuBar);
+//
+//	AddChild(BGroupLayoutBuilder(B_HORIZONTAL)
+//		.Add(BGroupLayoutBuilder(B_VERTICAL)
+//			.Add(fToolIconControl)
+//			.AddStrut(5)
+//			.Add(new SeparatorView(B_HORIZONTAL))
+//			.Add(objectMenuBar)
+//			.Add(objectTreeScrollView)
+//			.Add(propertyMenuBar)
+//			.Add(fInspectorView, 0.35)
+//			.SetInsets(0, 5, 0, 0), 0.2
+//		)
+//		.Add(new SeparatorView(B_VERTICAL))
+//		.Add(canvasScrollView)
+//	);
 
 	fView->MakeFocus(true);
+
+	fFileMenu->SetTargetForItems(this);
+	fEditMenu->SetTargetForItems(this);
+	newWindowMI->SetTarget(be_app);
 
 	_InitTools();
 

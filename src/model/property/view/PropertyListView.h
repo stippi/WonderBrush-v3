@@ -45,7 +45,7 @@ public:
 
 	// Scrollable interface
 	virtual	void				ScrollOffsetChanged(BPoint oldOffset,
-													BPoint newOffset);
+									BPoint newOffset);
 
 	// MouseWheelTarget interface
 	virtual	bool				MouseWheelChanged(float x, float y)
@@ -55,7 +55,7 @@ public:
 			void				SetTo(PropertyObject* object);
 				// takes ownership of the object
 	virtual	void				PropertyChanged(const Property* previous,
-												const Property* current);
+									const Property* current);
 				// implement to know when a property changed
 	virtual	void				PasteProperties(const PropertyObject* object);
 				// implement to know when a property changed

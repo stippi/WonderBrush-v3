@@ -12,10 +12,12 @@
 #include "ListenerAdapter.h"
 #include "Selection.h"
 
+class BMenu;
 class CanvasView;
 class ColumnTreeModel;
 class Document;
 class IconOptionsControl;
+class InspectorView;
 class Layer;
 class ObjectColumnTreeItem;
 class ObjectTreeView;
@@ -53,12 +55,18 @@ private:
 // TODO: Remove
 PickToolState*		fPickState;
 
+			BMenu*				fFileMenu;
+			BMenu*				fEditMenu;
+			BMenu*				fObjectMenu;
+			BMenu*				fPropertyMenu;
+
 			BMenuItem*			fUndoMI;
 			BMenuItem*			fRedoMI;
 
+			IconOptionsControl*	fToolIconControl;
 			ObjectTreeView*		fLayerTreeView;
 //			ColumnTreeModel*	fLayerTreeModel;
-			IconOptionsControl*	fToolIconControl;
+			InspectorView*		fInspectorView;
 
 			BList				fTools;
 };

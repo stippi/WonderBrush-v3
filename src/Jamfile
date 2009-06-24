@@ -48,7 +48,11 @@ SubDirHdrs [ FDirName $(WONDERBRUSH_TOP) src model document ] ;
 SubDirHdrs [ FDirName $(WONDERBRUSH_TOP) src model fills ] ;
 SubDirHdrs [ FDirName $(WONDERBRUSH_TOP) src model objects ] ;
 SubDirHdrs [ FDirName $(WONDERBRUSH_TOP) src model property ] ;
-SubDirHdrs [ FDirName $(WONDERBRUSH_TOP) src model property specific_properties ] ;
+SubDirHdrs [ FDirName $(WONDERBRUSH_TOP) src model property
+	specific_properties ] ;
+SubDirHdrs [ FDirName $(WONDERBRUSH_TOP) src model property view ] ;
+SubDirHdrs [ FDirName $(WONDERBRUSH_TOP) src model property view
+	specific_properties ] ;
 SubDirHdrs [ FDirName $(WONDERBRUSH_TOP) src model snapshots ] ;
 SubDirHdrs [ FDirName $(WONDERBRUSH_TOP) src render ] ;
 SubDirHdrs [ FDirName $(WONDERBRUSH_TOP) src support ] ;
@@ -73,6 +77,7 @@ Application WonderBrush :
 
 	# gui (WonderBrush specific)
 	CanvasView.cpp
+	InspectorView.cpp
 	ObjectTreeView.cpp
 	ToolConfigView.cpp
 	Window.cpp
