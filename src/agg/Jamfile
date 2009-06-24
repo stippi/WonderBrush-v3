@@ -1,4 +1,4 @@
-SubDir WONDERBRUSH_TOP agg ;
+SubDir WONDERBRUSH_TOP src agg ;
 
 SubDirHdrs [ FDirName $(SUBDIR) include ] ;
 #SubDirHdrs [ FDirName $(SUBDIR) include freetype ] ;

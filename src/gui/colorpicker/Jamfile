@@ -1,10 +1,10 @@
-SubDir WONDERBRUSH_TOP gui colorpicker ;
+SubDir WONDERBRUSH_TOP src gui colorpicker ;
 
 # <pe-inc>
-SubDirHdrs $(WONDERBRUSH_TOP) gui ;
-SubDirHdrs $(WONDERBRUSH_TOP) gui colorpicker ;
-SubDirHdrs $(WONDERBRUSH_TOP) gui misc ;
-SubDirHdrs $(WONDERBRUSH_TOP) support ;
+SubDirHdrs $(WONDERBRUSH_TOP) src gui ;
+SubDirHdrs $(WONDERBRUSH_TOP) src gui colorpicker ;
+SubDirHdrs $(WONDERBRUSH_TOP) src gui misc ;
+SubDirHdrs $(WONDERBRUSH_TOP) src support ;
 # </pe-inc>
 
 # <pe-src>

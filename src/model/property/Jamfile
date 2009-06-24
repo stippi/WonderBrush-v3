@@ -1,13 +1,13 @@
-SubDir WONDERBRUSH_TOP property ;
+SubDir WONDERBRUSH_TOP src model property ;
 
 # <pe-inc>
-SubDirHdrs $(WONDERBRUSH_TOP) gui misc ;
-SubDirHdrs $(WONDERBRUSH_TOP) gui scrollview ;
-SubDirHdrs $(WONDERBRUSH_TOP) property ;
-SubDirHdrs $(WONDERBRUSH_TOP) property specific_properties ;
-SubDirHdrs $(WONDERBRUSH_TOP) property view ;
-SubDirHdrs $(WONDERBRUSH_TOP) property view specific_properties ;
-SubDirHdrs $(WONDERBRUSH_TOP) support ;
+SubDirHdrs $(WONDERBRUSH_TOP) src gui misc ;
+SubDirHdrs $(WONDERBRUSH_TOP) src gui scrollview ;
+SubDirHdrs $(WONDERBRUSH_TOP) src model property ;
+SubDirHdrs $(WONDERBRUSH_TOP) src model property specific_properties ;
+SubDirHdrs $(WONDERBRUSH_TOP) src model property view ;
+SubDirHdrs $(WONDERBRUSH_TOP) src model property view specific_properties ;
+SubDirHdrs $(WONDERBRUSH_TOP) src support ;
 # </pe-inc>
 
 # source directories
@@ -19,7 +19,8 @@ local sourceDirs =
 
 local sourceDir ;
 for sourceDir in $(sourceDirs) {
-	SEARCH_SOURCE += [ FDirName $(WONDERBRUSH_TOP) property $(sourceDir) ] ;
+	SEARCH_SOURCE += [ FDirName $(WONDERBRUSH_TOP) src model property
+		$(sourceDir) ] ;
 }
 
 # <pe-src>

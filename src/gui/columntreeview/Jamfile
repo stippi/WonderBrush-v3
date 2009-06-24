@@ -1,9 +1,9 @@
-SubDir WONDERBRUSH_TOP gui columntreeview ;
+SubDir WONDERBRUSH_TOP src gui columntreeview ;
 
 # <pe-inc>
-SubDirHdrs $(WONDERBRUSH_TOP) gui columntreeview ;
-SubDirHdrs $(WONDERBRUSH_TOP) gui scrollview ;
-SubDirHdrs $(WONDERBRUSH_TOP) support ;
+SubDirHdrs $(WONDERBRUSH_TOP) src gui columntreeview ;
+SubDirHdrs $(WONDERBRUSH_TOP) src gui scrollview ;
+SubDirHdrs $(WONDERBRUSH_TOP) src support ;
 # </pe-inc>
 
 # <pe-src>

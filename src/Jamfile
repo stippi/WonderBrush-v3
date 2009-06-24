@@ -1,0 +1,177 @@
+SubDir WONDERBRUSH_TOP src ;
+
+# source directories
+local sourceDirs =
+	commands
+	gui
+	gui/misc
+	model
+	model/document
+	model/fills
+	model/objects
+	model/snapshots
+	render
+	support
+	tools
+;
+
+local sourceDir ;
+for sourceDir in $(sourceDirs) {
+	SEARCH_SOURCE += [ FDirName $(WONDERBRUSH_TOP) src $(sourceDir) ] ;
+}
+
+# system include directories
+local sysIncludeDirs =
+	agg/include
+;
+
+local sysIncludeDir ;
+for sysIncludeDir in $(sysIncludeDirs) {
+	SubDirSysHdrs [ FDirName $(WONDERBRUSH_TOP) src $(sysIncludeDir) ] ;
+}
+
+# locak include directories
+
+# <pe-inc>
+SubDirHdrs [ FDirName $(WONDERBRUSH_TOP) src columntreeview ] ;
+SubDirHdrs [ FDirName $(WONDERBRUSH_TOP) src commands ] ;
+SubDirHdrs [ FDirName $(WONDERBRUSH_TOP) src gui ] ;
+SubDirHdrs [ FDirName $(WONDERBRUSH_TOP) src gui colorpicker ] ;
+SubDirHdrs [ FDirName $(WONDERBRUSH_TOP) src gui columntreeview ] ;
+SubDirHdrs [ FDirName $(WONDERBRUSH_TOP) src gui icons ] ;
+SubDirHdrs [ FDirName $(WONDERBRUSH_TOP) src gui misc ] ;
+SubDirHdrs [ FDirName $(WONDERBRUSH_TOP) src gui popupcontrol ] ;
+SubDirHdrs [ FDirName $(WONDERBRUSH_TOP) src gui scrollview ] ;
+SubDirHdrs [ FDirName $(WONDERBRUSH_TOP) src gui stateview ] ;
+SubDirHdrs [ FDirName $(WONDERBRUSH_TOP) src model ] ;
+SubDirHdrs [ FDirName $(WONDERBRUSH_TOP) src model document ] ;
+SubDirHdrs [ FDirName $(WONDERBRUSH_TOP) src model fills ] ;
+SubDirHdrs [ FDirName $(WONDERBRUSH_TOP) src model objects ] ;
+SubDirHdrs [ FDirName $(WONDERBRUSH_TOP) src model property ] ;
+SubDirHdrs [ FDirName $(WONDERBRUSH_TOP) src model property specific_properties ] ;
+SubDirHdrs [ FDirName $(WONDERBRUSH_TOP) src model snapshots ] ;
+SubDirHdrs [ FDirName $(WONDERBRUSH_TOP) src render ] ;
+SubDirHdrs [ FDirName $(WONDERBRUSH_TOP) src support ] ;
+SubDirHdrs [ FDirName $(WONDERBRUSH_TOP) src tools ] ;
+SubDirSysHdrs [ FDirName $(WONDERBRUSH_TOP) agg/include ] ;
+# </pe-inc>
+
+
+
+# <pe-src>
+Application WonderBrush :
+
+	# gui/misc
+	IconButton.cpp
+	IconOptionsControl.cpp
+	InputTextView.cpp
+	NummericalTextView.cpp
+	Panel.cpp
+	StringTextView.cpp
+	SwatchView.cpp
+	TextViewPopup.cpp
+
+	# gui (WonderBrush specific)
+	ObjectTreeView.cpp
+	ToolConfigView.cpp
+
+	# model/fills
+	Color.cpp
+	Gradient.cpp
+	Paint.cpp
+	PaintColor.cpp
+	PaintGradient.cpp
+
+	# model/document
+	BaseObject.cpp
+	Document.cpp
+
+	# model/objects/snapshots
+	Filter.cpp
+	FilterSnapshot.cpp
+	Layer.cpp
+	LayerObserver.cpp
+	LayerSnapshot.cpp
+	Object.cpp
+	ObjectSnapshot.cpp
+	Rect.cpp
+	RectSnapshot.cpp
+	Shape.cpp
+	ShapeSnapshot.cpp
+
+	# render
+	GaussFilter.cpp
+	LayoutContext.cpp
+	LayoutState.cpp
+	Path.cpp
+	RenderBuffer.cpp
+	RenderEngine.cpp
+	RenderManager.cpp
+	RenderThread.cpp
+	StackBlurFilter.cpp
+	VertexSource.cpp
+
+	# support
+	AbstractLOAdapter.cpp
+	bitmap_support.cpp
+	Command.cpp
+	CommandStack.cpp
+	CompoundCommand.cpp
+	Debug.cpp
+	Listener.cpp
+	ListenerAdapter.cpp
+	Notifier.cpp
+	ObjectTracker.cpp
+	Referenceable.cpp
+	RWLocker.cpp
+	Selectable.cpp
+	Selection.cpp
+	support.cpp
+	support_settings.cpp
+	support_ui.cpp
+	Transformable.cpp
+
+	# tools
+	ChannelTransform.cpp
+	DragStateViewState.cpp
+	PickTool.cpp
+	PickToolState.cpp
+	Tool.cpp
+	TransformableGroup.cpp
+	#TransformBox.cpp
+	#TransformBoxStates.cpp
+	TransformTool.cpp
+	TransformToolState.cpp
+	TransformViewState.cpp
+
+	# .
+	App.cpp
+	CanvasView.cpp
+	main.cpp
+	Window.cpp
+
+	:
+		libscrollview.a
+		libcolumntreeview.a
+		libstateview.a
+		libcolorpicker.a
+		libproperty.a
+
+		libagg.a
+
+		tracker
+		$(STDC++LIB)
+		translation
+		be
+	;
+# </pe-src>
+
+SubInclude WONDERBRUSH_TOP src agg ;
+SubInclude WONDERBRUSH_TOP src gui ;
+SubInclude WONDERBRUSH_TOP src model property ;
+
+
+Distro distro ;
+
+FullDistro fulldistro ;
+
