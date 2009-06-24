@@ -1,4 +1,4 @@
-#include "App.h"
+#include "WonderBrush.h"
 
 #include <String.h>
 
@@ -10,11 +10,12 @@
 #include "Window.h"
 
 // constructor
-App::App(BRect bounds)
-	: BApplication("application/x-vnd.stippi.DocumentFramework")
-	, fDocument(new Document(bounds))
-	, fWindowFrame(bounds.OffsetToCopy(50, 50))
-	, fWindowCount(0)
+WonderBrush::WonderBrush(BRect bounds)
+	:
+	BApplication("application/x-vnd.yellowbites.WonderBrush2"),
+	fDocument(new Document(bounds)),
+	fWindowFrame(bounds.OffsetToCopy(50, 50)),
+	fWindowCount(0)
 {
 	// create dummy contents for document
 	fDocument->RootLayer()->AddObject(new Rect(BRect(50, 100, 110, 130),
@@ -57,7 +58,7 @@ App::App(BRect bounds)
 
 // MessageReceived
 void
-App::MessageReceived(BMessage* message)
+WonderBrush::MessageReceived(BMessage* message)
 {
 	switch (message->what) {
 		case MSG_NEW_WINDOW:
@@ -76,18 +77,18 @@ App::MessageReceived(BMessage* message)
 
 // ReadyToRun
 void
-App::ReadyToRun()
+WonderBrush::ReadyToRun()
 {
 	_NewWindow();
 }
 
 // _NewWindow
 void
-App::_NewWindow()
+WonderBrush::_NewWindow()
 {
 	fWindowFrame.OffsetBy(30, 30);
 
-	BString windowName("Document Framework ");
+	BString windowName("WonderBrush ");
 	windowName << ++fWindowCount;
 
 	Window* window = new Window(fWindowFrame, windowName.String(),

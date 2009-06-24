@@ -12,9 +12,9 @@ enum {
 	MSG_WINDOW_QUIT	= 'wndq'
 };
 
-class App : public BApplication {
+class WonderBrush : public BApplication {
  public:
-								App(BRect bounds);
+								WonderBrush(BRect bounds);
 
 	virtual	void				MessageReceived(BMessage* message);
 	virtual void				ReadyToRun();

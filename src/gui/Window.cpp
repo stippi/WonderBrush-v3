@@ -12,7 +12,6 @@
 #include <ScrollBar.h>
 #include <String.h>
 
-#include "App.h"
 #include "CanvasView.h"
 #include "Column.h"
 #include "CommandStack.h"
@@ -27,6 +26,7 @@
 #include "PickToolState.h"
 #include "RenderManager.h"
 #include "ScrollView.h"
+#include "WonderBrush.h"
 
 enum {
 	MSG_UNDO				= 'undo',

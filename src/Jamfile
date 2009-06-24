@@ -72,8 +72,10 @@ Application WonderBrush :
 	TextViewPopup.cpp
 
 	# gui (WonderBrush specific)
+	CanvasView.cpp
 	ObjectTreeView.cpp
 	ToolConfigView.cpp
+	Window.cpp
 
 	# model/fills
 	Color.cpp
@@ -145,10 +147,8 @@ Application WonderBrush :
 	TransformViewState.cpp
 
 	# .
-	App.cpp
-	CanvasView.cpp
+	WonderBrush.cpp
 	main.cpp
-	Window.cpp
 
 	:
 		libscrollview.a
