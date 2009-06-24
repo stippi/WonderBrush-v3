@@ -1,3 +1,8 @@
+/*
+ * Copyright 2007-2009 Stephan Aßmus <superstippi@gmx.de>
+ * All rights reserved.
+ */
+
 #include "Selection.h"
 
 #include <stdio.h>
@@ -6,11 +11,31 @@
 
 #include "Selectable.h"
 
+#undef DEBUG
 #define DEBUG 1
+
+
+static const Selectable kEmptySelectable;
+
+
+// constructor
+Selection::Listener::Listener()
+{
+}
+
+// destructor
+Selection::Listener::~Listener()
+{
+}
+
+
+// #pragma mark -
 
 // constructor
 Selection::Selection()
-	: fSelected(20)
+	:
+	fSelected(),
+	fListeners(4)
 {
 }
 
@@ -21,57 +46,41 @@ Selection::~Selection()
 
 // Select
 bool
-Selection::Select(Selectable* object, bool extend)
+Selection::Select(const Selectable& object, bool extend)
 {
-//	AutoNotificationSuspender _(this);
-
 	if (!extend)
 		_DeselectAllExcept(object);
 
-	bool success = false;
-
-	if (!object->IsSelected()) {
-
-		#if DEBUG
-		if (fSelected.HasItem((void*)object))
-			debugger("Selection::Select() - "
-					 "unselected object in list!");
-		#endif
-
-		if (fSelected.AddItem((void*)object)) {
-			object->SetSelected(true);
-			success = true;
-
-//			Notify();
-		} else {
-			fprintf(stderr, "Selection::Select() - out of memory\n");
-		}
-	} else {
-
-		#if DEBUG
-		if (!fSelected.HasItem((void*)object))
-			debugger("Selection::Select() - "
-					 "already selected object not in list!");
-		#endif
-
-		success = true;
-		// object already in list
+	Container::iterator it = fSelected.begin();
+	for (; it != fSelected.end(); ++it) {
+		if (*it == object)
+			return true;
 	}
 
-	return success;
+	try {
+		fSelected.push_back(object);
+		_NotifyObjectSelected(object);
+		return true;
+	} catch (...) {
+	}
+
+	return false;
 }
 
 // Deselect
 void
-Selection::Deselect(Selectable* object)
+Selection::Deselect(const Selectable& object)
 {
-	if (object->IsSelected()) {
-		if (!fSelected.RemoveItem((void*)object))
-			debugger("Selection::Deselect() - "
-					 "selected object not within list!");
-		object->SetSelected(false);
-
-//		Notify();
+	try {
+		Container::iterator it = fSelected.begin();
+		for (; it != fSelected.end(); ++it) {
+			if (*it == object) {
+				fSelected.erase(it);
+				_NotifyObjectDeselected(object);
+				return;
+			}
+		}
+	} catch (...) {
 	}
 }
 
@@ -79,68 +88,110 @@ Selection::Deselect(Selectable* object)
 void
 Selection::DeselectAll()
 {
-	_DeselectAllExcept(NULL);
+	_DeselectAllExcept(kEmptySelectable);
 }
 
 // #pragma mark -
 
 // SelectableAt
-Selectable*
-Selection::SelectableAt(int32 index) const
+const Selectable&
+Selection::SelectableAt(uint32 index) const
 {
-	return (Selectable*)fSelected.ItemAt(index);
+	if (index < fSelected.size())
+		return fSelected[index];
+
+	return kEmptySelectable;
 }
 
 // SelectableAtFast
-Selectable*
-Selection::SelectableAtFast(int32 index) const
+const Selectable&
+Selection::SelectableAtFast(uint32 index) const
 {
-	return (Selectable*)fSelected.ItemAtFast(index);
+	return fSelected[index];
 }
 
 // CountSelected
-int32
+uint32
 Selection::CountSelected() const
 {
-	return fSelected.CountItems();
+	return fSelected.size();
 }
 
 // IsEmpty
 bool
 Selection::IsEmpty() const
 {
-	return fSelected.IsEmpty();
+	return fSelected.empty();
+}
+
+// #pragma mark -
+
+// AddListener
+bool
+Selection::AddListener(Listener* listener)
+{
+	if (listener == NULL || fListeners.HasItem(listener))
+		return false;
+	return fListeners.AddItem(listener);
+}
+
+// RemoveListener
+void
+Selection::RemoveListener(Listener* listener)
+{
+	fListeners.RemoveItem(listener);
 }
 
 // #pragma mark -
 
 // _DeselectAllExcept
 void
-Selection::_DeselectAllExcept(Selectable* except)
+Selection::_DeselectAllExcept(const Selectable& except)
 {
-	bool notify = false;
 	bool containedExcept = false;
 
-	int32 count = fSelected.CountItems();
-	for (int32 i = 0; i < count; i++) {
-		Selectable* object = (Selectable*)fSelected.ItemAtFast(i);
-		if (object != except) {
-			object->SetSelected(false);
-			notify = true;
-		} else {
-			containedExcept = true;
-		}
-	}
+	// Make a temporary copy of the list and read the selected objects
+	// from there. Make the original list empty here already, in order to
+	// prevent potential screw-ups when someone selects objects in his
+	// notification hooks...
+	Container selected;
+	selected.assign(fSelected.begin(), fSelected.end());
+	fSelected.clear();
 
-	fSelected.MakeEmpty();
+	int32 count = selected.size();
+	for (int32 i = 0; i < count; i++) {
+		const Selectable& object = selected[i];
+		if (object != except)
+			_NotifyObjectDeselected(object);
+		else
+			containedExcept = true;
+	}
 
 	// if the "except" object was previously
 	// in the selection, add it again after
 	// making the selection list empty
 	if (containedExcept)
-		fSelected.AddItem(except);
-
-//	if (notify)
-//		Notify();
+		fSelected.push_back(except);
 }
+
+// _NotifyObjectSelected
+void
+Selection::_NotifyObjectSelected(const Selectable& object)
+{
+	BList listeners(fListeners);
+	int32 count = listeners.CountItems();
+	for (int32 i = 0; i < count; i++)
+		((Listener*)listeners.ItemAtFast(i))->ObjectSelected(object);
+}
+
+// _NotifyObjectDeselected
+void
+Selection::_NotifyObjectDeselected(const Selectable& object)
+{
+	BList listeners(fListeners);
+	int32 count = listeners.CountItems();
+	for (int32 i = 0; i < count; i++)
+		((Listener*)listeners.ItemAtFast(i))->ObjectDeselected(object);
+}
+
 

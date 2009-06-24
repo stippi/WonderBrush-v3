@@ -1,10 +1,28 @@
-#include "Selectable.h"
+/*
+ * Copyright 2007-2009 Stephan Aßmus <superstippi@gmx.de>
+ * All rights reserved.
+ */
 
-//#include "PropertyObject.h"
+#include "Selectable.h"
 
 // constructor
 Selectable::Selectable()
-	: fSelected(false)
+	:
+	Reference<BaseObject>()
+{
+}
+
+// constructor
+Selectable::Selectable(BaseObject* object)
+	:
+	Reference<BaseObject>(object)
+{
+}
+
+// constructor
+Selectable::Selectable(const Selectable& other)
+	:
+	Reference<BaseObject>(other)
 {
 }
 
@@ -13,19 +31,4 @@ Selectable::~Selectable()
 {
 }
 
-// SetSelected
-void
-Selectable::SetSelected(bool selected)
-{
-	if (fSelected != selected) {
-		fSelected = selected;
-		SelectedChanged();
-	}
-}
 
-//// GetPropertyObject
-//PropertyObject*
-//Selectable::GetPropertyObject()
-//{
-//	return dynamic_cast<PropertyObject*>(this);
-//}

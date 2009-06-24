@@ -74,10 +74,10 @@ void
 Notifier::Notify() const
 {
 	if (!fSuspended) {
-		BList observers(fListeners);
-		int32 count = observers.CountItems();
+		BList listeners(fListeners);
+		int32 count = listeners.CountItems();
 		for (int32 i = 0; i < count; i++)
-			((Listener*)observers.ItemAtFast(i))->ObjectChanged(this);
+			((Listener*)listeners.ItemAtFast(i))->ObjectChanged(this);
 		fPendingNotifications = false;
 	} else {
 		fPendingNotifications = true;

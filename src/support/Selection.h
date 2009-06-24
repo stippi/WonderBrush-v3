@@ -1,31 +1,59 @@
+/*
+ * Copyright 2007-2009 Stephan Aßmus <superstippi@gmx.de>
+ * All rights reserved.
+ */
+
 #ifndef SELECTION_H
 #define SELECTION_H
 
+#include <vector>
+
 #include <List.h>
 
-class Selectable;
+#include "Selectable.h"
 
 class Selection {
- public:
+public:
+	class Listener {
+	public:
+								Listener();
+		virtual					~Listener();
+
+		virtual	void			ObjectSelected(const Selectable& object) = 0;
+		virtual	void			ObjectDeselected(const Selectable& object) = 0;
+	};
+
+public:
 								Selection();
 	virtual						~Selection();
 
 	// modify selection
-			bool				Select(Selectable* object,
-									   bool extend = false);
-			void				Deselect(Selectable* object);
+			bool				Select(const Selectable& object,
+									bool extend = false);
+			void				Deselect(const Selectable& object);
 			void				DeselectAll();
 
 	// query selection
-			Selectable*			SelectableAt(int32 index) const;
-			Selectable*			SelectableAtFast(int32 index) const;
-			int32				CountSelected() const;
+			const Selectable&	SelectableAt(uint32 index) const;
+			const Selectable&	SelectableAtFast(uint32 index) const;
+			uint32				CountSelected() const;
 			bool				IsEmpty() const;
 
- private:
-			void				_DeselectAllExcept(Selectable* object);
+	// listener support
+			bool				AddListener(Listener* listener);
+			void				RemoveListener(Listener* listener);
 
-			BList				fSelected;
+private:
+			void				_DeselectAllExcept(const Selectable& object);
+
+			void				_NotifyObjectSelected(
+									const Selectable& object);
+			void				_NotifyObjectDeselected(
+									const Selectable& object);
+
+	typedef std::vector<Selectable> Container;
+			Container			fSelected;
+			BList				fListeners;
 };
 
 #endif	// SELECTION_H

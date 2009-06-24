@@ -1,27 +1,20 @@
+/*
+ * Copyright 2007-2009 Stephan Aßmus <superstippi@gmx.de>
+ * All rights reserved.
+ */
+
 #ifndef SELECTABLE_H
 #define SELECTABLE_H
 
-#include <SupportDefs.h>
+#include "BaseObject.h"
+#include "Referenceable.h"
 
-//class PropertyObject;
-
-class Selectable {
- public:
+class Selectable : public Reference<BaseObject> {
+public:
 								Selectable();
+								Selectable(BaseObject* object);
+								Selectable(const Selectable& other);
 	virtual						~Selectable();
-
-	inline	bool				IsSelected() const
-									{ return fSelected; }
-
-	virtual	void				SelectedChanged() = 0;
-
-//	virtual	PropertyObject*		GetPropertyObject();
-
- private:
-	friend class Selection;
-			void				SetSelected(bool selected);
-
-			bool				fSelected;
 };
 
 #endif // SELECTABLE_H

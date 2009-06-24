@@ -10,20 +10,16 @@
 
 #include "Notifier.h"
 #include "Referenceable.h"
-#include "Selectable.h"
 
 class BMessage;
 class PropertyObject;
 
-class BaseObject : public Notifier, public Referenceable, public Selectable {
+class BaseObject : public Notifier, public Referenceable {
 public:
 								BaseObject(const char* name);
 								BaseObject(const BaseObject& other);
 								BaseObject(BMessage* archive);
 	virtual						~BaseObject();
-
-	// Selectable interface
-	virtual	void				SelectedChanged();
 
 	// BaseObject
 	virtual	status_t			Unarchive(const BMessage* archive);

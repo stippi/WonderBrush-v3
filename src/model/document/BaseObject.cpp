@@ -20,7 +20,6 @@
 BaseObject::BaseObject(const char* name)
 	: Notifier(),
 	  Referenceable(),
-	  Selectable(),
 
 	  fName(name)
 {
@@ -30,7 +29,6 @@ BaseObject::BaseObject(const char* name)
 BaseObject::BaseObject(const BaseObject& other)
 	: Notifier(),
 	  Referenceable(),
-	  Selectable(),
 
 	  fName(other.fName)
 {
@@ -40,7 +38,6 @@ BaseObject::BaseObject(const BaseObject& other)
 BaseObject::BaseObject(BMessage* archive)
 	: Notifier(),
 	  Referenceable(),
-	  Selectable(),
 
 	  fName()
 {
@@ -51,14 +48,6 @@ BaseObject::BaseObject(BMessage* archive)
 // destructor
 BaseObject::~BaseObject()
 {
-}
-
-// SelectedChanged
-void
-BaseObject::SelectedChanged()
-{
-	// simply pass on the event for now
-//	Notify();
 }
 
 // #pragma mark -

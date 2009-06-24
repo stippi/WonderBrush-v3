@@ -1,3 +1,8 @@
+/*
+ * Copyright 2007-2009 Stephan Aßmus <superstippi@gmx.de>
+ * All rights reserved.
+ */
+
 #ifndef WINDOW_H
 #define WINDOW_H
 
@@ -5,6 +10,7 @@
 
 #include "LayerObserver.h"
 #include "ListenerAdapter.h"
+#include "Selection.h"
 
 class CanvasView;
 class ColumnTreeModel;
@@ -39,16 +45,19 @@ private:
 
 			CanvasView*			fView;
 			Document*			fDocument;
-			PickToolState*		fPickState;
+			LayerObserver		fLayerObserver;
 			RenderManager*		fRenderManager;
 			ListenerAdapter		fCommandStackListener;
+			Selection			fSelection;
+
+// TODO: Remove
+PickToolState*		fPickState;
 
 			BMenuItem*			fUndoMI;
 			BMenuItem*			fRedoMI;
 
 			ObjectTreeView*		fLayerTreeView;
-			ColumnTreeModel*	fLayerTreeModel;
-			LayerObserver		fLayerObserver;
+//			ColumnTreeModel*	fLayerTreeModel;
 			IconOptionsControl*	fToolIconControl;
 
 			BList				fTools;

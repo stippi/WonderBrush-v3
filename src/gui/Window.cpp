@@ -1,3 +1,8 @@
+/*
+ * Copyright 2007-2009 Stephan Aßmus <superstippi@gmx.de>
+ * All rights reserved.
+ */
+
 #include "Window.h"
 
 #include <Application.h>
