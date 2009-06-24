@@ -3,8 +3,8 @@
  * Distributed under the terms of the MIT License.
  */
 
-#ifndef VECTOR_PATH_H
-#define VECTOR_PATH_H
+#ifndef PATH_H
+#define PATH_H
 
 
 #include <agg_path_storage.h>
@@ -22,7 +22,7 @@ class BMessage;
 class BView;
 
 
-class VectorPath : public BArchivable, public BaseObject {
+class Path : public BArchivable, public BaseObject {
 public:
 
 	class Listener {
@@ -39,7 +39,7 @@ public:
 	};
 
 	class Iterator {
-	 public:
+	public:
 								Iterator() {}
 		virtual					~Iterator() {}
 
@@ -47,11 +47,11 @@ public:
 		virtual	void			LineTo(BPoint point) = 0;
 	};
 
-								VectorPath();
-								VectorPath(const VectorPath& from);
-								VectorPath(BMessage* archive);
+								Path();
+								Path(const Path& from);
+								Path(BMessage* archive);
 
-	virtual						~VectorPath();
+	virtual						~Path();
 
 	// BaseObject
 	virtual	status_t			Archive(BMessage* into,
@@ -61,9 +61,10 @@ public:
 	virtual	bool				SetToPropertyObject(
 									const PropertyObject* object);
 
-	// VectorPath
-			VectorPath&			operator=(const VectorPath& from);
-//			bool				operator==(const VectorPath& from) const;
+	// Path
+			Path&				operator=(const Path& from);
+			bool				operator==(const Path& from) const;
+			bool				operator!=(const Path& from) const;
 
 			void				MakeEmpty();
 
@@ -183,4 +184,4 @@ private:
 	mutable	BRect				fCachedBounds;
 };
 
-#endif	// VECTOR_PATH_H
+#endif	// PATH_H

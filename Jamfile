@@ -3,6 +3,8 @@ SubDir WONDERBRUSH_TOP ;
 # source directories
 local sourceDirs =
 	commands
+	document
+	fills
 	gui
 	gui/misc
 	objects
@@ -32,6 +34,8 @@ for sysIncludeDir in $(sysIncludeDirs) {
 # <pe-inc>
 SubDirHdrs [ FDirName $(WONDERBRUSH_TOP) columntreeview ] ;
 SubDirHdrs [ FDirName $(WONDERBRUSH_TOP) commands ] ;
+SubDirHdrs [ FDirName $(WONDERBRUSH_TOP) document ] ;
+SubDirHdrs [ FDirName $(WONDERBRUSH_TOP) fills ] ;
 SubDirHdrs [ FDirName $(WONDERBRUSH_TOP) gui ] ;
 SubDirHdrs [ FDirName $(WONDERBRUSH_TOP) gui colorpicker ] ;
 SubDirHdrs [ FDirName $(WONDERBRUSH_TOP) gui columntreeview ] ;
@@ -57,6 +61,13 @@ SubDirSysHdrs [ FDirName $(WONDERBRUSH_TOP) agg/include ] ;
 # <pe-src>
 Application WonderBrush :
 
+	# fills
+	Color.cpp
+	Gradient.cpp
+	Paint.cpp
+	PaintColor.cpp
+	PaintGradient.cpp
+
 	# gui/misc
 	IconButton.cpp
 	IconOptionsControl.cpp
@@ -71,8 +82,11 @@ Application WonderBrush :
 	ObjectTreeView.cpp
 	ToolConfigView.cpp
 
-	# objects/snapshots
+	# document
+	BaseObject.cpp
 	Document.cpp
+
+	# objects/snapshots
 	Filter.cpp
 	FilterSnapshot.cpp
 	Layer.cpp
@@ -89,12 +103,12 @@ Application WonderBrush :
 	GaussFilter.cpp
 	LayoutContext.cpp
 	LayoutState.cpp
+	Path.cpp
 	RenderBuffer.cpp
 	RenderEngine.cpp
 	RenderManager.cpp
 	RenderThread.cpp
 	StackBlurFilter.cpp
-	VectorPath.cpp
 	VertexSource.cpp
 
 	# support
@@ -132,7 +146,6 @@ Application WonderBrush :
 
 	# .
 	App.cpp
-	BaseObject.cpp
 	CanvasView.cpp
 	main.cpp
 	Window.cpp

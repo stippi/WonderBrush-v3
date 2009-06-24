@@ -3,23 +3,25 @@
  * Distributed under the terms of the MIT License.
  */
 
-#include "VectorPath.h"
+#include "Path.h"
 
 #include <malloc.h>
 #include <stdio.h>
 #include <string.h>
+
+#include <new>
+#include <typeinfo>
+
+#include <debugger.h>
+
+#include <Message.h>
+#include <TypeConstants.h>
 
 #include <agg_basics.h>
 #include <agg_bounding_rect.h>
 #include <agg_conv_curve.h>
 #include <agg_curves.h>
 #include <agg_math.h>
-
-#include <debugger.h>
-#include <typeinfo>
-
-#include <Message.h>
-#include <TypeConstants.h>
 
 #include "support.h"
 
@@ -36,13 +38,13 @@
 
 #define ALLOC_CHUNKS 20
 
-VectorPath::Listener::Listener() {}
-VectorPath::Listener::~Listener() {}
+Path::Listener::Listener() {}
+Path::Listener::~Listener() {}
 
 // #pragma mark -
 
 // constructor
-VectorPath::VectorPath()
+Path::Path()
 	:
 	BArchivable(),
 	BaseObject("<path>"),
@@ -56,7 +58,7 @@ VectorPath::VectorPath()
 }
 
 // constructor
-VectorPath::VectorPath(const VectorPath& from)
+Path::Path(const Path& from)
 	:
 	BArchivable(),
 	BaseObject(from),
@@ -71,7 +73,7 @@ VectorPath::VectorPath(const VectorPath& from)
 }
 
 // constructor
-VectorPath::VectorPath(BMessage* archive)
+Path::Path(BMessage* archive)
 	:
 	BArchivable(),
 	BaseObject(archive),
@@ -97,11 +99,14 @@ VectorPath::VectorPath(BMessage* archive)
 		BPoint pointIn;
 		BPoint pointOut;
 		bool connected;
-		for (int32 i = 0; i < fPointCount
-						  && archive->FindPoint("point", i, &point) >= B_OK
-						  && archive->FindPoint("point in", i, &pointIn) >= B_OK
-						  && archive->FindPoint("point out", i, &pointOut) >= B_OK
-						  && archive->FindBool("connected", i, &connected) >= B_OK; i++) {
+		for (int32 i = 0;
+			i < fPointCount
+			&& archive->FindPoint("point", i, &point) == B_OK
+			&& archive->FindPoint("point in", i, &pointIn) == B_OK
+			&& archive->FindPoint("point out", i, &pointOut) == B_OK
+			&& archive->FindBool("connected", i, &connected) == B_OK;
+			i++) {
+
 			fPath[i].point = point;
 			fPath[i].point_in = pointIn;
 			fPath[i].point_out = pointOut;
@@ -114,7 +119,7 @@ VectorPath::VectorPath(BMessage* archive)
 }
 
 // destructor
-VectorPath::~VectorPath()
+Path::~Path()
 {
 	if (fPath)
 		obj_free(fPath);
@@ -122,64 +127,18 @@ VectorPath::~VectorPath()
 	if (fListeners.CountItems() > 0) {
 		Listener* listener = (Listener*)fListeners.ItemAt(0);
 		char message[512];
-		sprintf(message, "VectorPath::~VectorPath() - "
+		sprintf(message, "Path::~Path() - "
 				 "there are still listeners attached! %p/%s",
 				 listener, typeid(*listener).name());
 		debugger(message);
 	}
 }
 
-// #pragma mark -
-
-// MakePropertyObject
-PropertyObject*
-VectorPath::MakePropertyObject() const
-{
-	PropertyObject* object = BaseObject::MakePropertyObject();
-	if (!object)
-		return NULL;
-
-	// closed
-	object->AddProperty(new BoolProperty(PROPERTY_CLOSED, fClosed));
-
-	// archived path
-	BMessage* archive = new BMessage();
-	if (Archive(archive) == B_OK) {
-		object->AddProperty(new IconProperty(PROPERTY_PATH,
-											 kPathPropertyIconBits,
-											 kPathPropertyIconWidth,
-											 kPathPropertyIconHeight,
-											 kPathPropertyIconFormat,
-											 archive));
-	}
-
-	return object;
-}
-
-// SetToPropertyObject
-bool
-VectorPath::SetToPropertyObject(const PropertyObject* object)
-{
-	AutoNotificationSuspender _(this);
-	BaseObject::SetToPropertyObject(object);
-
-	// closed
-	SetClosed(object->Value(PROPERTY_CLOSED, fClosed));
-
-	// archived path
-	IconProperty* pathProperty = dynamic_cast<IconProperty*>(
-		object->FindProperty(PROPERTY_PATH));
-	if (pathProperty && pathProperty->Message()) {
-		VectorPath archivedPath(pathProperty->Message());
-		*this = archivedPath;
-	}
-
-	return HasPendingNotifications();
-}
+// #pragma mark - BaseObject
 
 // Archive
 status_t
-VectorPath::Archive(BMessage* into, bool deep) const
+Path::Archive(BMessage* into, bool deep) const
 {
 	status_t ret = BaseObject::Archive(into, deep);
 	if (ret < B_OK)
@@ -221,17 +180,61 @@ VectorPath::Archive(BMessage* into, bool deep) const
 	}
 	// finish off
 	if (ret < B_OK) {
-		ret = into->AddString("class", "VectorPath");
+		ret = into->AddString("class", "Path");
 	}
 
 	return ret;
 }
 
+// MakePropertyObject
+PropertyObject*
+Path::MakePropertyObject() const
+{
+	PropertyObject* object = BaseObject::MakePropertyObject();
+	if (!object)
+		return NULL;
+
+	// closed
+	object->AddProperty(new(std::nothrow) BoolProperty(PROPERTY_CLOSED,
+		fClosed));
+
+	// archived path
+	BMessage* archive = new BMessage();
+	if (Archive(archive) == B_OK) {
+		object->AddProperty(new(std::nothrow) IconProperty(PROPERTY_PATH,
+			kPathPropertyIconBits, kPathPropertyIconWidth,
+			kPathPropertyIconHeight, kPathPropertyIconFormat, archive));
+	}
+
+	return object;
+}
+
+// SetToPropertyObject
+bool
+Path::SetToPropertyObject(const PropertyObject* object)
+{
+	AutoNotificationSuspender _(this);
+	BaseObject::SetToPropertyObject(object);
+
+	// closed
+	SetClosed(object->Value(PROPERTY_CLOSED, fClosed));
+
+	// archived path
+	IconProperty* pathProperty = dynamic_cast<IconProperty*>(
+		object->FindProperty(PROPERTY_PATH));
+	if (pathProperty && pathProperty->Message()) {
+		Path archivedPath(pathProperty->Message());
+		*this = archivedPath;
+	}
+
+	return HasPendingNotifications();
+}
+
 // #pragma mark -
 
 // operator=
-VectorPath&
-VectorPath::operator=(const VectorPath& from)
+Path&
+Path::operator=(const Path& from)
 {
 	_SetPointCount(from.fPointCount);
 	fClosed = from.fClosed;
@@ -239,7 +242,7 @@ VectorPath::operator=(const VectorPath& from)
 		memcpy(fPath, from.fPath, fPointCount * sizeof(control_point));
 		fCachedBounds = from.fCachedBounds;
 	} else {
-		fprintf(stderr, "VectorPath() -> allocation failed in operator=!\n");
+		fprintf(stderr, "Path() -> allocation failed in operator=!\n");
 		fAllocCount = 0;
 		fPointCount = 0;
 		fCachedBounds.Set(0.0, 0.0, -1.0, -1.0);
@@ -249,9 +252,30 @@ VectorPath::operator=(const VectorPath& from)
 	return *this;
 }
 
+// operator==
+bool
+Path::operator==(const Path& other) const
+{
+	if (fPointCount != other.fPointCount || fClosed != other.fClosed)
+		return false;
+
+	if (fPath == NULL && other.fPath == NULL)
+		return true;
+
+	return memcmp(fPath, other.fPath,
+		fPointCount * sizeof(control_point)) == 0;
+}
+
+// operator!=
+bool
+Path::operator!=(const Path& other) const
+{
+	return !(*this == other);
+}
+
 // MakeEmpty
 void
-VectorPath::MakeEmpty()
+Path::MakeEmpty()
 {
 	_SetPointCount(0);
 }
@@ -260,7 +284,7 @@ VectorPath::MakeEmpty()
 
 // AddPoint
 bool
-VectorPath::AddPoint(BPoint point)
+Path::AddPoint(BPoint point)
 {
 	int32 index = fPointCount;
 
@@ -275,7 +299,7 @@ VectorPath::AddPoint(BPoint point)
 
 // AddPoint
 bool
-VectorPath::AddPoint(const BPoint& point,
+Path::AddPoint(const BPoint& point,
 					 const BPoint& pointIn,
 					 const BPoint& pointOut,
 					 bool connected)
@@ -293,7 +317,7 @@ VectorPath::AddPoint(const BPoint& point,
 
 // AddPoint
 bool
-VectorPath::AddPoint(BPoint point, int32 index)
+Path::AddPoint(BPoint point, int32 index)
 {
 	if (index < 0)
 		index = 0;
@@ -319,7 +343,7 @@ VectorPath::AddPoint(BPoint point, int32 index)
 
 // RemovePoint
 bool
-VectorPath::RemovePoint(int32 index)
+Path::RemovePoint(int32 index)
 {
 	if (index >= 0 && index < fPointCount) {
 
@@ -344,7 +368,7 @@ VectorPath::RemovePoint(int32 index)
 
 // SetPoint
 bool
-VectorPath::SetPoint(int32 index, BPoint point)
+Path::SetPoint(int32 index, BPoint point)
 {
 	if (index == fPointCount)
 		index = 0;
@@ -364,7 +388,7 @@ VectorPath::SetPoint(int32 index, BPoint point)
 
 // SetPoint
 bool
-VectorPath::SetPoint(int32 index, BPoint point,
+Path::SetPoint(int32 index, BPoint point,
 								  BPoint pointIn, BPoint pointOut,
 								  bool connected)
 {
@@ -386,7 +410,7 @@ VectorPath::SetPoint(int32 index, BPoint point,
 
 // SetPointIn
 bool
-VectorPath::SetPointIn(int32 i, BPoint point)
+Path::SetPointIn(int32 i, BPoint point)
 {
 	if (i == fPointCount)
 		i = 0;
@@ -418,7 +442,7 @@ VectorPath::SetPointIn(int32 i, BPoint point)
 
 // SetPointOut
 bool
-VectorPath::SetPointOut(int32 i, BPoint point, bool mirrorDist)
+Path::SetPointOut(int32 i, BPoint point, bool mirrorDist)
 {
 	if (i == fPointCount)
 		i = 0;
@@ -454,7 +478,7 @@ VectorPath::SetPointOut(int32 i, BPoint point, bool mirrorDist)
 
 // SetInOutConnected
 bool
-VectorPath::SetInOutConnected(int32 index, bool connected)
+Path::SetInOutConnected(int32 index, bool connected)
 {
 	if (index >= 0 && index < fPointCount) {
 		fPath[index].connected = connected;
@@ -468,7 +492,7 @@ VectorPath::SetInOutConnected(int32 index, bool connected)
 
 // GetPointAt
 bool
-VectorPath::GetPointAt(int32 index, BPoint& point) const
+Path::GetPointAt(int32 index, BPoint& point) const
 {
 	if (index == fPointCount)
 		index = 0;
@@ -481,7 +505,7 @@ VectorPath::GetPointAt(int32 index, BPoint& point) const
 
 // GetPointInAt
 bool
-VectorPath::GetPointInAt(int32 index, BPoint& point) const
+Path::GetPointInAt(int32 index, BPoint& point) const
 {
 	if (index == fPointCount)
 		index = 0;
@@ -494,7 +518,7 @@ VectorPath::GetPointInAt(int32 index, BPoint& point) const
 
 // GetPointOutAt
 bool
-VectorPath::GetPointOutAt(int32 index, BPoint& point) const
+Path::GetPointOutAt(int32 index, BPoint& point) const
 {
 	if (index == fPointCount)
 		index = 0;
@@ -507,7 +531,7 @@ VectorPath::GetPointOutAt(int32 index, BPoint& point) const
 
 // GetPointsAt
 bool
-VectorPath::GetPointsAt(int32 index, BPoint& point,
+Path::GetPointsAt(int32 index, BPoint& point,
 						BPoint& pointIn, BPoint& pointOut, bool* connected) const
 {
 	if (index >= 0 && index < fPointCount) {
@@ -525,7 +549,7 @@ VectorPath::GetPointsAt(int32 index, BPoint& point,
 
 // CountPoints
 int32
-VectorPath::CountPoints() const
+Path::CountPoints() const
 {
 	return fPointCount;
 }
@@ -574,7 +598,7 @@ distance_to_curve(const BPoint& p, const BPoint& a, const BPoint& aOut,
 
 // GetDistance
 bool
-VectorPath::GetDistance(BPoint p, float* distance, int32* index) const
+Path::GetDistance(BPoint p, float* distance, int32* index) const
 {
 	if (fPointCount > 1) {
 		// generate a curve for each segment of the path
@@ -610,7 +634,7 @@ VectorPath::GetDistance(BPoint p, float* distance, int32* index) const
 
 // FindBezierScale
 bool
-VectorPath::FindBezierScale(int32 index, BPoint point, double* scale) const
+Path::FindBezierScale(int32 index, BPoint point, double* scale) const
 {
 	if (index >= 0 && index < fPointCount && scale) {
 
@@ -642,7 +666,7 @@ VectorPath::FindBezierScale(int32 index, BPoint point, double* scale) const
 
 // GetPoint
 bool
-VectorPath::GetPoint(int32 index, double t, BPoint& point) const
+Path::GetPoint(int32 index, double t, BPoint& point) const
 {
 	if (index >= 0 && index < fPointCount) {
 
@@ -680,7 +704,7 @@ VectorPath::GetPoint(int32 index, double t, BPoint& point) const
 
 // SetClosed
 void
-VectorPath::SetClosed(bool closed)
+Path::SetClosed(bool closed)
 {
 	if (fClosed != closed) {
 		fClosed = closed;
@@ -691,7 +715,7 @@ VectorPath::SetClosed(bool closed)
 
 // Bounds
 BRect
-VectorPath::Bounds() const
+Path::Bounds() const
 {
 	// the bounds of the actual curves, not the control points!
 	if (!fCachedBounds.IsValid())
@@ -701,7 +725,7 @@ VectorPath::Bounds() const
 
 // Bounds
 BRect
-VectorPath::_Bounds() const
+Path::_Bounds() const
 {
 	agg::path_storage path;
 
@@ -727,7 +751,7 @@ VectorPath::_Bounds() const
 
 // ControlPointBounds
 BRect
-VectorPath::ControlPointBounds() const
+Path::ControlPointBounds() const
 {
 	if (fPointCount > 0) {
 		BRect r(fPath[0].point, fPath[0].point);
@@ -755,7 +779,7 @@ VectorPath::ControlPointBounds() const
 
 // Iterate
 void
-VectorPath::Iterate(Iterator* iterator, float smoothScale) const
+Path::Iterate(Iterator* iterator, float smoothScale) const
 {
 	if (fPointCount > 1) {
 		// generate a curve for each segment of the path
@@ -798,7 +822,7 @@ iterator->MoveTo(fPath[fPointCount - 1].point);
 
 // CleanUp
 void
-VectorPath::CleanUp()
+Path::CleanUp()
 {
 	if (fPointCount == 0)
 		return;
@@ -854,9 +878,9 @@ VectorPath::CleanUp()
 
 // Reverse
 void
-VectorPath::Reverse()
+Path::Reverse()
 {
-	VectorPath temp(*this);
+	Path temp(*this);
 	int32 index = 0;
 	for (int32 i = fPointCount - 1; i >= 0; i--) {
 		temp.SetPoint(index, fPath[i].point,
@@ -872,7 +896,7 @@ VectorPath::Reverse()
 
 // ApplyTransform
 void
-VectorPath::ApplyTransform(const Transformable& transform)
+Path::ApplyTransform(const Transformable& transform)
 {
 	if (transform.IsIdentity())
 		return;
@@ -888,7 +912,7 @@ VectorPath::ApplyTransform(const Transformable& transform)
 
 // PrintToStream
 void
-VectorPath::PrintToStream() const
+Path::PrintToStream() const
 {
 	for (int32 i = 0; i < fPointCount; i++) {
 		printf("point %ld: (%f, %f) -> (%f, %f) -> (%f, %f) (%d)\n", i,
@@ -901,7 +925,7 @@ VectorPath::PrintToStream() const
 
 // GetAGGPathStorage
 bool
-VectorPath::GetAGGPathStorage(agg::path_storage& path) const
+Path::GetAGGPathStorage(agg::path_storage& path) const
 {
 	return _GetAGGPathStorage(path, fPath, fPointCount, fClosed);
 }
@@ -910,7 +934,7 @@ VectorPath::GetAGGPathStorage(agg::path_storage& path) const
 
 // AddListener
 bool
-VectorPath::AddListener(Listener* listener)
+Path::AddListener(Listener* listener)
 {
 	if (listener && !fListeners.HasItem((void*)listener))
 		return fListeners.AddItem((void*)listener);
@@ -919,21 +943,21 @@ VectorPath::AddListener(Listener* listener)
 
 // RemoveListener
 bool
-VectorPath::RemoveListener(Listener* listener)
+Path::RemoveListener(Listener* listener)
 {
 	return fListeners.RemoveItem((void*)listener);
 }
 
 // CountListeners
 int32
-VectorPath::CountListeners() const
+Path::CountListeners() const
 {
 	return fListeners.CountItems();
 }
 
 // ListenerAtFast
-VectorPath::Listener*
-VectorPath::ListenerAtFast(int32 index) const
+Path::Listener*
+Path::ListenerAtFast(int32 index) const
 {
 	return (Listener*)fListeners.ItemAtFast(index);
 }
@@ -942,7 +966,7 @@ VectorPath::ListenerAtFast(int32 index) const
 
 // _GetAGGPathStorage
 bool
-VectorPath::_GetAGGPathStorage(agg::path_storage& path,
+Path::_GetAGGPathStorage(agg::path_storage& path,
 	const control_point* points, int32 count, bool closed)
 {
 	if (count > 1) {
@@ -975,7 +999,7 @@ VectorPath::_GetAGGPathStorage(agg::path_storage& path,
 
 // _SetPoint
 void
-VectorPath::_SetPoint(int32 index, BPoint point)
+Path::_SetPoint(int32 index, BPoint point)
 {
 	fPath[index].point = point;
 	fPath[index].point_in = point;
@@ -988,7 +1012,7 @@ VectorPath::_SetPoint(int32 index, BPoint point)
 
 // _SetPoint
 void
-VectorPath::_SetPoint(int32 index,
+Path::_SetPoint(int32 index,
 					  const BPoint& point,
 					  const BPoint& pointIn,
 					  const BPoint& pointOut,
@@ -1007,7 +1031,7 @@ VectorPath::_SetPoint(int32 index,
 
 // _SetPointCount
 bool
-VectorPath::_SetPointCount(int32 count)
+Path::_SetPointCount(int32 count)
 {
 	// handle reallocation if we run out of room
 	if (count >= fAllocCount) {
@@ -1026,7 +1050,7 @@ VectorPath::_SetPointCount(int32 count)
 		// reallocation might have failed
 		fPointCount = 0;
 		fAllocCount = 0;
-		fprintf(stderr, "VectorPath::_SetPointCount(%ld) - allocation failed!\n", count);
+		fprintf(stderr, "Path::_SetPointCount(%ld) - allocation failed!\n", count);
 	}
 
 	fCachedBounds.Set(0.0, 0.0, -1.0, -1.0);
@@ -1038,7 +1062,7 @@ VectorPath::_SetPointCount(int32 count)
 
 // _NotifyPointAdded
 void
-VectorPath::_NotifyPointAdded(int32 index) const
+Path::_NotifyPointAdded(int32 index) const
 {
 	BList listeners(fListeners);
 	int32 count = listeners.CountItems();
@@ -1050,7 +1074,7 @@ VectorPath::_NotifyPointAdded(int32 index) const
 
 // _NotifyPointChanged
 void
-VectorPath::_NotifyPointChanged(int32 index) const
+Path::_NotifyPointChanged(int32 index) const
 {
 	BList listeners(fListeners);
 	int32 count = listeners.CountItems();
@@ -1062,7 +1086,7 @@ VectorPath::_NotifyPointChanged(int32 index) const
 
 // _NotifyPointRemoved
 void
-VectorPath::_NotifyPointRemoved(int32 index) const
+Path::_NotifyPointRemoved(int32 index) const
 {
 	BList listeners(fListeners);
 	int32 count = listeners.CountItems();
@@ -1074,7 +1098,7 @@ VectorPath::_NotifyPointRemoved(int32 index) const
 
 // _NotifyPathChanged
 void
-VectorPath::_NotifyPathChanged() const
+Path::_NotifyPathChanged() const
 {
 	BList listeners(fListeners);
 	int32 count = listeners.CountItems();
@@ -1086,7 +1110,7 @@ VectorPath::_NotifyPathChanged() const
 
 // _NotifyClosedChanged
 void
-VectorPath::_NotifyClosedChanged() const
+Path::_NotifyClosedChanged() const
 {
 	BList listeners(fListeners);
 	int32 count = listeners.CountItems();
@@ -1098,7 +1122,7 @@ VectorPath::_NotifyClosedChanged() const
 
 // _NotifyPathReversed
 void
-VectorPath::_NotifyPathReversed() const
+Path::_NotifyPathReversed() const
 {
 	BList listeners(fListeners);
 	int32 count = listeners.CountItems();

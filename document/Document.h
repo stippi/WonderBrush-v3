@@ -11,19 +11,23 @@
 #include <List.h>
 #include <Rect.h>
 
+#include "NotifyingList.h"
 #include "RWLocker.h"
 
 class CommandStack;
 class Layer;
+class Path;
+
+typedef NotifyingList<Path> PathList;
 
 class Document : public RWLocker {
- public:
+public:
 	class Listener {
 	 public:
 								Listener();
 		virtual					~Listener();
 	};
-	
+
 
 								Document(const BRect& bounds);
 	virtual						~Document();
@@ -42,11 +46,17 @@ class Document : public RWLocker {
 									{ return fRootLayer; }
 			bool				HasLayer(Layer* layer) const;
 
- private:
+	inline	PathList*			GlobalPaths()
+									{ return &fGlobalPaths; }
+
+private:
 			bool				_HasLayer(Layer* parent, Layer* child) const;
 
 			::CommandStack*		fCommandStack;
 			Layer*				fRootLayer;
+
+			PathList			fGlobalPaths;
+
 			BList				fListeners;
 };
 

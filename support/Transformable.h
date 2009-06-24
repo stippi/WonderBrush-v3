@@ -8,13 +8,17 @@
 #include <agg_trans_perspective.h>
 
 class Transformable : public agg::trans_perspective {
- public:
+public:
+			enum {
+				MatrixSize = 9
+			};
+public:
 								Transformable();
 								Transformable(const Transformable& other);
 	virtual						~Transformable();
 
-			void				StoreTo(double matrix[9]) const;
-			void				LoadFrom(double matrix[9]);
+			void				StoreTo(double matrix[MatrixSize]) const;
+			void				LoadFrom(const double matrix[MatrixSize]);
 
 								// set to or combine with other matrix
 			void				SetTransformable(const Transformable& other);

@@ -33,7 +33,7 @@ Transformable::StoreTo(double matrix[9]) const
 
 // LoadFrom
 void
-Transformable::LoadFrom(double matrix[9])
+Transformable::LoadFrom(const double matrix[9])
 {
 	// before calling the potentially heavy TransformationChanged()
 	// hook function, we make sure that the transformation really changed

@@ -12,6 +12,7 @@
 #include "CommandStack.h"
 #include "Layer.h"
 #include "Object.h"
+#include "Path.h"
 
 
 using std::nothrow;
@@ -30,10 +31,12 @@ Document::Listener::~Listener()
 
 // constructor
 Document::Document(const BRect& bounds)
-	: RWLocker("document rw lock")
-	, fCommandStack(new (nothrow) ::CommandStack(this))
-	, fRootLayer(new (nothrow) Layer(bounds))
-	, fListeners(8)
+	:
+	RWLocker("document rw lock"),
+	fCommandStack(new (nothrow) ::CommandStack(this)),
+	fRootLayer(new (nothrow) Layer(bounds)),
+	fGlobalPaths(),
+	fListeners(8)
 {
 }
 
