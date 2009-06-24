@@ -9,9 +9,10 @@
 
 // constructor
 Object::Object()
-	: Transformable()
-	, fChangeCounter(0)
-	, fParent(NULL)
+	:
+	Transformable(),
+	fChangeCounter(0),
+	fParent(NULL)
 {
 }
 

@@ -69,7 +69,7 @@ Document::Bounds() const
 bool
 Document::AddListener(Listener* listener)
 {
-	if (!listener || fListeners.HasItem(listener))
+	if (listener == NULL || fListeners.HasItem(listener))
 		return false;
 	return fListeners.AddItem(listener);
 }
