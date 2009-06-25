@@ -7,25 +7,66 @@
  */
 #include "Filter.h"
 
+#include <new>
+
+#include "CommonPropertyIDs.h"
 #include "FilterSnapshot.h"
 
 // constructor
 Filter::Filter()
-	: Object()
-	, fFilterRadius(20.0)
+	:
+	Object(),
+	fFilterRadius(20.0)
 {
 }
 
 // constructor
 Filter::Filter(float radius)
-	: Object()
-	, fFilterRadius(radius)
+	:
+	Object(),
+	fFilterRadius(radius)
 {
 }
 
 // destructor
 Filter::~Filter()
 {
+}
+
+// #pragma mark - BaseObject
+
+// DefaultName
+const char*
+Filter::DefaultName() const
+{
+	return "Gaussian Blur";
+}
+
+// MakePropertyObject
+PropertyObject*
+Filter::MakePropertyObject() const
+{
+	PropertyObject* object = BaseObject::MakePropertyObject();
+	if (object == NULL)
+		return NULL;
+
+	object->AddProperty(new (std::nothrow) FloatProperty(
+		PROPERTY_FILTER_RADIUS, fFilterRadius, 0.0f, 10000.0f));
+
+	return object;
+}
+
+// SetToPropertyObject
+bool
+Filter::SetToPropertyObject(const PropertyObject* object)
+{
+	AutoNotificationSuspender _(this);
+	BaseObject::SetToPropertyObject(object);
+
+	// filter radius
+	SetFilterRadius(object->Value(PROPERTY_FILTER_RADIUS, fFilterRadius));
+
+	return HasPendingNotifications();
 }
 
 // #pragma mark -
@@ -37,12 +78,7 @@ Filter::Snapshot() const
 	return new FilterSnapshot(this);
 }
 
-// DefaultName
-const char*
-Filter::DefaultName() const
-{
-	return "Gaussian Blur";
-}
+// #pragma mark -
 
 // IsRegularTransformable
 bool
@@ -66,4 +102,19 @@ Filter::ExtendDirtyArea(BRect& area) const
 		// to pixel indices versus areas...
 	area.InsetBy(-extend, -extend);
 }
+
+// SetFilterRadius
+void
+Filter::SetFilterRadius(float filterRadius)
+{
+	if (fFilterRadius == filterRadius)
+		return;
+
+	fFilterRadius = filterRadius;
+
+	UpdateChangeCounter();
+	InvalidateParent();
+	Notify();
+}
+
 

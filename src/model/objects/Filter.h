@@ -16,16 +16,21 @@ class Filter : public Object {
 								Filter(float radius);
 	virtual						~Filter();
 
+	// BaseObject interface
+	virtual	const char*			DefaultName() const;
+	virtual	PropertyObject*		MakePropertyObject() const;
+	virtual	bool				SetToPropertyObject(
+									const PropertyObject* object);
+
 	// Object interface
 	virtual	ObjectSnapshot*		Snapshot() const;
-
-	virtual	const char*			DefaultName() const;
 
 	virtual	bool				IsRegularTransformable() const;
 
 	virtual	void				ExtendDirtyArea(BRect& area) const;
 
 	// Filter
+			void				SetFilterRadius(float filterRadius);
 	inline	float				FilterRadius() const
 									{ return fFilterRadius; }
 

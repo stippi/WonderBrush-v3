@@ -86,6 +86,10 @@ name_for_id(int32 id)
 			name = "Detect Orient.";
 			break;
 
+		case PROPERTY_FILTER_RADIUS:
+			name = "Filter Radius";
+			break;
+
 		default:
 			name = "<unkown property>";
 			break;

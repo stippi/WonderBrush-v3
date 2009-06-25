@@ -39,6 +39,8 @@ enum {
 	PROPERTY_SCALE_Y					= 'scly',
 
 	PROPERTY_DETECT_ORIENTATION			= 'ador',
+
+	PROPERTY_FILTER_RADIUS				= 'flrd'
 };
 
 
