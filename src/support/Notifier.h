@@ -13,7 +13,7 @@
 class Listener;
 
 class Notifier {
- public:
+public:
 								Notifier();
 	virtual						~Notifier();
 
@@ -22,15 +22,18 @@ class Notifier {
 
 			int32				CountListeners() const;
 			Listener*			ListenerAtFast(int32 index) const;
-	
-	 		void				Notify() const;
+
+			void				Notify();
 
 			void				SuspendNotifications(bool suspend);
 
 			bool				HasPendingNotifications() const
 									{ return fPendingNotifications; }
 
- private:
+protected:
+	virtual	void				NotifyListeners();
+
+private:
 			BList				fListeners;
 
 			int32				fSuspended;

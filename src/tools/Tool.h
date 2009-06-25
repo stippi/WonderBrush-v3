@@ -11,6 +11,7 @@
 class BMessage;
 class Document;
 class IconButton;
+class Selection;
 class StateView;
 class ToolConfigView;
 class ViewState;
@@ -31,7 +32,7 @@ public:
 
 	// GUI
 			ViewState*			ToolViewState(StateView* view,
-									Document* document);
+									Document* document, Selection* selection);
 			ToolConfigView*		ConfigView();
 			IconButton*			Icon();
 
@@ -44,7 +45,8 @@ public:
 
 protected:
 	virtual	ViewState*			MakeViewState(StateView* view,
-									Document* document) = 0;
+									Document* document,
+									Selection* selection) = 0;
 	virtual	ToolConfigView*		MakeConfigView() = 0;
 	virtual	IconButton*			MakeIcon() = 0;
 

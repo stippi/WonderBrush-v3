@@ -17,11 +17,11 @@
 #include "PropertyObject.h"
 
 // constructor
-BaseObject::BaseObject(const char* name)
+BaseObject::BaseObject()
 	: Notifier(),
 	  Referenceable(),
 
-	  fName(name)
+	  fName()
 {
 }
 
@@ -108,9 +108,19 @@ BaseObject::SetToPropertyObject(const PropertyObject* object)
 void
 BaseObject::SetName(const char* name)
 {
-	if (fName == name)
+	if (name == NULL || fName == name)
 		return;
 
 	fName = name;
 	Notify();
 }
+
+// Name
+const char*
+BaseObject::Name() const
+{
+	if (fName.Length() > 0)
+		return fName.String();
+	return DefaultName();
+}
+

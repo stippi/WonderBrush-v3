@@ -17,7 +17,7 @@ public:
 		PATTERN = 2
 	};
 
-								Paint(const char* defaultName);
+								Paint();
 								Paint(const Paint& other);
 								Paint(BMessage* archive);
 

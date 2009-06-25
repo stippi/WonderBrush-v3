@@ -14,7 +14,7 @@
 // constructor
 PaintColor::PaintColor()
 	:
-	Paint("<color>"),
+	Paint(),
 	fColor(kWhite)
 {
 }
@@ -22,7 +22,7 @@ PaintColor::PaintColor()
 // constructor
 PaintColor::PaintColor(const rgb_color& color)
 	:
-	Paint("<color>"),
+	Paint(),
 	fColor(color)
 {
 }
@@ -51,6 +51,15 @@ PaintColor::PaintColor(BMessage* archive)
 // destructor
 PaintColor::~PaintColor()
 {
+}
+
+// #pragma mark -
+
+// DefaultName
+const char*
+PaintColor::DefaultName() const
+{
+	return "Color";
 }
 
 // #pragma mark -

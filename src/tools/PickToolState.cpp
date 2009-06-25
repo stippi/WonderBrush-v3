@@ -100,25 +100,29 @@ PickToolState::ShapeLOAdapater::Deleted(Shape* shape)
 
 // constructor
 PickToolState::PickToolState(StateView* parent, Layer* layer,
-		Document* document)
-	: ViewState(parent)
-	, fDocument(document)
-	, fLayer(layer)
+		Document* document, Selection* selection)
+	:
+	ViewState(parent),
+	fDocument(document),
+	fSelection(selection),
+	fLayer(layer),
 
-	, fRect(NULL)
-	, fRectLOAdapter(parent)
+	fRect(NULL),
+	fRectLOAdapter(parent),
 
-	, fShape(NULL)
-	, fShapeLOAdapter(parent)
+	fShape(NULL),
+	fShapeLOAdapter(parent),
 
-	, fDragMode(DRAGGING_NONE)
-	, fLastDragPos(0.0, 0.0)
+	fDragMode(DRAGGING_NONE),
+	fLastDragPos(0.0, 0.0)
 {
+	fSelection->AddListener(this);
 }
 
 // destructor
 PickToolState::~PickToolState()
 {
+	fSelection->RemoveListener(this);
 	SetRect(NULL);
 	SetShape(NULL);
 }
@@ -304,6 +308,40 @@ PickToolState::Bounds() const
 
 // #pragma mark -
 
+// ObjectSelected
+void
+PickToolState::ObjectSelected(const Selectable& selectable,
+	const Selection::Controller* controller)
+{
+	if (controller == this) {
+		// ignore changes triggered by ourself
+		return;
+	}
+
+printf("PickToolState::ObjectSelected(%p)\n", selectable.Get());
+	Object* object = dynamic_cast<Object*>(selectable.Get());
+	Layer* layer = object != NULL ? object->Parent() : NULL;
+	SetObject(layer, object);
+}
+
+// ObjectDeselected
+void
+PickToolState::ObjectDeselected(const Selectable& selectable,
+	const Selection::Controller* controller)
+{
+	if (controller == this) {
+		// ignore changes triggered by ourself
+		return;
+	}
+
+printf("PickToolState::ObjectDeselected(%p)\n", selectable.Get());
+	Object* object = dynamic_cast<Object*>(selectable.Get());
+	if (object == fRect || object == fShape)
+		SetObject(NULL, NULL);
+}
+
+// #pragma mark -
+
 // SetObject
 void
 PickToolState::SetObject(Layer* layer, Object* object)
@@ -484,17 +522,24 @@ PickToolState::_Invalidate(BRect area)
 void
 PickToolState::_SendPickNotification()
 {
-	if (!fView->Window())
-		return;
+//	if (!fView->Window())
+//		return;
+//
+//	BMessage notification(MSG_OBJECT_PICKED);
+//	if (fRect)
+//		notification.AddPointer("object", (Object*)fRect);
+//	else if (fShape)
+//		notification.AddPointer("object", (Object*)fShape);
+//	else
+//		notification.AddPointer("object", (Object*)NULL);
+//
+//	fView->Window()->PostMessage(&notification);
 
-	BMessage notification(MSG_OBJECT_PICKED);
-	if (fRect)
-		notification.AddPointer("object", (Object*)fRect);
-	else if (fShape)
-		notification.AddPointer("object", (Object*)fShape);
+	if (fRect != NULL)
+		fSelection->Select(Selectable(fRect), this);
+	else if (fShape != NULL)
+		fSelection->Select(Selectable(fShape), this);
 	else
-		notification.AddPointer("object", (Object*)NULL);
-
-	fView->Window()->PostMessage(&notification);
+		fSelection->DeselectAll(this);
 }
 

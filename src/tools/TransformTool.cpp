@@ -52,7 +52,8 @@ TransformTool::ShortHelpMessage()
 
 // MakeViewState
 ViewState*
-TransformTool::MakeViewState(StateView* view, Document* document)
+TransformTool::MakeViewState(StateView* view, Document* document,
+	Selection* selection)
 {
 	// TODO: Remove test code...
 	TransformToolState* state = new TransformToolState(view,

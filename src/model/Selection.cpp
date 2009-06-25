@@ -32,6 +32,19 @@ Selection::Listener::~Listener()
 // #pragma mark -
 
 // constructor
+Selection::Controller::Controller()
+{
+}
+
+// destructor
+Selection::Controller::~Controller()
+{
+}
+
+
+// #pragma mark -
+
+// constructor
 Selection::Selection()
 	:
 	fSelected(),
@@ -46,10 +59,11 @@ Selection::~Selection()
 
 // Select
 bool
-Selection::Select(const Selectable& object, bool extend)
+Selection::Select(const Selectable& object, const Controller* controller,
+	bool extend)
 {
 	if (!extend)
-		_DeselectAllExcept(object);
+		_DeselectAllExcept(object, controller);
 
 	Container::iterator it = fSelected.begin();
 	for (; it != fSelected.end(); ++it) {
@@ -59,7 +73,7 @@ Selection::Select(const Selectable& object, bool extend)
 
 	try {
 		fSelected.push_back(object);
-		_NotifyObjectSelected(object);
+		_NotifyObjectSelected(object, controller);
 		return true;
 	} catch (...) {
 	}
@@ -69,14 +83,14 @@ Selection::Select(const Selectable& object, bool extend)
 
 // Deselect
 void
-Selection::Deselect(const Selectable& object)
+Selection::Deselect(const Selectable& object, const Controller* controller)
 {
 	try {
 		Container::iterator it = fSelected.begin();
 		for (; it != fSelected.end(); ++it) {
 			if (*it == object) {
 				fSelected.erase(it);
-				_NotifyObjectDeselected(object);
+				_NotifyObjectDeselected(object, controller);
 				return;
 			}
 		}
@@ -86,9 +100,9 @@ Selection::Deselect(const Selectable& object)
 
 // DeselectAll
 void
-Selection::DeselectAll()
+Selection::DeselectAll(const Controller* controller)
 {
-	_DeselectAllExcept(kEmptySelectable);
+	_DeselectAllExcept(kEmptySelectable, controller);
 }
 
 // #pragma mark -
@@ -146,7 +160,8 @@ Selection::RemoveListener(Listener* listener)
 
 // _DeselectAllExcept
 void
-Selection::_DeselectAllExcept(const Selectable& except)
+Selection::_DeselectAllExcept(const Selectable& except,
+	const Controller* controller)
 {
 	bool containedExcept = false;
 
@@ -162,7 +177,7 @@ Selection::_DeselectAllExcept(const Selectable& except)
 	for (int32 i = 0; i < count; i++) {
 		const Selectable& object = selected[i];
 		if (object != except)
-			_NotifyObjectDeselected(object);
+			_NotifyObjectDeselected(object, controller);
 		else
 			containedExcept = true;
 	}
@@ -176,22 +191,28 @@ Selection::_DeselectAllExcept(const Selectable& except)
 
 // _NotifyObjectSelected
 void
-Selection::_NotifyObjectSelected(const Selectable& object)
+Selection::_NotifyObjectSelected(const Selectable& object,
+	const Controller* controller)
 {
 	BList listeners(fListeners);
 	int32 count = listeners.CountItems();
-	for (int32 i = 0; i < count; i++)
-		((Listener*)listeners.ItemAtFast(i))->ObjectSelected(object);
+	for (int32 i = 0; i < count; i++) {
+		((Listener*)listeners.ItemAtFast(i))->ObjectSelected(object,
+			controller);
+	}
 }
 
 // _NotifyObjectDeselected
 void
-Selection::_NotifyObjectDeselected(const Selectable& object)
+Selection::_NotifyObjectDeselected(const Selectable& object,
+	const Controller* controller)
 {
 	BList listeners(fListeners);
 	int32 count = listeners.CountItems();
-	for (int32 i = 0; i < count; i++)
-		((Listener*)listeners.ItemAtFast(i))->ObjectDeselected(object);
+	for (int32 i = 0; i < count; i++) {
+		((Listener*)listeners.ItemAtFast(i))->ObjectDeselected(object,
+			controller);
+	}
 }
 
 

@@ -82,6 +82,10 @@ Application WonderBrush :
 	ToolConfigView.cpp
 	Window.cpp
 
+	# model
+	Selectable.cpp
+	Selection.cpp
+
 	# model/fills
 	Color.cpp
 	Gradient.cpp
@@ -131,8 +135,6 @@ Application WonderBrush :
 	ObjectTracker.cpp
 	Referenceable.cpp
 	RWLocker.cpp
-	Selectable.cpp
-	Selection.cpp
 	support.cpp
 	support_settings.cpp
 	support_ui.cpp

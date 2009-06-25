@@ -5,6 +5,7 @@
 #include "EasyColumnTreeItem.h"
 #include "LayerObserver.h"
 #include "ListenerAdapter.h"
+#include "Selection.h"
 
 
 class Document;
@@ -23,11 +24,14 @@ public:
 };
 
 
-class ObjectTreeView : public ColumnTreeView {
+class ObjectTreeView : public ColumnTreeView, public Selection::Controller,
+	public Selection::Listener {
 public:
-								ObjectTreeView(BRect frame, Document* document);
+								ObjectTreeView(BRect frame, Document* document,
+									Selection* selection);
 #ifdef __HAIKU__
-								ObjectTreeView(Document* document);
+								ObjectTreeView(Document* document,
+									Selection* selection);
 #endif
 	virtual						~ObjectTreeView();
 
@@ -42,6 +46,14 @@ public:
 	virtual	bool				InitiateDrag(BPoint point, int32 index,
 									bool wasSelected,
 									BMessage* _message = NULL);
+
+	virtual	void				SelectionChanged();
+
+	// Selection::Listener interface
+	virtual	void				ObjectSelected(const Selectable& object,
+									const Selection::Controller* controller);
+	virtual	void				ObjectDeselected(const Selectable& object,
+									const Selection::Controller* controller);
 
 	// ObjectTreeView
 			void				SelectItem(Object* object);
@@ -67,6 +79,7 @@ private:
 
 private:
 			Document*			fDocument;
+			Selection*			fSelection;
 			LayerObserver		fLayerObserver;
 };
 

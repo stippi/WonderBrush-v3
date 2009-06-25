@@ -16,7 +16,7 @@ class PropertyObject;
 
 class BaseObject : public Notifier, public Referenceable {
 public:
-								BaseObject(const char* name);
+								BaseObject();
 								BaseObject(const BaseObject& other);
 								BaseObject(BMessage* archive);
 	virtual						~BaseObject();
@@ -30,9 +30,9 @@ public:
 	virtual	bool				SetToPropertyObject(
 									const PropertyObject* object);
 
+	virtual	const char*			DefaultName() const = 0;
 			void				SetName(const char* name);
-			const char*			Name() const
-									{ return fName.String(); }
+			const char*			Name() const;
 
 private:
 			BString				fName;

@@ -8,7 +8,7 @@
 #include <Rect.h>
 #include <String.h>
 
-#include "Referenceable.h"
+#include "BaseObject.h"
 #include "Transformable.h"
 
 
@@ -17,7 +17,7 @@ class Layer;
 class ObjectSnapshot;
 
 
-class Object : public Transformable, public Referenceable {
+class Object : public Transformable, public BaseObject {
 public:
 								Object();
 	virtual						~Object();
@@ -28,10 +28,6 @@ public:
 	inline	Layer*				Parent() const
 									{ return fParent; }
 			int32				Level() const;
-
-	virtual	const char*			DefaultName() const = 0;
-			void				SetName(const char* name);
-			const char*			Name() const;
 
 	virtual	bool				GetIcon(const BBitmap* bitmap) const;
 
@@ -48,10 +44,13 @@ public:
 	inline	uint32				ChangeCounter() const
 									{ return fChangeCounter; }
 
+protected:
+	// BaseObject interface
+	virtual void				NotifyListeners();
+
 private:
 			uint32				fChangeCounter;
 			Layer*				fParent;
-			BString				fName;
 };
 
 #endif // OBJECT_H

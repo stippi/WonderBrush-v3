@@ -3,6 +3,7 @@
 
 #include "AbstractLOAdapter.h"
 #include "Rect.h"
+#include "Selection.h"
 #include "Shape.h"
 #include "ViewState.h"
 
@@ -10,7 +11,9 @@
 class Document;
 class Layer;
 
-class PickToolState : public ViewState {
+class PickToolState : public ViewState, public Selection::Controller,
+	public Selection::Listener {
+private:
 	class RectLOAdapater : public RectListener,
 						   public AbstractLOAdapter {
 	public:
@@ -38,12 +41,13 @@ class PickToolState : public ViewState {
 
 public:
 
-	enum {
-		MSG_OBJECT_PICKED	= 'objp'
-	};
+//	enum {
+//		MSG_OBJECT_PICKED	= 'objp'
+//	};
 
 								PickToolState(StateView* parent,
-									Layer* layer, Document* document);
+									Layer* layer, Document* document,
+									Selection* selection);
 	virtual						~PickToolState();
 
 	// ViewState interface
@@ -59,6 +63,12 @@ public:
 	virtual void				Draw(BView* view, BRect updateRect);
 
 	virtual	BRect				Bounds() const;
+
+	// Selection::Listener interface
+	virtual	void				ObjectSelected(const Selectable& object,
+									const Selection::Controller* controller);
+	virtual	void				ObjectDeselected(const Selectable& object,
+									const Selection::Controller* controller);
 
 	// PickToolState
 			void				SetObject(Layer* layer, Object* object);
@@ -85,6 +95,7 @@ private:
 			void				_SendPickNotification();
 
 			Document*			fDocument;
+			Selection*			fSelection;
 			Layer*				fLayer;
 
 			Rect*				fRect;

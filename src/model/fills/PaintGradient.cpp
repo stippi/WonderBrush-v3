@@ -15,7 +15,7 @@
 // constructor
 PaintGradient::PaintGradient()
 	:
-	Paint("<gradient>"),
+	Paint(),
 	fGradient(NULL),
 	fColors(NULL),
 
@@ -62,6 +62,15 @@ PaintGradient::~PaintGradient()
 {
 	SetGradient(NULL);
 }
+
+// DefaultName
+const char*
+PaintGradient::DefaultName() const
+{
+	return "Gradient";
+}
+
+// #pragma mark -
 
 // ObjectChanged
 void

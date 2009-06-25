@@ -47,7 +47,7 @@ Path::Listener::~Listener() {}
 Path::Path()
 	:
 	BArchivable(),
-	BaseObject("<path>"),
+	BaseObject(),
 	fListeners(20),
 	fPath(NULL),
 	fClosed(false),
@@ -135,6 +135,13 @@ Path::~Path()
 }
 
 // #pragma mark - BaseObject
+
+// DefaultName
+const char*
+Path::DefaultName() const
+{
+	return "Path";
+}
 
 // Archive
 status_t

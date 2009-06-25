@@ -29,7 +29,6 @@
 #include "ObjectTreeView.h"
 #include "PickTool.h"
 #include "TransformTool.h"
-#include "PickToolState.h"
 #include "RenderManager.h"
 #include "ScrollView.h"
 #include "WonderBrush.h"
@@ -146,7 +145,7 @@ Window::Window(BRect frame, const char* title, Document* document,
 	fPropertyMenu = new BMenu("Property");
 	propertyMenuBar->AddItem(fPropertyMenu);
 
-	fLayerTreeView = new ObjectTreeView(fDocument);
+	fLayerTreeView = new ObjectTreeView(fDocument, &fSelection);
 
 	Column* nameColumn = new Column("Name", "name", 177,
 		COLUMN_MOVABLE | COLUMN_VISIBLE);
@@ -185,7 +184,7 @@ Window::Window(BRect frame, const char* title, Document* document,
 	BLayoutBuilder::Group<>(this, B_VERTICAL)
 		.Add(menuBar)
 		.AddGroup(B_HORIZONTAL)
-			.AddSplit(B_VERTICAL)
+			.AddSplit(B_VERTICAL, 0.0f, 0.15f)
 				.AddGroup(B_VERTICAL)
 					.AddStrut(5)
 					.Add(fToolIconControl)
@@ -270,38 +269,33 @@ Window::MessageReceived(BMessage* message)
 			break;
 		}
 
-		case MSG_SELECTION_CHANGED:
-		{
-			int32 index;
-			if (message->FindInt32("index", &index) == B_OK) {
-				ObjectColumnTreeItem* item
-					= dynamic_cast<ObjectColumnTreeItem*>(
-						fLayerTreeView->ItemAt(index));
-				if (item) {
-					Object* object = item->object;
-					Layer* layer = object->Parent();
-					if (!layer)
-						layer = fDocument->RootLayer();
-					fPickState->SetObject(layer, object);
-				}
-			}
-			break;
-		}
+//		case MSG_SELECTION_CHANGED:
+//		{
+//			int32 index;
+//			if (message->FindInt32("index", &index) == B_OK) {
+//				ObjectColumnTreeItem* item
+//					= dynamic_cast<ObjectColumnTreeItem*>(
+//						fLayerTreeView->ItemAt(index));
+//				if (item) {
+//					Object* object = item->object;
+//					Layer* layer = object->Parent();
+//					if (!layer)
+//						layer = fDocument->RootLayer();
+//					fPickState->SetObject(layer, object);
+//				}
+//			}
+//			break;
+//		}
 
 		case MSG_SET_TOOL: {
 			int32 index;
 			if (message->FindInt32("tool", &index) == B_OK) {
-				if (Tool* tool = (Tool*)fTools.ItemAt(index))
-					fView->SetState(tool->ToolViewState(fView, fDocument));
+				if (Tool* tool = (Tool*)fTools.ItemAt(index)) {
+					fView->SetState(tool->ToolViewState(fView, fDocument,
+						&fSelection));
+				}
 			}
 			break;
-		}
-
-		case PickToolState::MSG_OBJECT_PICKED:
-		{
-			Object* object;
-			if (message->FindPointer("object", (void**)&object) == B_OK)
-				fLayerTreeView->SelectItem(object);
 		}
 
 		default:
@@ -349,10 +343,10 @@ Window::AddTool(Tool* tool)
 	icon->SetMessage(message);
 	fToolIconControl->AddOption(icon);
 
-//	if (count == 0) {
-//		// this was the first tool
-//		fTimelineView->SetTool(tool);
-//	}
+	if (count == 0) {
+		// this was the first tool
+		fView->SetState(tool->ToolViewState(fView, fDocument, &fSelection));
+	}
 }
 
 // #pragma mark -
@@ -362,13 +356,7 @@ void
 Window::_InitTools()
 {
 	// create canvas tools
-	PickTool* pickTool = new(std::nothrow) PickTool();
-	// TODO: Remove test code...
-	fPickState = dynamic_cast<PickToolState*>(
-		pickTool->ToolViewState(fView, fDocument));
-	fView->SetState(fPickState);
-
-	AddTool(pickTool);
+	AddTool(new(std::nothrow) PickTool());
 	AddTool(new(std::nothrow) TransformTool());
 }
 

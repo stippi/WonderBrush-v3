@@ -10,6 +10,7 @@
 // constructor
 Object::Object()
 	:
+	BaseObject(),
 	Transformable(),
 	fChangeCounter(0),
 	fParent(NULL)
@@ -40,27 +41,6 @@ Object::Level() const
 }
 
 // #pragma mark -
-
-// SetName
-void
-Object::SetName(const char* name)
-{
-	if (!name || fName == name)
-		return;
-
-	fName = name;
-	if (fParent)
-		fParent->ObjectChanged(this);
-}
-
-// Name
-const char*
-Object::Name() const
-{
-	if (fName.Length() > 0)
-		return fName.String();
-	return DefaultName();
-}
 
 // GetIcon
 bool
@@ -115,6 +95,17 @@ Object::UpdateChangeCounter()
 	if (fParent)
 		fParent->UpdateChangeCounter();
 	fChangeCounter++;
+}
+
+// #pragma mark -
+
+void
+Object::NotifyListeners()
+{
+	BaseObject::NotifyListeners();
+
+	if (fParent != NULL)
+		fParent->ObjectChanged(this);
 }
 
 

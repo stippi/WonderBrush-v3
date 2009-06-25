@@ -21,7 +21,6 @@ class InspectorView;
 class Layer;
 class ObjectColumnTreeItem;
 class ObjectTreeView;
-class PickToolState;
 class RenderManager;
 class Tool;
 
@@ -51,9 +50,6 @@ private:
 			RenderManager*		fRenderManager;
 			ListenerAdapter		fCommandStackListener;
 			Selection			fSelection;
-
-// TODO: Remove
-PickToolState*		fPickState;
 
 			BMenu*				fFileMenu;
 			BMenu*				fEditMenu;

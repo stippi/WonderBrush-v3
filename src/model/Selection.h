@@ -14,13 +14,21 @@
 
 class Selection {
 public:
+	class Controller {
+	public:
+								Controller();
+		virtual					~Controller();
+	};
+
 	class Listener {
 	public:
 								Listener();
 		virtual					~Listener();
 
-		virtual	void			ObjectSelected(const Selectable& object) = 0;
-		virtual	void			ObjectDeselected(const Selectable& object) = 0;
+		virtual	void			ObjectSelected(const Selectable& object,
+									const Controller* controller) = 0;
+		virtual	void			ObjectDeselected(const Selectable& object,
+									const Controller* controller) = 0;
 	};
 
 public:
@@ -29,9 +37,11 @@ public:
 
 	// modify selection
 			bool				Select(const Selectable& object,
+									const Controller* controller,
 									bool extend = false);
-			void				Deselect(const Selectable& object);
-			void				DeselectAll();
+			void				Deselect(const Selectable& object,
+									const Controller* controller);
+			void				DeselectAll(const Controller* controller);
 
 	// query selection
 			const Selectable&	SelectableAt(uint32 index) const;
@@ -44,12 +54,15 @@ public:
 			void				RemoveListener(Listener* listener);
 
 private:
-			void				_DeselectAllExcept(const Selectable& object);
+			void				_DeselectAllExcept(const Selectable& object,
+									const Controller* controller);
 
 			void				_NotifyObjectSelected(
-									const Selectable& object);
+									const Selectable& object,
+									const Controller* controller);
 			void				_NotifyObjectDeselected(
-									const Selectable& object);
+									const Selectable& object,
+									const Controller* controller);
 
 	typedef std::vector<Selectable> Container;
 			Container			fSelected;

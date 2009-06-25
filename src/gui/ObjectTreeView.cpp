@@ -55,22 +55,24 @@ enum {
 
 
 // constructor
-ObjectTreeView::ObjectTreeView(BRect frame, Document* document)
+ObjectTreeView::ObjectTreeView(BRect frame, Document* document,
+		Selection* selection)
 	:
 	ColumnTreeView(frame),
 	fDocument(document),
+	fSelection(selection),
 	fLayerObserver(this)
 {
-	_RecursiveAddItems(fDocument->RootLayer(), NULL);
 }
 
 #ifdef __HAIKU__
 
 // constructor
-ObjectTreeView::ObjectTreeView(Document* document)
+ObjectTreeView::ObjectTreeView(Document* document, Selection* selection)
 	:
 	ColumnTreeView(),
 	fDocument(document),
+	fSelection(selection),
 	fLayerObserver(this)
 {
 }
@@ -90,6 +92,8 @@ ObjectTreeView::AttachedToWindow()
 	Window()->AddShortcut('e', B_COMMAND_KEY,
 		new BMessage(MSG_RENAME_SELECTED_ITEM), this);
 
+	fSelection->AddListener(this);
+
 	_RecursiveAddItems(fDocument->RootLayer(), NULL);
 }
 
@@ -97,6 +101,7 @@ ObjectTreeView::AttachedToWindow()
 void
 ObjectTreeView::DetachedFromWindow()
 {
+	fSelection->RemoveListener(this);
 	Window()->RemoveShortcut('e', B_COMMAND_KEY);
 	ColumnTreeView::DetachedFromWindow();
 }
@@ -289,6 +294,55 @@ ObjectTreeView::InitiateDrag(BPoint point, int32 index, bool wasSelected,
 	}
 	return false;
 }
+
+// SelectionChanged
+void
+ObjectTreeView::SelectionChanged()
+{
+	// Sync the selections
+	int32 count = CountSelectedItems();
+	bool extend = false;
+	for (int32 i = 0; i < count; i++) {
+		ObjectColumnTreeItem* item = dynamic_cast<ObjectColumnTreeItem*>(
+			ItemAt(CurrentSelection(i)));
+		if (item == NULL)
+			continue;
+		fSelection->Select(Selectable(item->object), this, extend);
+		extend = true;
+	}
+}
+
+// #pragma mark -
+
+// ObjectSelected
+void
+ObjectTreeView::ObjectSelected(const Selectable& object,
+	const Selection::Controller* controller)
+{
+	if (controller == this) {
+		// ignore changes triggered by ourself
+		return;
+	}
+
+printf("ObjectTreeView::ObjectSelected(%p)\n", object.Get());
+	SelectItem(dynamic_cast<Object*>(object.Get()));
+}
+
+// ObjectDeselected
+void
+ObjectTreeView::ObjectDeselected(const Selectable& object,
+	const Selection::Controller* controller)
+{
+	if (controller == this) {
+		// ignore changes triggered by ourself
+		return;
+	}
+
+printf("ObjectTreeView::ObjectDeselected(%p)\n", object.Get());
+	// TODO...
+}
+
+// #pragma mark -
 
 // SelectItem
 void

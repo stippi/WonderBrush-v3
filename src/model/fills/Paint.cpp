@@ -6,9 +6,9 @@
 #include "Paint.h"
 
 // constructor
-Paint::Paint(const char* defaultName)
+Paint::Paint()
 	:
-	BaseObject(defaultName)
+	BaseObject()
 {
 }
 

@@ -21,7 +21,7 @@ public:
 
 protected:
 	virtual	ViewState*			MakeViewState(StateView* view,
-									Document* document);
+									Document* document, Selection* selection);
 	virtual	ToolConfigView*		MakeConfigView();
 	virtual	IconButton*			MakeIcon();
 };

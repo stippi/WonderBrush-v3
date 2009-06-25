@@ -53,10 +53,11 @@ PickTool::ShortHelpMessage()
 
 // MakeViewState
 ViewState*
-PickTool::MakeViewState(StateView* view, Document* document)
+PickTool::MakeViewState(StateView* view, Document* document,
+	Selection* selection)
 {
 	PickToolState* state = new PickToolState(view, document->RootLayer(),
-		document);
+		document, selection);
 	return state;
 }
 

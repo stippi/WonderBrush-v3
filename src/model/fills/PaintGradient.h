@@ -22,6 +22,9 @@ public:
 
 	virtual						~PaintGradient();
 
+	// BaseObject interface
+	virtual	const char*			DefaultName() const;
+
 	// Listener interface
 	virtual	void				ObjectChanged(const Notifier* object);
 

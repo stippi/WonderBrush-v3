@@ -21,6 +21,9 @@ public:
 
 	virtual						~PaintColor();
 
+	// BaseObject interface
+	virtual	const char*			DefaultName() const;
+
 	// Paint interface
 	virtual	status_t			Archive(BMessage* into,
 									bool deep = true) const;

@@ -71,13 +71,10 @@ Notifier::ListenerAtFast(int32 index) const
 
 // Notify
 void
-Notifier::Notify() const
+Notifier::Notify()
 {
 	if (!fSuspended) {
-		BList listeners(fListeners);
-		int32 count = listeners.CountItems();
-		for (int32 i = 0; i < count; i++)
-			((Listener*)listeners.ItemAtFast(i))->ObjectChanged(this);
+		NotifyListeners();
 		fPendingNotifications = false;
 	} else {
 		fPendingNotifications = true;
@@ -101,5 +98,15 @@ Notifier::SuspendNotifications(bool suspend)
 
 	if (!fSuspended && fPendingNotifications)
 		Notify();
+}
+
+// NotifyListeners
+void
+Notifier::NotifyListeners()
+{
+	BList listeners(fListeners);
+	int32 count = listeners.CountItems();
+	for (int32 i = 0; i < count; i++)
+		((Listener*)listeners.ItemAtFast(i))->ObjectChanged(this);
 }
 
