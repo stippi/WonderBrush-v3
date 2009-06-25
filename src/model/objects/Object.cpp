@@ -102,10 +102,9 @@ Object::UpdateChangeCounter()
 void
 Object::NotifyListeners()
 {
-	BaseObject::NotifyListeners();
-
 	if (fParent != NULL)
 		fParent->ObjectChanged(this);
+	BaseObject::NotifyListeners();
 }
 
 

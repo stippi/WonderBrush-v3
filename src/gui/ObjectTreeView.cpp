@@ -301,6 +301,10 @@ ObjectTreeView::SelectionChanged()
 {
 	// Sync the selections
 	int32 count = CountSelectedItems();
+	if (count == 0) {
+		fSelection->DeselectAll(this);
+		return;
+	}
 	bool extend = false;
 	for (int32 i = 0; i < count; i++) {
 		ObjectColumnTreeItem* item = dynamic_cast<ObjectColumnTreeItem*>(
@@ -324,7 +328,6 @@ ObjectTreeView::ObjectSelected(const Selectable& object,
 		return;
 	}
 
-printf("ObjectTreeView::ObjectSelected(%p)\n", object.Get());
 	SelectItem(dynamic_cast<Object*>(object.Get()));
 }
 
@@ -338,7 +341,7 @@ ObjectTreeView::ObjectDeselected(const Selectable& object,
 		return;
 	}
 
-printf("ObjectTreeView::ObjectDeselected(%p)\n", object.Get());
+//printf("ObjectTreeView::ObjectDeselected(%p)\n", object.Get());
 	// TODO...
 }
 
@@ -471,10 +474,8 @@ ObjectTreeView::_ObjectAdded(Layer* layer, Object* object, int32 index)
 	AddSubItem(parentItem, item, index);
 	ExpandItem(item);
 
-	if (Layer* subLayer = dynamic_cast<Layer*>(object)) {
-		subLayer->AddListener(&fLayerObserver);
+	if (Layer* subLayer = dynamic_cast<Layer*>(object))
 		_RecursiveAddItems(subLayer, item);
-	}
 }
 
 // _ObjectRemoved
@@ -514,6 +515,8 @@ void
 ObjectTreeView::_RecursiveAddItems(Layer* layer,
 	ObjectColumnTreeItem* layerItem)
 {
+	layer->AddListener(&fLayerObserver);
+
 	int32 count = layer->CountObjects();
 	for (int32 i = 0; i < count; i++) {
 		Object* object = layer->ObjectAtFast(i);
@@ -528,9 +531,7 @@ ObjectTreeView::_RecursiveAddItems(Layer* layer,
 		ExpandItem(item);
 
 		Layer* subLayer = dynamic_cast<Layer*>(object);
-		if (subLayer) {
-			subLayer->AddListener(&fLayerObserver);
+		if (subLayer != NULL)
 			_RecursiveAddItems(subLayer, item);
-		}
 	}
 }

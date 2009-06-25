@@ -126,7 +126,8 @@ void
 InspectorView::ObjectDeselected(const Selectable& selected,
 	const Selection::Controller* controller)
 {
-
+	if (selected.Get() == fObject)
+		_SetObject(NULL);
 }
 
 // #pragma mark -
