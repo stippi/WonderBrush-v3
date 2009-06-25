@@ -88,6 +88,14 @@ Object::InvalidateParent(const BRect& area)
 		fParent->Invalidate(area, fParent->IndexOf(this));
 }
 
+// InvalidateParent
+void
+Object::InvalidateParent()
+{
+	if (fParent)
+		fParent->Invalidate(fParent->Bounds(), fParent->IndexOf(this));
+}
+
 // UpdateChangeCounter
 void
 Object::UpdateChangeCounter()

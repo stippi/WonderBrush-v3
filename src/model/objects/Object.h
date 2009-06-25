@@ -39,6 +39,7 @@ public:
 	virtual	void				ExtendDirtyArea(BRect& area) const;
 
 			void				InvalidateParent(const BRect& area);
+			void				InvalidateParent();
 
 			void				UpdateChangeCounter();
 	inline	uint32				ChangeCounter() const
