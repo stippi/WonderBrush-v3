@@ -8,11 +8,13 @@
 
 #include <String.h>
 
+#include "CommonPropertyIDs.h"
 #include "Notifier.h"
+#include "Property.h"
+#include "PropertyObject.h"
 #include "Referenceable.h"
 
 class BMessage;
-class PropertyObject;
 
 class BaseObject : public Notifier, public Referenceable {
 public:

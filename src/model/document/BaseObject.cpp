@@ -12,10 +12,6 @@
 
 #include <new>
 
-#include "CommonPropertyIDs.h"
-#include "Property.h"
-#include "PropertyObject.h"
-
 // constructor
 BaseObject::BaseObject()
 	: Notifier(),
