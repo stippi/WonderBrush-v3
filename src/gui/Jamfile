@@ -3,5 +3,6 @@ SubDir WONDERBRUSH_TOP src gui ;
 SubInclude WONDERBRUSH_TOP src gui colorpicker ;
 SubInclude WONDERBRUSH_TOP src gui columntreeview ;
 #SubInclude WONDERBRUSH_TOP src gui popupcontrol ;
+SubInclude WONDERBRUSH_TOP src gui propertylistview ;
 SubInclude WONDERBRUSH_TOP src gui scrollview ;
 SubInclude WONDERBRUSH_TOP src gui stateview ;

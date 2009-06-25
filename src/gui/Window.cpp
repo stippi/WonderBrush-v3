@@ -180,6 +180,8 @@ Window::Window(BRect frame, const char* title, Document* document,
 
 	fInspectorView = new InspectorView();
 	fInspectorView->SetMenu(fPropertyMenu);
+	fInspectorView->SetCommandStack(fDocument->CommandStack());
+	fInspectorView->SetSelection(&fSelection);
 
 	BLayoutBuilder::Group<>(this, B_VERTICAL)
 		.Add(menuBar)

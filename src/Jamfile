@@ -41,6 +41,9 @@ SubDirHdrs [ FDirName $(WONDERBRUSH_TOP) src gui columntreeview ] ;
 SubDirHdrs [ FDirName $(WONDERBRUSH_TOP) src gui icons ] ;
 SubDirHdrs [ FDirName $(WONDERBRUSH_TOP) src gui misc ] ;
 SubDirHdrs [ FDirName $(WONDERBRUSH_TOP) src gui popupcontrol ] ;
+SubDirHdrs [ FDirName $(WONDERBRUSH_TOP) src gui propertylistview ] ;
+SubDirHdrs [ FDirName $(WONDERBRUSH_TOP) src gui propertylistview
+	specific_properties ] ;
 SubDirHdrs [ FDirName $(WONDERBRUSH_TOP) src gui scrollview ] ;
 SubDirHdrs [ FDirName $(WONDERBRUSH_TOP) src gui stateview ] ;
 SubDirHdrs [ FDirName $(WONDERBRUSH_TOP) src model ] ;
@@ -49,9 +52,6 @@ SubDirHdrs [ FDirName $(WONDERBRUSH_TOP) src model fills ] ;
 SubDirHdrs [ FDirName $(WONDERBRUSH_TOP) src model objects ] ;
 SubDirHdrs [ FDirName $(WONDERBRUSH_TOP) src model property ] ;
 SubDirHdrs [ FDirName $(WONDERBRUSH_TOP) src model property
-	specific_properties ] ;
-SubDirHdrs [ FDirName $(WONDERBRUSH_TOP) src model property view ] ;
-SubDirHdrs [ FDirName $(WONDERBRUSH_TOP) src model property view
 	specific_properties ] ;
 SubDirHdrs [ FDirName $(WONDERBRUSH_TOP) src model snapshots ] ;
 SubDirHdrs [ FDirName $(WONDERBRUSH_TOP) src render ] ;
@@ -64,6 +64,9 @@ SubDirSysHdrs [ FDirName $(WONDERBRUSH_TOP) agg/include ] ;
 
 # <pe-src>
 Application WonderBrush :
+
+	# commands
+	SetPropertiesCommand.cpp
 
 	# gui/misc
 	IconButton.cpp
@@ -162,6 +165,7 @@ Application WonderBrush :
 		libcolumntreeview.a
 		libstateview.a
 		libcolorpicker.a
+		libpropertylistview.a
 		libproperty.a
 
 		libagg.a
