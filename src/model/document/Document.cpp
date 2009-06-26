@@ -13,6 +13,7 @@
 #include "Layer.h"
 #include "Object.h"
 #include "Path.h"
+#include "Style.h"
 
 
 using std::nothrow;
@@ -36,6 +37,7 @@ Document::Document(const BRect& bounds)
 	fCommandStack(new (nothrow) ::CommandStack(this)),
 	fRootLayer(new (nothrow) Layer(bounds)),
 	fGlobalPaths(),
+	fGlobalStyles(),
 	fListeners(8)
 {
 }

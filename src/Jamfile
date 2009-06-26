@@ -86,6 +86,7 @@ Application WonderBrush :
 	Window.cpp
 
 	# model
+	BaseObject.cpp
 	Selectable.cpp
 	Selection.cpp
 
@@ -98,7 +99,6 @@ Application WonderBrush :
 	Style.cpp
 
 	# model/document
-	BaseObject.cpp
 	Document.cpp
 
 	# model/objects/snapshots

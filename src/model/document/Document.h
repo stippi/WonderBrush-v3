@@ -17,8 +17,10 @@
 class CommandStack;
 class Layer;
 class Path;
+class Style;
 
 typedef NotifyingList<Path> PathList;
+typedef NotifyingList<Style> StyleList;
 
 class Document : public RWLocker {
 public:
@@ -49,6 +51,9 @@ public:
 	inline	PathList*			GlobalPaths()
 									{ return &fGlobalPaths; }
 
+	inline	StyleList*			GlobalStyles()
+									{ return &fGlobalStyles; }
+
 private:
 			bool				_HasLayer(Layer* parent, Layer* child) const;
 
@@ -56,6 +61,7 @@ private:
 			Layer*				fRootLayer;
 
 			PathList			fGlobalPaths;
+			StyleList			fGlobalStyles;
 
 			BList				fListeners;
 };
