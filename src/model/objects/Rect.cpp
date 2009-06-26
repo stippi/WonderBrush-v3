@@ -33,19 +33,21 @@ RectListener::Deleted(Rect* rect)
 
 // constructor
 Rect::Rect()
-	: Object()
-	, fArea(10, 10, 60, 60)
-	, fColor((rgb_color){ 0, 0, 0, 255 })
-	, fListeners(4)
+	:
+	Object(),
+	fArea(10, 10, 60, 60),
+	fColor((rgb_color){ 0, 0, 0, 255 }),
+	fListeners(4)
 {
 }
 
 // constructor
 Rect::Rect(const BRect& area, const rgb_color& color)
-	: Object()
-	, fArea(area)
-	, fColor(color)
-	, fListeners(4)
+	:
+	Object(),
+	fArea(area),
+	fColor(color),
+	fListeners(4)
 {
 }
 

@@ -9,7 +9,6 @@
 
 #include <new>
 
-#include "CommonPropertyIDs.h"
 #include "FilterSnapshot.h"
 
 // constructor

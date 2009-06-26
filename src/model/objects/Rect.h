@@ -17,7 +17,7 @@
 class Rect;
 
 class RectListener {
- public:
+public:
 								RectListener();
 	virtual						~RectListener();
 
@@ -29,7 +29,7 @@ class RectListener {
 
 
 class Rect : public Object {
- public:
+public:
 								Rect();
 								Rect(const BRect& area,
 									const rgb_color& color);
@@ -50,7 +50,7 @@ class Rect : public Object {
 			bool				AddListener(RectListener* listener);
 			void				RemoveListener(RectListener* listener);
 
- private:
+private:
 			void				_NotifyAreaChanged(const BRect& oldArea,
 									const BRect& newArea);
 

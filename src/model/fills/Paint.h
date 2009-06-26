@@ -12,9 +12,10 @@
 class Paint : public BaseObject {
 public:
 	enum {
-		COLOR = 0,
-		GRADIENT = 1,
-		PATTERN = 2
+		NONE		= 0,
+		COLOR		= 1,
+		GRADIENT	= 2,
+		PATTERN		= 3
 	};
 
 								Paint();

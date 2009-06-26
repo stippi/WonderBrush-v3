@@ -95,6 +95,7 @@ Application WonderBrush :
 	Paint.cpp
 	PaintColor.cpp
 	PaintGradient.cpp
+	Style.cpp
 
 	# model/document
 	BaseObject.cpp
