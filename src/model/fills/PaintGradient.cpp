@@ -131,6 +131,21 @@ PaintGradient::HashKey() const
 	return 0;
 }
 
+// operator==
+bool
+PaintGradient::operator==(const PaintGradient& other) const
+{
+	if (fGradient == NULL) {
+		if (other.fGradient == NULL)
+			return true;
+		return false;
+	} else {
+		if (other.fGradient == NULL)
+			return false;
+		return *other.fGradient == *fGradient;
+	}
+}
+
 // SetGradient
 void
 PaintGradient::SetGradient(const ::Gradient* gradient)

@@ -32,10 +32,40 @@ public:
 	{
 	}
 
+	SharedObject(const SharedObject& object)
+		:
+		ObjectType(object),
+		fCache(NULL)
+	{
+	}
+
 	virtual ~SharedObject()
 	{
 		if (fCache != NULL)
 			debugger("SharedObject still in a cache!");
+	}
+
+	SharedObject& operator=(const ObjectType& object)
+	{
+		ObjectType::operator=(object);
+		return *this;
+	}
+
+	SharedObject& operator=(const SharedObject& object)
+	{
+		ObjectType::operator=(object);
+		// Do not copy the fCache member!
+		return *this;
+	}
+
+	bool operator==(const ObjectType& object) const
+	{
+		return ObjectType::operator==(object);
+	}
+
+	bool operator==(const SharedObject& object) const
+	{
+		return ObjectType::operator==(object);
 	}
 
 	void SetCache(CacheType* cache)
@@ -57,12 +87,13 @@ public:
 
 private:
 	LinkType	fCacheLink;
-	CacheType	fCache;
+	CacheType*	fCache;
 };
 
 template<typename ValueT>
 struct SharedObjectCacheHashDefinition {
 	typedef ValueT							ValueType;
+//	typedef ValueType::KeyType				KeyType;
 	typedef ValueT							KeyType;
 
 	size_t HashKey(const KeyType& key) const
@@ -101,21 +132,27 @@ public:
 		fTable.Init();
 	}
 
-	bool Get(const KeyType& key)
+	SharedObjectType* Get(const KeyType& key)
 	{
 		SharedObjectType* object = fTable.Lookup(key);
 		if (object != NULL) {
 			object->AddReference();
-			return true;
+			return object;
 		}
-		return false;
+		// Shared entry for this value/key does not yet exist.
+		object = new(std::nothrow) SharedObjectType(key);
+		if (object == NULL || Insert(object) != B_OK) {
+			delete object;
+			return NULL;
+		}
+		return object;
 	}
 
 	bool Put(const KeyType& key)
 	{
 		SharedObjectType* object = fTable.Lookup(key);
 		if (object != NULL) {
-			if (object->ReferenceCount() == 1)
+			if (object->CountReferences() == 1)
 				Remove(object);
 			object->RemoveReference();
 			return true;
@@ -129,12 +166,15 @@ public:
 			debugger("PrepareForModifications(): Object not in cache");
 
 		// Returns an object that is not part of the table.
-		if (object->ReferenceCount() == 1) {
+		if (object->CountReferences() == 1) {
 			Remove(object);
 			return object;
 		}
 
-		return object->Clone();
+		// The caller loses it's reference to the object he passed to
+		// this method.
+		object->RemoveReference();
+		return new(std::nothrow) SharedObjectType(*object);
 	}
 
 	SharedObjectType* CommitModifications(SharedObjectType* object)
@@ -177,7 +217,7 @@ public:
 				"another cache");
 		}
 
-		status_t ret = Insert(object->SharedObjectCacheLink());
+		status_t ret = fTable.Insert(object);
 		if (ret == B_OK)
 			object->SetCache(this);
 		return ret;
@@ -186,7 +226,7 @@ public:
 	void Remove(SharedObjectType* object)
 	{
 		fTable.Remove(object);
-		object.SetCache(NULL);
+		object->SetCache(NULL);
 	}
 
 private:

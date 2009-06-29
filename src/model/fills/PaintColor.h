@@ -35,6 +35,7 @@ public:
 	virtual	size_t				HashKey() const;
 
 	// PaintColor
+			bool				operator==(const PaintColor& other) const;
 			void				SetColor(const rgb_color& color);
 	inline	rgb_color			Color() const
 									{ return fColor; }

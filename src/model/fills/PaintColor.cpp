@@ -98,6 +98,13 @@ PaintColor::HashKey() const
 	return (size_t&)fColor;
 }
 
+// operator==
+bool
+PaintColor::operator==(const PaintColor& other) const
+{
+	return other.fColor == fColor;
+}
+
 // SetColor
 void
 PaintColor::SetColor(const rgb_color& color)

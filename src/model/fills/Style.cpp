@@ -5,17 +5,54 @@
 
 #include "Style.h"
 
+#include <stdio.h>
+
 #include <new>
 
 #include "Paint.h"
 #include "PaintColor.h"
 #include "SharedObjectCache.h"
 
+#include "ui_defines.h"
 
-typedef SharedObject<Paint>			SharedPaint;
-typedef SharedObjectCache<Paint>	PaintCache;
 
-static PaintCache sPaintCache;
+typedef SharedObject<PaintColor>			SharedPaintColor;
+typedef SharedObjectCache<PaintColor>		PaintColorCache;
+
+static PaintColorCache sPaintColorCache;
+
+static int
+test_paint_cache()
+{
+	PaintColor color1(kBlack);
+	PaintColor color2(kBlack);
+	PaintColor color3(kWhite);
+
+	SharedPaintColor* sharedColor1 = sPaintColorCache.Get(color1);
+	SharedPaintColor* sharedColor2 = sPaintColorCache.Get(color2);
+	SharedPaintColor* sharedColor3 = sPaintColorCache.Get(color3);
+
+	printf("sharedColor1 (%p) ref count: %ld\n", sharedColor1, sharedColor1->CountReferences());
+	printf("sharedColor2 (%p) ref count: %ld\n", sharedColor2, sharedColor2->CountReferences());
+	printf("sharedColor3 (%p) ref count: %ld\n", sharedColor3, sharedColor3->CountReferences());
+
+	SharedPaintColor* modified1
+		= sPaintColorCache.PrepareForModifications(sharedColor1);
+	printf("modified1 before: %p\n", modified1);
+
+	*modified1 = *sharedColor3;
+
+	modified1 = sPaintColorCache.CommitModifications(modified1);
+	printf("modified1 after: %p\n", modified1);
+
+	printf("sharedColor1 (%p) ref count: %ld\n", sharedColor1, sharedColor1->CountReferences());
+	printf("sharedColor2 (%p) ref count: %ld\n", sharedColor2, sharedColor2->CountReferences());
+	printf("sharedColor3 (%p) ref count: %ld\n", sharedColor3, sharedColor3->CountReferences());
+
+	return 0;
+}
+
+static int test = test_paint_cache();
 
 
 // constructor

@@ -39,6 +39,7 @@ public:
 	virtual	size_t				HashKey() const;
 
 	// PaintGradient
+			bool				operator==(const PaintGradient& other) const;
 			void				SetGradient(const ::Gradient* gradient);
 			::Gradient*			Gradient() const
 									{ return fGradient; }
