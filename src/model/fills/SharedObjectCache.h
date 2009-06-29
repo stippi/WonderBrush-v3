@@ -8,15 +8,14 @@
 
 #include "OpenHashTableHugo.h"
 
-template<typename SharedObjectType> class SharedObjectCache;
+template<typename ObjectType> class SharedObjectCache;
 
 template<typename ObjectType>
 class SharedObject : public ObjectType {
 public:
 	typedef SharedObject<ObjectType>			SharedObjectType;
-	typedef SharedObjectCache<SharedObjectType>	CacheType;
-	typedef HashTableLink<SharedObject>			LinkType;
-	typedef ObjectType							KeyType;
+	typedef SharedObjectCache<ObjectType>		CacheType;
+	typedef HashTableLink<SharedObjectType>		LinkType;
 
 public:
 	SharedObject()
@@ -35,12 +34,14 @@ public:
 
 	virtual ~SharedObject()
 	{
+		if (fCache != NULL)
+			debugger("SharedObject still in a cache!");
 	}
 
 	void SetCache(CacheType* cache)
 	{
 		if (fCache != NULL && fCache != cache)
-			debugger("SharedObject alread in another cache!");
+			debugger("SharedObject already in another cache!");
 		fCache = cache;
 	}
 
@@ -62,12 +63,10 @@ private:
 template<typename ValueT>
 struct SharedObjectCacheHashDefinition {
 	typedef ValueT							ValueType;
-//	typedef typename ValueType::KeyType		KeyType;
 	typedef ValueT							KeyType;
 
 	size_t HashKey(const KeyType& key) const
 	{
-//		return ValueType::KeyHashValue(key);
 		return key.HashKey();
 	}
 
@@ -88,12 +87,14 @@ struct SharedObjectCacheHashDefinition {
 };
 
 
-template<typename SharedObjectType>
+template<typename ObjectType>
 class SharedObjectCache {
+public:
+	typedef SharedObject<ObjectType>	SharedObjectType;
 private:
 	typedef OpenHashTable<SharedObjectCacheHashDefinition<SharedObjectType> >
 		HashTable;
-	typedef typename SharedObjectType::KeyType	KeyType;
+	typedef ObjectType	KeyType;
 public:
 	SharedObjectCache()
 	{
@@ -102,7 +103,7 @@ public:
 
 	bool Get(const KeyType& key)
 	{
-		SharedObjectType* object = fTable->Lookup(key);
+		SharedObjectType* object = fTable.Lookup(key);
 		if (object != NULL) {
 			object->AddReference();
 			return true;
@@ -112,7 +113,7 @@ public:
 
 	bool Put(const KeyType& key)
 	{
-		SharedObjectType* object = fTable->Lookup(key);
+		SharedObjectType* object = fTable.Lookup(key);
 		if (object != NULL) {
 			if (object->ReferenceCount() == 1)
 				Remove(object);
@@ -124,29 +125,68 @@ public:
 
 	SharedObjectType* PrepareForModifications(SharedObjectType* object)
 	{
+		if (object->Cache() != this)
+			debugger("PrepareForModifications(): Object not in cache");
+
 		// Returns an object that is not part of the table.
-		// TODO: ...
-		return object;
+		if (object->ReferenceCount() == 1) {
+			Remove(object);
+			return object;
+		}
+
+		return object->Clone();
 	}
 
 	SharedObjectType* CommitModifications(SharedObjectType* object)
 	{
-		// Returns an object that is not part of the table.
-		// TODO: ...
-		return object;
+		if (object->Cache() == this)
+			debugger("CommitModifications(): Trying to insert object twice");
+		if (object->Cache() != NULL) {
+			debugger("CommitModifications(): Trying to insert object which "
+				"belongs to another cache");
+		}
+
+		// Returns an object of the same value that is in the cache.
+		// If such an object was not already in the cache, the passed
+		// object is inserted.
+		SharedObjectType* cachedObject = fTable.Lookup(*object);
+		if (cachedObject == NULL) {
+			if (Insert(object) == B_OK)
+				return object;
+			// Return NULL on error.
+			return NULL;
+		}
+		// We switched to the already cached object, transfer the reference
+		// from the object to the cached object.
+		cachedObject->AddReference();
+		object->RemoveReference();
+		return cachedObject;
+	}
+
+	SharedObjectType* Lookup(const KeyType& key) const
+	{
+		return fTable.Lookup(key);
 	}
 
 	status_t Insert(SharedObjectType* object)
 	{
 		if (object->Cache() == this)
-			debugger("Trying to insert object twice");
-		if (object->Cache() != NULL)
-			debugger("Trying to insert object which belongs to another cache");
+			debugger("Insert(): Trying to insert object twice");
+		if (object->Cache() != NULL) {
+			debugger("Insert(): Trying to insert object which belongs to "
+				"another cache");
+		}
 
 		status_t ret = Insert(object->SharedObjectCacheLink());
 		if (ret == B_OK)
 			object->SetCache(this);
 		return ret;
+	}
+
+	void Remove(SharedObjectType* object)
+	{
+		fTable.Remove(object);
+		object.SetCache(NULL);
 	}
 
 private:

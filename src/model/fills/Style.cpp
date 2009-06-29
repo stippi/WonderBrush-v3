@@ -12,31 +12,10 @@
 #include "SharedObjectCache.h"
 
 
-#if 0
-class SharedPaintColor : public SharedObject<SharedPaintColor>,
-	public PaintColor {
-public:
-	typedef PaintColor KeyType;
+typedef SharedObject<Paint>			SharedPaint;
+typedef SharedObjectCache<Paint>	PaintCache;
 
-	SharedPaintColor()
-		:
-		PaintColor()
-	{
-	}
-
-	SharedPaintColor(const PaintColor& color)
-		:
-		PaintColor(color)
-	{
-	}
-};
-#else
-typedef SharedObject<Paint> SharedPaint;
-#endif
-
-typedef SharedObjectCache<SharedPaint>	PaintCache;
-
-static PaintCache sPaintColorCache;
+static PaintCache sPaintCache;
 
 
 // constructor

@@ -14,8 +14,6 @@
 
 class PaintColor : public Paint {
 public:
-//	typedef PaintColor KeyType;
-
 								PaintColor();
 								PaintColor(const PaintColor& other);
 								PaintColor(const rgb_color& color);

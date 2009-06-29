@@ -3,7 +3,6 @@ SubDir WONDERBRUSH_TOP src ;
 # source directories
 local sourceDirs =
 	commands
-	debug
 	gui
 	gui/misc
 	model
