@@ -81,6 +81,8 @@ Style::Style(const Style& other)
 // destructor
 Style::~Style()
 {
+	UnsetFillPaint();
+	UnsetStrokePaint();
 }
 
 // #pragma mark - BaseObject
@@ -148,11 +150,25 @@ Style::SetFillPaint(const Paint& paint)
 	_SetProperty(fFillPaint, paint, sPaintCache, FILL_PAINT);
 }
 
+// UnsetFillPaint
+void
+Style::UnsetFillPaint()
+{
+	_UnsetProperty(fFillPaint, sPaintCache, FILL_PAINT);
+}
+
 // SetStrokePaint
 void
 Style::SetStrokePaint(const Paint& paint)
 {
 	_SetProperty(fStrokePaint, paint, sPaintCache, STROKE_PAINT);
+}
+
+// UnsetStrokePaint
+void
+Style::UnsetStrokePaint()
+{
+	_UnsetProperty(fStrokePaint, sPaintCache, STROKE_PAINT);
 }
 
 // SetStrokeProperties
