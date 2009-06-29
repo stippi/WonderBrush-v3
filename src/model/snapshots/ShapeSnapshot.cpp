@@ -9,7 +9,7 @@
 
 #include <Bitmap.h>
 
-#include "PaintColor.h"
+#include "Paint.h"
 	// TODO: Remove, put all the handling for Style into RenderEngine...
 #include "Shape.h"
 #include "Style.h"
@@ -150,8 +150,7 @@ bigtime_t now = system_time();
 		if (paint.Get() != NULL) {
 			switch (paint->Type()) {
 				case Paint::COLOR:
-					rgb_color c = dynamic_cast<PaintColor*>(
-						paint.Get())->Color();
+					rgb_color c = paint.Get()->Color();
 					color = agg::rgba8(c.red, c.green, c.blue, c.alpha);
 					break;
 				case Paint::GRADIENT:

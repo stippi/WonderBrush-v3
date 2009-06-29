@@ -162,10 +162,11 @@ public:
 
 	SharedObjectType* PrepareForModifications(SharedObjectType* object)
 	{
+		// Returns an object that is not part of the table.
+
 		if (object->Cache() != this)
 			debugger("PrepareForModifications(): Object not in cache");
 
-		// Returns an object that is not part of the table.
 		if (object->CountReferences() == 1) {
 			Remove(object);
 			return object;

@@ -90,11 +90,9 @@ Application WonderBrush :
 	Selection.cpp
 
 	# model/fills
-	Color.cpp
+#	Color.cpp
 	Gradient.cpp
 	Paint.cpp
-	PaintColor.cpp
-	PaintGradient.cpp
 	Style.cpp
 
 	# model/document

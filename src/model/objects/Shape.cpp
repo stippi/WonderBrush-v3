@@ -5,7 +5,7 @@
 
 #include "Shape.h"
 
-#include "PaintColor.h"
+#include "Paint.h"
 #include "ShapeSnapshot.h"
 #include "Style.h"
 #include "ui_defines.h"
@@ -43,7 +43,7 @@ Shape::Shape()
 	fStyle(new ::Style(), true),
 	fListeners(4)
 {
-	Paint* paint = new PaintColor(kBlack);
+	Paint* paint = new Paint(kBlack);
 	Reference<Paint> _(paint, true);
 	fStyle->SetFillPaint(paint);
 }
@@ -56,7 +56,7 @@ Shape::Shape(const BRect& area, const rgb_color& color)
 	fStyle(new ::Style(), true),
 	fListeners(4)
 {
-	Paint* paint = new PaintColor(color);
+	Paint* paint = new Paint(color);
 	Reference<Paint> _(paint, true);
 	fStyle->SetFillPaint(paint);
 }
