@@ -6,6 +6,9 @@
 #ifndef SHARED_OBJECT_CACHE_H
 #define SHARED_OBJECT_CACHE_H
 
+#include <Locker.h>
+
+#include "AutoLocker.h"
 #include "OpenHashTableHugo.h"
 
 template<typename ObjectType> class SharedObjectCache;
@@ -128,12 +131,16 @@ private:
 	typedef ObjectType	KeyType;
 public:
 	SharedObjectCache()
+		:
+		fLock("shared object cache lock")
 	{
 		fTable.Init();
 	}
 
 	SharedObjectType* Get(const KeyType& key)
 	{
+		AutoLocker<BLocker> _(fLock);
+
 		SharedObjectType* object = fTable.Lookup(key);
 		if (object != NULL) {
 			object->AddReference();
@@ -141,7 +148,7 @@ public:
 		}
 		// Shared entry for this value/key does not yet exist.
 		object = new(std::nothrow) SharedObjectType(key);
-		if (object == NULL || Insert(object) != B_OK) {
+		if (object == NULL || _Insert(object) != B_OK) {
 			delete object;
 			return NULL;
 		}
@@ -150,10 +157,19 @@ public:
 
 	bool Put(const KeyType& key)
 	{
+		AutoLocker<BLocker> _(fLock);
+
 		SharedObjectType* object = fTable.Lookup(key);
+		return Put(object);
+	}
+
+	bool Put(SharedObjectType* object)
+	{
+		AutoLocker<BLocker> _(fLock);
+
 		if (object != NULL) {
 			if (object->CountReferences() == 1)
-				Remove(object);
+				_Remove(object);
 			object->RemoveReference();
 			return true;
 		}
@@ -163,12 +179,13 @@ public:
 	SharedObjectType* PrepareForModifications(SharedObjectType* object)
 	{
 		// Returns an object that is not part of the table.
+		AutoLocker<BLocker> _(fLock);
 
 		if (object->Cache() != this)
 			debugger("PrepareForModifications(): Object not in cache");
 
 		if (object->CountReferences() == 1) {
-			Remove(object);
+			_Remove(object);
 			return object;
 		}
 
@@ -180,6 +197,8 @@ public:
 
 	SharedObjectType* CommitModifications(SharedObjectType* object)
 	{
+		AutoLocker<BLocker> _(fLock);
+
 		if (object->Cache() == this)
 			debugger("CommitModifications(): Trying to insert object twice");
 		if (object->Cache() != NULL) {
@@ -192,7 +211,7 @@ public:
 		// object is inserted.
 		SharedObjectType* cachedObject = fTable.Lookup(*object);
 		if (cachedObject == NULL) {
-			if (Insert(object) == B_OK)
+			if (_Insert(object) == B_OK)
 				return object;
 			// Return NULL on error.
 			return NULL;
@@ -206,10 +225,12 @@ public:
 
 	SharedObjectType* Lookup(const KeyType& key) const
 	{
+		AutoLocker<BLocker> _(fLock);
 		return fTable.Lookup(key);
 	}
 
-	status_t Insert(SharedObjectType* object)
+private:
+	status_t _Insert(SharedObjectType* object)
 	{
 		if (object->Cache() == this)
 			debugger("Insert(): Trying to insert object twice");
@@ -224,14 +245,14 @@ public:
 		return ret;
 	}
 
-	void Remove(SharedObjectType* object)
+	void _Remove(SharedObjectType* object)
 	{
 		fTable.Remove(object);
 		object->SetCache(NULL);
 	}
 
-private:
 	HashTable	fTable;
+	BLocker		fLock;
 };
 
 #endif // SHARED_OBJECT_CACHE_H

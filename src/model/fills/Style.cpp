@@ -9,50 +9,43 @@
 
 #include <new>
 
-#include "Paint.h"
-#include "PaintColor.h"
-#include "SharedObjectCache.h"
-
 #include "ui_defines.h"
 
 
-typedef SharedObject<Paint>				SharedPaint;
-typedef SharedObjectCache<Paint>		PaintCache;
+Style::PaintCache Style::sPaintCache;
 
-static PaintCache sPaintCache;
-
-static int
-test_paint_cache()
-{
-	Paint color1(kBlack);
-	Paint color2(kBlack);
-	Paint color3(kWhite);
-
-	SharedPaint* sharedColor1 = sPaintCache.Get(color1);
-	SharedPaint* sharedColor2 = sPaintCache.Get(color2);
-	SharedPaint* sharedColor3 = sPaintCache.Get(color3);
-
-	printf("sharedColor1 (%p) ref count: %ld\n", sharedColor1, sharedColor1->CountReferences());
-	printf("sharedColor2 (%p) ref count: %ld\n", sharedColor2, sharedColor2->CountReferences());
-	printf("sharedColor3 (%p) ref count: %ld\n", sharedColor3, sharedColor3->CountReferences());
-
-	SharedPaint* modified1
-		= sPaintCache.PrepareForModifications(sharedColor1);
-	printf("modified1 before: %p\n", modified1);
-
-	*modified1 = *sharedColor3;
-
-	modified1 = sPaintCache.CommitModifications(modified1);
-	printf("modified1 after: %p\n", modified1);
-
-	printf("sharedColor1 (%p) ref count: %ld\n", sharedColor1, sharedColor1->CountReferences());
-	printf("sharedColor2 (%p) ref count: %ld\n", sharedColor2, sharedColor2->CountReferences());
-	printf("sharedColor3 (%p) ref count: %ld\n", sharedColor3, sharedColor3->CountReferences());
-
-	return 0;
-}
-
-static int test = test_paint_cache();
+//static int
+//test_paint_cache()
+//{
+//	Paint color1(kBlack);
+//	Paint color2(kBlack);
+//	Paint color3(kWhite);
+//
+//	SharedPaint* sharedColor1 = sPaintCache.Get(color1);
+//	SharedPaint* sharedColor2 = sPaintCache.Get(color2);
+//	SharedPaint* sharedColor3 = sPaintCache.Get(color3);
+//
+//	printf("sharedColor1 (%p) ref count: %ld\n", sharedColor1, sharedColor1->CountReferences());
+//	printf("sharedColor2 (%p) ref count: %ld\n", sharedColor2, sharedColor2->CountReferences());
+//	printf("sharedColor3 (%p) ref count: %ld\n", sharedColor3, sharedColor3->CountReferences());
+//
+//	SharedPaint* modified1
+//		= sPaintCache.PrepareForModifications(sharedColor1);
+//	printf("modified1 before: %p\n", modified1);
+//
+//	*modified1 = *sharedColor3;
+//
+//	modified1 = sPaintCache.CommitModifications(modified1);
+//	printf("modified1 after: %p\n", modified1);
+//
+//	printf("sharedColor1 (%p) ref count: %ld\n", sharedColor1, sharedColor1->CountReferences());
+//	printf("sharedColor2 (%p) ref count: %ld\n", sharedColor2, sharedColor2->CountReferences());
+//	printf("sharedColor3 (%p) ref count: %ld\n", sharedColor3, sharedColor3->CountReferences());
+//
+//	return 0;
+//}
+//
+//static int test = test_paint_cache();
 
 
 // constructor
@@ -75,8 +68,13 @@ Style::Style(const Style& other)
 	fStrokePaint(NULL),
 	fStrokeProperties(NULL)
 {
-	SetFillPaint(other.fFillPaint);
-	SetStrokePaint(other.fStrokePaint);
+	// We can directly add another reference to
+	if (other.fFillPaint != NULL)
+		SetFillPaint(*other.fFillPaint);
+
+	if (other.fStrokePaint != NULL)
+		SetFillPaint(*other.fStrokePaint);
+
 	SetStrokeProperties(other.fStrokeProperties);
 }
 
@@ -145,16 +143,16 @@ Style::SetToPropertyObject(const PropertyObject* object)
 
 // SetFillPaint
 void
-Style::SetFillPaint(Paint* paint)
+Style::SetFillPaint(const Paint& paint)
 {
-	_SetProperty(fFillPaint, paint, FILL_PAINT);
+	_SetProperty(fFillPaint, paint, sPaintCache, FILL_PAINT);
 }
 
 // SetStrokePaint
 void
-Style::SetStrokePaint(Paint* paint)
+Style::SetStrokePaint(const Paint& paint)
 {
-	_SetProperty(fStrokePaint, paint, STROKE_PAINT);
+	_SetProperty(fStrokePaint, paint, sPaintCache, STROKE_PAINT);
 }
 
 // SetStrokeProperties
@@ -199,4 +197,45 @@ Style::_SetProperty(PropertyType*& member, PropertyType* newMember,
 
 	Notify();
 }
+
+// _SetProperty
+template<typename PropertyType, typename ValueType, typename CacheType>
+void
+Style::_SetProperty(PropertyType*& member, const ValueType& newValue,
+	CacheType& cache, uint64 setProperty)
+{
+	fSetProperties |= setProperty;
+
+	if (member == NULL) {
+		member = cache.Get(newValue);
+		Notify();
+		return;
+	}
+
+	if (*member == newValue)
+		return;
+
+	member = cache.PrepareForModifications(member);
+	*member = newValue;
+	member = cache.CommitModifications(member);
+	Notify();
+}
+
+// _UnsetProperty
+template<typename PropertyType, typename CacheType>
+void
+Style::_UnsetProperty(PropertyType*& member, CacheType& cache,
+	uint64 setProperty)
+{
+	if (member == NULL)
+		return;
+
+	fSetProperties &= ~setProperty;
+
+	cache.Put(member);
+	member = NULL;
+	Notify();
+}
+
+
 

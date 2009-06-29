@@ -43,9 +43,7 @@ Shape::Shape()
 	fStyle(new ::Style(), true),
 	fListeners(4)
 {
-	Paint* paint = new Paint(kBlack);
-	Reference<Paint> _(paint, true);
-	fStyle->SetFillPaint(paint);
+	fStyle->SetFillPaint(Paint(kBlack));
 }
 
 // constructor
@@ -56,9 +54,7 @@ Shape::Shape(const BRect& area, const rgb_color& color)
 	fStyle(new ::Style(), true),
 	fListeners(4)
 {
-	Paint* paint = new Paint(color);
-	Reference<Paint> _(paint, true);
-	fStyle->SetFillPaint(paint);
+	fStyle->SetFillPaint(Paint(color));
 }
 
 // destructor

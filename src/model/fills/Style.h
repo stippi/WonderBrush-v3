@@ -7,10 +7,10 @@
 #define STYLE_H
 
 #include "BaseObject.h"
+#include "Paint.h"
 #include "SetProperty.h"
+#include "SharedObjectCache.h"
 #include "StrokeProperties.h"
-
-class Paint;
 
 class Style : public BaseObject {
 public:
@@ -30,11 +30,13 @@ public:
 									const PropertyObject* object);
 
 
-			void				SetFillPaint(Paint* paint);
+			void				SetFillPaint(const Paint& paint);
+			void				UnsetFillPaint();
 			Paint*				FillPaint() const
 									{ return fFillPaint; }
 
-			void				SetStrokePaint(Paint* paint);
+			void				SetStrokePaint(const Paint& paint);
+			void				UnsetStrokePaint();
 			Paint*				StrokePaint() const
 									{ return fStrokePaint; }
 
@@ -51,10 +53,29 @@ private:
 									PropertyType* newMember,
 									uint64 setProperty);
 
+			template<typename PropertyType, typename ValueType,
+				typename CacheType>
+			void				_SetProperty(PropertyType*& member,
+									const ValueType& newValue,
+									CacheType& cache,
+									uint64 setProperty);
+
+			template<typename PropertyType, typename CacheType>
+			void				_UnsetProperty(PropertyType*& member,
+									CacheType& cache,
+									uint64 setProperty);
+
+
+	typedef SharedObject<Paint>			SharedPaint;
+	typedef SharedObjectCache<Paint>	PaintCache;
+
+	static	PaintCache			sPaintCache;
+
 			uint64				fSetProperties;
 
-			Paint*				fFillPaint;
-			Paint*				fStrokePaint;
+			SharedPaint*		fFillPaint;
+			SharedPaint*		fStrokePaint;
+
 			::StrokeProperties*	fStrokeProperties;
 };
 
