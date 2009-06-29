@@ -52,12 +52,18 @@ public:
 		Unset();
 	}
 
-	void SetTo(Type* object, bool alreadyHasReference = false)
+	bool SetTo(Type* object, bool alreadyHasReference = false)
 	{
+		if (object == fObject) {
+			if (alreadyHasReference)
+				fObject->RemoveReference();
+			return false;
+		}
 		Unset();
 		fObject = object;
 		if (fObject && !alreadyHasReference)
 			fObject->AddReference();
+		return true;
 	}
 
 	void Unset()

@@ -42,7 +42,7 @@ point_line_distance(BPoint point, BPoint pa, BPoint pb)
 		double alpha = acos((b*b + c*c - a*a) / (2*b*c));
 		double beta = acos((a*a + c*c - b*b) / (2*a*c));
 
-		if (alpha <= PI2 && beta <= PI2) {
+		if (alpha <= M_PI_2 && beta <= M_PI_2) {
 			currentDist = fabs(point_line_distance(pa.x, pa.y, pb.x, pb.y,
 												   point.x, point.y));
 		}
@@ -66,12 +66,12 @@ calc_angle(BPoint origin, BPoint from, BPoint to, bool degree)
 		double c = point_point_distance(to, origin);
 		if (a > 0.0 && b > 0.0 && c > 0.0) {
 			angle = acos((b*b + c*c - a*a) / (2.0*b*c));
-		
+
 			if (d < 0.0)
 				angle = -angle;
 
 			if (degree)
-				angle = angle * 180.0 / PI;
+				angle = angle * 180.0 / M_PI;
 		}
 	}
 	return angle;
@@ -130,7 +130,7 @@ append_float(BString& string, float n, int32 maxDigits)
 //// gauss
 //double
 //gauss(double f)
-//{ 
+//{
 //	// this aint' a real gauss function
 ///*	if (f >= -1.0 && f <= 1.0) {
 //		if (f < -0.5) {

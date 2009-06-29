@@ -11,11 +11,21 @@
 #include <Rect.h>
 
 #include "Document.h"
-#include "HashMap.h"
 #include "Layer.h"
 #include "LayerSnapshot.h"
 #include "LayoutContext.h"
 #include "LayoutState.h"
+
+#define USE_OPEN_TRACKER_HASH_MAP 0
+#if USE_OPEN_TRACKER_HASH_MAP
+#	include "HashMap.h"
+#else
+// TODO: When using the alternative HashMap implementation, we are leaking
+// somewhere. Reproducable by just opening and closing more document window
+// instances.
+#	include "HashMapHugo.h"
+#endif
+
 
 class BBitmap;
 class BMessenger;
@@ -44,6 +54,8 @@ public:
 
 	virtual	void				AreaInvalidated(Layer* layer,
 									const BRect& area);
+
+	virtual	void				ListenerAttached(Layer* layer);
 
 	// RenderManager
 			LayerSnapshot*		Snapshot() const
@@ -76,10 +88,6 @@ private:
 			class RenderInfoInitVisitor;
 
 			friend class RenderInfoInitVisitor;
-
-			void				_RecursiveAddListener(Layer* layer,
-									bool invalidate = true);
-			void				_RecursiveRemoveListener(Layer* layer);
 
 			void				_QueueRedraw(Layer* layer, BRect area);
 			bool				_HasDirtyLayers() const;

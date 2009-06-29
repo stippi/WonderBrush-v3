@@ -48,6 +48,12 @@ Layer::Listener::AreaInvalidated(Layer* layer, const BRect& area)
 {
 }
 
+// ListenerAttached
+void
+Layer::Listener::ListenerAttached(Layer* layer)
+{
+}
+
 // #pragma mark -
 
 // constructor
@@ -213,7 +219,10 @@ Layer::AddListener(Listener* listener)
 {
 	if (!listener || fListeners.HasItem(listener))
 		return false;
-	return fListeners.AddItem(listener);
+	if (!fListeners.AddItem(listener))
+		return false;
+	listener->ListenerAttached(this);
+	return true;
 }
 
 // RemoveListener

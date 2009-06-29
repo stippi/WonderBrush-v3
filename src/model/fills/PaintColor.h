@@ -14,6 +14,8 @@
 
 class PaintColor : public Paint {
 public:
+//	typedef PaintColor KeyType;
+
 								PaintColor();
 								PaintColor(const PaintColor& other);
 								PaintColor(const rgb_color& color);
@@ -32,6 +34,7 @@ public:
 	virtual	bool				HasTransparency() const;
 	virtual	uint32				Type() const
 									{ return COLOR; }
+	virtual	size_t				HashKey() const;
 
 	// PaintColor
 			void				SetColor(const rgb_color& color);

@@ -297,7 +297,7 @@ Transformable::RotateBy(BPoint origin, double degrees)
 {
 	if (degrees != 0.0) {
 		multiply(agg::trans_affine_translation(-origin.x, -origin.y));
-		multiply(agg::trans_affine_rotation(degrees * (PI / 180.0)));
+		multiply(agg::trans_affine_rotation(degrees * (M_PI / 180.0)));
 		multiply(agg::trans_affine_translation(origin.x, origin.y));
 		TransformationChanged();
 	}

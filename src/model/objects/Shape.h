@@ -13,9 +13,10 @@
 #include "Object.h"
 
 class Shape;
+class Style;
 
 class ShapeListener {
- public:
+public:
 								ShapeListener();
 	virtual						~ShapeListener();
 
@@ -27,7 +28,7 @@ class ShapeListener {
 
 
 class Shape : public Object {
- public:
+public:
 								Shape();
 								Shape(const BRect& area,
 									const rgb_color& color);
@@ -42,20 +43,21 @@ class Shape : public Object {
 			void				SetArea(const BRect& area);
 			BRect				Area() const;
 
-			void				SetColor(const rgb_color& color);
-			rgb_color			Color() const;
+			void				SetStyle(::Style* style);
+	inline	::Style*			Style() const
+									{ return fStyle.Get(); }
 
 			bool				AddListener(ShapeListener* listener);
 			void				RemoveListener(ShapeListener* listener);
 
- private:
+private:
 			void				_NotifyAreaChanged(const BRect& oldArea,
 									const BRect& newArea);
 
 			void				_NotifyDeleted();
 
 			BRect				fArea;
-			rgb_color			fColor;
+			Reference< ::Style>	fStyle;
 
 			BList				fListeners;
 };

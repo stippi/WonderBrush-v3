@@ -8,6 +8,36 @@
 #include <new>
 
 #include "Paint.h"
+#include "PaintColor.h"
+#include "SharedObjectCache.h"
+
+
+#if 0
+class SharedPaintColor : public SharedObject<SharedPaintColor>,
+	public PaintColor {
+public:
+	typedef PaintColor KeyType;
+
+	SharedPaintColor()
+		:
+		PaintColor()
+	{
+	}
+
+	SharedPaintColor(const PaintColor& color)
+		:
+		PaintColor(color)
+	{
+	}
+};
+#else
+typedef SharedObject<Paint> SharedPaint;
+#endif
+
+typedef SharedObjectCache<SharedPaint>	PaintCache;
+
+static PaintCache sPaintColorCache;
+
 
 // constructor
 Style::Style()

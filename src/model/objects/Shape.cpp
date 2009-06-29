@@ -5,7 +5,10 @@
 
 #include "Shape.h"
 
+#include "PaintColor.h"
 #include "ShapeSnapshot.h"
+#include "Style.h"
+#include "ui_defines.h"
 
 // constructor
 ShapeListener::ShapeListener()
@@ -34,26 +37,35 @@ ShapeListener::Deleted(Shape* shape)
 
 // constructor
 Shape::Shape()
-	: Object()
-	, fArea(10, 10, 60, 60)
-	, fColor((rgb_color){ 0, 0, 0, 255 })
-	, fListeners(4)
+	:
+	Object(),
+	fArea(10, 10, 60, 60),
+	fStyle(new ::Style(), true),
+	fListeners(4)
 {
+	Paint* paint = new PaintColor(kBlack);
+	Reference<Paint> _(paint, true);
+	fStyle->SetFillPaint(paint);
 }
 
 // constructor
 Shape::Shape(const BRect& area, const rgb_color& color)
-	: Object()
-	, fArea(area)
-	, fColor(color)
-	, fListeners(4)
+	:
+	Object(),
+	fArea(area),
+	fStyle(new ::Style(), true),
+	fListeners(4)
 {
+	Paint* paint = new PaintColor(color);
+	Reference<Paint> _(paint, true);
+	fStyle->SetFillPaint(paint);
 }
 
 // destructor
 Shape::~Shape()
 {
 	_NotifyDeleted();
+	fStyle->RemoveReference();
 }
 
 // #pragma mark -
@@ -98,22 +110,10 @@ Shape::Area() const
 
 // SetColor
 void
-Shape::SetColor(const rgb_color& color)
+Shape::SetStyle(::Style* style)
 {
-//	if (color == fColor)
-//		return;
-
-//	rgb_color oldColor(fColor);
-	fColor = color;
-
-//	_NotifyColorChanged(oldColor, fColor);
-}
-
-// Color
-rgb_color
-Shape::Color() const
-{
-	return fColor;
+	if (fStyle.SetTo(style))
+		InvalidateParent(fArea);
 }
 
 // #pragma mark -

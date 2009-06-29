@@ -1,10 +1,8 @@
 /*
- * Copyright 2007, Haiku. All rights reserved.
- * Distributed under the terms of the MIT License.
- *
- * Authors:
- *		Stephan Aßmus <superstippi@gmx.de>
+ * Copyright 2007-2009, Stephan Aßmus <superstippi@gmx.de>.
+ * All rights reserved.
  */
+
 #ifndef SHAPE_SNAPSHOT_H
 #define SHAPE_SNAPSHOT_H
 
@@ -22,17 +20,11 @@
 
 #include "ObjectCache.h"
 #include "ObjectSnapshot.h"
-
-#define USE_OBJECT_CACHE 1
-
-#if USE_OBJECT_CACHE
 #include "Scanline.h"
-#else
-#include <agg_scanline_p.h>
-typedef agg::scanline_p8					Scanline;
-#endif
+#include "Referenceable.h"
 
 class Shape;
+class Style;
 
 typedef agg::rendering_buffer				RenderingBuffer;
 typedef agg::pixfmt_bgra32_pre				PixelFormat;
@@ -45,7 +37,7 @@ typedef agg::path_storage					Path;
 
 
 class ShapeSnapshot : public ObjectSnapshot {
- public:
+public:
 								ShapeSnapshot(const Shape* shape);
 	virtual						~ShapeSnapshot();
 
@@ -56,28 +48,24 @@ class ShapeSnapshot : public ObjectSnapshot {
 	virtual	void				Render(RenderEngine& engine, BBitmap* bitmap,
 									BRect area) const;
 
- private:
+private:
 			void				_RasterizeShape(Rasterizer& rasterizer,
 									BRect documentBounds) const;
 			void				_ClearScanlines();
 
 			const Shape*		fOriginal;
 			BRect				fArea;
-			rgb_color			fColor;
+			Reference<Style>	fStyle;
 
 			BLocker				fRasterizerLock;
 	volatile bool				fNeedsRasterizing;
 
 			Rasterizer			fRasterizer;
 
-#if USE_OBJECT_CACHE
-	typedef ObjectCache<Scanline> ScanlineContainer;
+	typedef ObjectCache<Scanline, false> ScanlineContainer;
 			ScanlineContainer	fScanlines2;
 			CoverAllocator		fCoverAllocator;
 			SpanAllocator		fSpanAllocator;
-#else
-			BList				fScanlines;
-#endif
 };
 
 #endif // SHAPE_SNAPSHOT_H

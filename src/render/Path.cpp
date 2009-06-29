@@ -588,7 +588,7 @@ distance_to_curve(const BPoint& p, const BPoint& a, const BPoint& aOut,
 			double alpha = acos((b*b + c*c - a*a) / (2*b*c));
 			double beta = acos((a*a + c*c - b*b) / (2*a*c));
 
-			if (alpha <= PI2 && beta <= PI2) {
+			if (alpha <= M_PI_2 && beta <= M_PI_2) {
 				currentDist = fabs(agg::calc_line_point_distance(
 											x1, y1, x2, y2, p.x, p.y));
 			}

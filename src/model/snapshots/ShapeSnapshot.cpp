@@ -1,36 +1,34 @@
 /*
- * Copyright 2007, Haiku. All rights reserved.
- * Distributed under the terms of the MIT License.
- *
- * Authors:
- *		Stephan Aßmus <superstippi@gmx.de>
+ * Copyright 2007-2009, Stephan Aßmus <superstippi@gmx.de>.
+ * All rights reserved.
  */
+
 #include "ShapeSnapshot.h"
 
 #include <stdio.h>
 
 #include <Bitmap.h>
 
+#include "PaintColor.h"
+	// TODO: Remove, put all the handling for Style into RenderEngine...
 #include "Shape.h"
+#include "Style.h"
 
 // constructor
 ShapeSnapshot::ShapeSnapshot(const Shape* shape)
-	: ObjectSnapshot(shape)
-	, fOriginal(shape)
-	, fArea(shape->Area())
-	, fColor(shape->Color())
+	:
+	ObjectSnapshot(shape),
+	fOriginal(shape),
+	fArea(shape->Area()),
+	fStyle(shape->Style()),
 
-	, fRasterizerLock("shape lock")
-	, fNeedsRasterizing(true)
+	fRasterizerLock("shape lock"),
+	fNeedsRasterizing(true),
 
-	, fRasterizer()
-#if USE_OBJECT_CACHE
-	, fScanlines2()
-	, fCoverAllocator()
-	, fSpanAllocator()
-#else
-	, fScanlines(256)
-#endif
+	fRasterizer(),
+	fScanlines2(),
+	fCoverAllocator(),
+	fSpanAllocator()
 {
 	fRasterizer.filling_rule(agg::fill_non_zero);
 }
@@ -56,7 +54,7 @@ ShapeSnapshot::Sync()
 {
 	if (ObjectSnapshot::Sync()) {
 		fArea = fOriginal->Area();
-		fColor = fOriginal->Color();
+		fStyle.SetTo(fOriginal->Style());
 		fNeedsRasterizing = true;
 		return true;
 	}
@@ -89,9 +87,7 @@ bigtime_t now = system_time();
 	_ClearScanlines();
 
 	// generate scanlines
-#if USE_OBJECT_CACHE
 	if (fRasterizer.rewind_scanlines()) {
-#if 1
 		Scanline* scanline;
 		do {
 			scanline = fScanlines2.AppendObject();
@@ -100,20 +96,9 @@ bigtime_t now = system_time();
 			scanline->SetAllocators(&fCoverAllocator, &fSpanAllocator);
 			scanline->reset(fRasterizer.min_x(), fRasterizer.max_x());
 		} while (fRasterizer.sweep_scanline(*scanline));
-#else
-		Scanline* scanline = fScanlines2.AppendObject();
-		if (scanline == NULL)
-			return;
-		scanline->SetAllocators(&fCoverAllocator, &fSpanAllocator);
-		scanline->reset(fRasterizer.min_x(), fRasterizer.max_x());
-		while (fRasterizer.sweep_scanline(*scanline)) {
-			scanline = fScanlines2.AppendObject();
-			if (scanline == NULL)
-				return;
-			scanline->SetAllocators(&fCoverAllocator, &fSpanAllocator);
-			scanline->reset(fRasterizer.min_x(), fRasterizer.max_x());
-		}
-#endif
+
+		// The last added scanline was not used anymore, so just remove it
+		// again.
 		fScanlines2.RemoveObject();
 
 		// Validate the data to avoid stale pointers after relocation of
@@ -124,19 +109,6 @@ bigtime_t now = system_time();
 			scanline->Validate();
 		}
 	}
-#else
-	// TODO: reuse scanlines
-	if (fRasterizer.rewind_scanlines()) {
-		Scanline* scanline = new Scanline();
-		scanline->reset(fRasterizer.min_x(), fRasterizer.max_x());
-		while (fRasterizer.sweep_scanline(*scanline)) {
-			fScanlines.AddItem(scanline);
-			scanline = new Scanline();
-			scanline->reset(fRasterizer.min_x(), fRasterizer.max_x());
-		}
-		delete scanline;
-	}
-#endif
 
 #if PRINT_TIMING
 printf("PrepareRendering(): %lld\n", system_time() - now);
@@ -148,8 +120,7 @@ printf("PrepareRendering(): %lld\n", system_time() - now);
 
 // Render
 void
-ShapeSnapshot::Render(RenderEngine& engine, BBitmap* bitmap,
-	BRect area) const
+ShapeSnapshot::Render(RenderEngine& engine, BBitmap* bitmap, BRect area) const
 {
 	area = (area & fArea) & bitmap->Bounds();
 	if (!area.IsValid())
@@ -173,8 +144,28 @@ bigtime_t now = system_time();
 	baseRenderer.clip_box((int32)area.left, top, (int32)area.right, bottom);
 
 	Renderer renderer(baseRenderer);
-	agg::rgba8 color(fColor.red, fColor.green,
-		fColor.blue, fColor.alpha);
+	agg::rgba8 color(0, 0, 0, 255);
+	if (fStyle.Get() != NULL) {
+		Reference<Paint> paint(fStyle->FillPaint());
+		if (paint.Get() != NULL) {
+			switch (paint->Type()) {
+				case Paint::COLOR:
+					rgb_color c = dynamic_cast<PaintColor*>(
+						paint.Get())->Color();
+					color = agg::rgba8(c.red, c.green, c.blue, c.alpha);
+					break;
+				case Paint::GRADIENT:
+					break;
+				case Paint::PATTERN:
+					break;
+
+				case Paint::NONE:
+				default:
+					break;
+			}
+		}
+	}
+
 	color.premultiply();
 	renderer.color(color);
 
@@ -182,7 +173,7 @@ bigtime_t now = system_time();
 #if PRINT_TIMING
 int32 rendered = 0;
 #endif
-#if USE_OBJECT_CACHE
+
 	uint32 count = fScanlines2.CountObjects();
 	for (uint32 i = 0; i < count; i++) {
 		const Scanline* scanline = fScanlines2.ObjectAtFast(i);
@@ -194,19 +185,6 @@ rendered++;
 #endif
 		}
 	}
-#else
-	int32 count = fScanlines.CountItems();
-	for (int32 i = 0; i < count; i++) {
-		Scanline* scanline = (Scanline*)fScanlines.ItemAtFast(i);
-		int y = scanline->y();
-		if (y >= top && y <= bottom) {
-			renderer.render(*scanline);
-#if PRINT_TIMING
-rendered++;
-#endif
-		}
-	}
-#endif // USE_OBJECT_CACHE
 
 #if PRINT_TIMING
 printf("Render(): %lld, %ld scanlines\n", system_time() - now, rendered);
@@ -237,7 +215,8 @@ ShapeSnapshot::_RasterizeShape(Rasterizer& rasterizer,
 	path.close_polygon();
 
 	rasterizer.reset();
-	rasterizer.clip_box(bounds.left, bounds.top, bounds.right + 1, bounds.bottom + 1);
+	rasterizer.clip_box(bounds.left, bounds.top, bounds.right + 1,
+		bounds.bottom + 1);
 	rasterizer.add_path(path);
 }
 
@@ -245,15 +224,7 @@ ShapeSnapshot::_RasterizeShape(Rasterizer& rasterizer,
 void
 ShapeSnapshot::_ClearScanlines()
 {
-#if USE_OBJECT_CACHE
 	fCoverAllocator.Clear();
 	fSpanAllocator.Clear();
 	fScanlines2.Clear();
-#else
-	int32 count = fScanlines.CountItems();
-	for (int32 i = 0; i < count; i++) {
-		delete (Scanline*)fScanlines.ItemAtFast(i);
-	}
-	fScanlines.MakeEmpty();
-#endif
 }

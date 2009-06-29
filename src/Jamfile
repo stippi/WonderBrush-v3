@@ -3,6 +3,7 @@ SubDir WONDERBRUSH_TOP src ;
 # source directories
 local sourceDirs =
 	commands
+	debug
 	gui
 	gui/misc
 	model
@@ -59,7 +60,6 @@ SubDirHdrs [ FDirName $(WONDERBRUSH_TOP) src support ] ;
 SubDirHdrs [ FDirName $(WONDERBRUSH_TOP) src tools ] ;
 SubDirSysHdrs [ FDirName $(WONDERBRUSH_TOP) agg/include ] ;
 # </pe-inc>
-
 
 
 # <pe-src>

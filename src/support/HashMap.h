@@ -1,17 +1,17 @@
 // HashMap.h
-// 
+//
 // Copyright (c) 2004-2007, Ingo Weinhold (bonefish@cs.tu-berlin.de)
-// 
+//
 // Permission is hereby granted, free of charge, to any person obtaining a
 // copy of this software and associated documentation files (the "Software"),
-// to deal in the Software without restriction, including without limitation 
+// to deal in the Software without restriction, including without limitation
 // the rights to use, copy, modify, merge, publish, distribute, sublicense,
 // and/or sell copies of the Software, and to permit persons to whom the
 // Software is furnished to do so, subject to the following conditions:
-// 
+//
 // The above copyright notice and this permission notice shall be included in
 // all copies or substantial portions of the Software.
-// 
+//
 // THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 // IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 // FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
@@ -19,7 +19,7 @@
 // LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
 // FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
-// 
+//
 // Except as contained in this notice, the name of a copyright holder shall
 // not be used in advertising or otherwise to promote the sale, use or other
 // dealings in this Software without prior written authorization of the
@@ -91,12 +91,12 @@ public:
 			  fLastElement(other.fElement)
 		{
 		}
-	
+
 		bool HasNext() const
 		{
 			return fElement;
 		}
-	
+
 		Entry Next()
 		{
 			if (!fElement)
@@ -105,7 +105,7 @@ public:
 			_FindNext();
 			return result;
 		}
-	
+
 		Entry Remove()
 		{
 			if (!fLastElement)
@@ -115,7 +115,7 @@ public:
 			fLastElement = NULL;
 			return result;
 		}
-	
+
 		Iterator& operator=(const Iterator& other)
 		{
 			fMap = other.fMap;
@@ -124,7 +124,7 @@ public:
 			fLastElement = other.fLastElement;
 			return *this;
 		}
-	
+
 	private:
 		Iterator(const HashMap<Key, Value>* map)
 			: fMap(const_cast<HashMap<Key, Value>*>(map)),
@@ -135,7 +135,7 @@ public:
 			// find first
 			_FindNext();
 		}
-	
+
 		void _FindNext()
 		{
 			fLastElement = fElement;
@@ -148,10 +148,10 @@ public:
 			for (; !fElement && fIndex < arraySize; fIndex++)
 				fElement = fMap->fTable.FindFirst(fIndex);
 		}
-	
+
 	private:
 		friend class HashMap<Key, Value>;
-	
+
 		HashMap<Key, Value>*	fMap;
 		int32					fIndex;
 		Element*				fElement;
@@ -266,7 +266,7 @@ protected:
 // HashKey32
 template<typename Value>
 struct HashKey32 {
-	HashKey32() {}
+	HashKey32() : value(0) {}
 	HashKey32(const Value& value) : value(value) {}
 
 	uint32 GetHashCode() const
@@ -274,7 +274,7 @@ struct HashKey32 {
 		return (uint32)value;
 	}
 
-	HashKey32<Value> operator=(const HashKey32<Value>& other)
+	HashKey32<Value>& operator=(const HashKey32<Value>& other)
 	{
 		value = other.value;
 		return *this;
@@ -297,7 +297,7 @@ struct HashKey32 {
 // HashKey64
 template<typename Value>
 struct HashKey64 {
-	HashKey64() {}
+	HashKey64() : value(0) {}
 	HashKey64(const Value& value) : value(value) {}
 
 	uint32 GetHashCode() const
@@ -306,7 +306,7 @@ struct HashKey64 {
 		return (uint32)(v >> 32) ^ (uint32)v;
 	}
 
-	HashKey64<Value> operator=(const HashKey64<Value>& other)
+	HashKey64<Value>& operator=(const HashKey64<Value>& other)
 	{
 		value = other.value;
 		return *this;
@@ -362,7 +362,7 @@ HashMap<Key, Value>::Put(const Key& key, Value value)
 		element->fValue = value;
 		return B_OK;
 	}
-	// does not contain the key yet: add an element	
+	// does not contain the key yet: add an element
 	element = fTable.Add(key.GetHashCode());
 	if (!element)
 		return B_NO_MEMORY;

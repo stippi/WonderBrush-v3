@@ -86,7 +86,7 @@ ChannelTransform::SetTransformation(BPoint pivot,
 		fRotation = rotation;
 		fXScale = xScale;
 		fYScale = yScale;
-	
+
 		_UpdateMatrix();
 	}
 }
@@ -133,7 +133,7 @@ ChannelTransform::RotateBy(BPoint origin, double degrees)
 	double xOffset = fTranslation.x - origin.x;
 	double yOffset = fTranslation.y - origin.y;
 
-	agg::trans_affine_rotation m(degrees * PI / 180.0);
+	agg::trans_affine_rotation m(degrees * M_PI / 180.0);
 	m.transform(&xOffset, &yOffset);
 
 	fTranslation.x = origin.x + xOffset;
@@ -246,7 +246,7 @@ ChannelTransform::_UpdateMatrix()
 	// coordinate system and is the center for rotation and scale
 	multiply(agg::trans_affine_translation(-fPivot.x, -fPivot.y));
 	multiply(agg::trans_affine_scaling(xScale, yScale));
-	multiply(agg::trans_affine_rotation(fRotation * PI / 180.0));
+	multiply(agg::trans_affine_rotation(fRotation * M_PI / 180.0));
 
 	multiply(agg::trans_affine_translation(fPivot.x + fTranslation.x,
 										   fPivot.y + fTranslation.y));

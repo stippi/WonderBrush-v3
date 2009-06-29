@@ -9,13 +9,12 @@
 
 #include <SupportDefs.h>
 
-template <typename ObjectType, uint32 BlockSize = 8>
+template <typename ObjectType, bool PlainOldData, uint32 BlockSize = 8>
 class ObjectCache {
 public:
 	ObjectCache()
 		:
 		fItems(NULL),
-		fNullObject(),
 		fCount(0),
 		fAllocatedCount(0)
 	{
@@ -38,12 +37,12 @@ public:
 
 	inline ObjectType* AppendObject()
 	{
-		// TODO: The object will not really be initialized if
-		// it wasn't just allocated! This only works for how this class is
-		// currently used!
 		if (_Resize(fCount + 1)) {
 			ObjectType* object = LastObject();
-//			*object = fNullObject;
+			if (!PlainOldData) {
+				// Initialize the new object
+				new (object) ObjectType;
+			}
 			return object;
 		}
 		return NULL;
@@ -95,20 +94,22 @@ private:
 				return false;
 			fItems = items;
 
-			// initialize the new objects
-			for (uint32 i = fAllocatedCount; i < allocationCount; i++) {
-				ObjectType* object = fItems + i;
-				new (object) ObjectType;
-			}
-
 			fAllocatedCount = allocationCount;
+		} else if (count < fCount) {
+			if (!PlainOldData) {
+				// Uninit old objects so that we can re-use them when
+				// appending objects without the need to re-allocate.
+				for (uint32 i = count; i < fCount; i++) {
+					ObjectType* object = fItems + i;
+					object->~ObjectType();
+				}
+			}
 		}
 		fCount = count;
 		return true;
 	}
 
 	ObjectType*		fItems;
-	ObjectType		fNullObject;
 	uint32			fCount;
 	uint32			fAllocatedCount;
 };

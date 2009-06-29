@@ -2,7 +2,7 @@
  * Copyright 2006-2008, Stephan Aßmus <superstippi@gmx.de>
  * Copyright 2007, Ingo Weinhold <ingo_weinhold@gmx.de>
  * All rights reserved. Distributed under the terms of the MIT License.
- *		
+ *
  */
 #include "RenderManager.h"
 
@@ -120,35 +120,36 @@ private:
 
 // constructor
 RenderManager::RenderManager(Document* document)
-	: Layer::Listener()
-	, fCleanArea(LONG_MAX, LONG_MAX, LONG_MIN, LONG_MIN)
+	:
+	Layer::Listener(),
+	fCleanArea(LONG_MAX, LONG_MAX, LONG_MIN, LONG_MIN),
 
-	, fDocumentDirtyMap(new (nothrow) DirtyMap())
-	, fSnapshotDirtyMap(new (nothrow) DirtyMap())
+	fDocumentDirtyMap(new (nothrow) DirtyMap()),
+	fSnapshotDirtyMap(new (nothrow) DirtyMap()),
 
-	, fDocument(document)
-	, fSnapshot(new (nothrow) LayerSnapshot(fDocument->RootLayer()))
+	fDocument(document),
+	fSnapshot(new (nothrow) LayerSnapshot(fDocument->RootLayer())),
 
-	, fInitialLayoutState()
-	, fLayoutContext(&fInitialLayoutState)
-	, fLayoutDirtyFlags(0)
+	fInitialLayoutState(),
+	fLayoutContext(&fInitialLayoutState),
+	fLayoutDirtyFlags(0),
 
-	, fRenderThreads(NULL)
-	, fRenderThreadCount(0)
+	fRenderThreads(NULL),
+	fRenderThreadCount(0),
 
-	, fRenderInfos(NULL)
-	, fRenderInfoCount(0)
-	, fRenderInfoCapacity(0)
-	, fCurrentRenderInfo(0)
+	fRenderInfos(NULL),
+	fRenderInfoCount(0),
+	fRenderInfoCapacity(0),
+	fCurrentRenderInfo(0),
 
-	, fWaitingRenderThreadsSem(-1)
-	, fWaitingRenderThreadCount(0)
+	fWaitingRenderThreadsSem(-1),
+	fWaitingRenderThreadCount(0),
 
-	, fRenderQueueLock("render queue lock")
+	fRenderQueueLock("render queue lock"),
 
-	, fBitmapListener(NULL)
+	fBitmapListener(NULL),
 
-	, fLastRenderStartTime(-1)
+	fLastRenderStartTime(-1)
 {
 	fDisplayBitmap[0] = NULL;
 	fDisplayBitmap[1] = NULL;
@@ -167,6 +168,11 @@ RenderManager::Init()
 		|| fDocumentDirtyMap == NULL || fSnapshotDirtyMap == NULL) {
 		return B_NO_MEMORY;
 	}
+
+#if !USE_OPEN_TRACKER_HASH_MAP
+	if (fDocumentDirtyMap->Init() != B_OK || fSnapshotDirtyMap->Init() != B_OK)
+		return B_NO_MEMORY;
+#endif
 
 #if 1
 	system_info info;
@@ -197,7 +203,8 @@ RenderManager::Init()
 		fRenderThreads[i]->Run();
 	}
 
-	_RecursiveAddListener(fDocument->RootLayer());
+	Layer::AddListenerRecursive(fDocument->RootLayer(), this);
+//	_RecursiveAddListener(fDocument->RootLayer());
 
 	return B_OK;
 }
@@ -217,7 +224,7 @@ RenderManager::~RenderManager()
 	delete fSnapshot;
 	delete fBitmapListener;
 
-	_RecursiveRemoveListener(fDocument->RootLayer());
+	Layer::RemoveListenerRecursive(fDocument->RootLayer(), this);
 
 	_ClearDirtyMap(fDocumentDirtyMap);
 	_ClearDirtyMap(fSnapshotDirtyMap);
@@ -238,9 +245,10 @@ RenderManager::ObjectAdded(Layer* layer, Object* object, int32 index)
 	// ok, since this is a synchronous notification which is executed
 	// in the thread that added the layer
 	Layer* subLayer = dynamic_cast<Layer*>(object);
-	if (subLayer) {
+	if (subLayer != NULL) {
 printf("RenderManager::ObjectAdded(%p)\n", subLayer);
-		_RecursiveAddListener(subLayer);
+//		_RecursiveAddListener(subLayer);
+		Layer::AddListenerRecursive(subLayer, this);
 	}
 }
 
@@ -250,9 +258,9 @@ RenderManager::ObjectRemoved(Layer* layer, Object* object, int32 index)
 {
 	// see ObjectAdded on why it is ok to add listener without locking
 	Layer* subLayer = dynamic_cast<Layer*>(object);
-	if (subLayer) {
+	if (subLayer != NULL) {
 printf("RenderManager::ObjectRemoved(%p)\n", subLayer);
-		_RecursiveRemoveListener(subLayer);
+		Layer::RemoveListenerRecursive(subLayer, this);
 	}
 }
 
@@ -263,6 +271,13 @@ RenderManager::AreaInvalidated(Layer* layer, const BRect& area)
 	// this is a synchronous notification, therefore the document
 	// is already properly locked
 	_QueueRedraw(layer, area);
+}
+
+// ListenerAttached
+void
+RenderManager::ListenerAttached(Layer* layer)
+{
+	AreaInvalidated(layer, layer->Bounds());
 }
 
 // #pragma mark -
@@ -471,42 +486,25 @@ RenderManager::WakeUpRenderThreads()
 
 // #pragma mark -
 
-// _RecursiveAddListener
-void
-RenderManager::_RecursiveAddListener(Layer* layer, bool invalidate)
-{
-	// the document is locked and/or this is executed from within
-	// a synchronous notification
-	int32 count = layer->CountObjects();
-	for (int32 i = 0; i < count; i++) {
-		Object* object = layer->ObjectAtFast(i);
-		Layer* subLayer = dynamic_cast<Layer*>(object);
-		if (subLayer)
-			_RecursiveAddListener(subLayer, invalidate);
-	}
-
-	layer->AddListener(this);
-
-	if (invalidate)
-		AreaInvalidated(layer, layer->Bounds());
-}
-
-// _RecursiveRemoveListener
-void
-RenderManager::_RecursiveRemoveListener(Layer* layer)
-{
-	// the document is locked and/or this is executed from within
-	// a synchronous notification
-	int32 count = layer->CountObjects();
-	for (int32 i = 0; i < count; i++) {
-		Object* object = layer->ObjectAtFast(i);
-		Layer* subLayer = dynamic_cast<Layer*>(object);
-		if (subLayer)
-			_RecursiveRemoveListener(subLayer);
-	}
-
-	layer->RemoveListener(this);
-}
+//// _RecursiveAddListener
+//void
+//RenderManager::_RecursiveAddListener(Layer* layer, bool invalidate)
+//{
+//	// the document is locked and/or this is executed from within
+//	// a synchronous notification
+//	int32 count = layer->CountObjects();
+//	for (int32 i = 0; i < count; i++) {
+//		Object* object = layer->ObjectAtFast(i);
+//		Layer* subLayer = dynamic_cast<Layer*>(object);
+//		if (subLayer)
+//			_RecursiveAddListener(subLayer, invalidate);
+//	}
+//
+//	layer->AddListener(this);
+//
+//	if (invalidate)
+//		AreaInvalidated(layer, layer->Bounds());
+//}
 
 // #pragma mark -
 
@@ -523,12 +521,12 @@ RenderManager::_QueueRedraw(Layer* layer, BRect area)
 	area.right = ceilf(area.right);
 	area.bottom = ceilf(area.bottom);
 
-	BRect* info;
-	if (fDocumentDirtyMap->ContainsKey(layer)) {
-		info = fDocumentDirtyMap->Get(layer);
-	} else {
+	// We do not need to use ContainsKey(), since Get() will return
+	// NULL if there is no key.
+	BRect* info = fDocumentDirtyMap->Get(layer);
+	if (info == NULL) {
 		info = new (nothrow) BRect(LONG_MAX, LONG_MAX, LONG_MIN, LONG_MIN);
-		if (!info || fDocumentDirtyMap->Put(layer, info) < B_OK) {
+		if (!info || fDocumentDirtyMap->Put(layer, info) != B_OK) {
 			delete info;
 			printf("RenderManager::_QueueRedraw() - out of memory!\n");
 			fRenderQueueLock.Unlock();
@@ -609,8 +607,13 @@ void
 RenderManager::_ClearDirtyMap(DirtyMap* map)
 {
 	DirtyMap::Iterator iterator = map->GetIterator();
+#if USE_OPEN_TRACKER_HASH_MAP
 	while (iterator.HasNext())
 		delete iterator.Next().value;
+#else
+	while (iterator.HasNext())
+		delete iterator.Next()->Value;
+#endif
 	map->Clear();
 }
 

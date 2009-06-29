@@ -30,6 +30,7 @@ public:
 	virtual	Paint*				Clone() const = 0;
 	virtual	bool				HasTransparency() const = 0;
 	virtual	uint32				Type() const = 0;
+	virtual	size_t				HashKey() const = 0;
 };
 
 #endif	// PAINT_H

@@ -90,6 +90,14 @@ PaintColor::HasTransparency() const
 	return fColor.alpha < 255;
 }
 
+// HashKey
+size_t
+PaintColor::HashKey() const
+{
+	// TODO: Shrink, maybe 6 bits per component?
+	return (size_t&)fColor;
+}
+
 // SetColor
 void
 PaintColor::SetColor(const rgb_color& color)

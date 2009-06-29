@@ -36,6 +36,7 @@ public:
 	virtual	bool				HasTransparency() const;
 	virtual	uint32				Type() const
 									{ return COLOR; }
+	virtual	size_t				HashKey() const;
 
 	// PaintGradient
 			void				SetGradient(const ::Gradient* gradient);

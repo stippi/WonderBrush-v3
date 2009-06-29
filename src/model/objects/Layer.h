@@ -31,6 +31,8 @@ class Layer : public Object {
 
 		virtual	void			AreaInvalidated(Layer* layer,
 									const BRect& area);
+
+		virtual	void			ListenerAttached(Layer* layer);
 	};
 
 								Layer(const BRect& bounds);

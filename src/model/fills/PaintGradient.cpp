@@ -123,6 +123,14 @@ PaintGradient::HasTransparency() const
 	return false;
 }
 
+// HashKey
+size_t
+PaintGradient::HashKey() const
+{
+	// TODO: Implement!
+	return 0;
+}
+
 // SetGradient
 void
 PaintGradient::SetGradient(const ::Gradient* gradient)
