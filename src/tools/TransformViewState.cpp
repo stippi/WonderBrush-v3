@@ -93,7 +93,7 @@ TransformViewState::ViewspaceRotation() const
 		NULL, NULL, NULL, NULL);
 	// TODO: If ever we can rotate the canvas on the view, this rotation
 	// needs to be added here!
-	return (float)(rotation * 180.0 / PI);
+	return (float)(rotation * 180.0 / M_PI);
 }
 
 // #pragma mark -
