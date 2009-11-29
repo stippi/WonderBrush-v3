@@ -49,7 +49,7 @@ Füllfarben sollten auch als "Schattierung" einer anderen Farbe auftreten könne
 
 
 PropertyObject Interface erweitern:
-	-> Abfrage nach Anzahl von "PropertyObjects" order "PropertyCategory" order
+	-> Abfrage nach Anzahl von "PropertyObjects" oder "PropertyCategory" oder
 	   "Sub-PropertyObject" (nested PropertyObjects?)
 	-> einklappbare Abschnitte für jede einzelne PropertyCategory in ListView
 	-> PropertyCategory unterstützt Hinzufügen von Properties.
