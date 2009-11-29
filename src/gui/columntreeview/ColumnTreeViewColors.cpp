@@ -35,7 +35,7 @@ const column_tree_item_colors	kDefaultColumnTreeItemColors = {
 };
 
 const column_header_colors		kDefaultColumnHeaderColors = {
-	black,								// foreground
+	tint_color(backGround, 1.75),		// foreground
 	backGround,							// background
 	highlight,							// highlight
 	darken1,							// light_shadow

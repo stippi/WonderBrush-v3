@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <math.h>
 
+#include <ControlLook.h>
 #include <Cursor.h>
 #include <Font.h>
 #include <Message.h>
@@ -45,13 +46,20 @@ ColumnHeaderView::ColumnHeaderView()
 	  fParentView(NULL),
 	  fHeaders(10),
 	  fVisibleHeaders(10),
-	  fHeight(ceilf(be_plain_font->Size() * 1.5)),
 	  fHorizontalResizeCursor(NULL),
 	  fState(new OutsideState(this)),
 	  fColors(new column_header_view_colors(kDefaultColumnHeaderViewColors))
 {
 	SetViewColor(B_TRANSPARENT_32_BIT);
 //	SetMouseEventMask(B_POINTER_EVENTS);
+
+	// decrease header font size
+	BFont font;
+	GetFont(&font);
+	font.SetSize(font.Size() * 0.8f);
+	SetFont(&font);
+
+	fHeight = ceilf(font.Size() * 1.6);
 }
 
 // destructor
@@ -87,23 +95,33 @@ ColumnHeaderView::Draw(BRect updateRect)
 	if (updateRect.right > headersRect.right) {
 		updateRect.left = headersRect.right + 1.0f;
 		if (updateRect.IsValid()) {
-			SetHighColor(fColors->background);
-			FillRect(updateRect);
-			BeginLineArray(3);
-			AddLine(BPoint(updateRect.left, headersRect.bottom),
-					BPoint(updateRect.left, headersRect.top),
-					fColors->header_colors.highlight);
-			AddLine(BPoint(updateRect.left + 1.0, headersRect.top),
-					BPoint(updateRect.right, headersRect.top),
-					fColors->header_colors.highlight);
-			AddLine(BPoint(updateRect.left + 1.0, headersRect.bottom),
-					BPoint(updateRect.right, headersRect.bottom),
-					fColors->header_colors.light_shadow);
-			EndLineArray();
+			if (be_control_look != NULL) {
+				BRect bgRect(updateRect.left, headersRect.top,
+					updateRect.right, headersRect.bottom);
+				be_control_look->DrawButtonBackground(this, bgRect,
+					updateRect, fColors->background, 0,
+					BControlLook::B_TOP_BORDER
+						| BControlLook::B_BOTTOM_BORDER);
+			} else {
+				SetHighColor(fColors->background);
+				FillRect(updateRect);
+				BeginLineArray(3);
+				AddLine(BPoint(updateRect.left, headersRect.bottom),
+						BPoint(updateRect.left, headersRect.top),
+						fColors->header_colors.highlight);
+				AddLine(BPoint(updateRect.left + 1.0, headersRect.top),
+						BPoint(updateRect.right, headersRect.top),
+						fColors->header_colors.highlight);
+				AddLine(BPoint(updateRect.left + 1.0, headersRect.bottom),
+						BPoint(updateRect.right, headersRect.bottom),
+						fColors->header_colors.light_shadow);
+				EndLineArray();
+			}
 		}
 	}
 	// shadow at bottom
-	SetHighColor(tint_color(ui_color(B_PANEL_BACKGROUND_COLOR), B_DARKEN_3_TINT));
+	SetHighColor(tint_color(ui_color(B_PANEL_BACKGROUND_COLOR),
+		B_DARKEN_3_TINT));
 	StrokeLine(Bounds().LeftBottom(), Bounds().RightBottom());
 }
 
