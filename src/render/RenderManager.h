@@ -63,6 +63,9 @@ public:
 
 			BRect				Bounds() const;
 
+			void				SetZoomLevel(float zoomLevel);
+			float				ZoomLevel() const;
+
 			void				SetBitmapListener(BMessenger* listener);
 
 			bool				LockDisplay();
@@ -104,8 +107,13 @@ private:
 
 			void				_AllRenderThreadsDone();
 
+			status_t			_CreateDisplayBitmaps();
+			void				_DestroyDisplayBitmaps();
+
 private:
 			BBitmap*			fDisplayBitmap[2];
+//			BRect				fDisplayRect;
+			float				fZoomLevel;
 
 			BRect				fCleanArea;
 

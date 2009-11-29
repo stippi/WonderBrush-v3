@@ -124,11 +124,11 @@ RenderManager::RenderManager(Document* document)
 	Layer::Listener(),
 	fCleanArea(LONG_MAX, LONG_MAX, LONG_MIN, LONG_MIN),
 
-	fDocumentDirtyMap(new (nothrow) DirtyMap()),
-	fSnapshotDirtyMap(new (nothrow) DirtyMap()),
+	fDocumentDirtyMap(NULL),
+	fSnapshotDirtyMap(NULL),
 
 	fDocument(document),
-	fSnapshot(new (nothrow) LayerSnapshot(fDocument->RootLayer())),
+	fSnapshot(NULL),
 
 	fInitialLayoutState(),
 	fLayoutContext(&fInitialLayoutState),
@@ -159,15 +159,22 @@ RenderManager::RenderManager(Document* document)
 status_t
 RenderManager::Init()
 {
-// TODO: Move everything to Init() method and check errors!
-	fDisplayBitmap[0] = new (nothrow) BBitmap(fDocument->Bounds(), 0, B_RGBA32);
-	fDisplayBitmap[1] = new (nothrow) BBitmap(fDocument->Bounds(), 0, B_RGBA32);
+	if (fDocument == NULL)
+		return B_NO_INIT;
 
-	if (fDisplayBitmap[0] == NULL || !fDisplayBitmap[0]->IsValid()
-		|| fDisplayBitmap[1] == NULL || !fDisplayBitmap[1]->IsValid()
-		|| fDocumentDirtyMap == NULL || fSnapshotDirtyMap == NULL) {
+	fDocumentDirtyMap = new(std::nothrow) DirtyMap();
+	fSnapshotDirtyMap = new(std::nothrow) DirtyMap();
+
+	fSnapshot = new(std::nothrow) LayerSnapshot(fDocument->RootLayer());
+
+	if (fDocumentDirtyMap == NULL || fSnapshotDirtyMap == NULL
+		|| fSnapshot == NULL) {
 		return B_NO_MEMORY;
 	}
+
+	status_t ret = _CreateDisplayBitmaps();
+	if (ret != B_OK)
+		return ret;
 
 #if !USE_OPEN_TRACKER_HASH_MAP
 	if (fDocumentDirtyMap->Init() != B_OK || fSnapshotDirtyMap->Init() != B_OK)
@@ -187,14 +194,14 @@ RenderManager::Init()
 	if (fWaitingRenderThreadsSem < 0)
 		return fWaitingRenderThreadsSem;
 
-	fRenderThreads = new (nothrow) RenderThread*[fRenderThreadCount];
+	fRenderThreads = new(std::nothrow) RenderThread*[fRenderThreadCount];
 	if (fRenderThreads == NULL)
 		return B_NO_MEMORY;
 
 	memset(fRenderThreads, 0, sizeof(RenderThread*) * fRenderThreadCount);
 
 	for (int32 i = 0; i < fRenderThreadCount; i++) {
-		fRenderThreads[i] = new (nothrow) RenderThread(this);
+		fRenderThreads[i] = new(std::nothrow) RenderThread(this);
 		if (fRenderThreads[i] == NULL || fRenderThreads[i]->Init() != B_OK) {
 			delete fRenderThreads[i];
 			fRenderThreads[i] = NULL;
@@ -204,10 +211,10 @@ RenderManager::Init()
 	}
 
 	Layer::AddListenerRecursive(fDocument->RootLayer(), this);
-//	_RecursiveAddListener(fDocument->RootLayer());
 
 	return B_OK;
 }
+
 // destructor
 RenderManager::~RenderManager()
 {
@@ -218,8 +225,7 @@ RenderManager::~RenderManager()
 		delete fRenderThreads[i];
 	delete[] fRenderThreads;
 
-	delete fDisplayBitmap[0];
-	delete fDisplayBitmap[1];
+	_DestroyDisplayBitmaps();
 
 	delete fSnapshot;
 	delete fBitmapListener;
@@ -247,7 +253,6 @@ RenderManager::ObjectAdded(Layer* layer, Object* object, int32 index)
 	Layer* subLayer = dynamic_cast<Layer*>(object);
 	if (subLayer != NULL) {
 printf("RenderManager::ObjectAdded(%p)\n", subLayer);
-//		_RecursiveAddListener(subLayer);
 		Layer::AddListenerRecursive(subLayer, this);
 	}
 }
@@ -268,8 +273,8 @@ printf("RenderManager::ObjectRemoved(%p)\n", subLayer);
 void
 RenderManager::AreaInvalidated(Layer* layer, const BRect& area)
 {
-	// this is a synchronous notification, therefore the document
-	// is already properly locked
+	// This is a synchronous notification, therefore the document
+	// is already properly locked.
 	_QueueRedraw(layer, area);
 }
 
@@ -281,6 +286,25 @@ RenderManager::ListenerAttached(Layer* layer)
 }
 
 // #pragma mark -
+
+// SetZoomLevel
+void
+RenderManager::SetZoomLevel(float zoomLevel)
+{
+	if (fZoomLevel == zoomLevel)
+		return;
+
+	fZoomLevel = zoomLevel;
+
+	_CreateDisplayBitmaps();
+}
+
+// ZoomLevel
+float
+RenderManager::ZoomLevel() const
+{
+	return fZoomLevel;
+}
 
 // Bounds
 BRect
@@ -486,28 +510,6 @@ RenderManager::WakeUpRenderThreads()
 
 // #pragma mark -
 
-//// _RecursiveAddListener
-//void
-//RenderManager::_RecursiveAddListener(Layer* layer, bool invalidate)
-//{
-//	// the document is locked and/or this is executed from within
-//	// a synchronous notification
-//	int32 count = layer->CountObjects();
-//	for (int32 i = 0; i < count; i++) {
-//		Object* object = layer->ObjectAtFast(i);
-//		Layer* subLayer = dynamic_cast<Layer*>(object);
-//		if (subLayer)
-//			_RecursiveAddListener(subLayer, invalidate);
-//	}
-//
-//	layer->AddListener(this);
-//
-//	if (invalidate)
-//		AreaInvalidated(layer, layer->Bounds());
-//}
-
-// #pragma mark -
-
 // _QueueRedraw
 void
 RenderManager::_QueueRedraw(Layer* layer, BRect area)
@@ -685,5 +687,46 @@ RenderManager::_AllRenderThreadsDone()
 
 	if (_HasDirtyLayers())
 		_TriggerRender();
+}
+
+// #pragma mark -
+
+// _CreateDisplayBitmaps
+status_t
+RenderManager::_CreateDisplayBitmaps()
+{
+	// Wait for all rendering to finish first.
+	AutoLocker<BLocker> locker(fRenderQueueLock);
+	while (fWaitingRenderThreadCount < fRenderThreadCount) {
+		locker.Unlock();
+		// This should switch to the blocked thread...
+		// But just in case the render thread is not blocking, but rendering,
+		// we prevent a busy loop...
+		snooze(1000);
+		locker.Lock();
+	}
+
+	_DestroyDisplayBitmaps();
+
+	fDisplayBitmap[0] = new(nothrow) BBitmap(fDocument->Bounds(), 0, B_RGBA32);
+	fDisplayBitmap[1] = new(nothrow) BBitmap(fDocument->Bounds(), 0, B_RGBA32);
+
+	if (fDisplayBitmap[0] == NULL || !fDisplayBitmap[0]->IsValid()
+		|| fDisplayBitmap[1] == NULL || !fDisplayBitmap[1]->IsValid()) {
+		return B_NO_MEMORY;
+	}
+
+	return B_OK;
+}
+
+// _DestroyDisplayBitmaps
+void
+RenderManager::_DestroyDisplayBitmaps()
+{
+	delete fDisplayBitmap[0];
+	delete fDisplayBitmap[1];
+
+	fDisplayBitmap[0] = NULL;
+	fDisplayBitmap[1] = NULL;
 }
 
