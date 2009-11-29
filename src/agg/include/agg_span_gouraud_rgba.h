@@ -120,9 +120,9 @@ namespace agg
 
             m_y2 = int(coord[1].y);
 
-            m_swap = calc_point_location(coord[0].x, coord[0].y, 
-                                         coord[2].x, coord[2].y,
-                                         coord[1].x, coord[1].y) < 0.0;
+            m_swap = cross_product(coord[0].x, coord[0].y, 
+                                   coord[2].x, coord[2].y,
+                                   coord[1].x, coord[1].y) < 0.0;
 
             m_rgba1.init(coord[0], coord[2]);
             m_rgba2.init(coord[0], coord[1]);

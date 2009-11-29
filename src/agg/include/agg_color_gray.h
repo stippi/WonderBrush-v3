@@ -2,8 +2,8 @@
 // Anti-Grain Geometry - Version 2.4
 // Copyright (C) 2002-2005 Maxim Shemanarev (http://www.antigrain.com)
 //
-// Permission to copy, use, modify, sell and distribute this software 
-// is granted provided this copyright notice appears in all copies. 
+// Permission to copy, use, modify, sell and distribute this software
+// is granted provided this copyright notice appears in all copies.
 // This software is provided "as is" without express or implied
 // warranty, and with no claim as to its suitability for any purpose.
 //
@@ -13,12 +13,12 @@
 //          http://www.antigrain.com
 //----------------------------------------------------------------------------
 //
-// Adaptation for high precision colors has been sponsored by 
+// Adaptation for high precision colors has been sponsored by
 // Liberty Technology Systems, Inc., visit http://lib-sys.com
 //
 // Liberty Technology Systems, Inc. is the provider of
 // PostScript and PDF technology for software developers.
-// 
+//
 //----------------------------------------------------------------------------
 //
 // color types gray8, gray16
@@ -44,7 +44,8 @@ namespace agg
         {
             base_shift = 8,
             base_scale = 1 << base_shift,
-            base_mask  = base_scale - 1
+            base_mask  = base_scale - 1,
+            base_MSB = 1 << (base_shift - 1)
         };
         typedef gray8 self_type;
 
@@ -79,8 +80,38 @@ namespace agg
 
         //--------------------------------------------------------------------
         gray8(const rgba8& c, unsigned a_) :
-            v((c.r*77 + c.g*150 + c.b*29) >> 8),
-            a(a_) {}
+            v((value_type)((c.r*77 + c.g*150 + c.b*29) >> 8)),
+            a((value_type)a_) {}
+
+        //--------------------------------------------------------------------
+        // fixed-point multiply, exact over uint8
+        static AGG_INLINE calc_type int_mult(calc_type a, calc_type b)
+        {
+            calc_type t = a * b + base_MSB;
+            return ((t >> base_shift) + t) >> base_shift;
+        }
+
+        //--------------------------------------------------------------------
+        // fixed-point multiply, exact over uint8
+        // specifically for multiplying a color component by a cover
+        static AGG_INLINE calc_type int_mult_cover(calc_type a, calc_type b)
+        {
+            return int_mult(a, b);
+        }
+
+        //--------------------------------------------------------------------
+        // linear interpolate q over p by a, assuming q is pre-muliplied by a
+        static AGG_INLINE calc_type int_prelerp(calc_type p, calc_type q, calc_type a)
+        {
+            return p + q - int_mult(p, a);
+        }
+
+        //--------------------------------------------------------------------
+        // linear interpolate q over p by a
+        static AGG_INLINE calc_type int_lerp(calc_type p, calc_type q, calc_type a)
+        {
+            return p + int_mult(q - p, a);
+        }
 
         //--------------------------------------------------------------------
         void clear()
@@ -119,7 +150,7 @@ namespace agg
                 v = 0;
                 return *this;
             }
-            v = value_type((calc_type(v) * a) >> base_shift);
+            v = (value_type)int_mult(v, a);
             return *this;
         }
 
@@ -148,7 +179,7 @@ namespace agg
                 return *this;
             }
             calc_type v_ = (calc_type(v) * base_mask) / a;
-            v = value_type((v_ > base_mask) ? base_mask : v_);
+            v = value_type((v_ > base_mask) ? (value_type)base_mask : v_);
             return *this;
         }
 
@@ -157,9 +188,35 @@ namespace agg
         {
             self_type ret;
             calc_type ik = uround(k * base_scale);
-            ret.v = value_type(calc_type(v) + (((calc_type(c.v) - v) * ik) >> base_shift));
-            ret.a = value_type(calc_type(a) + (((calc_type(c.a) - a) * ik) >> base_shift));
+            ret.v = (value_type)int_lerp(v, c.v, ik);
+            ret.a = (value_type)int_lerp(a, c.a, ik);
             return ret;
+        }
+
+        //--------------------------------------------------------------------
+        AGG_INLINE void add(const self_type& c, unsigned cover)
+        {
+            calc_type cv, ca;
+            if(cover == cover_mask)
+            {
+                if(c.a == base_mask)
+                {
+                    *this = c;
+                    return;
+                }
+                else
+                {
+                    cv = v + c.v;
+                    ca = a + c.a;
+                }
+            }
+            else
+            {
+                cv = v + int_mult_cover(c.v, cover);
+                ca = a + int_mult_cover(c.a, cover);
+            }
+            v = (value_type)((cv > calc_type(base_mask)) ? calc_type(base_mask) : cv);
+            a = (value_type)((ca > calc_type(base_mask)) ? calc_type(base_mask) : ca);
         }
 
         //--------------------------------------------------------------------
@@ -206,7 +263,8 @@ namespace agg
         {
             base_shift = 16,
             base_scale = 1 << base_shift,
-            base_mask  = base_scale - 1
+            base_mask  = base_scale - 1,
+            base_MSB = 1 << (base_shift - 1)
         };
         typedef gray16 self_type;
 
@@ -245,6 +303,46 @@ namespace agg
             a((value_type(a_) << 8) | c.a) {}
 
         //--------------------------------------------------------------------
+        gray16(const rgba16& c) :
+        v((c.r*77 + c.g*150 + c.b*29) >> 8),
+        a(c.a) {}
+
+        //--------------------------------------------------------------------
+        gray16(const rgba16& c, unsigned a_) :
+        v((value_type)((c.r*77 + c.g*150 + c.b*29) >> 8)),
+        a((value_type)a_) {}
+
+        //--------------------------------------------------------------------
+        // fixed-point multiply, exact over uint16
+        static AGG_INLINE calc_type int_mult(calc_type a, calc_type b)
+        {
+            calc_type t = a * b + base_MSB;
+            return ((t >> base_shift) + t) >> base_shift;
+        }
+
+        //--------------------------------------------------------------------
+        // fixed-point multiply, almost exact over uint16
+        // specifically for multiplying a color component by a cover
+        static AGG_INLINE calc_type int_mult_cover(calc_type a, calc_type b)
+        {
+            return int_mult(a, b << 8 | b);
+        }
+
+        //--------------------------------------------------------------------
+        // linear interpolate q over p by a, assuming q is pre-muliplied by a
+        static AGG_INLINE calc_type int_prelerp(calc_type p, calc_type q, calc_type a)
+        {
+            return p + q - int_mult(p, a);
+        }
+
+        //--------------------------------------------------------------------
+        // linear interpolate q over p by a
+        static AGG_INLINE calc_type int_lerp(calc_type p, calc_type q, calc_type a)
+        {
+            return p + int_mult(q - p, a);
+        }
+
+        //--------------------------------------------------------------------
         void clear()
         {
             v = a = 0;
@@ -281,7 +379,7 @@ namespace agg
                 v = 0;
                 return *this;
             }
-            v = value_type((calc_type(v) * a) >> base_shift);
+            v = (value_type)int_mult(v, a);
             return *this;
         }
 
@@ -319,9 +417,35 @@ namespace agg
         {
             self_type ret;
             calc_type ik = uround(k * base_scale);
-            ret.v = value_type(calc_type(v) + (((calc_type(c.v) - v) * ik) >> base_shift));
-            ret.a = value_type(calc_type(a) + (((calc_type(c.a) - a) * ik) >> base_shift));
+            ret.v = (value_type)int_lerp(v, c.v, ik);
+            ret.a = (value_type)int_lerp(a, c.a, ik);
             return ret;
+        }
+
+        //--------------------------------------------------------------------
+        AGG_INLINE void add(const self_type& c, unsigned cover)
+        {
+            calc_type cv, ca;
+            if(cover == cover_mask)
+            {
+                if(c.a == base_mask)
+                {
+                    *this = c;
+                    return;
+                }
+                else
+                {
+                    cv = v + c.v;
+                    ca = a + c.a;
+                }
+            }
+            else
+            {
+                cv = v + int_mult_cover(c.v, cover);
+                ca = a + int_mult_cover(c.a, cover);
+            }
+            v = (value_type)((cv > calc_type(base_mask)) ? calc_type(base_mask) : cv);
+            a = (value_type)((ca > calc_type(base_mask)) ? calc_type(base_mask) : ca);
         }
 
         //--------------------------------------------------------------------

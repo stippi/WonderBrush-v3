@@ -60,10 +60,9 @@ namespace agg
         typedef Curve4 curve4_type;
         typedef conv_curve<VertexSource, Curve3, Curve4> self_type;
 
-        conv_curve(VertexSource& source) :
+        explicit conv_curve(VertexSource& source) :
           m_source(&source), m_last_x(0.0), m_last_y(0.0) {}
-
-        void set_source(VertexSource& source) { m_source = &source; }
+        void attach(VertexSource& source) { m_source = &source; }
 
         void approximation_method(curve_approximation_method_e v) 
         { 
@@ -163,13 +162,6 @@ namespace agg
         unsigned cmd = m_source->vertex(x, y);
         switch(cmd)
         {
-        case path_cmd_move_to:
-        case path_cmd_line_to:
-            m_last_x = *x;
-            m_last_y = *y;
-        default:
-            break; 
-        
         case path_cmd_curve3:
             m_source->vertex(&end_x, &end_y);
 
@@ -196,6 +188,8 @@ namespace agg
             cmd = path_cmd_line_to;
             break;
         }
+        m_last_x = *x;
+        m_last_y = *y;
         return cmd;
     }
 

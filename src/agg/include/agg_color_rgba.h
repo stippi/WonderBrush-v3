@@ -29,6 +29,9 @@
 
 namespace agg
 {
+    struct gray8;
+    struct gray16;
+    
     // Supported byte orders for RGB and RGBA pixel formats
     //=======================================================================
     struct order_rgb  { enum rgb_e  { R=0, G=1, B=2, rgb_tag }; };       //----order_rgb
@@ -229,7 +232,8 @@ namespace agg
         {
             base_shift = 8,
             base_scale = 1 << base_shift,
-            base_mask  = base_scale - 1
+            base_mask  = base_scale - 1,
+            base_MSB = 1 << (base_shift - 1)
         };
         typedef rgba8 self_type;
 
@@ -268,6 +272,39 @@ namespace agg
             a((value_type)uround(c.a * double(base_mask))) {}
 
         //--------------------------------------------------------------------
+        rgba8(const gray8& c);
+
+        //--------------------------------------------------------------------
+        // fixed-point multiply, exact over uint8
+        static AGG_INLINE calc_type int_mult(calc_type a, calc_type b) 
+        {
+            calc_type t = a * b + base_MSB;
+            return ((t >> base_shift) + t) >> base_shift;
+        }
+        
+        //--------------------------------------------------------------------
+        // fixed-point multiply, exact over uint8
+        // specifically for multiplying a color component by a cover
+        static AGG_INLINE calc_type int_mult_cover(calc_type a, calc_type b) 
+        {
+            return int_mult(a, b);
+        }
+        
+        //--------------------------------------------------------------------
+        // linear interpolate q over p by a, assuming q is pre-muliplied by a
+        static AGG_INLINE calc_type int_prelerp(calc_type p, calc_type q, calc_type a) 
+        {
+            return p + q - int_mult(p, a);
+        }
+        
+        //--------------------------------------------------------------------
+        // linear interpolate q over p by a
+        static AGG_INLINE calc_type int_lerp(calc_type p, calc_type q, calc_type a) 
+        {
+            return p + int_mult(q - p, a);
+        }
+        
+        //--------------------------------------------------------------------
         void clear()
         {
             r = g = b = a = 0;
@@ -304,9 +341,9 @@ namespace agg
                 r = g = b = 0;
                 return *this;
             }
-            r = value_type((calc_type(r) * a) >> base_shift);
-            g = value_type((calc_type(g) * a) >> base_shift);
-            b = value_type((calc_type(b) * a) >> base_shift);
+            r = (value_type)int_mult(r, a);
+            g = (value_type)int_mult(g, a);
+            b = (value_type)int_mult(b, a);
             return *this;
         }
 
@@ -351,11 +388,11 @@ namespace agg
         AGG_INLINE self_type gradient(const self_type& c, double k) const
         {
             self_type ret;
-            calc_type ik = uround(k * base_scale);
-            ret.r = value_type(calc_type(r) + (((calc_type(c.r) - r) * ik) >> base_shift));
-            ret.g = value_type(calc_type(g) + (((calc_type(c.g) - g) * ik) >> base_shift));
-            ret.b = value_type(calc_type(b) + (((calc_type(c.b) - b) * ik) >> base_shift));
-            ret.a = value_type(calc_type(a) + (((calc_type(c.a) - a) * ik) >> base_shift));
+            calc_type ik = uround(k * base_mask);
+            ret.r = (value_type)int_lerp(r, c.r, ik);
+            ret.g = (value_type)int_lerp(g, c.g, ik);
+            ret.b = (value_type)int_lerp(b, c.b, ik);
+            ret.a = (value_type)int_lerp(a, c.a, ik);
             return ret;
         }
 
@@ -368,26 +405,27 @@ namespace agg
                 if(c.a == base_mask) 
                 {
                     *this = c;
+                    return;
                 }
                 else
                 {
-                    cr = r + c.r; r = (cr > calc_type(base_mask)) ? calc_type(base_mask) : cr;
-                    cg = g + c.g; g = (cg > calc_type(base_mask)) ? calc_type(base_mask) : cg;
-                    cb = b + c.b; b = (cb > calc_type(base_mask)) ? calc_type(base_mask) : cb;
-                    ca = a + c.a; a = (ca > calc_type(base_mask)) ? calc_type(base_mask) : ca;
+                    cr = r + c.r; 
+                    cg = g + c.g; 
+                    cb = b + c.b; 
+                    ca = a + c.a; 
                 }
             }
             else
             {
-                cr = r + ((c.r * cover + cover_mask/2) >> cover_shift);
-                cg = g + ((c.g * cover + cover_mask/2) >> cover_shift);
-                cb = b + ((c.b * cover + cover_mask/2) >> cover_shift);
-                ca = a + ((c.a * cover + cover_mask/2) >> cover_shift);
-                r = (cr > calc_type(base_mask)) ? calc_type(base_mask) : cr;
-                g = (cg > calc_type(base_mask)) ? calc_type(base_mask) : cg;
-                b = (cb > calc_type(base_mask)) ? calc_type(base_mask) : cb;
-                a = (ca > calc_type(base_mask)) ? calc_type(base_mask) : ca;
+                cr = r + int_mult_cover(c.r, cover);
+                cg = g + int_mult_cover(c.g, cover);
+                cb = b + int_mult_cover(c.b, cover);
+                ca = a + int_mult_cover(c.a, cover);
             }
+            r = (value_type)((cr > calc_type(base_mask)) ? calc_type(base_mask) : cr);
+            g = (value_type)((cg > calc_type(base_mask)) ? calc_type(base_mask) : cg);
+            b = (value_type)((cb > calc_type(base_mask)) ? calc_type(base_mask) : cb);
+            a = (value_type)((ca > calc_type(base_mask)) ? calc_type(base_mask) : ca);
         }
 
         //--------------------------------------------------------------------
@@ -443,32 +481,43 @@ namespace agg
     }
 
 
-    //-----------------------------------------------------------rgb8_packed
+    //-------------------------------------------------------------rgb8_packed
     inline rgba8 rgb8_packed(unsigned v)
     {
         return rgba8((v >> 16) & 0xFF, (v >> 8) & 0xFF, v & 0xFF);
     }
 
-    //-----------------------------------------------------------bgr8_packed
+    //-------------------------------------------------------------bgr8_packed
     inline rgba8 bgr8_packed(unsigned v)
     {
         return rgba8(v & 0xFF, (v >> 8) & 0xFF, (v >> 16) & 0xFF);
     }
 
-    //----------------------------------------------------------argb8_packed
+    //------------------------------------------------------------argb8_packed
     inline rgba8 argb8_packed(unsigned v)
     {
         return rgba8((v >> 16) & 0xFF, (v >> 8) & 0xFF, v & 0xFF, v >> 24);
+    }
+
+    //---------------------------------------------------------rgba8_gamma_dir
+    template<class GammaLUT>
+    rgba8 rgba8_gamma_dir(rgba8 c, const GammaLUT& gamma)
+    {
+        return rgba8(gamma.dir(c.r), gamma.dir(c.g), gamma.dir(c.b), c.a);
+    }
+
+    //---------------------------------------------------------rgba8_gamma_inv
+    template<class GammaLUT>
+    rgba8 rgba8_gamma_inv(rgba8 c, const GammaLUT& gamma)
+    {
+        return rgba8(gamma.inv(c.r), gamma.inv(c.g), gamma.inv(c.b), c.a);
     }
 
 
 
 
 
-
-
-
-    //=================================================================rgba16
+    //==================================================================rgba16
     struct rgba16
     {
         typedef int16u value_type;
@@ -478,7 +527,8 @@ namespace agg
         {
             base_shift = 16,
             base_scale = 1 << base_shift,
-            base_mask  = base_scale - 1
+            base_mask  = base_scale - 1,
+            base_MSB = 1 << (base_shift - 1)
         };
         typedef rgba16 self_type;
 
@@ -530,6 +580,39 @@ namespace agg
             a(value_type((             a_ << 8) | c.a)) {}
 
         //--------------------------------------------------------------------
+        rgba16(const gray16& c);
+
+        //--------------------------------------------------------------------
+        // fixed-point multiply, exact over uint16
+        static AGG_INLINE calc_type int_mult(calc_type a, calc_type b) 
+        {
+            calc_type t = a * b + base_MSB;
+            return ((t >> base_shift) + t) >> base_shift;
+        }
+        
+        //--------------------------------------------------------------------
+        // fixed-point multiply, almost exact over uint16
+        // specifically for multiplying a color component by a cover
+        static AGG_INLINE calc_type int_mult_cover(calc_type a, calc_type b) 
+        {
+            return int_mult(a, (b << 8) | b);
+        }
+        
+        //--------------------------------------------------------------------
+        // linear interpolate q over p by a, assuming q is pre-muliplied by a
+        static AGG_INLINE calc_type int_prelerp(calc_type p, calc_type q, calc_type a) 
+        {
+            return p + q - int_mult(p, a);
+        }
+        
+        //--------------------------------------------------------------------
+        // linear interpolate q over p by a
+        static AGG_INLINE calc_type int_lerp(calc_type p, calc_type q, calc_type a) 
+        {
+            return p + int_mult(q - p, a);
+        }
+        
+        //--------------------------------------------------------------------
         void clear()
         {
             r = g = b = a = 0;
@@ -566,9 +649,9 @@ namespace agg
                 r = g = b = 0;
                 return *this;
             }
-            r = value_type((calc_type(r) * a) >> base_shift);
-            g = value_type((calc_type(g) * a) >> base_shift);
-            b = value_type((calc_type(b) * a) >> base_shift);
+            r = (value_type)int_mult(r, a);
+            g = (value_type)int_mult(g, a);
+            b = (value_type)int_mult(b, a);
             return *this;
         }
 
@@ -613,11 +696,11 @@ namespace agg
         AGG_INLINE self_type gradient(const self_type& c, double k) const
         {
             self_type ret;
-            calc_type ik = uround(k * base_scale);
-            ret.r = value_type(calc_type(r) + (((calc_type(c.r) - r) * ik) >> base_shift));
-            ret.g = value_type(calc_type(g) + (((calc_type(c.g) - g) * ik) >> base_shift));
-            ret.b = value_type(calc_type(b) + (((calc_type(c.b) - b) * ik) >> base_shift));
-            ret.a = value_type(calc_type(a) + (((calc_type(c.a) - a) * ik) >> base_shift));
+            calc_type ik = uround(k * base_mask);
+            ret.r = (value_type)int_lerp(r, c.r, ik);
+            ret.g = (value_type)int_lerp(g, c.g, ik);
+            ret.b = (value_type)int_lerp(b, c.b, ik);
+            ret.a = (value_type)int_lerp(a, c.a, ik);
             return ret;
         }
 
@@ -630,26 +713,27 @@ namespace agg
                 if(c.a == base_mask) 
                 {
                     *this = c;
+                    return;
                 }
                 else
                 {
-                    cr = r + c.r; r = (cr > calc_type(base_mask)) ? calc_type(base_mask) : cr;
-                    cg = g + c.g; g = (cg > calc_type(base_mask)) ? calc_type(base_mask) : cg;
-                    cb = b + c.b; b = (cb > calc_type(base_mask)) ? calc_type(base_mask) : cb;
-                    ca = a + c.a; a = (ca > calc_type(base_mask)) ? calc_type(base_mask) : ca;
+                    cr = r + c.r; 
+                    cg = g + c.g; 
+                    cb = b + c.b; 
+                    ca = a + c.a; 
                 }
             }
             else
             {
-                cr = r + ((c.r * cover + cover_mask) >> cover_shift);
-                cg = g + ((c.g * cover + cover_mask) >> cover_shift);
-                cb = b + ((c.b * cover + cover_mask) >> cover_shift);
-                ca = a + ((c.a * cover + cover_mask) >> cover_shift);
-                r = (cr > calc_type(base_mask)) ? calc_type(base_mask) : cr;
-                g = (cg > calc_type(base_mask)) ? calc_type(base_mask) : cg;
-                b = (cb > calc_type(base_mask)) ? calc_type(base_mask) : cb;
-                a = (ca > calc_type(base_mask)) ? calc_type(base_mask) : ca;
+                cr = r + int_mult_cover(c.r, cover);
+                cg = g + int_mult_cover(c.g, cover);
+                cb = b + int_mult_cover(c.b, cover);
+                ca = a + int_mult_cover(c.a, cover);
             }
+            r = (value_type)((cr > calc_type(base_mask)) ? calc_type(base_mask) : cr);
+            g = (value_type)((cg > calc_type(base_mask)) ? calc_type(base_mask) : cg);
+            b = (value_type)((cb > calc_type(base_mask)) ? calc_type(base_mask) : cb);
+            a = (value_type)((ca > calc_type(base_mask)) ? calc_type(base_mask) : ca);
         }
 
         //--------------------------------------------------------------------
@@ -708,6 +792,22 @@ namespace agg
     {
         return rgba16(c,a).premultiply();
     }
+
+
+    //------------------------------------------------------rgba16_gamma_dir
+    template<class GammaLUT>
+    rgba16 rgba16_gamma_dir(rgba16 c, const GammaLUT& gamma)
+    {
+        return rgba16(gamma.dir(c.r), gamma.dir(c.g), gamma.dir(c.b), c.a);
+    }
+
+    //------------------------------------------------------rgba16_gamma_inv
+    template<class GammaLUT>
+    rgba16 rgba16_gamma_inv(rgba16 c, const GammaLUT& gamma)
+    {
+        return rgba16(gamma.inv(c.r), gamma.inv(c.g), gamma.inv(c.b), c.a);
+    }
+
 
 }
 

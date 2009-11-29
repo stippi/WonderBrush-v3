@@ -55,12 +55,10 @@ namespace agg
         // Set font parameters
         //--------------------------------------------------------------------
         void resolution(unsigned dpi);
-        bool load_font(const char* font_name, unsigned face_index,
-                       double size, glyph_rendering ren_type,
+        bool load_font(const char* font_name, unsigned face_index, glyph_rendering ren_type,
                        const char* font_mem = 0, const long font_mem_size = 0);
         bool attach(const char* file_name);
         bool char_map(FT_Encoding map);
-        bool size(double w, double h);
         bool height(double h);
         bool width(double w);
         void hinting(bool h);

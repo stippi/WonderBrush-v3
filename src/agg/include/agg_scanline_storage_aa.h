@@ -83,7 +83,8 @@ namespace agg
             int i;
             for(i = m_extra_storage.size()-1; i >= 0; --i)
             {
-                delete [] m_extra_storage[(unsigned)i].ptr;
+                pod_allocator<T>::deallocate(m_extra_storage[i].ptr,
+                                             m_extra_storage[i].len);
             }
             m_extra_storage.remove_all();
             m_cells.remove_all();
@@ -101,7 +102,7 @@ namespace agg
             }
             extra_span s;
             s.len = num_cells;
-            s.ptr = new T [num_cells];
+            s.ptr = pod_allocator<T>::allocate(num_cells);
             memcpy(s.ptr, cells, sizeof(T) * num_cells);
             m_extra_storage.add(s);
             return -int(m_extra_storage.size());
@@ -142,7 +143,7 @@ namespace agg
                 const extra_span& src = v.m_extra_storage[i];
                 extra_span dst;
                 dst.len = src.len;
-                dst.ptr = new T [dst.len];
+                dst.ptr = pod_allocator<T>::allocate(dst.len);
                 memcpy(dst.ptr, src.ptr, dst.len * sizeof(T));
                 m_extra_storage.add(dst);
             }
@@ -196,6 +197,7 @@ namespace agg
                     const T* covers;
                 };
 
+                const_iterator() : m_storage(0) {}
                 const_iterator(const embedded_scanline& sl) :
                     m_storage(sl.m_storage),
                     m_span_idx(sl.m_scanline.start_span)
@@ -554,6 +556,7 @@ namespace agg
                     const T* covers; 
                 };
 
+                const_iterator() : m_ptr(0) {}
                 const_iterator(const embedded_scanline& sl) :
                     m_ptr(sl.m_ptr),
                     m_dx(sl.m_dx)
@@ -721,9 +724,8 @@ namespace agg
                 m_min_y = read_int32() + m_dy;
                 m_max_x = read_int32() + m_dx;
                 m_max_y = read_int32() + m_dy;
-                return true;
             }
-            return false;
+            return m_ptr < m_end;
         }
 
         //--------------------------------------------------------------------
