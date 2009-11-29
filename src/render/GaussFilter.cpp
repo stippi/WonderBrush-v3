@@ -121,13 +121,15 @@ GaussFilter::_Filter(calc_type* buffer, int32 count)
 	// forward
 	calc_type* b = buffer + 3;
 	for (int32 i = 3; i < count + 6; i++) {
-		*b++ = B * b[0] + (b1 * b[-1] + b2 * b[-2] + b3 * b[-3]);
+		*b = B * b[0] + (b1 * b[-1] + b2 * b[-2] + b3 * b[-3]);
+		b++;
 	}
 
 	// backward
 	b = buffer + count + 2;
 	for (int32 i = count + 2; i >= 0; i--) {
-		*b-- = B * b[0] + (b1 * b[1] + b2 * b[2] + b3 * b[3]);
+		*b = B * b[0] + (b1 * b[1] + b2 * b[2] + b3 * b[3]);
+		b--;
 	}
 }
 
