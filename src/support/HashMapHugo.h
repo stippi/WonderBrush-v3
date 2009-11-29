@@ -7,6 +7,8 @@
 
 #include "OpenHashTableHugo.h"
 
+#include <new>
+
 
 template<typename HashMapKeyType, typename HashMapValueType>
 struct HashMapLink : HashTableLink<HashMapLink<HashMapKeyType,
@@ -127,7 +129,7 @@ public:
 	// on how many entries are already in the HashMap!
 	bool RemoveValue(const HashMapValueType& value)
 	{
-		typename HashTableType::Iterator iterator = GetIterator();
+		typename HashTableType::Iterator iterator(this);
 		while (iterator.HasNext()) {
 			LinkType* link = iterator.Next();
 			if (link->Value == value) {

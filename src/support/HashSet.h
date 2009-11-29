@@ -176,7 +176,7 @@ protected:
 template<typename Key>
 class SynchronizedHashSet : public BLocker {
 public:
-	typedef HashSet<Key>::Iterator Iterator;
+	typedef struct HashSet<Key>::Iterator Iterator;
 
 	SynchronizedHashSet() : BLocker("synchronized hash set")	{}
 	~SynchronizedHashSet()	{ Lock(); }
@@ -310,7 +310,7 @@ HashSet<Key>::Size() const
 
 // GetIterator
 template<typename Key>
-HashSet<Key>::Iterator
+struct HashSet<Key>::Iterator
 HashSet<Key>::GetIterator()
 {
 	return Iterator(this);
@@ -318,7 +318,7 @@ HashSet<Key>::GetIterator()
 
 // _FindElement
 template<typename Key>
-HashSet<Key>::Element *
+struct HashSet<Key>::Element *
 HashSet<Key>::_FindElement(const Key& key) const
 {
 	Element* element = fTable.FindFirst(key.GetHashCode());
