@@ -8,6 +8,8 @@
 
 #include <Locker.h>
 
+#include <new>
+
 #include "AutoLocker.h"
 #include "OpenHashTableHugo.h"
 
@@ -73,8 +75,13 @@ public:
 
 	void SetCache(CacheType* cache)
 	{
-		if (fCache != NULL && fCache != cache)
-			debugger("SharedObject already in another cache!");
+		if (cache != NULL && fCache != NULL && fCache != cache) {
+			char message[256];
+			snprintf(message, sizeof(message),
+				"SharedObject already in another cache: %p -> %p",
+				fCache, cache);
+			debugger(message);
+		}
 		fCache = cache;
 	}
 
