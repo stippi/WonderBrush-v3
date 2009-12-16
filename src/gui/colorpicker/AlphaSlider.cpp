@@ -9,6 +9,7 @@
 #include "AlphaSlider.h"
 
 #include <stdio.h>
+#include <string.h>
 
 #include <AppDefs.h>
 #include <Bitmap.h>
@@ -23,7 +24,7 @@ AlphaSlider::AlphaSlider(orientation dir, BMessage* message)
 	: BControl(dir == B_HORIZONTAL ? BRect(0, 0, 255 + 4, 7 + 4)
 								   : BRect(0, 0, 7 + 4, 255 + 4),
 			   "alpha slider", NULL, message,
-								   
+
 			   B_FOLLOW_NONE,
 			   B_WILL_DRAW | B_FRAME_EVENTS | B_NAVIGABLE),
 
@@ -197,7 +198,7 @@ AlphaSlider::Draw(BRect updateRect)
 	// value marker
 	if (fOrientation == B_HORIZONTAL) {
 		float pos = floorf(b.left + Value() * b.Width() / 255.0 + 0.5);
-	
+
 		if (pos - 2 >= b.left) {
 			SetHighColor(kWhite);
 			StrokeLine(BPoint(pos - 2, b.top), BPoint(pos - 2, b.bottom));
@@ -216,7 +217,7 @@ AlphaSlider::Draw(BRect updateRect)
 		}
 	} else {
 		float pos = floorf(b.top + Value() * b.Height() / 255.0 + 0.5);
-	
+
 		if (pos - 2 >= b.top) {
 			SetHighColor(kWhite);
 			StrokeLine(BPoint(b.left, pos - 2), BPoint(b.right, pos - 2));
@@ -244,7 +245,7 @@ AlphaSlider::FrameResized(float width, float height)
 	_AllocBitmap(r.IntegerWidth() + 1, r.IntegerHeight() + 1);
 	_UpdateColors();
 	Invalidate();
-	
+
 }
 
 // SetValue
