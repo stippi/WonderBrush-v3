@@ -188,7 +188,7 @@ StateView::MessageReceived(BMessage* message)
 
 		Command* command = NULL;
 		if (fCurrentState->MessageReceived(message, &command)) {
-			Perform(command);
+			PerformCommand(command);
 			return;
 		}
 	}
@@ -330,7 +330,7 @@ StateView::MouseUp(BPoint where)
 		return;
 
 	if (fDropAnticipatingState) {
-		Perform(fDropAnticipatingState->MouseUp());
+		PerformCommand(fDropAnticipatingState->MouseUp());
 		fDropAnticipatingState->Cleanup();
 		fDropAnticipatingState = NULL;
 
@@ -340,7 +340,7 @@ StateView::MouseUp(BPoint where)
 		}
 	} else {
 		if (fCurrentState) {
-			Perform(fCurrentState->MouseUp());
+			PerformCommand(fCurrentState->MouseUp());
 			TriggerUpdate();
 		}
 	}
@@ -513,7 +513,7 @@ StateView::HandleKeyDown(const KeyEvent& event, BHandler* originalTarget)
 	if (fCurrentState) {
 		Command* command = NULL;
 		if (fCurrentState->HandleKeyDown(event, &command)) {
-			Perform(command);
+			PerformCommand(command);
 			return true;
 		}
 	}
@@ -534,7 +534,7 @@ StateView::HandleKeyUp(const KeyEvent& event, BHandler* originalTarget)
 	if (fCurrentState) {
 		Command* command = NULL;
 		if (fCurrentState->HandleKeyUp(event, &command)) {
-			Perform(command);
+			PerformCommand(command);
 			return true;
 		}
 	}
@@ -585,9 +585,9 @@ StateView::SetCatchAllEvents(bool catchAll)
 		_RemoveEventFilter();
 }
 
-// Perform
+// PerformCommand
 status_t
-StateView::Perform(Command* command)
+StateView::PerformCommand(Command* command)
 {
 	if (fCommandStack)
 		return fCommandStack->Perform(command);

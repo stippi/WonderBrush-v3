@@ -95,7 +95,7 @@ public:
 
 			void				SetCatchAllEvents(bool catchAll);
 
-			status_t			Perform(Command* command);
+			status_t			PerformCommand(Command* command);
 
 			void				TriggerUpdate();
 
