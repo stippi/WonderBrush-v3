@@ -83,9 +83,8 @@ rule SetUpSubDirBuildSettings {
 		if $(OSPLAT) = X86 {
 			CCFLAGS += -Wall -Wno-multichar -Wmissing-prototypes
 						  -Wpointer-arith -Wcast-align -Wsign-compare ;
-			C++FLAGS += -Wall -Wno-multichar -Wmissing-prototypes
-							-Wno-ctor-dtor-privacy -Woverloaded-virtual
-							-Wconversion -Wpointer-arith -Wstrict-prototypes
+			C++FLAGS += -Wall -Wno-multichar  -Wno-ctor-dtor-privacy
+							-Woverloaded-virtual -Wpointer-arith
 							-Wcast-align -Wsign-compare -Wno-reorder
 							-Wno-unknown-pragmas ;
 		} else {
@@ -97,7 +96,7 @@ rule SetUpSubDirBuildSettings {
 	if $(DEBUG) && $(DEBUG) != 0 {
 		OPTIMIZE = 0 ;
 		STRIP_APPS = 0 ;
-		DEFINES += DEBUG=$(DEBUG) BM_REF_DEBUGGING ;
+		DEFINES += DEBUG=$(DEBUG) ;
 		CCFLAGS += -g ;
 		C++FLAGS += -g -fno-inline ;
 		LINKFLAGS += -g ;
@@ -143,15 +142,14 @@ AUTO_SET_UP_CONFIG_VARIABLES += LOCATE_MAIN_TARGET ;
 SUBDIRRULES += SetUpSubDirBuildSettings ;
 
 # Where to find the 3rd party libraries
-LIBCRYPTLIB			= libcl.so.3.2.2 ;
-LIBCRYPTLIB_DEBUG	= libcl-debug.so.3.2.2 ;
-LIBFREETYPE			= libfreetype.so ;
-LIBLAYOUT			= liblayout.so ;
-LIBXERCES			= libxerces-c1_5.so ;
+#LIBCRYPTLIB			= libcl.so.3.2.2 ;
+#LIBCRYPTLIB_DEBUG	= libcl-debug.so.3.2.2 ;
+#LIBFREETYPE			= libfreetype.so ;
+#LIBXERCES			= libxerces-c1_5.so ;
 #LIBXERCES			= libxerces-c.so.26.0 ;
 
-SEARCH on $(LIBCRYPTLIB) $(LIBCRYPTLIB_DEBUG) $(LIBFREETYPE) $(LIBLAYOUT)
-	$(LIBXERCES) = [ FDirName $(WONDERBRUSH_TOP) lib ] ;
+#SEARCH on $(LIBCRYPTLIB) $(LIBCRYPTLIB_DEBUG) $(LIBFREETYPE)
+#	$(LIBXERCES) = [ FDirName $(TOP) lib ] ;
 
-CRYPTLIB_HEADERS	= [ FDirName $(WONDERBRUSH_TOP) include cryptlib ] ;
+#CRYPTLIB_HEADERS	= [ FDirName $(TOP) include cryptlib ] ;
 

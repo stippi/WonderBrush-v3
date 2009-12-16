@@ -1,8 +1,7 @@
-SubDir WONDERBRUSH_TOP ;
+SubDir TOP ;
 
-SubInclude WONDERBRUSH_TOP src ;
+SubInclude TOP src ;
 
 Distro distro ;
 
 FullDistro fulldistro ;
-

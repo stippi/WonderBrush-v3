@@ -28,7 +28,8 @@ public:
 	virtual status_t			Archive(BMessage* into,
 										bool deep = true) const;
 
-	virtual	PropertyObject*		MakePropertyObject() const;
+			PropertyObject*		MakePropertyObject() const;
+	virtual	void				AddProperties(PropertyObject* object) const;
 	virtual	bool				SetToPropertyObject(
 									const PropertyObject* object);
 

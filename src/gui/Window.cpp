@@ -15,6 +15,7 @@
 #include <MenuItem.h>
 #include <Message.h>
 #include <ScrollBar.h>
+#include <SeparatorView.h>
 #include <String.h>
 
 #include "CanvasView.h"
@@ -39,70 +40,6 @@ enum {
 	MSG_SELECTION_CHANGED	= 'slch',
 	MSG_SET_TOOL			= 'sltl'
 };
-
-
-class SeparatorView : public BView {
-public:
-								SeparatorView(enum orientation orientation);
-	virtual						~SeparatorView();
-
-	virtual	BSize				MinSize();
-	virtual	BSize				PreferredSize();
-	virtual	BSize				MaxSize();
-private:
-			enum orientation	fOrientation;
-};
-
-
-SeparatorView::SeparatorView(enum orientation orientation)
-	:
-	BView("separator", 0),
-	fOrientation(orientation)
-{
-	SetViewColor(tint_color(ui_color(B_PANEL_BACKGROUND_COLOR),
-		B_DARKEN_2_TINT));
-}
-
-
-SeparatorView::~SeparatorView()
-{
-}
-
-
-BSize
-SeparatorView::MinSize()
-{
-	return BLayoutUtils::ComposeSize(ExplicitMinSize(), BSize(0, 0));
-}
-
-
-BSize
-SeparatorView::MaxSize()
-{
-	BSize size(0, 0);
-	if (fOrientation == B_VERTICAL)
-		size.height = B_SIZE_UNLIMITED;
-	else
-		size.width = B_SIZE_UNLIMITED;
-
-	return BLayoutUtils::ComposeSize(ExplicitMaxSize(), size);
-}
-
-
-BSize
-SeparatorView::PreferredSize()
-{
-	BSize size(0, 0);
-	if (fOrientation == B_VERTICAL)
-		size.height = 10;
-	else
-		size.width = 10;
-
-	return BLayoutUtils::ComposeSize(ExplicitPreferredSize(), size);
-}
-
-
-// #pragma mark -
 
 
 // constructor
@@ -185,24 +122,31 @@ Window::Window(BRect frame, const char* title, Document* document,
 
 	BLayoutBuilder::Group<>(this, B_VERTICAL)
 		.Add(menuBar)
-		.AddGroup(B_HORIZONTAL)
-			.AddSplit(B_VERTICAL, 0.0f, 0.15f)
+		.AddSplit(B_HORIZONTAL, 0.0f, 0.15f)
+			.AddGroup(B_HORIZONTAL)
 				.AddGroup(B_VERTICAL)
 					.AddStrut(5)
 					.Add(fToolIconControl)
 					.AddStrut(5)
-					.Add(new SeparatorView(B_HORIZONTAL))
-					.Add(objectMenuBar)
-					.Add(objectTreeScrollView)
+					.Add(new BSeparatorView(B_HORIZONTAL))
+					.AddSplit(B_VERTICAL, 0.0f, 0.15f)
+						.AddGroup(B_VERTICAL)
+							.Add(objectMenuBar)
+							.Add(objectTreeScrollView)
+						.End()
+						.AddGroup(B_VERTICAL, 0.0f, 0.35f)
+							.Add(new BSeparatorView(B_HORIZONTAL))
+							.Add(propertyMenuBar)
+							.Add(fInspectorView)
+						.End()
+					.End()
 				.End()
-				.AddGroup(B_VERTICAL, 0.0f, 0.35f)
-					.Add(new SeparatorView(B_HORIZONTAL))
-					.Add(propertyMenuBar)
-					.Add(fInspectorView)
-				.End()
+				.Add(new BSeparatorView(B_VERTICAL))
 			.End()
-			.Add(new SeparatorView(B_VERTICAL))
-			.Add(canvasScrollView)
+			.AddGroup(B_HORIZONTAL)
+				.Add(new BSeparatorView(B_VERTICAL))
+				.Add(canvasScrollView)
+			.End()
 		.End();
 
 

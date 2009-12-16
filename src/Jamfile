@@ -1,7 +1,8 @@
-SubDir WONDERBRUSH_TOP src ;
+SubDir TOP src ;
 
 # source directories
 local sourceDirs =
+	alm
 	commands
 	gui
 	gui/misc
@@ -17,7 +18,7 @@ local sourceDirs =
 
 local sourceDir ;
 for sourceDir in $(sourceDirs) {
-	SEARCH_SOURCE += [ FDirName $(WONDERBRUSH_TOP) src $(sourceDir) ] ;
+	SEARCH_SOURCE += [ FDirName $(TOP) src $(sourceDir) ] ;
 }
 
 # system include directories
@@ -27,42 +28,48 @@ local sysIncludeDirs =
 
 local sysIncludeDir ;
 for sysIncludeDir in $(sysIncludeDirs) {
-	SubDirSysHdrs [ FDirName $(WONDERBRUSH_TOP) src $(sysIncludeDir) ] ;
+	SubDirSysHdrs [ FDirName $(TOP) src $(sysIncludeDir) ] ;
 }
 
-# locak include directories
+# local include directories
 
 # <pe-inc>
-SubDirHdrs [ FDirName $(WONDERBRUSH_TOP) src columntreeview ] ;
-SubDirHdrs [ FDirName $(WONDERBRUSH_TOP) src commands ] ;
-SubDirHdrs [ FDirName $(WONDERBRUSH_TOP) src gui ] ;
-SubDirHdrs [ FDirName $(WONDERBRUSH_TOP) src gui colorpicker ] ;
-SubDirHdrs [ FDirName $(WONDERBRUSH_TOP) src gui columntreeview ] ;
-SubDirHdrs [ FDirName $(WONDERBRUSH_TOP) src gui icons ] ;
-SubDirHdrs [ FDirName $(WONDERBRUSH_TOP) src gui misc ] ;
-SubDirHdrs [ FDirName $(WONDERBRUSH_TOP) src gui popupcontrol ] ;
-SubDirHdrs [ FDirName $(WONDERBRUSH_TOP) src gui propertylistview ] ;
-SubDirHdrs [ FDirName $(WONDERBRUSH_TOP) src gui propertylistview
+SubDirHdrs [ FDirName $(TOP) src columntreeview ] ;
+SubDirHdrs [ FDirName $(TOP) src commands ] ;
+SubDirHdrs [ FDirName $(TOP) src gui ] ;
+SubDirHdrs [ FDirName $(TOP) src gui colorpicker ] ;
+SubDirHdrs [ FDirName $(TOP) src gui columntreeview ] ;
+SubDirHdrs [ FDirName $(TOP) src gui icons ] ;
+SubDirHdrs [ FDirName $(TOP) src gui misc ] ;
+SubDirHdrs [ FDirName $(TOP) src gui popupcontrol ] ;
+SubDirHdrs [ FDirName $(TOP) src gui propertylistview ] ;
+SubDirHdrs [ FDirName $(TOP) src gui propertylistview
 	specific_properties ] ;
-SubDirHdrs [ FDirName $(WONDERBRUSH_TOP) src gui scrollview ] ;
-SubDirHdrs [ FDirName $(WONDERBRUSH_TOP) src gui stateview ] ;
-SubDirHdrs [ FDirName $(WONDERBRUSH_TOP) src model ] ;
-SubDirHdrs [ FDirName $(WONDERBRUSH_TOP) src model document ] ;
-SubDirHdrs [ FDirName $(WONDERBRUSH_TOP) src model fills ] ;
-SubDirHdrs [ FDirName $(WONDERBRUSH_TOP) src model objects ] ;
-SubDirHdrs [ FDirName $(WONDERBRUSH_TOP) src model property ] ;
-SubDirHdrs [ FDirName $(WONDERBRUSH_TOP) src model property
+SubDirHdrs [ FDirName $(TOP) src gui scrollview ] ;
+SubDirHdrs [ FDirName $(TOP) src gui stateview ] ;
+SubDirHdrs [ FDirName $(TOP) src model ] ;
+SubDirHdrs [ FDirName $(TOP) src model document ] ;
+SubDirHdrs [ FDirName $(TOP) src model fills ] ;
+SubDirHdrs [ FDirName $(TOP) src model objects ] ;
+SubDirHdrs [ FDirName $(TOP) src model property ] ;
+SubDirHdrs [ FDirName $(TOP) src model property
 	specific_properties ] ;
-SubDirHdrs [ FDirName $(WONDERBRUSH_TOP) src model snapshots ] ;
-SubDirHdrs [ FDirName $(WONDERBRUSH_TOP) src render ] ;
-SubDirHdrs [ FDirName $(WONDERBRUSH_TOP) src support ] ;
-SubDirHdrs [ FDirName $(WONDERBRUSH_TOP) src tools ] ;
-SubDirSysHdrs [ FDirName $(WONDERBRUSH_TOP) agg/include ] ;
+SubDirHdrs [ FDirName $(TOP) src model snapshots ] ;
+SubDirHdrs [ FDirName $(TOP) src render ] ;
+SubDirHdrs [ FDirName $(TOP) src support ] ;
+SubDirHdrs [ FDirName $(TOP) src tools ] ;
+SubDirSysHdrs [ FDirName $(TOP) agg/include ] ;
 # </pe-inc>
 
 
 # <pe-src>
 Application WonderBrush :
+
+	#alm (Auckland Layout Model)
+	ALMArea.cpp
+	ALMLayout.cpp
+	ALMSpan.cpp
+	ALMTab.cpp
 
 	# commands
 	SetPropertiesCommand.cpp
@@ -110,6 +117,8 @@ Application WonderBrush :
 	RectSnapshot.cpp
 	Shape.cpp
 	ShapeSnapshot.cpp
+	Styleable.cpp
+	StyleableSnapshot.cpp
 
 	# render
 	GaussFilter.cpp
@@ -168,16 +177,20 @@ Application WonderBrush :
 
 		libagg.a
 
+		linprog
+		lpsolve55
+
 		tracker
 		$(STDC++LIB)
+		$(SUPC++LIB)
 		translation
 		be
 	;
 # </pe-src>
 
-SubInclude WONDERBRUSH_TOP src agg ;
-SubInclude WONDERBRUSH_TOP src gui ;
-SubInclude WONDERBRUSH_TOP src model property ;
+SubInclude TOP src agg ;
+SubInclude TOP src gui ;
+SubInclude TOP src model property ;
 
 
 Distro distro ;

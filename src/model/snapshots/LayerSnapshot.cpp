@@ -8,6 +8,8 @@
 #include "LayerSnapshot.h"
 
 #include <new>
+
+#include <stdio.h>
 #include <string.h>
 
 #include <Bitmap.h>
@@ -18,6 +20,7 @@
 #include "Layer.h"
 #include "LayoutContext.h"
 #include "Object.h"
+#include "RenderEngine.h"
 
 
 using std::nothrow;
@@ -87,7 +90,7 @@ LayerSnapshot::Layout(LayoutContext& context, uint32 flags)
 void
 LayerSnapshot::Render(RenderEngine& engine, BBitmap* bitmap, BRect area) const
 {
-	blend_area(fBitmap, bitmap, area);
+	engine.BlendArea(fBitmap, area);
 }
 
 // #pragma mark -
@@ -166,10 +169,10 @@ LayerSnapshot::Render(RenderEngine& engine, BRect area, BBitmap* bitmap,
 		uint32 bytes = (rebuildArea.IntegerWidth() + 1) * 4;
 		uint32 height = rebuildArea.IntegerHeight() + 1;
 		uint32 bpr = bitmap->BytesPerRow();
-	
+
 		bits += (int32)rebuildArea.top * bpr;
 		bits += (int32)rebuildArea.left * 4;
-	
+
 		// clean out bitmap
 		for (uint32 y = 0; y < height; y++) {
 			memset(bits, 0, bytes);
@@ -180,9 +183,14 @@ LayerSnapshot::Render(RenderEngine& engine, BRect area, BBitmap* bitmap,
 	// render objects
 	BRect layerBounds = bitmap->Bounds();
 
+	engine.AttachTo(bitmap);
+
 	for (int32 i = firstObject; i < count; i++) {
 		ObjectSnapshot* object = ObjectAtFast(i);
 		object->PrepareRendering(layerBounds);
+
+		engine.SetClipping(dirtyAreas[i]);
+
 		object->Render(engine, bitmap, dirtyAreas[i]);
 //		if (cacheBitmap && i == cacheLevel) {
 //			copy_area(bitmap, cacheBitmap, dirtyAreas[i]);
@@ -241,7 +249,7 @@ LayerSnapshot::_Sync()
 			snapshot->Sync();
 			continue;
 		}
-		
+
 		while (snapshot && snapshot->Original() != object) {
 			// delete all snapshots until they match again
 			fObjects.RemoveItem(i);

@@ -195,7 +195,7 @@ actions BisonC++
 
 rule Rez
 {
-	Depends $(<) : $(>) ;	
+	Depends $(<) : $(>) ;
 }
 
 rule PreCompile
@@ -260,22 +260,33 @@ rule ObjectSysHdrs
 	}
 }
 
-
 # FSysIncludes <dirs> ;
 #
 # Counterpart of FIncludes for system include search paths.
 #
-if $(OSPLAT) = X86 {
+if $(IS_GCC_4_PLATFORM) {
 	rule FSysIncludes { return -I$(<) ; }
 } else {
-	rule FSysIncludes { return "-i "$(<) ; }
+	if $(OSPLAT) = X86 {
+		rule FSysIncludes { return -I$(<) ; }
+	} else {
+		rule FSysIncludes { return "-i "$(<) ; }
+	}
 }
 
 # Variable referring to the STL.
-if $(OSPLAT) = X86 {
-	TARGET_LIBSTDC++ = stdc++.r4 ;
+if $(IS_GCC_4_PLATFORM) {
+	# gcc 4 Haiku
+	STDC++LIB = stdc++ ;
+	SUPC++LIB = supc++ ;
 } else {
-	TARGET_LIBSTDC++ = mslcpp_4_0 ;
+	SUBC++LIB = ;
+	# BeOS or BeOS compatible Haiku
+	if $(OSPLAT) = X86 {
+		STDC++LIB = stdc++.r4 ;
+	} else {
+		STDC++LIB = mslcpp_4_0 ;
+	}
 }
 
 
@@ -287,9 +298,9 @@ rule CreateSVNRevisionFile file
 	SEARCH on $(svnEntries) = [ FDirName $(HAIKU_TOP) .svn ] ;
 	Depends $(file) : $(svnEntries) ;
 }
-	
+
 actions CreateSVNRevisionFile
 {
-	(LANG=C svn info $(CLOCKWERK_TOP) 2> /dev/null || echo Revision: 0) |
+	(LANG=C svn info $(TOP) 2> /dev/null || echo Revision: 0) |
 		grep Revision | awk '{printf $2}' > $(1)
 }

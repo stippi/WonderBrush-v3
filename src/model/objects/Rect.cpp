@@ -33,21 +33,17 @@ RectListener::Deleted(Rect* rect)
 
 // constructor
 Rect::Rect()
-	:
-	Object(),
-	fArea(10, 10, 60, 60),
-	fColor((rgb_color){ 0, 0, 0, 255 }),
-	fListeners(4)
+	: Styleable()
+	, fArea(10, 10, 60, 60)
+	, fListeners(4)
 {
 }
 
 // constructor
 Rect::Rect(const BRect& area, const rgb_color& color)
-	:
-	Object(),
-	fArea(area),
-	fColor(color),
-	fListeners(4)
+	: Styleable(color)
+	, fArea(area)
+	, fListeners(4)
 {
 }
 
@@ -95,27 +91,6 @@ BRect
 Rect::Area() const
 {
 	return fArea;
-}
-
-// SetColor
-void
-Rect::SetColor(const rgb_color& color)
-{
-//	if (color == fColor)
-//		return;
-
-//	rgb_color oldColor(fColor);
-	fColor = color;
-
-	UpdateChangeCounter();
-//	_NotifyColorChanged(oldColor, fColor);
-}
-
-// Area
-rgb_color
-Rect::Color() const
-{
-	return fColor;
 }
 
 // #pragma mark -

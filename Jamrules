@@ -1,8 +1,21 @@
 
 # The directories used by the build.
-BUILD_DIR			= [ FDirName $(WONDERBRUSH_TOP) build ] ;
-GENERATED_DIR		= [ FDirName $(WONDERBRUSH_TOP) generated ] ;
-DISTRO_DIR			= [ FDirName $(WONDERBRUSH_TOP) generated distro ] ;
+BUILD_DIR			= [ FDirName $(TOP) build ] ;
+GENERATED_DIR		= [ FDirName $(TOP) generated ] ;
+DISTRO_DIR			= [ FDirName $(TOP) generated distro ] ;
+
+# First find out which gcc version the platform uses.
+IS_GCC_4_PLATFORM = ;
+if $(OS) = HAIKU {
+	# Only Haiku might use gcc 4. We use the existence of a libstdc++.r4.so in
+	# /boot/develop/lib/x86 to judge whether this is a BeOS compatible and thus
+	# gcc 2 platform. This is not entirely correct, but should be good enough
+	# for the time being.
+	local hasLibStdC++.R4 = [ Glob /boot/develop/lib/x86 : libstdc++.r4.so ] ;
+	if ! $(hasLibStdC++.R4) {
+		IS_GCC_4_PLATFORM = 1 ;
+	}
+}
 
 include [ FDirName $(BUILD_DIR) HelperRules ] ;
 include [ FDirName $(BUILD_DIR) ConfigRules ] ;
@@ -10,7 +23,7 @@ include [ FDirName $(BUILD_DIR) OverriddenJamRules ] ;
 include [ FDirName $(BUILD_DIR) MainBuildRules ] ;
 include [ FDirName $(BUILD_DIR) BuildSettings ] ;
 
-FULL_DISTRO_DIR	= [ FDirName $(WONDERBRUSH_TOP) generated distro-$(PLATFORM)-with-libs ] ;
+FULL_DISTRO_DIR	= [ FDirName $(TOP) generated distro-$(PLATFORM)-with-libs ] ;
 
 # Include UserBuildConfig.
 {
@@ -42,9 +55,9 @@ rule Distro
 actions Distro
 {
 	echo "making distro $(DISTRO_DIR)" ;
-#	cp -a $(WONDERBRUSH_TOP)/Changes.txt $(DISTRO_DIR)/ ;
-#	cp -a $(WONDERBRUSH_TOP)/Readme.txt $(DISTRO_DIR)/ ;
-	cp -a $(WONDERBRUSH_TOP)/LICENSE $(DISTRO_DIR)/ ;
+#	cp -a $(TOP)/Changes.txt $(DISTRO_DIR)/ ;
+#	cp -a $(TOP)/Readme.txt $(DISTRO_DIR)/ ;
+	cp -a $(TOP)/LICENSE $(DISTRO_DIR)/ ;
 	mimeset $(DISTRO_DIR) ;
 }
 
@@ -63,11 +76,10 @@ actions FullDistro
 	echo "making full distro $(FULL_DISTRO_DIR)" ;
 	rm -rf $(FULL_DISTRO_DIR) ;
 	cp -a $(DISTRO_DIR) $(FULL_DISTRO_DIR) ;
-	mkdir -p $(FULL_DISTRO_DIR)/lib ;
-	cp $(WONDERBRUSH_TOP)/lib/$(LIBCRYPTLIB) $(FULL_DISTRO_DIR)/lib/ ;
-	cp $(WONDERBRUSH_TOP)/lib/$(LIBFREETYPE) $(FULL_DISTRO_DIR)/lib/ ;
-	cp $(WONDERBRUSH_TOP)/lib/$(LIBLAYOUT) $(FULL_DISTRO_DIR)/lib/ ;
-	cp $(WONDERBRUSH_TOP)/lib/$(LIBXERCES) $(FULL_DISTRO_DIR)/lib/ ;
+#	mkdir -p $(FULL_DISTRO_DIR)/lib ;
+#	cp $(TOP)/lib/$(LIBCRYPTLIB) $(FULL_DISTRO_DIR)/lib/ ;
+#	cp $(TOP)/lib/$(LIBFREETYPE) $(FULL_DISTRO_DIR)/lib/ ;
+#	cp $(TOP)/lib/$(LIBXERCES) $(FULL_DISTRO_DIR)/lib/ ;
 	mimeset $(FULL_DISTRO_DIR) ;
 }
 

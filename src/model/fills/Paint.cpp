@@ -7,9 +7,13 @@
 
 #include <new>
 
+#include <stdio.h>
+
 #include <Message.h>
 
+#include "ColorProperty.h"
 #include "Gradient.h"
+#include "OptionProperty.h"
 #include "ui_defines.h"
 
 // constructor
@@ -70,26 +74,14 @@ Paint::Paint(const ::Gradient* gradient)
 // constructor
 Paint::Paint(BMessage* archive)
 	:
-	BaseObject(archive),
+	BaseObject(),
 	fType(NONE),
 	fColors(NULL),
 
 	fGammaCorrectedColors(NULL),
 	fGammaCorrectedColorsValid(false)
 {
-	// TODO: ...
-//	if (archive == NULL)
-//		return;
-//
-//	if (archive->FindInt32("color", (int32*)&fColor) < B_OK)
-//		fColor = kWhite;
-
-//	BMessage gradientArchive;
-//	if (archive->FindMessage("gradient", &gradientArchive) == B_OK) {
-//		::Gradient gradient(&gradientArchive);
-//		SetGradient(&gradient);
-//	}
-
+	Unarchive(archive);
 }
 
 // destructor
@@ -101,40 +93,27 @@ Paint::~Paint()
 
 // #pragma mark -
 
-// DefaultName
-const char*
-Paint::DefaultName() const
+// Unarchive
+status_t
+Paint::Unarchive(const BMessage* archive)
 {
-	switch (fType) {
-		default:
-		case NONE:
-			return "No Paint";
+	status_t ret = BaseObject::Unarchive(archive);
 
-		case COLOR:
-			return "Color";
+	// TODO: ...
+//	if (archive == NULL)
+//		return B_BAD_VALUE;
+//
+//	if (archive->FindInt32("color", (int32*)&fColor) < B_OK)
+//		fColor = kWhite;
 
-		case GRADIENT:
-			return "Gradient";
+//	BMessage gradientArchive;
+//	if (archive->FindMessage("gradient", &gradientArchive) == B_OK) {
+//		::Gradient gradient(&gradientArchive);
+//		SetGradient(&gradient);
+//	}
 
-		case PATTERN:
-			return "Pattern";
-	}
+	return ret;
 }
-
-// #pragma mark -
-
-// ObjectChanged
-void
-Paint::ObjectChanged(const Notifier* object)
-{
-	if (object == fData.gradient && fColors) {
-		fData.gradient->MakeGradient((uint32*)fColors, 256);
-		fGammaCorrectedColorsValid = false;
-		Notify();
-	}
-}
-
-// #pragma mark -
 
 // Archive
 status_t
@@ -172,6 +151,106 @@ Paint::Archive(BMessage* into, bool deep) const
 
 	return ret;
 }
+
+// AddProperties
+void
+Paint::AddProperties(PropertyObject* object) const
+{
+	AddTypeProperty(object, fType);
+
+	switch (fType) {
+		default:
+		case NONE:
+			break;
+		case COLOR:
+			object->AddProperty(new ColorProperty(PROPERTY_PAINT_COLOR,
+				Color()));
+			break;
+		case GRADIENT:
+			// TODO: ...
+			break;
+		case PATTERN:
+			// TODO: ...
+			break;
+	}
+}
+
+// SetToPropertyObject
+bool
+Paint::SetToPropertyObject(const PropertyObject* object)
+{
+	AutoNotificationSuspender _(this);
+
+	BaseObject::SetToPropertyObject(object);
+
+	// Adopt the type first
+	OptionProperty* typeProperty = dynamic_cast<OptionProperty*>(
+		object->FindProperty(PROPERTY_PAINT_TYPE));
+	if (typeProperty != NULL)
+		SetType(typeProperty->CurrentOptionID());
+
+	// Adopt rest of properties according to type
+	// NOTE: SetToPropertyObject() will usually be called as soon as
+	// one property has been changed. So the type should change just
+	// by itself. In any case, the properties we find in the object
+	// should not mismatch. But no harm if they do.
+	switch (fType) {
+		default:
+		case NONE:
+			break;
+		case COLOR:
+		{
+			ColorProperty* colorProperty = dynamic_cast<ColorProperty*>(
+				object->FindProperty(PROPERTY_PAINT_COLOR));
+			if (colorProperty != NULL)
+				SetColor(colorProperty->Value());
+			break;
+		}
+		case GRADIENT:
+			// TODO: ...
+			break;
+		case PATTERN:
+			// TODO: ...
+			break;
+	}
+
+	return HasPendingNotifications();
+}
+
+// DefaultName
+const char*
+Paint::DefaultName() const
+{
+	switch (fType) {
+		default:
+		case NONE:
+			return "No Paint";
+
+		case COLOR:
+			return "Color";
+
+		case GRADIENT:
+			return "Gradient";
+
+		case PATTERN:
+			return "Pattern";
+	}
+}
+
+// #pragma mark -
+
+// ObjectChanged
+void
+Paint::ObjectChanged(const Notifier* object)
+{
+	if (object == fData.gradient && fColors) {
+		fData.gradient->MakeGradient((uint32*)fColors, 256);
+		fGammaCorrectedColorsValid = false;
+		Notify();
+	}
+}
+
+// #pragma mark -
 
 // Unset
 void
@@ -308,6 +387,31 @@ Paint::HashKey() const
 
 // #pragma mark -
 
+// SetType
+void
+Paint::SetType(uint32 type)
+{
+	if (fType == type)
+		return;
+
+	Unset();
+	fType = type;
+	Notify();
+}
+
+// AddTypeProperty
+/*static*/ void
+Paint::AddTypeProperty(PropertyObject* object, uint32 type)
+{
+	OptionProperty* typeProperty = new OptionProperty(PROPERTY_PAINT_TYPE);
+	typeProperty->AddOption(NONE, "None");
+	typeProperty->AddOption(COLOR, "Color");
+	typeProperty->AddOption(GRADIENT, "Gradient");
+	typeProperty->AddOption(PATTERN, "Pattern");
+	typeProperty->SetCurrentOptionID(type);
+	object->AddProperty(typeProperty);
+}
+
 // SetColor
 void
 Paint::SetColor(const rgb_color& color)
@@ -338,7 +442,7 @@ Paint::SetGradient(const ::Gradient* gradient)
 
 	if (gradient != NULL) {
 		if (fData.gradient == NULL) {
-			fData.gradient = new (nothrow) ::Gradient(*gradient);
+			fData.gradient = new (std::nothrow) ::Gradient(*gradient);
 			if (fData.gradient != NULL) {
 				fData.gradient->AddListener(this);
 				// generate gradient

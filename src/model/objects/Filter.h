@@ -18,7 +18,7 @@ class Filter : public Object {
 
 	// BaseObject interface
 	virtual	const char*			DefaultName() const;
-	virtual	PropertyObject*		MakePropertyObject() const;
+	virtual	void				AddProperties(PropertyObject* object) const;
 	virtual	bool				SetToPropertyObject(
 									const PropertyObject* object);
 

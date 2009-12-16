@@ -79,12 +79,19 @@ PropertyObject*
 BaseObject::MakePropertyObject() const
 {
 	PropertyObject* object = new(std::nothrow) PropertyObject();
-	if (object != NULL) {
-		object->AddProperty(new(std::nothrow) StringProperty(PROPERTY_NAME,
-			fName.String()));
-	}
+
+	if (object != NULL)
+		AddProperties(object);
 
 	return object;
+}
+
+// AddProperties
+void
+BaseObject::AddProperties(PropertyObject* object) const
+{
+	object->AddProperty(new(std::nothrow) StringProperty(PROPERTY_NAME,
+		fName.String()));
 }
 
 // SetToPropertyObject

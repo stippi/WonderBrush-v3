@@ -12,7 +12,8 @@
 #include "ui_defines.h"
 
 
-Style::PaintCache Style::sPaintCache;
+PaintCache Style::sPaintCache;
+Style Style::sNullStyle;
 
 //static int
 //test_paint_cache()
@@ -117,18 +118,21 @@ Style::DefaultName() const
 	return "Style";
 }
 
-// MakePropertyObject
-PropertyObject*
-Style::MakePropertyObject() const
+// AddProperties
+void
+Style::AddProperties(PropertyObject* object) const
 {
-	PropertyObject* object = BaseObject::MakePropertyObject();
-	if (object == NULL)
-		return NULL;
+	BaseObject::AddProperties(object);
 
-//	object->AddProperty(new (std::nothrow) FloatProperty(
-//		PROPERTY_FILTER_RADIUS, fFilterRadius, 0.0f, 10000.0f));
+	if (fFillPaint != NULL)
+		fFillPaint->AddProperties(object);
+	else
+		Paint::AddTypeProperty(object, Paint::NONE);
 
-	return object;
+	if (fStrokePaint != NULL)
+		fStrokePaint->AddProperties(object);
+	else
+		Paint::AddTypeProperty(object, Paint::NONE);
 }
 
 // SetToPropertyObject
@@ -138,9 +142,30 @@ Style::SetToPropertyObject(const PropertyObject* object)
 	AutoNotificationSuspender _(this);
 	BaseObject::SetToPropertyObject(object);
 
-//	SetFilterRadius(object->Value(PROPERTY_FILTER_RADIUS, fFilterRadius));
+	// TODO: ...
 
-	return HasPendingNotifications();
+	bool ret = HasPendingNotifications();
+
+	Paint paint;
+
+	if (fFillPaint != NULL)
+		paint = *fFillPaint;
+
+	// TODO: These really need to be sub-PropertyObjects!
+	if (paint.SetToPropertyObject(object)) {
+		SetFillPaint(paint);
+		ret = true;
+	}
+
+	if (fStrokePaint != NULL)
+		paint = *fStrokePaint;
+
+	if (paint.SetToPropertyObject(object)) {
+		SetStrokePaint(paint);
+		ret = true;
+	}
+
+	return ret;
 }
 
 // SetFillPaint

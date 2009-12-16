@@ -1,20 +1,18 @@
 /*
- * Copyright 2007, Haiku. All rights reserved.
- * Distributed under the terms of the MIT License.
- *
- * Authors:
- *		Stephan Aßmus <superstippi@gmx.de>
+ * Copyright 2007-2009, Stephan Aßmus <superstippi@gmx.de>.
+ * All rights reserved.
  */
 #ifndef RECT_SNAPSHOT_H
 #define RECT_SNAPSHOT_H
 
 #include <GraphicsDefs.h>
-#include "ObjectSnapshot.h"
+
+#include "StyleableSnapshot.h"
 
 class Rect;
 
-class RectSnapshot : public ObjectSnapshot {
- public:
+class RectSnapshot : public StyleableSnapshot {
+public:
 								RectSnapshot(const Rect* rect);
 	virtual						~RectSnapshot();
 
@@ -24,10 +22,9 @@ class RectSnapshot : public ObjectSnapshot {
 	virtual	void				Render(RenderEngine& engine, BBitmap* bitmap,
 									BRect area) const;
 
- private:
+private:
 			const Rect*			fOriginal;
 			BRect				fArea;
-			rgb_color			fColor;
 };
 
 #endif // RECT_SNAPSHOT_H

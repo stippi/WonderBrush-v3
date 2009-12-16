@@ -193,13 +193,11 @@ Path::Archive(BMessage* into, bool deep) const
 	return ret;
 }
 
-// MakePropertyObject
-PropertyObject*
-Path::MakePropertyObject() const
+// AddProperties
+void
+Path::AddProperties(PropertyObject* object) const
 {
-	PropertyObject* object = BaseObject::MakePropertyObject();
-	if (!object)
-		return NULL;
+	BaseObject::AddProperties(object);
 
 	// closed
 	object->AddProperty(new(std::nothrow) BoolProperty(PROPERTY_CLOSED,
@@ -212,8 +210,6 @@ Path::MakePropertyObject() const
 			kPathPropertyIconBits, kPathPropertyIconWidth,
 			kPathPropertyIconHeight, kPathPropertyIconFormat, archive));
 	}
-
-	return object;
 }
 
 // SetToPropertyObject

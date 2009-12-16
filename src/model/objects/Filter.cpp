@@ -41,18 +41,14 @@ Filter::DefaultName() const
 	return "Gaussian Blur";
 }
 
-// MakePropertyObject
-PropertyObject*
-Filter::MakePropertyObject() const
+// AddProperties
+void
+Filter::AddProperties(PropertyObject* object) const
 {
-	PropertyObject* object = BaseObject::MakePropertyObject();
-	if (object == NULL)
-		return NULL;
+	BaseObject::AddProperties(object);
 
 	object->AddProperty(new (std::nothrow) FloatProperty(
 		PROPERTY_FILTER_RADIUS, fFilterRadius, 0.0f, 10000.0f));
-
-	return object;
 }
 
 // SetToPropertyObject

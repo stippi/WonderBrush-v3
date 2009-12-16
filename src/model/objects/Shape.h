@@ -10,10 +10,9 @@
 #include <List.h>
 #include <Rect.h>
 
-#include "Object.h"
+#include "Styleable.h"
 
 class Shape;
-class Style;
 
 class ShapeListener {
 public:
@@ -27,7 +26,7 @@ public:
 };
 
 
-class Shape : public Object {
+class Shape : public Styleable {
 public:
 								Shape();
 								Shape(const BRect& area,
@@ -37,15 +36,15 @@ public:
 	// Object interface
 	virtual	ObjectSnapshot*		Snapshot() const;
 
+	virtual	void				AddProperties(PropertyObject* object) const;
+	virtual	bool				SetToPropertyObject(
+									const PropertyObject* object);
+
 	virtual	const char*			DefaultName() const;
 
 	// Shape
 			void				SetArea(const BRect& area);
-			BRect				Area() const;
-
-			void				SetStyle(::Style* style);
-	inline	::Style*			Style() const
-									{ return fStyle.Get(); }
+	virtual	BRect				Area() const;
 
 			bool				AddListener(ShapeListener* listener);
 			void				RemoveListener(ShapeListener* listener);
@@ -57,7 +56,6 @@ private:
 			void				_NotifyDeleted();
 
 			BRect				fArea;
-			Reference< ::Style>	fStyle;
 
 			BList				fListeners;
 };

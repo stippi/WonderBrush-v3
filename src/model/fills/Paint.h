@@ -33,15 +33,18 @@ public:
 	virtual						~Paint();
 
 	// BaseObject interface
+	virtual	status_t			Unarchive(const BMessage* archive);
+	virtual	status_t			Archive(BMessage* into,
+									bool deep = true) const;
+	virtual	void				AddProperties(PropertyObject* object) const;
+	virtual	bool				SetToPropertyObject(
+									const PropertyObject* object);
 	virtual	const char*			DefaultName() const;
 
 	// Listener interface
 	virtual	void				ObjectChanged(const Notifier* object);
 
 	// Paint
-	virtual	status_t			Archive(BMessage* into,
-									bool deep = true) const;
-
 			void				Unset();
 
 			Paint&				operator=(const Paint& other);
@@ -51,8 +54,12 @@ public:
 			bool				HasTransparency() const;
 			size_t				HashKey() const;
 
+			void				SetType(uint32 type);
 	inline	uint32				Type() const
 									{ return fType; }
+
+	static	void				AddTypeProperty(PropertyObject* object,
+									uint32 type);
 
 			void				SetColor(const rgb_color& color);
 	inline	rgb_color			Color() const

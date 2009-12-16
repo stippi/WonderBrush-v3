@@ -40,7 +40,12 @@ enum {
 
 	PROPERTY_DETECT_ORIENTATION			= 'ador',
 
-	PROPERTY_FILTER_RADIUS				= 'flrd'
+	PROPERTY_FILTER_RADIUS				= 'flrd',
+
+	PROPERTY_PAINT_TYPE					= 'pntt',
+	PROPERTY_PAINT_COLOR				= 'pntc',
+	PROPERTY_PAINT_GRADIENT				= 'pntg',
+	PROPERTY_PAINT_PATTERN				= 'pntp',
 };
 
 

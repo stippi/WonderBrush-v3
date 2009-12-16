@@ -5,10 +5,7 @@
 
 #include "Shape.h"
 
-#include "Paint.h"
 #include "ShapeSnapshot.h"
-#include "Style.h"
-#include "ui_defines.h"
 
 // constructor
 ShapeListener::ShapeListener()
@@ -37,31 +34,24 @@ ShapeListener::Deleted(Shape* shape)
 
 // constructor
 Shape::Shape()
-	:
-	Object(),
-	fArea(10, 10, 60, 60),
-	fStyle(new ::Style(), true),
-	fListeners(4)
+	: Styleable()
+	, fArea(10, 10, 60, 60)
+	, fListeners(4)
 {
-	fStyle->SetFillPaint(Paint(kBlack));
 }
 
 // constructor
 Shape::Shape(const BRect& area, const rgb_color& color)
-	:
-	Object(),
-	fArea(area),
-	fStyle(new ::Style(), true),
-	fListeners(4)
+	: Styleable(color)
+	, fArea(area)
+	, fListeners(4)
 {
-	fStyle->SetFillPaint(Paint(color));
 }
 
 // destructor
 Shape::~Shape()
 {
 	_NotifyDeleted();
-	fStyle->RemoveReference();
 }
 
 // #pragma mark -
@@ -71,6 +61,20 @@ ObjectSnapshot*
 Shape::Snapshot() const
 {
 	return new ShapeSnapshot(this);
+}
+
+// AddProperties
+void
+Shape::AddProperties(PropertyObject* object) const
+{
+	Styleable::AddProperties(object);
+}
+
+// SetToPropertyObject
+bool
+Shape::SetToPropertyObject(const PropertyObject* object)
+{
+	return Styleable::SetToPropertyObject(object);
 }
 
 // DefaultName
@@ -102,14 +106,6 @@ BRect
 Shape::Area() const
 {
 	return fArea;
-}
-
-// SetColor
-void
-Shape::SetStyle(::Style* style)
-{
-	if (fStyle.SetTo(style))
-		InvalidateParent(fArea);
 }
 
 // #pragma mark -

@@ -11,32 +11,14 @@
 #include <Locker.h>
 #include <Rect.h>
 
-#include <agg_pixfmt_rgba.h>
-#include <agg_rasterizer_scanline_aa.h>
-#include <agg_renderer_base.h>
-#include <agg_rendering_buffer.h>
-#include <agg_renderer_scanline.h>
-#include <agg_path_storage.h>
-
-#include "ObjectCache.h"
-#include "ObjectSnapshot.h"
-#include "Scanline.h"
+#include "StyleableSnapshot.h"
 #include "Referenceable.h"
+#include "RenderEngine.h"
 
 class Shape;
-class Style;
-
-typedef agg::rendering_buffer				RenderingBuffer;
-typedef agg::pixfmt_bgra32_pre				PixelFormat;
-typedef agg::renderer_base<PixelFormat>		BaseRenderer;
-typedef agg::renderer_scanline_aa_solid<BaseRenderer>
-											Renderer;
-
-typedef agg::rasterizer_scanline_aa<>		Rasterizer;
-typedef agg::path_storage					Path;
 
 
-class ShapeSnapshot : public ObjectSnapshot {
+class ShapeSnapshot : public StyleableSnapshot {
 public:
 								ShapeSnapshot(const Shape* shape);
 	virtual						~ShapeSnapshot();
@@ -53,17 +35,16 @@ private:
 									BRect documentBounds) const;
 			void				_ClearScanlines();
 
+private:
 			const Shape*		fOriginal;
 			BRect				fArea;
-			Reference<Style>	fStyle;
 
 			BLocker				fRasterizerLock;
 	volatile bool				fNeedsRasterizing;
 
 			Rasterizer			fRasterizer;
 
-	typedef ObjectCache<Scanline, false> ScanlineContainer;
-			ScanlineContainer	fScanlines2;
+			ScanlineContainer	fScanlines;
 			CoverAllocator		fCoverAllocator;
 			SpanAllocator		fSpanAllocator;
 };

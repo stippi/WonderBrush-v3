@@ -1,8 +1,8 @@
-SubDir WONDERBRUSH_TOP src gui popupcontrol ;
+SubDir TOP src gui popupcontrol ;
 
 # <pe-inc>
-SubDirHdrs $(WONDERBRUSH_TOP) src gui ;
-SubDirHdrs $(WONDERBRUSH_TOP) src support ;
+SubDirHdrs $(TOP) src gui ;
+SubDirHdrs $(TOP) src support ;
 # </pe-inc>
 
 # <pe-src>

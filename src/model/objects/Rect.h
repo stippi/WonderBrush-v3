@@ -12,7 +12,7 @@
 #include <List.h>
 #include <Rect.h>
 
-#include "Object.h"
+#include "Styleable.h"
 
 class Rect;
 
@@ -28,7 +28,7 @@ public:
 };
 
 
-class Rect : public Object {
+class Rect : public Styleable {
 public:
 								Rect();
 								Rect(const BRect& area,
@@ -42,10 +42,7 @@ public:
 
 	// Rect
 			void				SetArea(const BRect& area);
-			BRect				Area() const;
-
-			void				SetColor(const rgb_color& color);
-			rgb_color			Color() const;
+	virtual	BRect				Area() const;
 
 			bool				AddListener(RectListener* listener);
 			void				RemoveListener(RectListener* listener);
@@ -56,8 +53,8 @@ private:
 
 			void				_NotifyDeleted();
 
+private:
 			BRect				fArea;
-			rgb_color			fColor;
 
 			BList				fListeners;
 };

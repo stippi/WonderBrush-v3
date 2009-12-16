@@ -90,6 +90,19 @@ name_for_id(int32 id)
 			name = "Filter Radius";
 			break;
 
+		case PROPERTY_PAINT_TYPE:
+			name = "Type";
+			break;
+		case PROPERTY_PAINT_COLOR:
+			name = "Color";
+			break;
+		case PROPERTY_PAINT_GRADIENT:
+			name = "Gradient";
+			break;
+		case PROPERTY_PAINT_PATTERN:
+			name = "Pattern";
+			break;
+
 		default:
 			name = "<unkown property>";
 			break;

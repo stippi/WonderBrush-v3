@@ -9,26 +9,22 @@
 
 #include <Bitmap.h>
 
-#include "Paint.h"
-	// TODO: Remove, put all the handling for Style into RenderEngine...
+#include "AutoLocker.h"
 #include "Shape.h"
-#include "Style.h"
 
 // constructor
 ShapeSnapshot::ShapeSnapshot(const Shape* shape)
-	:
-	ObjectSnapshot(shape),
-	fOriginal(shape),
-	fArea(shape->Area()),
-	fStyle(shape->Style()),
+	: StyleableSnapshot(shape)
+	, fOriginal(shape)
+	, fArea(shape->Area())
 
-	fRasterizerLock("shape lock"),
-	fNeedsRasterizing(true),
+	, fRasterizerLock("shape lock")
+	, fNeedsRasterizing(true)
 
-	fRasterizer(),
-	fScanlines2(),
-	fCoverAllocator(),
-	fSpanAllocator()
+	, fRasterizer()
+	, fScanlines()
+	, fCoverAllocator()
+	, fSpanAllocator()
 {
 	fRasterizer.filling_rule(agg::fill_non_zero);
 }
@@ -52,9 +48,8 @@ ShapeSnapshot::Original() const
 bool
 ShapeSnapshot::Sync()
 {
-	if (ObjectSnapshot::Sync()) {
+	if (StyleableSnapshot::Sync()) {
 		fArea = fOriginal->Area();
-		fStyle.SetTo(fOriginal->Style());
 		fNeedsRasterizing = true;
 		return true;
 	}
@@ -67,14 +62,14 @@ ShapeSnapshot::Sync()
 void
 ShapeSnapshot::PrepareRendering(BRect documentBounds)
 {
-	if (!fRasterizerLock.Lock())
+	AutoLocker<BLocker> lock(fRasterizerLock);
+	if (!lock.IsLocked())
 		return;
 
 	if (!fNeedsRasterizing) {
 #if PRINT_TIMING
 printf("PrepareRendering(): already prepared\n");
 #endif
-		fRasterizerLock.Unlock();
 		return;
 	}
 
@@ -90,7 +85,7 @@ bigtime_t now = system_time();
 	if (fRasterizer.rewind_scanlines()) {
 		Scanline* scanline;
 		do {
-			scanline = fScanlines2.AppendObject();
+			scanline = fScanlines.AppendObject();
 			if (scanline == NULL)
 				return;
 			scanline->SetAllocators(&fCoverAllocator, &fSpanAllocator);
@@ -99,13 +94,13 @@ bigtime_t now = system_time();
 
 		// The last added scanline was not used anymore, so just remove it
 		// again.
-		fScanlines2.RemoveObject();
+		fScanlines.RemoveObject();
 
 		// Validate the data to avoid stale pointers after relocation of
 		// memory buffers.
-		uint32 count = fScanlines2.CountObjects();
+		uint32 count = fScanlines.CountObjects();
 		for (uint32 i = 0; i < count; i++) {
-			scanline = fScanlines2.ObjectAtFast(i);
+			scanline = fScanlines.ObjectAtFast(i);
 			scanline->Validate();
 		}
 	}
@@ -115,79 +110,14 @@ printf("PrepareRendering(): %lld\n", system_time() - now);
 #endif
 
 	fNeedsRasterizing = false;
-	fRasterizerLock.Unlock();
 }
 
 // Render
 void
 ShapeSnapshot::Render(RenderEngine& engine, BBitmap* bitmap, BRect area) const
 {
-	area = (area & fArea) & bitmap->Bounds();
-	if (!area.IsValid())
-		return;
-
-#if PRINT_TIMING
-bigtime_t now = system_time();
-#endif
-
-	uint8* bits = (uint8*)bitmap->Bits();
-	uint32 width = bitmap->Bounds().IntegerWidth() + 1;
-	uint32 height = bitmap->Bounds().IntegerHeight() + 1;
-	uint32 bpr = bitmap->BytesPerRow();
-	int32 top = (int32)area.top;
-	int32 bottom = (int32)area.bottom;
-
-	RenderingBuffer buffer(bits, width, height, bpr);
-
-	PixelFormat pixelFormat(buffer);
-	BaseRenderer baseRenderer(pixelFormat);
-	baseRenderer.clip_box((int32)area.left, top, (int32)area.right, bottom);
-
-	Renderer renderer(baseRenderer);
-	agg::rgba8 color(0, 0, 0, 255);
-	if (fStyle.Get() != NULL) {
-		Reference<Paint> paint(fStyle->FillPaint());
-		if (paint.Get() != NULL) {
-			switch (paint->Type()) {
-				case Paint::COLOR:
-					rgb_color c = paint.Get()->Color();
-					color = agg::rgba8(c.red, c.green, c.blue, c.alpha);
-					break;
-				case Paint::GRADIENT:
-					break;
-				case Paint::PATTERN:
-					break;
-
-				case Paint::NONE:
-				default:
-					break;
-			}
-		}
-	}
-
-	color.premultiply();
-	renderer.color(color);
-
-	renderer.prepare();
-#if PRINT_TIMING
-int32 rendered = 0;
-#endif
-
-	uint32 count = fScanlines2.CountObjects();
-	for (uint32 i = 0; i < count; i++) {
-		const Scanline* scanline = fScanlines2.ObjectAtFast(i);
-		int y = scanline->y();
-		if (y >= top && y <= bottom) {
-			renderer.render(*scanline);
-#if PRINT_TIMING
-rendered++;
-#endif
-		}
-	}
-
-#if PRINT_TIMING
-printf("Render(): %lld, %ld scanlines\n", system_time() - now, rendered);
-#endif
+	engine.SetStyle(fStyle.Get());
+	engine.RenderScanlines(fScanlines);
 }
 
 // _RasterizeShape
@@ -195,7 +125,7 @@ void
 ShapeSnapshot::_RasterizeShape(Rasterizer& rasterizer,
 	BRect bounds) const
 {
-	Path path;
+	PathStorage path;
 	path.move_to(fArea.left, fArea.top);
 	path.line_to((fArea.left + fArea.right) / 2,
 		fArea.top + fArea.Height() / 3);
@@ -225,5 +155,5 @@ ShapeSnapshot::_ClearScanlines()
 {
 	fCoverAllocator.Clear();
 	fSpanAllocator.Clear();
-	fScanlines2.Clear();
+	fScanlines.Clear();
 }

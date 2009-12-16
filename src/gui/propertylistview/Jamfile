@@ -1,17 +1,17 @@
-SubDir WONDERBRUSH_TOP src gui propertylistview ;
+SubDir TOP src gui propertylistview ;
 
 # <pe-inc>
-SubDirHdrs $(WONDERBRUSH_TOP) src gui misc ;
-SubDirHdrs $(WONDERBRUSH_TOP) src gui propertylistview ;
-SubDirHdrs $(WONDERBRUSH_TOP) src gui propertylistview specific_properties ;
-SubDirHdrs $(WONDERBRUSH_TOP) src gui scrollview ;
-SubDirHdrs $(WONDERBRUSH_TOP) src model property ;
-SubDirHdrs $(WONDERBRUSH_TOP) src model property specific_properties ;
-SubDirHdrs $(WONDERBRUSH_TOP) src support ;
+SubDirHdrs $(TOP) src gui misc ;
+SubDirHdrs $(TOP) src gui propertylistview ;
+SubDirHdrs $(TOP) src gui propertylistview specific_properties ;
+SubDirHdrs $(TOP) src gui scrollview ;
+SubDirHdrs $(TOP) src model property ;
+SubDirHdrs $(TOP) src model property specific_properties ;
+SubDirHdrs $(TOP) src support ;
 # </pe-inc>
 
 # additional source directories
-SEARCH_SOURCE += [ FDirName $(WONDERBRUSH_TOP) src gui propertylistview
+SEARCH_SOURCE += [ FDirName $(TOP) src gui propertylistview
 	specific_properties ] ;
 
 # <pe-src>

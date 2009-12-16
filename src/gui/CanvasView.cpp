@@ -513,6 +513,8 @@ CanvasView::SetZoomLevel(double zoomLevel, bool mouseIsAnchor)
 	Invalidate();
 		// Cause the (Haiku) app_server to skip visual scrolling
 	SetDataRectAndScrollOffset(dataRect, offset);
+
+	fRenderManager->SetZoomLevel(fZoomLevel);
 }
 
 // SetAutoScrolling

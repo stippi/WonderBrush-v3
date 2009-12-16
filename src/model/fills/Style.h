@@ -12,6 +12,11 @@
 #include "SharedObjectCache.h"
 #include "StrokeProperties.h"
 
+
+typedef SharedObject<Paint>			SharedPaint;
+typedef SharedObjectCache<Paint>	PaintCache;
+
+
 class Style : public BaseObject {
 public:
 								Style();
@@ -25,10 +30,11 @@ public:
 										bool deep = true) const;
 
 	virtual	const char*			DefaultName() const;
-	virtual	PropertyObject*		MakePropertyObject() const;
+	virtual	void				AddProperties(PropertyObject* object) const;
 	virtual	bool				SetToPropertyObject(
 									const PropertyObject* object);
 
+	// Style
 
 			void				SetFillPaint(const Paint& paint);
 			void				UnsetFillPaint();
@@ -65,11 +71,9 @@ private:
 									CacheType& cache,
 									uint64 setProperty);
 
-
-	typedef SharedObject<Paint>			SharedPaint;
-	typedef SharedObjectCache<Paint>	PaintCache;
-
+private:
 	static	PaintCache			sPaintCache;
+	static	Style				sNullStyle;
 
 			uint64				fSetProperties;
 
