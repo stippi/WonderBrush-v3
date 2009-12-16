@@ -2,7 +2,7 @@
  * Copyright 2007-2008, Stephan Aßmus <superstippi@gmx.de>
  * Copyright 2007, Ingo Weinhold <ingo_weinhold@gmx.de>
  * All rights reserved. Distributed under the terms of the MIT License.
- *		
+ *
  */
 #define USE_CACHING 0
 #define DEBUG_CACHING 0
@@ -121,12 +121,13 @@ class RenderThread::LayerBitmap {
 			BRect				Render(RenderEngine& engine, BRect area);
 
 			const BBitmap*		Bitmap() const
-									{ return &fLayerBitmap; }
+									{ return fLayerBitmap; }
+			status_t			Resize(uint32 width, uint32 height);
 
  private:
 			LayerSnapshot*		fLayer;
 
-			BBitmap				fLayerBitmap;
+			BBitmap*			fLayerBitmap;
 #if USE_CACHING
 			BBitmap				fCacheBitmap;
 			int32				fCacheLevel;
@@ -144,13 +145,16 @@ class RenderThread::LayerBitmap {
 // constructor
 RenderThread::LayerBitmap::LayerBitmap(LayerSnapshot* layer)
 	: fLayer(layer)
-	, fLayerBitmap(layer->Bounds(), 0, B_RGBA32)
+	, fLayerBitmap(NULL)
 #if USE_CACHING
 	, fCacheBitmap(layer->Bounds(), 0, B_RGBA32)
 	, fCacheLevel(-1)
 	, fValidCache()
 #endif
 {
+	Resize(layer->Bounds().IntegerWidth() + 1,
+		layer->Bounds().IntegerHeight() + 1);
+
 #  if DEBUG_CACHING
 	uint32 windowFlags = B_NOT_RESIZABLE | B_NOT_ZOOMABLE | B_NOT_CLOSABLE;
 	BString helper;
@@ -184,7 +188,7 @@ RenderThread::LayerBitmap::InitCheck() const
 {
 	if (!fLayer)
 		return B_NO_INIT;
-	status_t ret = fLayerBitmap.InitCheck();
+	status_t ret = fLayerBitmap->InitCheck();
 	if (ret < B_OK)
 		return ret;
 #if USE_CACHING
@@ -201,16 +205,28 @@ RenderThread::LayerBitmap::Render(RenderEngine& engine, BRect area)
 {
 #if USE_CACHING
 	return fLayer->Render(area, lowestChangedObject,
-		&fLayerBitmap, &fCacheBitmap, fValidCache, fCacheLevel);
+		fLayerBitmap, &fCacheBitmap, fValidCache, fCacheLevel);
 #else
 	BRegion dummyRegion;
 	int32 dummyLevel;
-	return fLayer->Render(engine, area, &fLayerBitmap, NULL,
+	return fLayer->Render(engine, area, fLayerBitmap, NULL,
 		dummyRegion, dummyLevel);
 #endif
 }
 
-// #pragma mark -
+// Resize
+status_t
+RenderThread::LayerBitmap::Resize(uint32 width, uint32 height)
+{
+	delete fLayerBitmap;
+	fLayerBitmap = new(std::nothrow) BBitmap(
+		BRect(0, 0, width - 1, height - 1), B_BITMAP_NO_SERVER_LINK, B_RGBA32);
+	if (fLayerBitmap == NULL)
+		return B_NO_MEMORY;
+	return fLayerBitmap->InitCheck();
+}
+
+// #pragma mark - RenderThread
 
 // constructor
 RenderThread::RenderThread(RenderManager* manager)
