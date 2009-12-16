@@ -1,7 +1,14 @@
-// Scroller.h
-
+/*
+ * Copyright 2006, Haiku.
+ * Distributed under the terms of the MIT License.
+ *
+ * Authors:
+ *		Ingo Weinhold <bonefish@cs.tu-berlin.de>
+ */
 #ifndef SCROLLER_H
 #define SCROLLER_H
+
+#include <Rect.h>
 
 class Scrollable;
 

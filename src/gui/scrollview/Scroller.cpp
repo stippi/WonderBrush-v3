@@ -1,11 +1,18 @@
-// Scroller.cpp
+/*
+ * Copyright 2006, Haiku.
+ * Distributed under the terms of the MIT License.
+ *
+ * Authors:
+ *		Ingo Weinhold <bonefish@cs.tu-berlin.de>
+ */
+
+#include "Scroller.h"
 
 #include <stdio.h>
 
 #include <Point.h>
 #include <Rect.h>
 
-#include "Scroller.h"
 #include "Scrollable.h"
 
 // constructor

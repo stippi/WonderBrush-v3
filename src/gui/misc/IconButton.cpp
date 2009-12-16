@@ -257,7 +257,7 @@ IconButton::MouseMoved(BPoint where, uint32 transit, const BMessage* message)
 	if ((transit == B_INSIDE_VIEW || transit == B_ENTERED_VIEW)
 		&& _HasFlags(STATE_ENABLED))
 		_AddFlags(STATE_INSIDE);
-	else 
+	else
 		_ClearFlags(STATE_INSIDE);
 	if (_HasFlags(STATE_TRACKING)) {
 		if (Bounds().Contains(where))
@@ -375,7 +375,7 @@ IconButton::SetIcon(const char* pathToBitmap)
 					status = path.Append(pathToBitmap, true);
 					if (status == B_OK)
 						fileBitmap = BTranslationUtils::GetBitmap(path.Path());
-					else 
+					else
 						printf("IconButton::SetIcon() - path.Append() failed: %s\n", strerror(status));
 				} else
 					printf("IconButton::SetIcon() - path.GetParent() failed: %s\n", strerror(status));
@@ -546,8 +546,8 @@ IconButton::Bitmap() const
 bool
 IconButton::DrawBorder() const
 {
-	return (IsEnabled() && (_HasFlags(STATE_INSIDE)
-		|| _HasFlags(STATE_TRACKING)) || _HasFlags(STATE_FORCE_PRESSED));
+	return ((IsEnabled() && (_HasFlags(STATE_INSIDE)
+		|| _HasFlags(STATE_TRACKING))) || _HasFlags(STATE_FORCE_PRESSED));
 }
 
 // DrawNormalBorder

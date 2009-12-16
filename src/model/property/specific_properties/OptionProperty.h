@@ -37,7 +37,6 @@ class OptionProperty : public Property {
 	// animation
 	virtual	bool				MakeAnimatable(bool animatable = true);
 
-
 	// OptionProperty
 			void				AddOption(int32 id, const char* name);
 

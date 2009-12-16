@@ -7,6 +7,9 @@
 #define NOTIFYING_LIST_H
 
 
+#include <stdio.h>
+
+#include <debugger.h>
 #include <List.h>
 
 

@@ -11,11 +11,10 @@
 
 // constructor
 WonderBrush::WonderBrush(BRect bounds)
-	:
-	BApplication("application/x-vnd.yellowbites.WonderBrush2"),
-	fDocument(new Document(bounds)),
-	fWindowFrame(bounds.OffsetToCopy(50, 50)),
-	fWindowCount(0)
+	: BApplication("application/x-vnd.yellowbites.WonderBrush2")
+	, fDocument(new Document(bounds))
+	, fWindowFrame(bounds.OffsetToCopy(50, 50))
+	, fWindowCount(0)
 {
 	// create dummy contents for document
 	fDocument->RootLayer()->AddObject(new Rect(BRect(50, 100, 110, 130),
