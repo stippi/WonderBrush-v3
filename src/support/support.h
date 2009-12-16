@@ -22,16 +22,17 @@ constrain(float& value, float min, float max)
 inline int32
 constrain_int32_0_255_asm(int32 value)
 {
-    __asm__ __volatile__ (
-    	"movl  $0,    %%ecx;"
-		"movl  $255,  %%edx;"
-		"cmpl  %%ecx, %%eax;"
-		"cmovl %%ecx, %%eax;"
-		"cmpl  %%edx, %%eax;"
-		"cmovg %%edx, %%eax"
-       : "=a" (value)
-       : "a" (value) 
-       : "%ecx", "%edx");
+	__asm__ __volatile__ (
+		"movl	$0,		%%ecx;"
+		"movl	$255,	%%edx;"
+		"cmpl	%%ecx,	%%eax;"
+		"cmovl	%%ecx,	%%eax;"
+		"cmpl	%%edx,	%%eax;"
+		"cmovg	%%edx,	%%eax"
+		: "=a" (value)
+		: "a" (value)
+		: "%ecx", "%edx"
+	);
 	return value;
 }
 
@@ -42,12 +43,38 @@ constrain_int32_0_255_c(int32 value)
     return max_c(0, min_c(255, value));
 }
 
+
+/*!	From FOG library (posted to AGG mailing list without license)
+	Multiplies each byte in x by a, where a must by on [0..255].
+	Each byte in x is then divided by 255.
+*/
+inline uint32
+multiply_bytes(uint32 x, uint32 a)
+{
+#if 0 // on 64bit architecture:
+	uint64 x0 = ((uint64)x | ((uint64)x << 24)) & uint64(0x00ff00ff00ff00ff);
+	x0 *= a;
+	x0 = (x0 + ((x0 >> 8) & uint64(0x00ff00ff00ff00ff))
+		+ uint64(0x0080008000800080)) >> 8;
+	x0 &= uint64(0x00ff00ff00ff00ff);
+	return (uint32)(x0 | (x0 >> 24));
+#else
+	uint32 t0 = ((x & 0x00ff00ff)     ) * a;
+	uint32 t1 = ((x & 0xff00ff00) >> 8) * a;
+
+	x  = ((t0 + ((t0 >> 8) & 0x00ff00ff) + 0x00800080) >> 8) & 0x00ff00ff;
+	x |= ((t1 + ((t1 >> 8) & 0x00ff00ff) + 0x00800080)     ) & 0xff00ff00;
+
+	return x;
+#endif
+}
+
+
 #define constrain_int32_0_255 constrain_int32_0_255_asm
 
 // rect_to_int
 inline void
-rect_to_int(BRect r,
-			int32& left, int32& top, int32& right, int32& bottom)
+rect_to_int(BRect r, int32& left, int32& top, int32& right, int32& bottom)
 {
 	left = (int32)floorf(r.left);
 	top = (int32)floorf(r.top);
@@ -85,26 +112,26 @@ T min4(const T a, const T b, const T c, const T d)
 	T e = a < b ? a : b;
 	T f = c < d ? c : d;
 	return e < f ? e : f;
-} 
+}
 template <class T>
 T max4(const T a, const T b, const T c, const T d)
 {
 	T e = a > b ? a : b;
 	T f = c > d ? c : d;
 	return e > f ? e : f;
-} 
+}
 */
 inline float
 min4(float a, float b, float c, float d)
 {
 	return min_c(a, min_c(b, min_c(c, d)));
-} 
+}
 
 inline float
 max4(float a, float b, float c, float d)
 {
 	return max_c(a, max_c(b, max_c(c, d)));
-} 
+}
 
 inline float
 min5(float v1, float v2, float v3, float v4, float v5)
