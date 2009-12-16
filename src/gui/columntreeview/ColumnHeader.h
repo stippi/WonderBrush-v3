@@ -21,10 +21,10 @@ class ColumnHeader {
 									 BRect updateRect, uint32 flags,
 									 const column_header_colors* colors);
 
-			void				DrawBackground(BView* view, BRect frame,
+	static	void				DrawBackground(BView* view, BRect frame,
 										BRect rect, uint32 flags,
 										const column_header_colors* colors);
-			void				DrawFrame(BView* view, BRect frame,
+	static	void				DrawFrame(BView* view, BRect frame,
 										  uint32 flags,
 										  const column_header_colors* colors);
 

@@ -43,7 +43,10 @@ LabelColumnHeader::Draw(BView* view, BRect frame, BRect updateRect,
 	font_height fontHeight;
 	view->GetFontHeight(&fontHeight);
 	BRect textRect(frame.InsetByCopy(1.0, 1.0));
-	BPoint textPoint(textRect.left + 8.0, textRect.bottom - 2.0 - fontHeight.descent);
+	BPoint textPoint(textRect.left + 8.0,
+		textRect.top
+			+ (textRect.Height() - fontHeight.ascent - fontHeight.descent) / 2
+			+ fontHeight.ascent);
 
 	BString label(fLabel);
 	view->TruncateString(&label, B_TRUNCATE_END, textRect.right - textPoint.x);
