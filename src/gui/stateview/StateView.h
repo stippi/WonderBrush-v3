@@ -78,6 +78,8 @@ public:
 
 	virtual	float				ZoomLevel() const;
 
+	virtual	void				InvalidateCanvas(const BRect& bounds);
+
 	virtual	void				FilterMouse(BPoint* where) const;
 
 	virtual	ViewState*			StateForDragMessage(const BMessage* message);

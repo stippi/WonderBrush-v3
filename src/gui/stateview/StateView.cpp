@@ -419,6 +419,13 @@ StateView::ZoomLevel() const
 	return 1.0f;
 }
 
+// InvalidateCanvas
+void
+StateView::InvalidateCanvas(const BRect& bounds)
+{
+	Invalidate(bounds);
+}
+
 // FilterMouse
 void
 StateView::FilterMouse(BPoint* point) const

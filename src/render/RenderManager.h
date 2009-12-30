@@ -66,6 +66,8 @@ public:
 			void				SetZoomLevel(float zoomLevel);
 			float				ZoomLevel() const;
 
+			bool				ScrollBy(const BPoint& offset);
+
 			void				SetBitmapListener(BMessenger* listener);
 
 			bool				LockDisplay();
@@ -114,6 +116,7 @@ private:
 			BBitmap*			fDisplayBitmap[2];
 //			BRect				fDisplayRect;
 			float				fZoomLevel;
+			bool				fScrollingDelayed;
 
 			BRect				fCleanArea;
 

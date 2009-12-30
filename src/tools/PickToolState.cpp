@@ -515,7 +515,7 @@ PickToolState::_Invalidate(BRect area)
 {
 	fView->ConvertFromCanvas(&area);
 	area.InsetBy(-1, -1);
-	fView->Invalidate(area);
+	fView->InvalidateCanvas(area);
 }
 
 // _SendPickNotification

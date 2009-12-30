@@ -45,6 +45,7 @@ CanvasView::CanvasView(BRect frame, Document* document, RenderManager* manager)
 	fInScrollTo(false),
 	fScrollTrackingStart(0.0, 0.0),
 	fScrollOffsetStart(0.0, 0.0),
+	fDelayedScrolling(false),
 
 	fAutoScroller(NULL)
 {
@@ -71,6 +72,7 @@ CanvasView::CanvasView(Document* document, RenderManager* manager)
 	fInScrollTo(false),
 	fScrollTrackingStart(0.0, 0.0),
 	fScrollOffsetStart(0.0, 0.0),
+	fDelayedScrolling(false),
 
 	fAutoScroller(NULL)
 {
@@ -123,6 +125,15 @@ CanvasView::MessageReceived(BMessage* message)
 			}
 			break;
 		case MSG_BITMAP_CLEAN: {
+			bool scrollingDelayed;
+			if (message->FindBool("scrolling delayed",
+				&scrollingDelayed) == B_OK) {
+				fDelayedScrolling = false;
+				// just invalidate everything, it will simulate scrolling,
+				// but only after rendering is done
+				Invalidate();
+				break;
+			}
 			BRect area;
 			if (message->FindRect("area", &area) == B_OK) {
 				ConvertFromCanvas(&area);
@@ -226,10 +237,11 @@ CanvasView::MouseDown(BPoint where)
 
 	uint32 buttons;
 	if (Window()->CurrentMessage()->FindInt32("buttons",
-		(int32*)&buttons) < B_OK)
+		(int32*)&buttons) != B_OK) {
 		buttons = 0;
+	}
 
-	// handle clicks of the third mouse button ourselves (panning),
+	// handle clicks of the third mouse button ourself (panning),
 	// otherwise have BackBufferedStateView handle it (normal clicks)
 	if (fSpaceHeldDown || buttons & B_TERTIARY_MOUSE_BUTTON) {
 		// switch into scrolling mode and update cursor
@@ -330,12 +342,14 @@ CanvasView::ConvertFromCanvas(BPoint* point) const
 {
 	point->x *= fZoomLevel;
 	point->y *= fZoomLevel;
+	*point -= ScrollOffset();
 }
 
 // ConvertToCanvas
 void
 CanvasView::ConvertToCanvas(BPoint* point) const
 {
+	*point += ScrollOffset();
 	point->x /= fZoomLevel;
 	point->y /= fZoomLevel;
 }
@@ -352,12 +366,16 @@ CanvasView::ConvertFromCanvas(BRect* r) const
 	r->bottom *= fZoomLevel;
 	r->right--;
 	r->bottom--;
+
+	r->OffsetBy(-ScrollOffset());
 }
 
 // ConvertToCanvas
 void
 CanvasView::ConvertToCanvas(BRect* r) const
 {
+	r->OffsetBy(ScrollOffset());
+
 	r->left /= fZoomLevel;
 	r->right /= fZoomLevel;
 	r->top /= fZoomLevel;
@@ -381,11 +399,14 @@ CanvasView::SetScrollOffset(BPoint newOffset)
 		return;
 
 	fInScrollTo = true;
+	fDelayedScrolling = true;
 
 	newOffset = ValidScrollOffsetFor(newOffset);
 	if (!fScrollTracking) {
-		BPoint mouseOffset = newOffset - ScrollOffset();
-		MouseMoved(fMouseInfo.position + mouseOffset, fMouseInfo.transit, NULL);
+//		BPoint mouseOffset = newOffset - ScrollOffset();
+//		MouseMoved(fMouseInfo.position + mouseOffset, fMouseInfo.transit,
+//			NULL);
+		MouseMoved(fMouseInfo.position, fMouseInfo.transit, NULL);
 	}
 
 	Scrollable::SetScrollOffset(newOffset);
@@ -403,7 +424,10 @@ CanvasView::ScrollOffsetChanged(BPoint oldOffset, BPoint newOffset)
 		// prevent circular code (MouseMoved might call ScrollBy...)
 		return;
 
-	ScrollBy(offset.x, offset.y);
+//	ScrollBy(offset.x, offset.y);
+	fDelayedScrolling = fRenderManager->ScrollBy(offset);
+	if (!fDelayedScrolling)
+		Invalidate();
 }
 
 // VisibleSizeChanged
@@ -510,7 +534,7 @@ CanvasView::SetZoomLevel(double zoomLevel, bool mouseIsAnchor)
 	offset.x = roundf(offset.x + canvasAnchor.x - anchor.x);
 	offset.y = roundf(offset.y + canvasAnchor.y - anchor.y);
 
-	Invalidate();
+//	Invalidate();
 		// Cause the (Haiku) app_server to skip visual scrolling
 	SetDataRectAndScrollOffset(dataRect, offset);
 
@@ -538,6 +562,15 @@ CanvasView::SetAutoScrolling(bool scroll)
 		delete fAutoScroller;
 		fAutoScroller = NULL;
 	}
+}
+
+// InvalidateCanvas
+void
+CanvasView::InvalidateCanvas(const BRect& bounds)
+{
+	if (fDelayedScrolling)
+		return;
+	Invalidate(bounds);
 }
 
 // #pragma mark -

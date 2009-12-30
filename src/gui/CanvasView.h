@@ -52,6 +52,8 @@ public:
 
 	virtual	float				ZoomLevel() const;
 
+	virtual	void				InvalidateCanvas(const BRect& bounds);
+
 	// Scrollable interface
 protected:
 	virtual	void				SetScrollOffset(BPoint offset);
@@ -95,6 +97,7 @@ private:
 			bool				fInScrollTo;
 			BPoint				fScrollTrackingStart;
 			BPoint				fScrollOffsetStart;
+			bool				fDelayedScrolling;
 
 			BMessageRunner*		fAutoScroller;
 };

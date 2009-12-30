@@ -134,7 +134,7 @@ ViewState::UpdateBounds()
 		dirty = dirty | fBounds;
 	else
 		dirty = fBounds;
-	fView->Invalidate(dirty);
+	fView->InvalidateCanvas(dirty);
 }
 
 // TransformCanvasToView

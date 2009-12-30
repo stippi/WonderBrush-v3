@@ -122,6 +122,8 @@ private:
 RenderManager::RenderManager(Document* document)
 	:
 	Layer::Listener(),
+	fZoomLevel(1.0f),
+	fScrollingDelayed(false),
 	fCleanArea(LONG_MAX, LONG_MAX, LONG_MIN, LONG_MIN),
 
 	fDocumentDirtyMap(NULL),
@@ -273,6 +275,7 @@ printf("RenderManager::ObjectRemoved(%p)\n", subLayer);
 void
 RenderManager::AreaInvalidated(Layer* layer, const BRect& area)
 {
+printf("RenderManager::AreaInvalidated(%p)\n", layer);
 	// This is a synchronous notification, therefore the document
 	// is already properly locked.
 	_QueueRedraw(layer, area);
@@ -304,6 +307,21 @@ float
 RenderManager::ZoomLevel() const
 {
 	return fZoomLevel;
+}
+
+// ScrollBy
+bool
+RenderManager::ScrollBy(const BPoint& offset)
+{
+	if (!fRenderQueueLock.Lock())
+		return false;
+
+	if (fScrollingDelayed || fWaitingRenderThreadCount < fRenderThreadCount)
+		fScrollingDelayed = true;
+
+	fRenderQueueLock.Unlock();
+
+	return fScrollingDelayed;
 }
 
 // Bounds
@@ -600,6 +618,10 @@ RenderManager::_BackToDisplay(const BRect& area)
 	if (fBitmapListener) {
 		BMessage message(MSG_BITMAP_CLEAN);
 		message.AddRect("area", area);
+		if (fScrollingDelayed) {
+			message.AddBool("scrolling delayed", true);
+			fScrollingDelayed = false;
+		}
 		fBitmapListener->SendMessage(&message);
 	}
 }
@@ -676,14 +698,17 @@ RenderManager::_TraverseLayerSnapshots(LayerSnapshotVisitor* visitor,
 void
 RenderManager::_AllRenderThreadsDone()
 {
+bool scrollingDelayed = fScrollingDelayed;
 	// executed in a rendering thread
 	if (fCleanArea.IsValid()) {
 		_BackToDisplay(fCleanArea);
 		fCleanArea.Set(LONG_MAX, LONG_MAX, LONG_MIN, LONG_MIN);
 	}
 
-	if (fLastRenderStartTime > 0)
-		printf("render pass: %lld\n", system_time() - fLastRenderStartTime);
+	if (fLastRenderStartTime > 0) {
+		printf("render pass: %lld (%d)\n",
+			system_time() - fLastRenderStartTime, scrollingDelayed);
+	}
 
 	if (_HasDirtyLayers())
 		_TriggerRender();
