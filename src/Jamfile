@@ -2,7 +2,7 @@ SubDir TOP src ;
 
 # source directories
 local sourceDirs =
-	alm
+#	alm
 	commands
 	gui
 	gui/misc
@@ -65,11 +65,12 @@ SubDirSysHdrs [ FDirName $(TOP) agg/include ] ;
 # <pe-src>
 Application WonderBrush :
 
-	#alm (Auckland Layout Model)
-	ALMArea.cpp
-	ALMLayout.cpp
-	ALMSpan.cpp
-	ALMTab.cpp
+	# alm (Auckland Layout Model)
+	# requires linprog headers from Haiku to be installed...
+#	ALMArea.cpp
+#	ALMLayout.cpp
+#	ALMSpan.cpp
+#	ALMTab.cpp
 
 	# commands
 	SetPropertiesCommand.cpp
@@ -177,8 +178,8 @@ Application WonderBrush :
 
 		libagg.a
 
-		linprog
-		lpsolve55
+#		linprog
+#		lpsolve55
 
 		tracker
 		$(STDC++LIB)
