@@ -25,6 +25,8 @@ static const rgb_color kStripeLight = (rgb_color){ 112, 112, 112, 255 };
 static const rgb_color kStripeDark = (rgb_color){ 104, 104, 104, 255 };
 
 #define AUTO_SCROLL_DELAY		40000 // 40 ms
+#define USE_DELAYED_SCROLLING	0
+#define USE_NATIVE_SCROLLING	1
 
 enum {
 	MSG_AUTO_SCROLL	= 'ascr'
@@ -33,7 +35,7 @@ enum {
 // constructor
 CanvasView::CanvasView(BRect frame, Document* document, RenderManager* manager)
 	:
-	BackBufferedStateView(frame, "canvas view", B_FOLLOW_NONE,
+	StateView(frame, "canvas view", B_FOLLOW_NONE,
 		B_WILL_DRAW | B_FRAME_EVENTS),
 	fDocument(document),
 	fRenderManager(manager),
@@ -53,7 +55,6 @@ CanvasView::CanvasView(BRect frame, Document* document, RenderManager* manager)
 	SetHighColor(kStripeLight);
 	SetLowColor(kStripeDark);
 		// used for drawing the stripes pattern
-	SetSyncToRetrace(true);
 }
 
 #ifdef __HAIKU__
@@ -61,7 +62,7 @@ CanvasView::CanvasView(BRect frame, Document* document, RenderManager* manager)
 // constructor
 CanvasView::CanvasView(Document* document, RenderManager* manager)
 	:
-	BackBufferedStateView("canvas view", B_WILL_DRAW | B_FRAME_EVENTS),
+	StateView("canvas view", B_WILL_DRAW | B_FRAME_EVENTS),
 	fDocument(document),
 	fRenderManager(manager),
 
@@ -80,7 +81,6 @@ CanvasView::CanvasView(Document* document, RenderManager* manager)
 	SetHighColor(kStripeLight);
 	SetLowColor(kStripeDark);
 		// used for drawing the stripes pattern
-	SetSyncToRetrace(true);
 }
 
 #endif // __HAIKU__
@@ -125,6 +125,7 @@ CanvasView::MessageReceived(BMessage* message)
 			}
 			break;
 		case MSG_BITMAP_CLEAN: {
+#if USE_DELAYED_SCROLLING
 			bool scrollingDelayed;
 			if (message->FindBool("scrolling delayed",
 				&scrollingDelayed) == B_OK) {
@@ -134,6 +135,7 @@ CanvasView::MessageReceived(BMessage* message)
 				Invalidate();
 				break;
 			}
+#endif
 			BRect area;
 			if (message->FindRect("area", &area) == B_OK) {
 				ConvertFromCanvas(&area);
@@ -146,7 +148,7 @@ CanvasView::MessageReceived(BMessage* message)
 			break;
 		}
 		default:
-			BackBufferedStateView::MessageReceived(message);
+			StateView::MessageReceived(message);
 			break;
 	}
 }
@@ -155,7 +157,7 @@ CanvasView::MessageReceived(BMessage* message)
 void
 CanvasView::AttachedToWindow()
 {
-	BackBufferedStateView::AttachedToWindow();
+	StateView::AttachedToWindow();
 
 	fRenderManager->SetBitmapListener(new BMessenger(this));
 
@@ -177,7 +179,7 @@ CanvasView::AttachedToWindow()
 void
 CanvasView::FrameResized(float width, float height)
 {
-	BackBufferedStateView::FrameResized(width, height);
+	StateView::FrameResized(width, height);
 }
 
 void
@@ -201,9 +203,9 @@ CanvasView::MaxSize()
 #endif // __HAIKU__
 
 
-// DrawInto
+// Draw
 void
-CanvasView::DrawInto(BView* view, BRect updateRect)
+CanvasView::Draw(BRect updateRect)
 {
 	BRect canvas(_CanvasRect());
 
@@ -211,19 +213,19 @@ CanvasView::DrawInto(BView* view, BRect updateRect)
 	if (fRenderManager->LockDisplay()) {
 
 		const BBitmap* bitmap = fRenderManager->DisplayBitmap();
-		view->DrawBitmap(bitmap, bitmap->Bounds(), canvas);
+		DrawBitmap(bitmap, bitmap->Bounds(), canvas);
 
 		fRenderManager->UnlockDisplay();
 	} else {
-		view->FillRect(canvas);
+		FillRect(canvas);
 	}
 
 	// outside canvas
 	BRegion outside(Bounds() & updateRect);
 	outside.Exclude(canvas);
-	view->FillRegion(&outside, kStripes);
+	FillRegion(&outside, kStripes);
 
-	BackBufferedStateView::DrawInto(view, updateRect);
+	StateView::Draw(this, updateRect);
 }
 
 // #pragma mark -
@@ -242,7 +244,7 @@ CanvasView::MouseDown(BPoint where)
 	}
 
 	// handle clicks of the third mouse button ourself (panning),
-	// otherwise have BackBufferedStateView handle it (normal clicks)
+	// otherwise have StateView handle it (normal clicks)
 	if (fSpaceHeldDown || buttons & B_TERTIARY_MOUSE_BUTTON) {
 		// switch into scrolling mode and update cursor
 		fScrollTracking = true;
@@ -255,7 +257,7 @@ CanvasView::MouseDown(BPoint where)
 						  B_LOCK_WINDOW_FOCUS | B_SUSPEND_VIEW_FOCUS);
 	} else {
 		SetAutoScrolling(true);
-		BackBufferedStateView::MouseDown(where);
+		StateView::MouseDown(where);
 	}
 }
 
@@ -267,12 +269,12 @@ CanvasView::MouseUp(BPoint where)
 		// stop scroll tracking and update cursor
 		fScrollTracking = false;
 		_UpdateToolCursor();
-		// update BackBufferedStateView mouse position
+		// update StateView mouse position
 		uint32 transit = Bounds().Contains(where) ?
 			B_INSIDE_VIEW : B_OUTSIDE_VIEW;
-		BackBufferedStateView::MouseMoved(where, transit, NULL);
+		StateView::MouseMoved(where, transit, NULL);
 	} else {
-		BackBufferedStateView::MouseUp(where);
+		StateView::MouseUp(where);
 	}
 	SetAutoScrolling(false);
 }
@@ -294,9 +296,9 @@ CanvasView::MouseMoved(BPoint where, uint32 transit, const BMessage* dragMessage
 		BPoint offset = where - fScrollTrackingStart;
 		SetScrollOffset(fScrollOffsetStart - offset);
 	} else {
-		// normal mouse movement handled by BackBufferedStateView
+		// normal mouse movement handled by StateView
 //		if (!fSpaceHeldDown)
-			BackBufferedStateView::MouseMoved(where, transit, dragMessage);
+			StateView::MouseMoved(where, transit, dragMessage);
 	}
 	_UpdateToolCursor();
 }
@@ -342,14 +344,18 @@ CanvasView::ConvertFromCanvas(BPoint* point) const
 {
 	point->x *= fZoomLevel;
 	point->y *= fZoomLevel;
+#if !USE_NATIVE_SCROLLING
 	*point -= ScrollOffset();
+#endif
 }
 
 // ConvertToCanvas
 void
 CanvasView::ConvertToCanvas(BPoint* point) const
 {
+#if !USE_NATIVE_SCROLLING
 	*point += ScrollOffset();
+#endif
 	point->x /= fZoomLevel;
 	point->y /= fZoomLevel;
 }
@@ -367,14 +373,18 @@ CanvasView::ConvertFromCanvas(BRect* r) const
 	r->right--;
 	r->bottom--;
 
+#if !USE_NATIVE_SCROLLING
 	r->OffsetBy(-ScrollOffset());
+#endif
 }
 
 // ConvertToCanvas
 void
 CanvasView::ConvertToCanvas(BRect* r) const
 {
+#if !USE_NATIVE_SCROLLING
 	r->OffsetBy(ScrollOffset());
+#endif
 
 	r->left /= fZoomLevel;
 	r->right /= fZoomLevel;
@@ -399,14 +409,19 @@ CanvasView::SetScrollOffset(BPoint newOffset)
 		return;
 
 	fInScrollTo = true;
+#if USE_DELAYED_SCROLLING
 	fDelayedScrolling = true;
+#endif
 
 	newOffset = ValidScrollOffsetFor(newOffset);
 	if (!fScrollTracking) {
-//		BPoint mouseOffset = newOffset - ScrollOffset();
-//		MouseMoved(fMouseInfo.position + mouseOffset, fMouseInfo.transit,
-//			NULL);
+#if USE_DELAYED_SCROLLING
 		MouseMoved(fMouseInfo.position, fMouseInfo.transit, NULL);
+#else
+		BPoint mouseOffset = newOffset - ScrollOffset();
+		MouseMoved(fMouseInfo.position + mouseOffset, fMouseInfo.transit,
+			NULL);
+#endif
 	}
 
 	Scrollable::SetScrollOffset(newOffset);
@@ -424,10 +439,17 @@ CanvasView::ScrollOffsetChanged(BPoint oldOffset, BPoint newOffset)
 		// prevent circular code (MouseMoved might call ScrollBy...)
 		return;
 
-//	ScrollBy(offset.x, offset.y);
+#if USE_DELAYED_SCROLLING
 	fDelayedScrolling = fRenderManager->ScrollBy(offset);
 	if (!fDelayedScrolling)
 		Invalidate();
+#else
+#	if USE_NATIVE_SCROLLING
+	ScrollBy(offset.x, offset.y);
+#	else
+	Invalidate();
+#	endif
+#endif
 }
 
 // VisibleSizeChanged
@@ -534,8 +556,11 @@ CanvasView::SetZoomLevel(double zoomLevel, bool mouseIsAnchor)
 	offset.x = roundf(offset.x + canvasAnchor.x - anchor.x);
 	offset.y = roundf(offset.y + canvasAnchor.y - anchor.y);
 
-//	Invalidate();
+#if USE_NATIVE_SCROLLING
+	Invalidate();
 		// Cause the (Haiku) app_server to skip visual scrolling
+#endif
+
 	SetDataRectAndScrollOffset(dataRect, offset);
 
 	fRenderManager->SetZoomLevel(fZoomLevel);
@@ -602,7 +627,7 @@ CanvasView::_HandleKeyDown(const StateView::KeyEvent& event,
 			break;
 
 		default:
-			return BackBufferedStateView::_HandleKeyDown(event,
+			return StateView::_HandleKeyDown(event,
 				originalHandler);
 	}
 
@@ -621,7 +646,7 @@ CanvasView::_HandleKeyUp(const StateView::KeyEvent& event,
 			break;
 
 		default:
-			return BackBufferedStateView::_HandleKeyUp(event,
+			return StateView::_HandleKeyUp(event,
 				originalHandler);
 	}
 
@@ -681,7 +706,7 @@ CanvasView::_UpdateToolCursor()
 		BCursor cursor(cursorData);
 		SetViewCursor(&cursor, true);
 	} else {
-		// pass on to current state of BackBufferedStateView
+		// pass on to current state of StateView
 		UpdateStateCursor();
 	}
 }

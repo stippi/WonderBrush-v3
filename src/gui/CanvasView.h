@@ -2,7 +2,7 @@
 #define CANVAS_VIEW_H
 
 
-#include "BackBufferedStateView.h"
+#include "StateView.h"
 #include "Scrollable.h"
 
 
@@ -10,7 +10,7 @@ class BMessageRunner;
 class Document;
 class RenderManager;
 
-class CanvasView : public BackBufferedStateView, public Scrollable {
+class CanvasView : public StateView, public Scrollable {
 public:
 								CanvasView(BRect frame,
 									Document* document,
@@ -32,7 +32,7 @@ public:
 #ifdef __HAIKU__
 	virtual	BSize				MaxSize();
 #endif
-	virtual	void				DrawInto(BView* view, BRect updateRect);
+	virtual	void				Draw(BRect updateRect);
 
 	virtual	void				MouseDown(BPoint where);
 	virtual	void				MouseUp(BPoint where);
