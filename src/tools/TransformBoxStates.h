@@ -40,7 +40,11 @@ public:
 
 protected:
 			void				_SetViewCursor(BView* view,
-											   const uchar* cursorData) const;
+									const uchar* cursorData) const;
+#ifdef __HAIKU__
+			void				_SetViewCursor(BView* view,
+									BCursorID cursorID) const;
+#endif
 
 			BPoint				fOrigin;
 			TransformBox*		fParent;

@@ -57,6 +57,16 @@ DragState::_SetViewCursor(BView* view, const uchar* cursorData) const
 	view->SetViewCursor(&cursor);
 }
 
+#ifdef __HAIKU__
+// _SetViewCursor
+void
+DragState::_SetViewCursor(BView* view, BCursorID cursorID) const
+{
+	BCursor cursor(cursorID);
+	view->SetViewCursor(&cursor);
+}
+#endif
+
 // #pragma mark - DragCornerState
 
 // constructor
@@ -176,68 +186,87 @@ DragCornerState::UpdateViewCursor(BView* view, BPoint current) const
 	float rotation = fmod(360.0 - fParent->ViewSpaceRotation() + 22.5, 180.0);
 	bool flipX = fParent->LocalXScale() < 0.0;
 	bool flipY = fParent->LocalYScale() < 0.0;
+#ifdef __HAIKU__
 	if (rotation < 45.0) {
 		switch (fCorner) {
 			case LEFT_TOP_CORNER:
 			case RIGHT_BOTTOM_CORNER:
-				if (flipX)
-					_SetViewCursor(view, flipY ? kLeftTopRightBottomCursor
-											   : kLeftBottomRightTopCursor);
-				else
-					_SetViewCursor(view, flipY ? kLeftBottomRightTopCursor
-											   : kLeftTopRightBottomCursor);
+				if (flipX) {
+					_SetViewCursor(view, flipY
+						? B_CURSOR_ID_RESIZE_NORTH_WEST_SOUTH_EAST
+						: B_CURSOR_ID_RESIZE_NORTH_EAST_SOUTH_WEST);
+				} else {
+					_SetViewCursor(view, flipY
+						? B_CURSOR_ID_RESIZE_NORTH_EAST_SOUTH_WEST
+						: B_CURSOR_ID_RESIZE_NORTH_WEST_SOUTH_EAST);
+				}
 				break;
 			case RIGHT_TOP_CORNER:
 			case LEFT_BOTTOM_CORNER:
-				if (flipX)
-					_SetViewCursor(view, flipY ? kLeftBottomRightTopCursor
-											   : kLeftTopRightBottomCursor);
-				else
-					_SetViewCursor(view, flipY ? kLeftTopRightBottomCursor
-											   : kLeftBottomRightTopCursor);
+				if (flipX) {
+					_SetViewCursor(view, flipY
+						? B_CURSOR_ID_RESIZE_NORTH_EAST_SOUTH_WEST
+						: B_CURSOR_ID_RESIZE_NORTH_WEST_SOUTH_EAST);
+				} else {
+					_SetViewCursor(view, flipY
+						? B_CURSOR_ID_RESIZE_NORTH_WEST_SOUTH_EAST
+						: B_CURSOR_ID_RESIZE_NORTH_EAST_SOUTH_WEST);
+				}
 				break;
 		}
 	} else if (rotation < 90.0) {
 		switch (fCorner) {
 			case LEFT_TOP_CORNER:
 			case RIGHT_BOTTOM_CORNER:
-				if (flipX)
-					_SetViewCursor(view, flipY ? kLeftRightCursor
-											   : kUpDownCursor);
-				else
-					_SetViewCursor(view, flipY ? kUpDownCursor
-											   : kLeftRightCursor);
+				if (flipX) {
+					_SetViewCursor(view, flipY
+						? B_CURSOR_ID_RESIZE_EAST_WEST
+						: B_CURSOR_ID_RESIZE_NORTH_SOUTH);
+				} else {
+					_SetViewCursor(view, flipY
+						? B_CURSOR_ID_RESIZE_NORTH_SOUTH
+						: B_CURSOR_ID_RESIZE_EAST_WEST);
+				}
 				break;
 			case RIGHT_TOP_CORNER:
 			case LEFT_BOTTOM_CORNER:
-				if (flipX)
-					_SetViewCursor(view, flipY ? kUpDownCursor
-											   : kLeftRightCursor);
-				else
-					_SetViewCursor(view, flipY ? kLeftRightCursor
-											   : kUpDownCursor);
+				if (flipX) {
+					_SetViewCursor(view, flipY
+						? B_CURSOR_ID_RESIZE_NORTH_SOUTH
+						: B_CURSOR_ID_RESIZE_EAST_WEST);
+				} else {
+					_SetViewCursor(view, flipY
+						? B_CURSOR_ID_RESIZE_EAST_WEST
+						: B_CURSOR_ID_RESIZE_NORTH_SOUTH);
+				}
 				break;
 		}
 	} else if (rotation < 135.0) {
 		switch (fCorner) {
 			case LEFT_TOP_CORNER:
 			case RIGHT_BOTTOM_CORNER:
-				if (flipX)
-					_SetViewCursor(view, flipY ? kLeftBottomRightTopCursor
-											   : kLeftTopRightBottomCursor);
-				else
-					_SetViewCursor(view, flipY ? kLeftTopRightBottomCursor
-											   : kLeftBottomRightTopCursor);
+				if (flipX) {
+					_SetViewCursor(view, flipY
+						? B_CURSOR_ID_RESIZE_NORTH_EAST_SOUTH_WEST
+						: B_CURSOR_ID_RESIZE_NORTH_WEST_SOUTH_EAST);
+				} else {
+					_SetViewCursor(view, flipY
+						? B_CURSOR_ID_RESIZE_NORTH_WEST_SOUTH_EAST
+						: B_CURSOR_ID_RESIZE_NORTH_EAST_SOUTH_WEST);
+				}
 				break;
 				break;
 			case RIGHT_TOP_CORNER:
 			case LEFT_BOTTOM_CORNER:
-				if (flipX)
-					_SetViewCursor(view, flipY ? kLeftTopRightBottomCursor
-											   : kLeftBottomRightTopCursor);
-				else
-					_SetViewCursor(view, flipY ? kLeftBottomRightTopCursor
-											   : kLeftTopRightBottomCursor);
+				if (flipX) {
+					_SetViewCursor(view, flipY
+						? B_CURSOR_ID_RESIZE_NORTH_WEST_SOUTH_EAST
+						: B_CURSOR_ID_RESIZE_NORTH_EAST_SOUTH_WEST);
+				} else {
+					_SetViewCursor(view, flipY
+						? B_CURSOR_ID_RESIZE_NORTH_EAST_SOUTH_WEST
+						: B_CURSOR_ID_RESIZE_NORTH_WEST_SOUTH_EAST);
+				}
 				break;
 				break;
 		}
@@ -245,24 +274,134 @@ DragCornerState::UpdateViewCursor(BView* view, BPoint current) const
 		switch (fCorner) {
 			case LEFT_TOP_CORNER:
 			case RIGHT_BOTTOM_CORNER:
-				if (flipX)
-					_SetViewCursor(view, flipY ? kUpDownCursor
-											   : kLeftRightCursor);
-				else
-					_SetViewCursor(view, flipY ? kLeftRightCursor
-											   : kUpDownCursor);
+				if (flipX) {
+					_SetViewCursor(view, flipY
+						? B_CURSOR_ID_RESIZE_NORTH_SOUTH
+						: B_CURSOR_ID_RESIZE_EAST_WEST);
+				} else {
+					_SetViewCursor(view, flipY
+						? B_CURSOR_ID_RESIZE_EAST_WEST
+						: B_CURSOR_ID_RESIZE_NORTH_SOUTH);
+				}
 				break;
 			case RIGHT_TOP_CORNER:
 			case LEFT_BOTTOM_CORNER:
-				if (flipX)
-					_SetViewCursor(view, flipY ? kLeftRightCursor
-											   : kUpDownCursor);
-				else
-					_SetViewCursor(view, flipY ? kUpDownCursor
-											   : kLeftRightCursor);
+				if (flipX) {
+					_SetViewCursor(view, flipY
+						? B_CURSOR_ID_RESIZE_EAST_WEST
+						: B_CURSOR_ID_RESIZE_NORTH_SOUTH);
+				} else {
+					_SetViewCursor(view, flipY
+						? B_CURSOR_ID_RESIZE_NORTH_SOUTH
+						: B_CURSOR_ID_RESIZE_EAST_WEST);
+				}
 				break;
 		}
 	}
+#else // (!__HAIKU__)
+	if (rotation < 45.0) {
+		switch (fCorner) {
+			case LEFT_TOP_CORNER:
+			case RIGHT_BOTTOM_CORNER:
+				if (flipX)
+					_SetViewCursor(view, flipY
+						? kLeftTopRightBottomCursor
+						: kLeftBottomRightTopCursor);
+				else
+					_SetViewCursor(view, flipY
+						? kLeftBottomRightTopCursor
+						: kLeftTopRightBottomCursor);
+				break;
+			case RIGHT_TOP_CORNER:
+			case LEFT_BOTTOM_CORNER:
+				if (flipX) {
+					_SetViewCursor(view, flipY
+						? kLeftBottomRightTopCursor
+						: kLeftTopRightBottomCursor);
+				} else {
+					_SetViewCursor(view, flipY
+						? kLeftTopRightBottomCursor
+						: kLeftBottomRightTopCursor);
+				}
+				break;
+		}
+	} else if (rotation < 90.0) {
+		switch (fCorner) {
+			case LEFT_TOP_CORNER:
+			case RIGHT_BOTTOM_CORNER:
+				if (flipX) {
+					_SetViewCursor(view, flipY
+						? kLeftRightCursor : kUpDownCursor);
+				} else {
+					_SetViewCursor(view, flipY
+						? kUpDownCursor : kLeftRightCursor);
+				}
+				break;
+			case RIGHT_TOP_CORNER:
+			case LEFT_BOTTOM_CORNER:
+				if (flipX) {
+					_SetViewCursor(view, flipY
+						? kUpDownCursor : kLeftRightCursor);
+				} else {
+					_SetViewCursor(view, flipY
+						? kLeftRightCursor : kUpDownCursor);
+				}
+				break;
+		}
+	} else if (rotation < 135.0) {
+		switch (fCorner) {
+			case LEFT_TOP_CORNER:
+			case RIGHT_BOTTOM_CORNER:
+				if (flipX) {
+					_SetViewCursor(view, flipY
+						? kLeftBottomRightTopCursor
+						: kLeftTopRightBottomCursor);
+				} else {
+					_SetViewCursor(view, flipY
+						? kLeftTopRightBottomCursor
+						: kLeftBottomRightTopCursor);
+				}
+				break;
+				break;
+			case RIGHT_TOP_CORNER:
+			case LEFT_BOTTOM_CORNER:
+				if (flipX) {
+					_SetViewCursor(view, flipY
+						? kLeftTopRightBottomCursor
+						: kLeftBottomRightTopCursor);
+				} else {
+					_SetViewCursor(view, flipY
+						? kLeftBottomRightTopCursor
+						: kLeftTopRightBottomCursor);
+				}
+				break;
+				break;
+		}
+	} else {
+		switch (fCorner) {
+			case LEFT_TOP_CORNER:
+			case RIGHT_BOTTOM_CORNER:
+				if (flipX) {
+					_SetViewCursor(view, flipY
+						? kUpDownCursor : kLeftRightCursor);
+				} else {
+					_SetViewCursor(view, flipY
+						? kLeftRightCursor : kUpDownCursor);
+				}
+				break;
+			case RIGHT_TOP_CORNER:
+			case LEFT_BOTTOM_CORNER:
+				if (flipX) {
+					_SetViewCursor(view, flipY
+						? kLeftRightCursor : kUpDownCursor);
+				} else {
+					_SetViewCursor(view, flipY
+						? kUpDownCursor : kLeftRightCursor);
+				}
+				break;
+		}
+	}
+#endif // (!__HAIKU__)
 }
 
 // ActionName
@@ -379,6 +518,53 @@ void
 DragSideState::UpdateViewCursor(BView* view, BPoint current) const
 {
 	float rotation = fmod(360.0 - fParent->ViewSpaceRotation() + 22.5, 180.0);
+#ifdef __HAIKU__
+	if (rotation < 45.0) {
+		switch (fSide) {
+			case LEFT_SIDE:
+			case RIGHT_SIDE:
+				_SetViewCursor(view, B_CURSOR_ID_RESIZE_EAST_WEST);
+				break;
+			case TOP_SIDE:
+			case BOTTOM_SIDE:
+				_SetViewCursor(view, B_CURSOR_ID_RESIZE_NORTH_SOUTH);
+				break;
+		}
+	} else if (rotation < 90.0) {
+		switch (fSide) {
+			case LEFT_SIDE:
+			case RIGHT_SIDE:
+				_SetViewCursor(view, B_CURSOR_ID_RESIZE_NORTH_EAST_SOUTH_WEST);
+				break;
+			case TOP_SIDE:
+			case BOTTOM_SIDE:
+				_SetViewCursor(view, B_CURSOR_ID_RESIZE_NORTH_WEST_SOUTH_EAST);
+				break;
+		}
+	} else if (rotation < 135.0) {
+		switch (fSide) {
+			case LEFT_SIDE:
+			case RIGHT_SIDE:
+				_SetViewCursor(view, B_CURSOR_ID_RESIZE_NORTH_SOUTH);
+				break;
+			case TOP_SIDE:
+			case BOTTOM_SIDE:
+				_SetViewCursor(view, B_CURSOR_ID_RESIZE_EAST_WEST);
+				break;
+		}
+	} else {
+		switch (fSide) {
+			case LEFT_SIDE:
+			case RIGHT_SIDE:
+				_SetViewCursor(view, B_CURSOR_ID_RESIZE_NORTH_WEST_SOUTH_EAST);
+				break;
+			case TOP_SIDE:
+			case BOTTOM_SIDE:
+				_SetViewCursor(view, B_CURSOR_ID_RESIZE_NORTH_EAST_SOUTH_WEST);
+				break;
+		}
+	}
+#else // (!__HAIKU__)
 	if (rotation < 45.0) {
 		switch (fSide) {
 			case LEFT_SIDE:
@@ -424,6 +610,7 @@ DragSideState::UpdateViewCursor(BView* view, BPoint current) const
 				break;
 		}
 	}
+#endif // (!__HAIKU__)
 }
 
 // ActionName
@@ -470,7 +657,11 @@ DragBoxState::DragTo(BPoint current, uint32 modifiers)
 void
 DragBoxState::UpdateViewCursor(BView* view, BPoint current) const
 {
+#ifdef __HAIKU__
+	_SetViewCursor(view, B_CURSOR_ID_MOVE);
+#else
 	_SetViewCursor(view, kMoveCursor);
+#endif
 }
 
 // ActionName

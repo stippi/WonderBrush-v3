@@ -728,8 +728,14 @@ CanvasView::_UpdateToolCursor()
 {
 	if (fScrollTracking || fSpaceHeldDown) {
 		// indicate scrolling mode
+#ifdef __HAIKU__
+		BCursorID cursorID = fScrollTracking ? B_CURSOR_ID_GRABBING
+			: B_CURSOR_ID_GRAB;
+		BCursor cursor(cursorID);
+#else
 		const uchar* cursorData = fScrollTracking ? kGrabCursor : kHandCursor;
 		BCursor cursor(cursorData);
+#endif
 		SetViewCursor(&cursor, true);
 	} else {
 		// pass on to current state of StateView

@@ -498,8 +498,13 @@ ColumnHeaderView::_ChangeState(State* state)
 void
 ColumnHeaderView::_SetHorizontalResizeCursor()
 {
-	if (!fHorizontalResizeCursor)
+	if (!fHorizontalResizeCursor) {
+#ifdef __HAIKU__
+		fHorizontalResizeCursor = new BCursor(B_CURSOR_ID_RESIZE_EAST_WEST);
+#else
 		fHorizontalResizeCursor = new BCursor(kHorizontalResizeCursor);
+#endif
+	}
 	SetViewCursor(fHorizontalResizeCursor);
 }
 

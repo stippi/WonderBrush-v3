@@ -513,8 +513,12 @@ PickToolState::_DragObject(ObjectType* object, BPoint where)
 void
 PickToolState::_Invalidate(BRect area)
 {
+	area.left = floorf(area.left);
+	area.top = floorf(area.top);
+	area.right = ceilf(area.right);
+	area.bottom = ceilf(area.bottom);
 	fView->ConvertFromCanvas(&area);
-	area.InsetBy(-1, -1);
+	area.InsetBy(-2, -2);
 	fView->InvalidateCanvas(area);
 }
 

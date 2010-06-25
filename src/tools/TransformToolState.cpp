@@ -44,7 +44,11 @@ public:
 
 	virtual BCursor ViewCursor(BPoint current) const
 	{
+#ifdef __HAIKU__
+		return BCursor(B_CURSOR_ID_MOVE);
+#else
 		return BCursor(kMoveCursor);
+#endif
 	}
 
 	virtual const char* CommandName() const
@@ -125,31 +129,148 @@ public:
 
 	virtual BCursor ViewCursor(BPoint current) const
 	{
-		const uint8* cursorData = kMoveCursor;
 		float rotation = fmod(360.0 - fParent->ViewspaceRotation() + 22.5,
 			180.0);
 		bool flipX = fParent->LocalXScale() < 0.0;
 		bool flipY = fParent->LocalYScale() < 0.0;
+#ifdef __HAIKU__
+		BCursorID cursorID = B_CURSOR_ID_MOVE;
 		if (rotation < 45.0) {
 			switch (fCorner) {
 				case LEFT_TOP:
 				case RIGHT_BOTTOM:
 					if (flipX) {
-						cursorData = flipY ? kLeftTopRightBottomCursor
-										   : kLeftBottomRightTopCursor;
+						cursorID = flipY
+							? B_CURSOR_ID_RESIZE_NORTH_WEST_SOUTH_EAST
+							: B_CURSOR_ID_RESIZE_NORTH_EAST_SOUTH_WEST;
 					} else {
-						cursorData = flipY ? kLeftBottomRightTopCursor
-										   : kLeftTopRightBottomCursor;
+						cursorID = flipY
+							? B_CURSOR_ID_RESIZE_NORTH_EAST_SOUTH_WEST
+							: B_CURSOR_ID_RESIZE_NORTH_WEST_SOUTH_EAST;
 					}
 					break;
 				case RIGHT_TOP:
 				case LEFT_BOTTOM:
 					if (flipX) {
-						cursorData = flipY ? kLeftBottomRightTopCursor
-										   : kLeftTopRightBottomCursor;
+						cursorID = flipY
+							? B_CURSOR_ID_RESIZE_NORTH_EAST_SOUTH_WEST
+							: B_CURSOR_ID_RESIZE_NORTH_WEST_SOUTH_EAST;
 					} else {
-						cursorData = flipY ? kLeftTopRightBottomCursor
-										   : kLeftBottomRightTopCursor;
+						cursorID = flipY
+							? B_CURSOR_ID_RESIZE_NORTH_WEST_SOUTH_EAST
+							: B_CURSOR_ID_RESIZE_NORTH_EAST_SOUTH_WEST;
+					}
+					break;
+			}
+		} else if (rotation < 90.0) {
+			switch (fCorner) {
+				case LEFT_TOP:
+				case RIGHT_BOTTOM:
+					if (flipX) {
+						cursorID = flipY
+							? B_CURSOR_ID_RESIZE_EAST_WEST
+							: B_CURSOR_ID_RESIZE_NORTH_SOUTH;
+					} else {
+						cursorID = flipY
+							? B_CURSOR_ID_RESIZE_NORTH_SOUTH
+							: B_CURSOR_ID_RESIZE_EAST_WEST;
+					}
+					break;
+				case RIGHT_TOP:
+				case LEFT_BOTTOM:
+					if (flipX) {
+						cursorID = flipY
+							? B_CURSOR_ID_RESIZE_NORTH_SOUTH
+							: B_CURSOR_ID_RESIZE_EAST_WEST;
+					} else {
+						cursorID = flipY
+							? B_CURSOR_ID_RESIZE_EAST_WEST
+							: B_CURSOR_ID_RESIZE_NORTH_SOUTH;
+					}
+					break;
+			}
+		} else if (rotation < 135.0) {
+			switch (fCorner) {
+				case LEFT_TOP:
+				case RIGHT_BOTTOM:
+					if (flipX) {
+						cursorID = flipY
+							? B_CURSOR_ID_RESIZE_NORTH_EAST_SOUTH_WEST
+							: B_CURSOR_ID_RESIZE_NORTH_WEST_SOUTH_EAST;
+					} else {
+						cursorID = flipY
+							? B_CURSOR_ID_RESIZE_NORTH_WEST_SOUTH_EAST
+							: B_CURSOR_ID_RESIZE_NORTH_EAST_SOUTH_WEST;
+					}
+					break;
+				case RIGHT_TOP:
+				case LEFT_BOTTOM:
+					if (flipX) {
+						cursorID = flipY
+							? B_CURSOR_ID_RESIZE_NORTH_WEST_SOUTH_EAST
+							: B_CURSOR_ID_RESIZE_NORTH_EAST_SOUTH_WEST;
+					} else {
+						cursorID = flipY
+							? B_CURSOR_ID_RESIZE_NORTH_EAST_SOUTH_WEST
+							: B_CURSOR_ID_RESIZE_NORTH_WEST_SOUTH_EAST;
+					}
+					break;
+			}
+		} else {
+			switch (fCorner) {
+				case LEFT_TOP:
+				case RIGHT_BOTTOM:
+					if (flipX) {
+						cursorID = flipY
+							? B_CURSOR_ID_RESIZE_NORTH_SOUTH
+							: B_CURSOR_ID_RESIZE_EAST_WEST;
+					} else {
+						cursorID = flipY
+							? B_CURSOR_ID_RESIZE_EAST_WEST
+							: B_CURSOR_ID_RESIZE_NORTH_SOUTH;
+					}
+					break;
+				case RIGHT_TOP:
+				case LEFT_BOTTOM:
+					if (flipX) {
+						cursorID = flipY
+							? B_CURSOR_ID_RESIZE_EAST_WEST
+							: B_CURSOR_ID_RESIZE_NORTH_SOUTH;
+					} else {
+						cursorID = flipY
+							? B_CURSOR_ID_RESIZE_NORTH_SOUTH
+							: B_CURSOR_ID_RESIZE_EAST_WEST;
+					}
+					break;
+			}
+		}
+		return BCursor(cursorID);
+#else // (!__HAIKU__)
+		const uint8* cursorData = kMoveCursor;
+		if (rotation < 45.0) {
+			switch (fCorner) {
+				case LEFT_TOP:
+				case RIGHT_BOTTOM:
+					if (flipX) {
+						cursorData = flipY
+							? kLeftTopRightBottomCursor
+							: kLeftBottomRightTopCursor;
+					} else {
+						cursorData = flipY
+							? kLeftBottomRightTopCursor
+							: kLeftTopRightBottomCursor;
+					}
+					break;
+				case RIGHT_TOP:
+				case LEFT_BOTTOM:
+					if (flipX) {
+						cursorData = flipY
+							? kLeftBottomRightTopCursor
+							: kLeftTopRightBottomCursor;
+					} else {
+						cursorData = flipY
+							? kLeftTopRightBottomCursor
+							: kLeftBottomRightTopCursor;
 					}
 					break;
 			}
@@ -174,21 +295,26 @@ public:
 			switch (fCorner) {
 				case LEFT_TOP:
 				case RIGHT_BOTTOM:
-					if (flipX)
-						cursorData = flipY ? kLeftBottomRightTopCursor
-										   : kLeftTopRightBottomCursor;
-					else
-						cursorData = flipY ? kLeftTopRightBottomCursor
-										   : kLeftBottomRightTopCursor;
+					if (flipX) {
+						cursorData = flipY
+							? kLeftBottomRightTopCursor
+							: kLeftTopRightBottomCursor;
+					} else {
+						cursorData = flipY
+							? kLeftTopRightBottomCursor
+							: kLeftBottomRightTopCursor;
+					}
 					break;
 				case RIGHT_TOP:
 				case LEFT_BOTTOM:
 					if (flipX) {
-						cursorData = flipY ? kLeftTopRightBottomCursor
-										   : kLeftBottomRightTopCursor;
+						cursorData = flipY
+							? kLeftTopRightBottomCursor
+							: kLeftBottomRightTopCursor;
 					} else {
-						cursorData = flipY ? kLeftBottomRightTopCursor
-										   : kLeftTopRightBottomCursor;
+						cursorData = flipY
+							? kLeftBottomRightTopCursor
+							: kLeftTopRightBottomCursor;
 					}
 					break;
 			}
@@ -211,6 +337,7 @@ public:
 			}
 		}
 		return BCursor(cursorData);
+#endif // (!__HAIKU__)
 	}
 
 	virtual const char* CommandName() const
@@ -286,9 +413,58 @@ public:
 
 	virtual BCursor ViewCursor(BPoint current) const
 	{
-		const uint8* cursorData = kMoveCursor;
 		float rotation = fmod(360.0 - fParent->ViewspaceRotation() + 22.5,
 			180.0);
+#ifdef __HAIKU__
+		BCursorID cursorID = B_CURSOR_ID_MOVE;
+		if (rotation < 45.0) {
+			switch (fSide) {
+				case LEFT:
+				case RIGHT:
+					cursorID = B_CURSOR_ID_RESIZE_EAST_WEST;
+					break;
+				case TOP:
+				case BOTTOM:
+					cursorID = B_CURSOR_ID_RESIZE_NORTH_SOUTH;
+					break;
+			}
+		} else if (rotation < 90.0) {
+			switch (fSide) {
+				case LEFT:
+				case RIGHT:
+					cursorID = B_CURSOR_ID_RESIZE_NORTH_EAST_SOUTH_WEST;
+					break;
+				case TOP:
+				case BOTTOM:
+					cursorID = B_CURSOR_ID_RESIZE_NORTH_WEST_SOUTH_EAST;
+					break;
+			}
+		} else if (rotation < 135.0) {
+			switch (fSide) {
+				case LEFT:
+				case RIGHT:
+					cursorID = B_CURSOR_ID_RESIZE_NORTH_SOUTH;
+					break;
+				case TOP:
+				case BOTTOM:
+					cursorID = B_CURSOR_ID_RESIZE_EAST_WEST;
+					break;
+			}
+		} else {
+			switch (fSide) {
+				case LEFT:
+				case RIGHT:
+					cursorID = B_CURSOR_ID_RESIZE_NORTH_WEST_SOUTH_EAST;
+					break;
+				case TOP:
+				case BOTTOM:
+					cursorID = B_CURSOR_ID_RESIZE_NORTH_EAST_SOUTH_WEST;
+					break;
+			}
+		}
+		return BCursor(cursorID);
+#else // (!__HAIKU__)
+		const uint8* cursorData = kMoveCursor;
 		if (rotation < 45.0) {
 			switch (fSide) {
 				case LEFT:
@@ -335,6 +511,7 @@ public:
 			}
 		}
 		return BCursor(cursorData);
+#endif // (!__HAIKU__)
 	}
 
 	virtual const char* CommandName() const
