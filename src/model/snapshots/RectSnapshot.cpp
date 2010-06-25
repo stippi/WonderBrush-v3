@@ -54,6 +54,7 @@ void
 RectSnapshot::Render(RenderEngine& engine, BBitmap* bitmap, BRect area) const
 {
 	engine.SetStyle(fStyle.Get());
+	engine.SetTransformation(LayoutedState().Matrix);
 	engine.DrawRectangle(fArea, area);
 }
 
