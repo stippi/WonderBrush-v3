@@ -57,6 +57,7 @@ class LayerSnapshot : public ObjectSnapshot {
 
 			const ::Layer*		fOriginal;
 			BList				fObjects;
+			BRect				fBounds;
 			BBitmap*			fBitmap;
 };
 

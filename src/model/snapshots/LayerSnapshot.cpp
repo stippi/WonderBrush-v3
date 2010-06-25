@@ -1,9 +1,6 @@
 /*
- * Copyright 2007, Haiku. All rights reserved.
- * Distributed under the terms of the MIT License.
- *
- * Authors:
- *		Stephan Aßmus <superstippi@gmx.de>
+ * Copyright 2007-2010, Stephan Aßmus <superstippi@gmx.de>.
+ * All rights reserved. Distributed under the terms of the MIT License.
  */
 #include "LayerSnapshot.h"
 
@@ -31,8 +28,8 @@ LayerSnapshot::LayerSnapshot(const ::Layer* layer)
 	: ObjectSnapshot(layer)
 	, fOriginal(layer)
 	, fObjects(20)
-	, fBitmap(new (nothrow) BBitmap(layer->Bounds(), B_BITMAP_NO_SERVER_LINK,
-		B_RGBA32))
+	, fBounds(layer->Bounds())
+	, fBitmap(NULL)
 {
 	_Sync();
 }
@@ -71,11 +68,25 @@ LayerSnapshot::Sync()
 void
 LayerSnapshot::Layout(LayoutContext& context, uint32 flags)
 {
+//printf("%p->LayerSnapshot::Layout()\n", Original());
 	LayoutState state(context.State());
 	context.PushState(&state);
 
-	// TODO: Keep Transformable as a member, don't inherit it.
-	context.SetTransformation(*this);
+	// Allocate or resize bitmap for caching layer contents
+	BRect zoomedBounds(fBounds);
+	zoomedBounds.left = floorf(zoomedBounds.left * context.ZoomLevel());
+	zoomedBounds.top = floorf(zoomedBounds.top * context.ZoomLevel());
+	zoomedBounds.right = ceilf(zoomedBounds.right * context.ZoomLevel());
+	zoomedBounds.bottom = ceilf(zoomedBounds.bottom * context.ZoomLevel());
+	if (fBitmap == NULL || zoomedBounds != fBitmap->Bounds()) {
+//printf("  resizing bitmap\n");
+		delete fBitmap;
+		fBitmap = new (nothrow) BBitmap(zoomedBounds,
+			B_BITMAP_NO_SERVER_LINK, B_RGBA32);
+		memset(fBitmap->Bits(), 0, fBitmap->BitsLength());
+	}
+
+	ObjectSnapshot::Layout(context,flags);
 
 	int32 count = CountObjects();
 	for (int32 i = 0; i < count; i++) {
@@ -90,6 +101,13 @@ LayerSnapshot::Layout(LayoutContext& context, uint32 flags)
 void
 LayerSnapshot::Render(RenderEngine& engine, BBitmap* bitmap, BRect area) const
 {
+//printf("%p->LayerSnapshot::Render(BRect(%.1f, %.1f, %.1f, %.1f))\n", fOriginal,
+//area.left, area.top, area.right, area.bottom);
+	area = area & bitmap->Bounds();
+	if (fBitmap == NULL)
+		debugger("Layer bitmap not allocated!");
+	if (fBitmap->Bounds() != bitmap->Bounds())
+		debugger("Layer bitmap has wrong size!");
 	engine.BlendArea(fBitmap, area);
 }
 
@@ -99,9 +117,7 @@ LayerSnapshot::Render(RenderEngine& engine, BBitmap* bitmap, BRect area) const
 BRect
 LayerSnapshot::Bounds() const
 {
-	if (fBitmap)
-		return fBitmap->Bounds();
-	return BRect(0, 0, -1, -1);
+	return fBounds;
 }
 
 // Render
@@ -109,15 +125,23 @@ BRect
 LayerSnapshot::Render(RenderEngine& engine, BRect area, BBitmap* bitmap,
 	BBitmap* cacheBitmap, BRegion& validCacheRegion, int32& cacheLevel) const
 {
+//printf("%p->LayerSnapshot::Render(BRect(%.1f, %.1f, %.1f, %.1f)) objects\n",
+//fOriginal, area.left, area.top, area.right, area.bottom);
 	area = area & bitmap->Bounds();
 	if (!area.IsValid())
 		return area;
+
+	// Check bitmap size matches (for debugging purposes)
+	if (fBitmap == NULL || bitmap->Bounds() != fBitmap->Bounds()) {
+		printf("Layer bitmap has wrong size or is not allocated!");
+		bitmap->Bounds().PrintToStream();
+		fBitmap->Bounds().PrintToStream();
+	}
 
 	// first pass, give every object snapshot a chance to
 	// extend the visually changed area, start with the lowest
 	// changed object
 	int32 count = CountObjects();
-//	lowestChangedObject = max_c(0, min_c(count - 1, lowestChangedObject));
 
 	BRect visuallyChangedArea = area;
 
@@ -134,68 +158,34 @@ LayerSnapshot::Render(RenderEngine& engine, BRect area, BBitmap* bitmap,
 	// begin rendering
 
 	rebuildArea = rebuildArea & bitmap->Bounds();
-	int32 firstObject = 0;
 
-//	// Figure out until which object level we can reuse the cache bitmap,
-//	// if at all.
-//	BRegion cacheTest(rebuildArea);
-//	cacheTest.Exclude(&validCacheRegion);
-//	bool canUseCache = false;
-//	if (cacheLevel < lowestChangedObject && cacheTest.CountRects() == 0) {
-////printf("can use cache\n");
-//		// we can use the cache
-//		firstObject = cacheLevel + 1;
-//		canUseCache = true;
-//	} else {
-//		// we need to build the cache
-//		if (cacheLevel != lowestChangedObject - 1) {
-//			cacheLevel = lowestChangedObject - 1;
-//			validCacheRegion.MakeEmpty();
-////printf("start building cache\n");
-//		} else {
-////printf("continue building cache\n");
-//		}
-//	}
+	// start clean
+	uint8* bits = (uint8*)bitmap->Bits();
+	uint32 bytes = (rebuildArea.IntegerWidth() + 1) * 4;
+	uint32 height = rebuildArea.IntegerHeight() + 1;
+	uint32 bpr = bitmap->BytesPerRow();
 
-	// clear the bitmap, or transfer the area from the cache
-//printf("rebuild: "); rebuildArea.PrintToStream();
+	bits += (int32)rebuildArea.top * bpr;
+	bits += (int32)rebuildArea.left * 4;
 
-//	if (cacheBitmap && canUseCache) {
-//		// use the cache
-//		copy_area(cacheBitmap, bitmap, rebuildArea);
-//	} else {
-		// start clean
-		uint8* bits = (uint8*)bitmap->Bits();
-		uint32 bytes = (rebuildArea.IntegerWidth() + 1) * 4;
-		uint32 height = rebuildArea.IntegerHeight() + 1;
-		uint32 bpr = bitmap->BytesPerRow();
-
-		bits += (int32)rebuildArea.top * bpr;
-		bits += (int32)rebuildArea.left * 4;
-
-		// clean out bitmap
-		for (uint32 y = 0; y < height; y++) {
-			memset(bits, 0, bytes);
-			bits += bpr;
-		}
-//	}
+	// clean out bitmap
+	for (uint32 y = 0; y < height; y++) {
+		memset(bits, 0, bytes);
+		bits += bpr;
+	}
 
 	// render objects
 	BRect layerBounds = bitmap->Bounds();
 
 	engine.AttachTo(bitmap);
 
-	for (int32 i = firstObject; i < count; i++) {
+	for (int32 i = 0; i < count; i++) {
 		ObjectSnapshot* object = ObjectAtFast(i);
 		object->PrepareRendering(layerBounds);
 
 		engine.SetClipping(dirtyAreas[i]);
 
 		object->Render(engine, bitmap, dirtyAreas[i]);
-//		if (cacheBitmap && i == cacheLevel) {
-//			copy_area(bitmap, cacheBitmap, dirtyAreas[i]);
-//			validCacheRegion.Include(dirtyAreas[i]);
-//		}
 	}
 
 	// return the final visually changed area
@@ -258,11 +248,7 @@ LayerSnapshot::_Sync()
 		}
 	}
 
-	if (!fBitmap || fOriginal->Bounds() != fBitmap->Bounds()) {
-		delete fBitmap;
-		fBitmap = new (nothrow) BBitmap(fOriginal->Bounds(),
-			B_BITMAP_NO_SERVER_LINK, B_RGBA32);
-	}
+	fBounds = fOriginal->Bounds();
 }
 
 // _MakeEmpty
