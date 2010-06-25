@@ -53,7 +53,12 @@ Styleable::SetToPropertyObject(const PropertyObject* object)
 	AutoNotificationSuspender styleSuspender(fStyle.Get());
 	fStyle->SetToPropertyObject(object);
 
-	return HasPendingNotifications() || fStyle->HasPendingNotifications();
+	if (HasPendingNotifications() || fStyle->HasPendingNotifications()) {
+		UpdateChangeCounter();
+		InvalidateParent(Area());
+		return true;
+	}
+	return false;
 }
 
 // #pragma mark -
