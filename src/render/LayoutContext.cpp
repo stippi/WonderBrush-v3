@@ -57,7 +57,7 @@ LayoutContext::PopState()
 void
 LayoutContext::SetTransformation(const Transformable& matrix)
 {
-	fCurrentState->Matrix = fCurrentState->Previous->Matrix;
-	fCurrentState->Matrix.Multiply(matrix);
+	fCurrentState->Matrix = matrix;
+	fCurrentState->Matrix.Multiply(fCurrentState->Previous->Matrix);
 }
 
