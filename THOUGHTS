@@ -47,6 +47,9 @@ Füllungen müssen optional einen Alphakanal (Bitmap) unterstützen. Jedenfalls 
 Füllfarben sollten auch als "Schattierung" einer anderen Farbe auftreten können. Wenn die Hauptfarbe gelöscht wird, erscheint ein Bestätigungsdialog, ob alle Schattierungen in normale Farben umgewandelt werden sollen. Alternativ könnte man auch eine zusätzliche Eigenschaft im Style verwalten, die dafür sorgt, dass eine Füllung abgedunkelt oder sonst wie verändert wird.
 
 
+Layouting:
+Layouting bedeutet, dass der Objektbaum traversiert wird und Abhängigkeiten final aufgelöst werden. Zum Beispiel könnte eine Objektgröße von der aktuellen Fontgröße abhängen, wobei der Font nur in einem übergeordneten Objekt gesetzt ist. Da die Tools auch fertig "gelayoutete" Objektparameter benötigen werden, ist es sinnvoll, das Layout auf dem Originaldokument durchzuführen. Dazu müssten Veränderungen eines Objektes darauf hinweisen, dass ein Layout das Unterbaums nötig ist. Alternativ könnten absolute Parameter im Originalobjektbaum immer live aufgelöst werden, aber der explizite Layoutvorgang könnte es erleichtern, die Regionen zum Neurendern zu wissen. Prinzipiell ist auch ein Layout der Snapshots notwendig, und zwar asynchron vor jedem Rendervorgang. Hierbei können zum Beispiel der aktuelle Zoom und Scrolloffset in die globalen Matrizen einfließen, welche im Originaldokument außen vor bleiben sollten.
+
 
 PropertyObject Interface erweitern:
 	-> Abfrage nach Anzahl von "PropertyObjects" oder "PropertyCategory" oder
