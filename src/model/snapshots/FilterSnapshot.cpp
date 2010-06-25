@@ -13,6 +13,7 @@
 
 #include "Filter.h"
 #include "GaussFilter.h"
+#include "LayoutContext.h"
 #include "RenderBuffer.h"
 #include "StackBlurFilter.h"
 
@@ -22,6 +23,7 @@ FilterSnapshot::FilterSnapshot(const Filter* filter)
 	: ObjectSnapshot(filter)
 	, fOriginal(filter)
 	, fFilterRadius(filter->FilterRadius())
+	, fLayoutedFilterRadius(fFilterRadius)
 {
 }
 
@@ -50,30 +52,38 @@ FilterSnapshot::Sync()
 	return false;
 }
 
+// Layout
+void
+FilterSnapshot::Layout(LayoutContext& context, uint32 flags)
+{
+	ObjectSnapshot::Layout(context, flags);
+	fLayoutedFilterRadius = fFilterRadius * LayoutedState().Matrix.Scale();
+}
+
 // Render
 void
 FilterSnapshot::Render(RenderEngine& engine, BBitmap* bitmap,
 	BRect area) const
 {
-	float extend = ceilf(fFilterRadius) + 3;
+	float extend = ceilf(fLayoutedFilterRadius) + 3;
 	BRect source = area;
 	source.InsetBy(-extend, -extend);
 
 	RenderBuffer buffer(bitmap, source, false);
 
-	if (fFilterRadius < 254) {
+	if (fLayoutedFilterRadius < 254) {
 		// stack blur is really fast and independent
 		// of the filter radius, but limited to 254
 		// filter radius maximum
 		StackBlurFilter filter;
-		filter.FilterRGBA32(&buffer, fFilterRadius);
+		filter.FilterRGBA32(&buffer, fLayoutedFilterRadius);
 	} else {
 		// gauss filter supports any radius and is
 		// independent of the radius as well, but
 		// uses floating point math/conversion, so
 		// it is slower
 		GaussFilter filter;
-		filter.FilterRGB32(&buffer, fFilterRadius);
+		filter.FilterRGB32(&buffer, fLayoutedFilterRadius);
 	}
 
 	source.InsetBy(extend, extend);
@@ -91,7 +101,7 @@ FilterSnapshot::RebuildAreaForDirtyArea(BRect& area) const
 	// are required by this object to render the given area
 	// correctly.
 
-	float extend = ceilf(fFilterRadius) + 3;
+	float extend = ceilf(fLayoutedFilterRadius) + 3;
 		// + 3 to account for the required 3 edge pixles
 	area.InsetBy(-extend, -extend);
 }

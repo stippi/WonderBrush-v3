@@ -20,6 +20,8 @@ class FilterSnapshot : public ObjectSnapshot {
 	virtual	const Object*		Original() const;
 	virtual	bool				Sync();
 
+	virtual	void				Layout(LayoutContext& context, uint32 flags);
+
 	virtual	void				Render(RenderEngine& engine, BBitmap* bitmap,
 									BRect area) const;
 	virtual	void				RebuildAreaForDirtyArea(BRect& area) const;
@@ -27,6 +29,7 @@ class FilterSnapshot : public ObjectSnapshot {
  private:
 			const Filter*		fOriginal;
 			float				fFilterRadius;
+			float				fLayoutedFilterRadius;
 };
 
 #endif // FILTER_CLONE_H
