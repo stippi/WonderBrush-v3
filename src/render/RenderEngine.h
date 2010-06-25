@@ -5,6 +5,7 @@
 #ifndef RENDER_ENGINE_H
 #define RENDER_ENGINE_H
 
+#include <agg_conv_transform.h>
 #include <agg_gamma_lut.h>
 #include <agg_path_storage.h>
 #include <agg_pixfmt_rgba.h>
@@ -45,6 +46,8 @@ typedef agg::path_storage					PathStorage;
 typedef ObjectCache<Scanline, false>		ScanlineContainer;
 
 typedef agg::trans_perspective				Transformation;
+typedef agg::conv_transform
+			<PathStorage, Transformation>	TransformedPath;
 
 // This class should become the rendering backend. Compound rasterizer
 // pipeline, blending functions, etc...
@@ -62,9 +65,15 @@ public:
 			// the differences to the engine objects. (For example, if
 			// the blending mode differs, the renderer will be adjusted
 			// accordingly...)
+			void				Reset();
 			void				SetStyle(const Style* style);
+
 			void				AttachTo(BBitmap* bitmap);
 			void				SetClipping(const BRect& area);
+
+			void				SetTransformation(
+									const Transformable& transformation);
+			const Transformable& Transformation() const;
 
 			// Drawing methods
 			void				BlendArea(const BBitmap* source, BRect area);

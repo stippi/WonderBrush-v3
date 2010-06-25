@@ -84,6 +84,20 @@ RenderEngine::SetClipping(const BRect& area)
 		clipping.right + 1, clipping.bottom + 1);
 }
 
+// SetTransformation
+void
+RenderEngine::SetTransformation(const Transformable& transformation)
+{
+	fState.Matrix = transformation;
+}
+
+// Transformation
+const Transformable&
+RenderEngine::Transformation() const
+{
+	return fState.Matrix;
+}
+
 // BlendArea
 void
 RenderEngine::BlendArea(const BBitmap* source, BRect area)
@@ -116,14 +130,19 @@ RenderEngine::BlendArea(const BBitmap* source, BRect area)
 void
 RenderEngine::DrawRectangle(const BRect& rect, BRect area)
 {
-	if (!area.Intersects(rect))
-		return;
+// TODO: Fix this check, rect is untransformed, area is!
+//	if (!area.Intersects(rect))
+//		return;
 
 	agg::rounded_rect roundRect(rect.left, rect.top, rect.right, rect.bottom,
 		0.0);
 
 	fRasterizer.reset();
-	fRasterizer.add_path(roundRect);
+
+	agg::conv_transform<agg::rounded_rect, Transformable>
+		transformedRoundRect(roundRect, fState.Matrix);
+
+	fRasterizer.add_path(transformedRoundRect);
 
 	_RenderScanlines();
 }
