@@ -78,6 +78,17 @@ Transformable::Multiply(const Transformable& other)
 	return *this;
 }
 
+// PreMultiply
+Transformable&
+Transformable::PreMultiply(const Transformable& other)
+{
+	if (!other.IsIdentity()) {
+		premultiply(other);
+		TransformationChanged();
+	}
+	return *this;
+}
+
 // Reset
 void
 Transformable::Reset()
