@@ -26,6 +26,8 @@ public:
 	virtual	const Object*		Original() const;
 	virtual	bool				Sync();
 
+	virtual	void				Layout(LayoutContext& context, uint32 flags);
+
 	virtual	void				PrepareRendering(BRect documentBounds);
 	virtual	void				Render(RenderEngine& engine, BBitmap* bitmap,
 									BRect area) const;

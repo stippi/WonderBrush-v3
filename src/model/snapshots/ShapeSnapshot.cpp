@@ -56,6 +56,16 @@ ShapeSnapshot::Sync()
 	return false;
 }
 
+// Layout
+void
+ShapeSnapshot::Layout(LayoutContext& context, uint32 flags)
+{
+	Transformable previous = LayoutedState().Matrix;
+	StyleableSnapshot::Layout(context, flags);
+	if (previous != LayoutedState().Matrix)
+		fNeedsRasterizing = true;
+}
+
 #define PRINT_TIMING 0
 
 // PrepareRendering
@@ -143,10 +153,13 @@ ShapeSnapshot::_RasterizeShape(Rasterizer& rasterizer,
 		(fArea.top + fArea.bottom) / 2);
 	path.close_polygon();
 
+	TransformedPath transformedPath(path, LayoutedState().Matrix);
+
 	rasterizer.reset();
 	rasterizer.clip_box(bounds.left, bounds.top, bounds.right + 1,
 		bounds.bottom + 1);
-	rasterizer.add_path(path);
+
+	rasterizer.add_path(transformedPath);
 }
 
 // _ClearScanlines
