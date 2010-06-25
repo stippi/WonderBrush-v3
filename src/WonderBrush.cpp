@@ -31,8 +31,10 @@ WonderBrush::WonderBrush(BRect bounds)
 	fDocument->RootLayer()->AddObject(subLayer);
 
 	fDocument->RootLayer()->AddObject(new Filter(5.0));
-	fDocument->RootLayer()->AddObject(new Shape(BRect(180, 40, 320, 170),
-		(rgb_color){ 255, 100, 50, 210 }));
+	Shape* shape = new Shape(BRect(180, 40, 320, 170),
+		(rgb_color){ 255, 100, 50, 210 });
+	shape->RotateBy(BPoint(250, 105), 5);
+	fDocument->RootLayer()->AddObject(shape);
 	fDocument->RootLayer()->AddObject(new Rect(BRect(200, 10, 280, 70),
 		(rgb_color){ 255, 200, 50, 80 }));
 
