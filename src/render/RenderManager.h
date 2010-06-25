@@ -63,8 +63,8 @@ public:
 
 			BRect				Bounds() const;
 
-			void				SetZoomLevel(float zoomLevel);
-			float				ZoomLevel() const;
+			void				SetZoomLevel(double zoomLevel);
+			double				ZoomLevel() const;
 
 			bool				ScrollBy(const BPoint& offset);
 
@@ -91,13 +91,17 @@ private:
 			struct RenderInfo;
 			class LayerSnapshotVisitor;
 			class RenderInfoInitVisitor;
+			class QueueRedrawVisitor;
 
 			friend class RenderInfoInitVisitor;
+			friend class QueueRedrawVisitor;
 
-			void				_QueueRedraw(Layer* layer, BRect area);
+			status_t			_IncludeDirtyArea(const Layer* layer,
+									BRect area);
+			void				_QueueRedraw(const Layer* layer, BRect area);
 			bool				_HasDirtyLayers() const;
 			void				_TriggerRender();
-			void				_BackToDisplay(const BRect& area);
+			void				_BackToDisplay(BRect area);
 
 			void				_ClearDirtyMap(DirtyMap* map);
 
@@ -109,13 +113,13 @@ private:
 
 			void				_AllRenderThreadsDone();
 
-			status_t			_CreateDisplayBitmaps();
+			status_t			_CreateDisplayBitmaps(double zoomLevel);
 			void				_DestroyDisplayBitmaps();
 
 private:
 			BBitmap*			fDisplayBitmap[2];
 //			BRect				fDisplayRect;
-			float				fZoomLevel;
+			double				fZoomLevel;
 			bool				fScrollingDelayed;
 
 			BRect				fCleanArea;

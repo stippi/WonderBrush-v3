@@ -33,206 +33,12 @@
 
 using std::nothrow;
 
-
-#if DEBUG_CACHING
-class CacheView : public BView {
-public:
-		CacheView(BRect frame, BBitmap* cacheBitmap)
-			: BView(frame, "", B_FOLLOW_ALL, B_WILL_DRAW)
-			, fCacheBitmap(cacheBitmap)
-		{
-			SetViewColor(B_TRANSPARENT_COLOR);
-		}
-		virtual ~CacheView()
-		{
-		}
-		virtual void Draw(BRect updateRect)
-		{
-			BRegion invalidCache(updateRect);
-			invalidCache.Exclude(&fValidCache);
-			SetHighColor(255, 0, 0);
-			FillRegion(&invalidCache);
-
-			ConstrainClippingRegion(&fValidCache);
-			DrawBitmap(fCacheBitmap, B_ORIGIN);
-		}
-
-		void SetValidCache(const BRegion& region)
-		{
-			if (!LockLooper())
-				return;
-
-			fValidCache = region;
-
-			PushState();
-			Draw(Bounds());
-			PopState();
-
-			UnlockLooper();
-		}
-private:
-		BRegion fValidCache;
-		BBitmap* fCacheBitmap;
-};
-
-class BitmapView : public BView {
-public:
-		BitmapView(BRect frame, BBitmap* bitmap)
-			: BView(frame, "", B_FOLLOW_ALL, B_WILL_DRAW)
-			, fBitmap(bitmap)
-		{
-			SetViewColor(B_TRANSPARENT_COLOR);
-		}
-		virtual ~BitmapView()
-		{
-		}
-		virtual void Draw(BRect updateRect)
-		{
-			DrawBitmap(fBitmap, B_ORIGIN);
-		}
-
-		void Redraw()
-		{
-			if (!LockLooper())
-				return;
-
-			PushState();
-			Draw(Bounds());
-			PopState();
-
-			UnlockLooper();
-		}
-private:
-		BBitmap* fBitmap;
-};
-#endif
-
-// #pragma mark -
-
-class RenderThread::LayerBitmap {
- public:
-								LayerBitmap(LayerSnapshot* layer);
-	virtual						~LayerBitmap();
-
-	inline	const LayerSnapshot* Layer() const
-									{ return fLayer; }
-
-			status_t			InitCheck() const;
-			BRect				Render(RenderEngine& engine, BRect area);
-
-			const BBitmap*		Bitmap() const
-									{ return fLayerBitmap; }
-			status_t			Resize(uint32 width, uint32 height);
-
- private:
-			LayerSnapshot*		fLayer;
-
-			BBitmap*			fLayerBitmap;
-#if USE_CACHING
-			BBitmap				fCacheBitmap;
-			int32				fCacheLevel;
-			BRegion				fValidCache;
-
-#  if DEBUG_CACHING
-			BWindow*			fCacheWindow;
-			CacheView*			fCacheView;
-			BWindow*			fBitmapWindow;
-			BitmapView*			fBitmapView;
-#  endif
-#endif
-};
-
-// constructor
-RenderThread::LayerBitmap::LayerBitmap(LayerSnapshot* layer)
-	: fLayer(layer)
-	, fLayerBitmap(NULL)
-#if USE_CACHING
-	, fCacheBitmap(layer->Bounds(), 0, B_RGBA32)
-	, fCacheLevel(-1)
-	, fValidCache()
-#endif
-{
-	Resize(layer->Bounds().IntegerWidth() + 1,
-		layer->Bounds().IntegerHeight() + 1);
-
-#  if DEBUG_CACHING
-	uint32 windowFlags = B_NOT_RESIZABLE | B_NOT_ZOOMABLE | B_NOT_CLOSABLE;
-	BString helper;
-	helper = "Bitmap Region ";
-	helper << index + 1;
-	BRect frame = manager->Bounds().OffsetByCopy(90, 115);
-	frame.OffsetBy(frame.Width() + 30, index * (frame.Height() + 40));
-	fBitmapWindow = new BWindow(frame, helper.String(), B_TITLED_WINDOW, windowFlags);
-	fBitmapView = new BitmapView(fBitmapWindow->Bounds(), fBitmap);
-	fBitmapWindow->AddChild(fBitmapView);
-	fBitmapWindow->Show();
-
-	helper = "Invalid Cache Region ";
-	helper << index + 1;
-	frame.OffsetBy(frame.Width() + 30, 0);
-	fCacheWindow = new BWindow(frame, helper.String(), B_TITLED_WINDOW, windowFlags);
-	fCacheView = new CacheView(fCacheWindow->Bounds(), fCacheBitmap);
-	fCacheWindow->AddChild(fCacheView);
-	fCacheWindow->Show();
-#  endif
-}
-
-// destructor
-RenderThread::LayerBitmap::~LayerBitmap()
-{
-}
-
-// InitCheck
-status_t
-RenderThread::LayerBitmap::InitCheck() const
-{
-	if (!fLayer)
-		return B_NO_INIT;
-	status_t ret = fLayerBitmap->InitCheck();
-	if (ret < B_OK)
-		return ret;
-#if USE_CACHING
-	ret = fCacheBitmap.InitCheck();
-	if (ret < B_OK)
-		return ret;
-#endif
-	return B_OK;
-}
-
-// Render
-BRect
-RenderThread::LayerBitmap::Render(RenderEngine& engine, BRect area)
-{
-#if USE_CACHING
-	return fLayer->Render(area, lowestChangedObject,
-		fLayerBitmap, &fCacheBitmap, fValidCache, fCacheLevel);
-#else
-	BRegion dummyRegion;
-	int32 dummyLevel;
-	return fLayer->Render(engine, area, fLayerBitmap, NULL,
-		dummyRegion, dummyLevel);
-#endif
-}
-
-// Resize
-status_t
-RenderThread::LayerBitmap::Resize(uint32 width, uint32 height)
-{
-	delete fLayerBitmap;
-	fLayerBitmap = new(std::nothrow) BBitmap(
-		BRect(0, 0, width - 1, height - 1), B_BITMAP_NO_SERVER_LINK, B_RGBA32);
-	if (fLayerBitmap == NULL)
-		return B_NO_MEMORY;
-	return fLayerBitmap->InitCheck();
-}
-
-// #pragma mark - RenderThread
-
 // constructor
 RenderThread::RenderThread(RenderManager* manager)
 	: fThread(-1)
 	, fRenderManager(manager)
 	, fEngine()
+	, fScratchBitmap(NULL)
 {
 }
 
@@ -241,9 +47,7 @@ RenderThread::~RenderThread()
 {
 	WaitForThread();
 
-	int32 count = fLayerBitmaps.CountItems();
-	for (int32 i = 0; i < count; i++)
-		delete (LayerBitmap*)fLayerBitmaps.ItemAtFast(i);
+	delete fScratchBitmap;
 }
 
 // #pragma mark -
@@ -282,17 +86,33 @@ RenderThread::WaitForThread()
 // Called by the RenderManager, but in our own thread
 // (_WorkerLoop() -> RenderManager::DoNextRenderJob() -> Render()).
 void
-RenderThread::Render(LayerSnapshot* layer, BRect area)
+RenderThread::Render(LayerSnapshot* layer, BRect area, double zoomLevel)
 {
-//printf("RenderThread::Render(%p, (%f, %f, %f, %f))\n", layer, area.left, area.top, area.right, area.bottom);
-	LayerBitmap* bitmap = _LayerBitmapFor(layer);
-	if (!bitmap)
-		return;
+//printf("RenderThread::Render(%p, (%f, %f, %f, %f))\n", layer,
+//area.left, area.top, area.right, area.bottom);
+	// TODO: Move change of zoom elsewhere and check Resize() success
+	// there. Otherwise we may access an invalid BBitmap here the next
+	// time this method is called after resizing.
+	BRect zoomedBounds(layer->Bounds());
+	zoomedBounds.left = floorf(zoomedBounds.left * zoomLevel);
+	zoomedBounds.top = floorf(zoomedBounds.top * zoomLevel);
+	zoomedBounds.right = ceilf(zoomedBounds.right * zoomLevel);
+	zoomedBounds.bottom = ceilf(zoomedBounds.bottom * zoomLevel);
+	if (fScratchBitmap == NULL || fScratchBitmap->Bounds() != zoomedBounds) {
+		// Need to resize the bitmap and render everything
+//printf("  resizing scratch bitmap\n");
+		delete fScratchBitmap;
+		fScratchBitmap = new(std::nothrow) BBitmap(zoomedBounds,
+			B_BITMAP_NO_SERVER_LINK, B_RGBA32);
+		if (fScratchBitmap == NULL || fScratchBitmap->InitCheck() != B_OK)
+			return;
+		area = zoomedBounds;
+	}
 
-//printf("rendering layer %p BRect(%.1f, %.1f, %.1f, %.1f)\n", layer->Layer(),
-//	area.left, area.top, area.right, area.bottom);
-
-	bitmap->Render(fEngine, area);
+	BRegion dummyRegion;
+	int32 dummyLevel;
+	layer->Render(fEngine, area, fScratchBitmap, NULL, dummyRegion,
+		dummyLevel);
 }
 
 // #pragma mark -
@@ -313,24 +133,3 @@ RenderThread::_WorkerLoop()
 	fThread = B_BAD_THREAD_ID;
 	return B_OK;
 }
-
-// _LayerBitmapFor
-RenderThread::LayerBitmap*
-RenderThread::_LayerBitmapFor(LayerSnapshot* layer)
-{
-	int32 count = fLayerBitmaps.CountItems();
-	for (int32 i = 0; i < count; i++) {
-		LayerBitmap* l = (LayerBitmap*)fLayerBitmaps.ItemAtFast(i);
-		if (l->Layer() == layer)
-			return l;
-	}
-
-	LayerBitmap* bitmap = new (nothrow) LayerBitmap(layer);
-	if (!bitmap || bitmap->InitCheck() != B_OK
-		|| !fLayerBitmaps.AddItem(bitmap)) {
-		delete bitmap;
-		return NULL;
-	}
-	return bitmap;
-}
-

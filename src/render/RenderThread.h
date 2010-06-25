@@ -27,21 +27,19 @@ public:
 			status_t			Init();
 			thread_id			Run();
 			void				WaitForThread();
-			void				Render(LayerSnapshot* layer, BRect area);
+			void				Render(LayerSnapshot* layer, BRect area,
+									double zoomLevel);
 
 private:
-	class LayerBitmap;
-
 	static	status_t			_WorkerLoopEntry(void* data);
 			status_t			_WorkerLoop();
-
-			LayerBitmap*		_LayerBitmapFor(LayerSnapshot* layer);
 
 			thread_id			fThread;
 			RenderManager*		fRenderManager;
 			RenderEngine		fEngine;
 
 			BList				fLayerBitmaps;
+			BBitmap*			fScratchBitmap;
 };
 
 #endif // RENDER_THREAD_H
