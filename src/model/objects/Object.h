@@ -38,6 +38,8 @@ public:
 
 	virtual	void				ExtendDirtyArea(BRect& area) const;
 
+			void				InvalidateParent(BRect untransformedOldBounds,
+									BRect untransformedNewBounds);
 			void				InvalidateParent(const BRect& area);
 			void				InvalidateParent();
 
@@ -48,6 +50,8 @@ public:
 protected:
 	// BaseObject interface
 	virtual void				NotifyListeners();
+
+	virtual	void				TransformationChanged();
 
 private:
 			uint32				fChangeCounter;
