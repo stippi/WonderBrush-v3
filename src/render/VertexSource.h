@@ -1,9 +1,12 @@
 /*
- * Copyright 2009 Stephan Aßmus <superstippi@gmx.de>
+ * Copyright 2009-2010 Stephan Aßmus <superstippi@gmx.de>
  * All rights reserved. Distributed under the terms of the MIT license.
  */
 #ifndef VERTEX_SOURCE_H
 #define VERTEX_SOURCE_H
+
+// Virtualized version of AGG Vertex Source interface with additional
+// methods important only when chaining multiple VertexSource instances.
 
 class VertexSource {
  public:

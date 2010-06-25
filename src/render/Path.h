@@ -1,6 +1,6 @@
 /*
- * Copyright 2006-2009, Stephan Aßmus <superstippi@gmx.de>.
- * Distributed under the terms of the MIT License.
+ * Copyright 2006-2010, Stephan Aßmus <superstippi@gmx.de>.
+ * All rights reserved. Distributed under the terms of the MIT License.
  */
 
 #ifndef PATH_H
@@ -57,7 +57,7 @@ public:
 	virtual	const char*			DefaultName() const;
 
 	virtual	status_t			Archive(BMessage* into,
-										bool deep = true) const;
+									bool deep = true) const;
 
 	virtual	void				AddProperties(PropertyObject* object) const;
 	virtual	bool				SetToPropertyObject(
@@ -72,9 +72,8 @@ public:
 
 			bool				AddPoint(BPoint point);
 			bool				AddPoint(const BPoint& point,
-										 const BPoint& pointIn,
-										 const BPoint& pointOut,
-										 bool connected);
+									const BPoint& pointIn,
+									const BPoint& pointOut, bool connected);
 			bool				AddPoint(BPoint point, int32 index);
 
 			bool				RemovePoint(int32 index);
@@ -82,12 +81,11 @@ public:
 								// modify existing points position
 			bool				SetPoint(int32 index, BPoint point);
 			bool				SetPoint(int32 index, BPoint point,
-													  BPoint pointIn,
-													  BPoint pointOut,
-													  bool connected);
+									BPoint pointIn, BPoint pointOut,
+									bool connected);
 			bool				SetPointIn(int32 index, BPoint point);
 			bool				SetPointOut(int32 index, BPoint point,
-										   bool mirrorDist = false);
+									bool mirrorDist = false);
 
 			bool				SetInOutConnected(int32 index, bool connected);
 
@@ -95,19 +93,17 @@ public:
 			bool				GetPointAt(int32 index, BPoint& point) const;
 			bool				GetPointInAt(int32 index, BPoint& point) const;
 			bool				GetPointOutAt(int32 index, BPoint& point) const;
-			bool				GetPointsAt(int32 index,
-											BPoint& point,
-											BPoint& pointIn,
-											BPoint& pointOut,
-											bool* connected = NULL) const;
+			bool				GetPointsAt(int32 index, BPoint& point,
+									BPoint& pointIn, BPoint& pointOut,
+									bool* connected = NULL) const;
 
 			int32				CountPoints() const;
 
 								// iterates over curve segments and returns
 								// the distance and index of the point that
 								// started the segment that is closest
-			bool				GetDistance(BPoint point,
-											float* distance, int32* index) const;
+			bool				GetDistance(BPoint point, float* distance,
+									int32* index) const;
 
 								// at curve segment indicated by "index", this
 								// function looks for the closest point
@@ -115,13 +111,13 @@ public:
 								// that indicates the distance on the curve
 								// between [0..1]
 			bool				FindBezierScale(int32 index, BPoint point,
-												double* scale) const;
+									double* scale) const;
 								// this function can be used to get a point
 								// directly on the segment indicated by "index"
 								// "scale" is on [0..1] indicating the distance
 								// from the start of the segment to the end
 			bool				GetPoint(int32 index, double scale,
-										 BPoint& point) const;
+									BPoint& point) const;
 
 			void				SetClosed(bool closed);
 			bool				IsClosed() const
@@ -131,7 +127,7 @@ public:
 			BRect				ControlPointBounds() const;
 
 			void				Iterate(Iterator* iterator,
-										float smoothScale = 1.0) const;
+									float smoothScale = 1.0) const;
 
 			void				CleanUp();
 			void				Reverse();
@@ -139,7 +135,8 @@ public:
 
 			void				PrintToStream() const;
 
-			bool				GetAGGPathStorage(agg::path_storage& path) const;
+			bool				GetAGGPathStorage(
+									agg::path_storage& path) const;
 
 			bool				AddListener(Listener* listener);
 			bool				RemoveListener(Listener* listener);
@@ -161,11 +158,9 @@ private:
 
 			BRect				_Bounds() const;
 			void				_SetPoint(int32 index, BPoint point);
-			void				_SetPoint(int32 index,
-										  const BPoint& point,
-										  const BPoint& pointIn,
-										  const BPoint& pointOut,
-										  bool connected);
+			void				_SetPoint(int32 index, const BPoint& point,
+									const BPoint& pointIn,
+									const BPoint& pointOut, bool connected);
 			bool				_SetPointCount(int32 count);
 
 			void				_NotifyPointAdded(int32 index) const;
@@ -175,6 +170,7 @@ private:
 			void				_NotifyClosedChanged() const;
 			void				_NotifyPathReversed() const;
 
+private:
 			BList				fListeners;
 
 			control_point*		fPath;
