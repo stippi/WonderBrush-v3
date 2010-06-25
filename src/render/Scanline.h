@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009 Stephan Aßmus <superstippi@gmx.de>
+ * Copyright (c) 2009-2010 Stephan Aßmus <superstippi@gmx.de>
  */
 //----------------------------------------------------------------------------
 // Anti-Grain Geometry - Version 2.4
@@ -111,7 +111,7 @@ public:
 		} else {
 			fCurrentSpan++;
 			fCurrentSpan->covers = fCoverPtr;
-			fCurrentSpan->x = (int16)x;
+			fCurrentSpan->x = (CoordType)x;
 			fCurrentSpan->len = 1;
 		}
 		fLastX = x;
@@ -122,12 +122,12 @@ public:
 	{
 		memcpy(fCoverPtr, covers, len * sizeof(CoverType));
 		if (x == fLastX + 1 && fCurrentSpan->len > 0) {
-			fCurrentSpan->len += (int16)len;
+			fCurrentSpan->len += (CoordType)len;
 		} else {
 			fCurrentSpan++;
 			fCurrentSpan->covers = fCoverPtr;
-			fCurrentSpan->x = (int16)x;
-			fCurrentSpan->len = (int16)len;
+			fCurrentSpan->x = (CoordType)x;
+			fCurrentSpan->len = (CoordType)len;
 		}
 		fCoverPtr += len;
 		fLastX = x + len - 1;
@@ -138,13 +138,13 @@ public:
 		if (x == fLastX + 1 && 
 		   fCurrentSpan->len < 0 && 
 		   cover == *fCurrentSpan->covers) {
-			fCurrentSpan->len -= (int16)len;
+			fCurrentSpan->len -= (CoordType)len;
 		} else {
 			*fCoverPtr = (CoverType)cover;
 			fCurrentSpan++;
 			fCurrentSpan->covers = fCoverPtr++;
-			fCurrentSpan->x	  = (int16)x;
-			fCurrentSpan->len	= (int16)(-int(len));
+			fCurrentSpan->x = (CoordType)x;
+			fCurrentSpan->len = (CoordType)(-int(len));
 		}
 		fLastX = x + len - 1;
 	}
@@ -179,7 +179,7 @@ public:
 	{
 		fLastX	= 0x7FFFFFF0;
 		fCoverPtr = fCovers;
-		fCurrentSpan  = fSpans;
+		fCurrentSpan = fSpans;
 		fCurrentSpan->len = 0;
 	}
 
