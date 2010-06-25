@@ -17,6 +17,8 @@ public:
 								LayoutContext(LayoutState* initialState);
 	virtual						~LayoutContext();
 
+			void				Init(double zoomLevel);
+
 			void				PushState(LayoutState* state);
 			void				PopState();
 
@@ -25,8 +27,12 @@ public:
 
 			void				SetTransformation(const Transformable& matrix);
 
+	inline	double				ZoomLevel() const
+									{ return fZoomLevel; }
+
 private:
-	LayoutState*				fCurrentState;
+			LayoutState*		fCurrentState;
+			double				fZoomLevel;
 };
 
 #endif // LAYOUT_CONTEXT_H

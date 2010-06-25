@@ -14,12 +14,25 @@ using std::nothrow;
 // constructor
 LayoutContext::LayoutContext(LayoutState* initialState)
 	: fCurrentState(initialState)
+	, fZoomLevel(1.0)
 {
 }
 
 // destructor
 LayoutContext::~LayoutContext()
 {
+}
+
+// Init
+void
+LayoutContext::Init(double zoomLevel)
+{
+	ASSERT(fCurrentState->Previous == NULL);
+
+	fZoomLevel = zoomLevel;
+	// set the zoom level on the inital LayoutState
+	fCurrentState->Matrix.Reset();
+	fCurrentState->Matrix.ScaleBy(B_ORIGIN, fZoomLevel, fZoomLevel);
 }
 
 // PushState
