@@ -36,13 +36,16 @@ ObjectSnapshot::Sync()
 void
 ObjectSnapshot::Layout(LayoutContext& context, uint32 flags)
 {
+	// TODO: Keep Transformable as a member, don't inherit it.
+	context.SetTransformation(*this);
+	fLayoutedState = *context.State();
 }
 
 // PrepareRendering
 void
 ObjectSnapshot::PrepareRendering(BRect documentBounds)
 {
-	// do anything necessary to invoke a rendering
+	// Do anything necessary to invoke a rendering
 	// for example, a shape might pre-rasterize, but
 	// it needs to protect this step by a lock, because
 	// PrepareRendering() is executed by each rendering
@@ -50,7 +53,7 @@ ObjectSnapshot::PrepareRendering(BRect documentBounds)
 	// do the work for all other threads, so that these
 	// threads can quickly skip the preparation after
 	// they have acquired the lock and see that the work
-	// has already been done
+	// has already been done.
 }
 
 // Render
@@ -58,8 +61,8 @@ void
 ObjectSnapshot::Render(RenderEngine& engine, BBitmap* bitmap,
 	BRect area) const
 {
-	// "area" is the area previously given in
-	// RebuildAreaForDirtyArea()
+	// "Area" is the area previously given in
+	// RebuildAreaForDirtyArea().
 	// The object is requested to correctly produce all pixels
 	// in the given area, where pixels outside this area can
 	// be assumed to be valid, provided that
@@ -71,8 +74,7 @@ ObjectSnapshot::Render(RenderEngine& engine, BBitmap* bitmap,
 void
 ObjectSnapshot::RebuildAreaForDirtyArea(BRect& area) const
 {
-	// "area" is the area requested to be rendered by this
-	// object.
+	// "Area" is the area requested to be rendered by this object.
 	// This function should change the area so that
 	// it includes all pixels outside the given area which
 	// are required by this object to render the given area

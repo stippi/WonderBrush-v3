@@ -7,15 +7,16 @@
 
 #include <Rect.h>
 
+#include "LayoutContext.h"
+#include "LayoutState.h"
 #include "Transformable.h"
 
 class BBitmap;
-class LayoutContext;
 class Object;
 class RenderEngine;
 
 class ObjectSnapshot : public Transformable {
- public:
+public:
 								ObjectSnapshot(const Object* object);
 	virtual						~ObjectSnapshot();
 
@@ -37,8 +38,12 @@ class ObjectSnapshot : public Transformable {
 	virtual	void				RebuildAreaForDirtyArea(BRect& area) const;
 									// TODO: could be BRegions...
 
- private:
+	inline	const LayoutState&	LayoutedState() const
+									{ return fLayoutedState; }
+
+private:
 			uint32				fChangeCounter;
+			LayoutState			fLayoutedState;
 };
 
 #endif // OBJECT_SNAPSHOT_H
