@@ -52,6 +52,7 @@ public:
 	virtual	void				ScaleBy(BPoint origin, double scaleX,
 									double scaleY);
 
+			double				Scale() const;
 			bool				GetAffineParameters(double* translationX,
 									double* translationY, double* rotation,
 									double* scaleX, double* scaleY,

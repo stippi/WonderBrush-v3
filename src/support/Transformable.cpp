@@ -223,6 +223,37 @@ Transformable::TranslateBy(BPoint offset)
 	}
 }
 
+// RotateBy
+void
+Transformable::RotateBy(BPoint origin, double degrees)
+{
+	if (degrees != 0.0) {
+		multiply(agg::trans_affine_translation(-origin.x, -origin.y));
+		multiply(agg::trans_affine_rotation(degrees * (M_PI / 180.0)));
+		multiply(agg::trans_affine_translation(origin.x, origin.y));
+		TransformationChanged();
+	}
+}
+
+// ScaleBy
+void
+Transformable::ScaleBy(BPoint origin, double xScale, double yScale)
+{
+	if (xScale != 1.0 || yScale != 1.0) {
+		multiply(agg::trans_affine_translation(-origin.x, -origin.y));
+		multiply(agg::trans_affine_scaling(xScale, yScale));
+		multiply(agg::trans_affine_translation(origin.x, origin.y));
+		TransformationChanged();
+	}
+}
+
+// Scale
+double
+Transformable::Scale() const
+{
+	return scale();
+}
+
 // GetAffineParameters
 bool
 Transformable::GetAffineParameters(double* _translationX,
@@ -291,26 +322,3 @@ Transformable::GetAffineParameters(double* _translationX,
 	return false;
 }
 
-// RotateBy
-void
-Transformable::RotateBy(BPoint origin, double degrees)
-{
-	if (degrees != 0.0) {
-		multiply(agg::trans_affine_translation(-origin.x, -origin.y));
-		multiply(agg::trans_affine_rotation(degrees * (M_PI / 180.0)));
-		multiply(agg::trans_affine_translation(origin.x, origin.y));
-		TransformationChanged();
-	}
-}
-
-// ScaleBy
-void
-Transformable::ScaleBy(BPoint origin, double xScale, double yScale)
-{
-	if (xScale != 1.0 || yScale != 1.0) {
-		multiply(agg::trans_affine_translation(-origin.x, -origin.y));
-		multiply(agg::trans_affine_scaling(xScale, yScale));
-		multiply(agg::trans_affine_translation(origin.x, origin.y));
-		TransformationChanged();
-	}
-}
