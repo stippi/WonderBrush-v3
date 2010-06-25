@@ -34,22 +34,22 @@ enum {
 
 // constructor
 CanvasView::CanvasView(BRect frame, Document* document, RenderManager* manager)
-	:
-	StateView(frame, "canvas view", B_FOLLOW_NONE,
-		B_WILL_DRAW | B_FRAME_EVENTS),
-	fDocument(document),
-	fRenderManager(manager),
+	: StateView(frame, "canvas view", B_FOLLOW_NONE,
+		B_WILL_DRAW | B_FRAME_EVENTS)
+	, fDocument(document)
+	, fRenderManager(manager)
 
-	fZoomLevel(1.0),
+	, fZoomLevel(1.0)
+	, fZoomPolicy(ZOOM_POLICY_ENLARGE_PIXELS)
 
-	fSpaceHeldDown(false),
-	fScrollTracking(false),
-	fInScrollTo(false),
-	fScrollTrackingStart(0.0, 0.0),
-	fScrollOffsetStart(0.0, 0.0),
-	fDelayedScrolling(false),
+	, fSpaceHeldDown(false)
+	, fScrollTracking(false)
+	, fInScrollTo(false)
+	, fScrollTrackingStart(0.0, 0.0)
+	, fScrollOffsetStart(0.0, 0.0)
+	, fDelayedScrolling(false)
 
-	fAutoScroller(NULL)
+	, fAutoScroller(NULL)
 {
 	SetViewColor(B_TRANSPARENT_32_BIT);
 	SetHighColor(kStripeLight);
@@ -61,21 +61,21 @@ CanvasView::CanvasView(BRect frame, Document* document, RenderManager* manager)
 
 // constructor
 CanvasView::CanvasView(Document* document, RenderManager* manager)
-	:
-	StateView("canvas view", B_WILL_DRAW | B_FRAME_EVENTS),
-	fDocument(document),
-	fRenderManager(manager),
+	: StateView("canvas view", B_WILL_DRAW | B_FRAME_EVENTS)
+	, fDocument(document)
+	, fRenderManager(manager)
 
-	fZoomLevel(1.0),
+	, fZoomLevel(1.0)
+	, fZoomPolicy(ZOOM_POLICY_ENLARGE_PIXELS)
 
-	fSpaceHeldDown(false),
-	fScrollTracking(false),
-	fInScrollTo(false),
-	fScrollTrackingStart(0.0, 0.0),
-	fScrollOffsetStart(0.0, 0.0),
-	fDelayedScrolling(false),
+	, fSpaceHeldDown(false)
+	, fScrollTracking(false)
+	, fInScrollTo(false)
+	, fScrollTrackingStart(0.0, 0.0)
+	, fScrollOffsetStart(0.0, 0.0)
+	, fDelayedScrolling(false)
 
-	fAutoScroller(NULL)
+	, fAutoScroller(NULL)
 {
 	SetViewColor(B_TRANSPARENT_32_BIT);
 	SetHighColor(kStripeLight);
@@ -563,7 +563,18 @@ CanvasView::SetZoomLevel(double zoomLevel, bool mouseIsAnchor)
 
 	SetDataRectAndScrollOffset(dataRect, offset);
 
-	fRenderManager->SetZoomLevel(fZoomLevel);
+	_SetRenderManagerZoom();
+}
+
+// SetZoomPolicy
+void
+CanvasView::SetZoomPolicy(uint32 policy)
+{
+	if (fZoomPolicy == policy)
+		return;
+
+	fZoomPolicy = policy;
+	_SetRenderManagerZoom();
 }
 
 // SetAutoScrolling
@@ -694,6 +705,21 @@ CanvasView::_LayoutCanvas()
 	return r;
 }
 
+// _SetRenderManagerZoom
+void
+CanvasView::_SetRenderManagerZoom()
+{
+	if (fZoomLevel <= 1.0)	
+		fRenderManager->SetZoomLevel(fZoomLevel);
+	else {
+		// upscaling depends on zoom policy
+		if (fZoomPolicy == ZOOM_POLICY_ENLARGE_PIXELS)
+			fRenderManager->SetZoomLevel(1.0);
+		else
+			fRenderManager->SetZoomLevel(fZoomLevel);
+	}
+}
+
 // #pragma mark -
 
 // _UpdateToolCursor
@@ -710,4 +736,3 @@ CanvasView::_UpdateToolCursor()
 		UpdateStateCursor();
 	}
 }
-

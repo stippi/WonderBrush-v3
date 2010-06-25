@@ -71,6 +71,12 @@ public:
 			void				SetZoomLevel(double zoomLevel,
 										 bool mouseIsAnchor = true);
 
+			enum {
+				ZOOM_POLICY_ENLARGE_PIXELS	= 0,
+				ZOOM_POLICY_VECTOR_SCALE	= 1
+			};
+			void				SetZoomPolicy(uint32 policy);
+
 			void				SetAutoScrolling(bool scroll);
 
 	// StateView interface
@@ -85,12 +91,16 @@ private:
 			BRect				_CanvasRect() const;
 			BRect				_LayoutCanvas();
 
+			void				_SetRenderManagerZoom();
+
 			void				_UpdateToolCursor();
 
+private:
 			Document*			fDocument;
 			RenderManager*		fRenderManager;
 
 			double				fZoomLevel;
+			uint32				fZoomPolicy;
 
 			bool				fSpaceHeldDown;
 			bool				fScrollTracking;
