@@ -29,8 +29,6 @@ public:
 								RenderBuffer(uint32 width, uint32 height);
 								RenderBuffer(RenderBuffer* bitmap, BRect area,
 									bool adopt);
-								RenderBuffer(BBitmap* bitmap, BRect area,
-									bool adopt);
 								RenderBuffer(uint8* buffer,
 									uint32 width, uint32 height,
 									uint32 bytesPerRow, bool adopt);
@@ -57,13 +55,8 @@ public:
 
 			void				CopyTo(BBitmap* bitmap, BRect area) const;
 			void				CopyTo(RenderBuffer* buffer, BRect area) const;
-			void				CopyTo(uint8* dstBits, uint32 dstBytesPerRow,
-									BRect dstBounds, BRect areaToCopy) const;
 
-			void				BlendTo(BBitmap* bitmap, BRect area) const;
 			void				BlendTo(RenderBuffer* buffer, BRect area) const;
-			void				BlendTo(uint8* dstBits, uint32 dstBytesPerRow,
-									BRect dstBounds, BRect areaToCopy) const;
 
 private:
 			uint8*				fBits;
