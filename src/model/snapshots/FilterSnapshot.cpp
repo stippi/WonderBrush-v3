@@ -71,8 +71,8 @@ FilterSnapshot::Render(RenderEngine& engine, RenderBuffer* bitmap,
 
 	RenderBuffer buffer(bitmap, source, false);
 
-// TODO: Port GaussFilter to 16 bits/channel! The effect here is that
-// radius is clamped to 254 right now.
+// TODO: GaussFilter is broken! Using only the StackBlurFilter here means that
+// radius is clamped to 254.
 //	if (fLayoutedFilterRadius < 254) {
 		// stack blur is really fast and independent
 		// of the filter radius, but limited to 254
@@ -85,7 +85,7 @@ FilterSnapshot::Render(RenderEngine& engine, RenderBuffer* bitmap,
 //		// uses floating point math/conversion, so
 //		// it is slower
 //		GaussFilter filter;
-//		filter.FilterRGB32(&buffer, fLayoutedFilterRadius);
+//		filter.FilterRGBA64(&buffer, fLayoutedFilterRadius);
 //	}
 
 	source.InsetBy(extend, extend);
