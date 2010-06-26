@@ -240,35 +240,35 @@ StackBlurFilter::_Filter64(uint16* buffer,
 			src_pix_ptr = buffer + bpr * y;
 			for (i = 0; i <= rx; i++) {
 				stack_pix_ptr	= &stack[i];
-				stack_pix_ptr->r = src_pix_ptr[2];
-				stack_pix_ptr->g = src_pix_ptr[1];
-				stack_pix_ptr->b = src_pix_ptr[0];
-				stack_pix_ptr->a = src_pix_ptr[3];
-				sum_r		   += src_pix_ptr[2] * (i + 1);
-				sum_g		   += src_pix_ptr[1] * (i + 1);
-				sum_b		   += src_pix_ptr[0] * (i + 1);
-				sum_a		   += src_pix_ptr[3] * (i + 1);
-				sum_out_r	   += src_pix_ptr[2];
-				sum_out_g	   += src_pix_ptr[1];
-				sum_out_b	   += src_pix_ptr[0];
-				sum_out_a	   += src_pix_ptr[3];
+				stack_pix_ptr->r = src_pix_ptr[2] >> 8;
+				stack_pix_ptr->g = src_pix_ptr[1] >> 8;
+				stack_pix_ptr->b = src_pix_ptr[0] >> 8;
+				stack_pix_ptr->a = src_pix_ptr[3] >> 8;
+				sum_r		   += stack_pix_ptr->r * (i + 1);
+				sum_g		   += stack_pix_ptr->g * (i + 1);
+				sum_b		   += stack_pix_ptr->b * (i + 1);
+				sum_a		   += stack_pix_ptr->a * (i + 1);
+				sum_out_r	   += stack_pix_ptr->r;
+				sum_out_g	   += stack_pix_ptr->g;
+				sum_out_b	   += stack_pix_ptr->b;
+				sum_out_a	   += stack_pix_ptr->a;
 			}
 			for (i = 1; i <= rx; i++) {
 				if (i <= wm)
 					src_pix_ptr += 4;
 				stack_pix_ptr = &stack[i + rx];
-				stack_pix_ptr->r = src_pix_ptr[2];
-				stack_pix_ptr->g = src_pix_ptr[1];
-				stack_pix_ptr->b = src_pix_ptr[0];
-				stack_pix_ptr->a = src_pix_ptr[3];
-				sum_r		   += src_pix_ptr[2] * (rx + 1 - i);
-				sum_g		   += src_pix_ptr[1] * (rx + 1 - i);
-				sum_b		   += src_pix_ptr[0] * (rx + 1 - i);
-				sum_a		   += src_pix_ptr[3] * (rx + 1 - i);
-				sum_in_r		+= src_pix_ptr[2];
-				sum_in_g		+= src_pix_ptr[1];
-				sum_in_b		+= src_pix_ptr[0];
-				sum_in_a		+= src_pix_ptr[3];
+				stack_pix_ptr->r = src_pix_ptr[2] >> 8;
+				stack_pix_ptr->g = src_pix_ptr[1] >> 8;
+				stack_pix_ptr->b = src_pix_ptr[0] >> 8;
+				stack_pix_ptr->a = src_pix_ptr[3] >> 8;
+				sum_r		   += stack_pix_ptr->r * (rx + 1 - i);
+				sum_g		   += stack_pix_ptr->g * (rx + 1 - i);
+				sum_b		   += stack_pix_ptr->b * (rx + 1 - i);
+				sum_a		   += stack_pix_ptr->a * (rx + 1 - i);
+				sum_in_r		+= stack_pix_ptr->r;
+				sum_in_g		+= stack_pix_ptr->g;
+				sum_in_b		+= stack_pix_ptr->b;
+				sum_in_a		+= stack_pix_ptr->a;
 			}
 
 			stack_ptr = rx;
@@ -278,10 +278,14 @@ StackBlurFilter::_Filter64(uint16* buffer,
 			src_pix_ptr = buffer + xp * 4 + y * bpr;
 			dst_pix_ptr = buffer + y * bpr;
 			for (x = 0; x < w; x++) {
-				dst_pix_ptr[2] = (sum_r * mul_sum) >> shr_sum;
-				dst_pix_ptr[1] = (sum_g * mul_sum) >> shr_sum;
 				dst_pix_ptr[0] = (sum_b * mul_sum) >> shr_sum;
+				dst_pix_ptr[1] = (sum_g * mul_sum) >> shr_sum;
+				dst_pix_ptr[2] = (sum_r * mul_sum) >> shr_sum;
 				dst_pix_ptr[3] = (sum_a * mul_sum) >> shr_sum;
+				dst_pix_ptr[0] = (dst_pix_ptr[0] << 8) | dst_pix_ptr[0];
+				dst_pix_ptr[1] = (dst_pix_ptr[1] << 8) | dst_pix_ptr[1];
+				dst_pix_ptr[2] = (dst_pix_ptr[2] << 8) | dst_pix_ptr[2];
+				dst_pix_ptr[3] = (dst_pix_ptr[3] << 8) | dst_pix_ptr[3];
 				dst_pix_ptr += 4;
 
 				sum_r -= sum_out_r;
@@ -303,15 +307,15 @@ StackBlurFilter::_Filter64(uint16* buffer,
 					++xp;
 				}
 	
-				stack_pix_ptr->r = src_pix_ptr[2];
-				stack_pix_ptr->g = src_pix_ptr[1];
-				stack_pix_ptr->b = src_pix_ptr[0];
-				stack_pix_ptr->a = src_pix_ptr[3];
+				stack_pix_ptr->r = src_pix_ptr[2] >> 8;
+				stack_pix_ptr->g = src_pix_ptr[1] >> 8;
+				stack_pix_ptr->b = src_pix_ptr[0] >> 8;
+				stack_pix_ptr->a = src_pix_ptr[3] >> 8;
 	
-				sum_in_r += src_pix_ptr[2];
-				sum_in_g += src_pix_ptr[1];
-				sum_in_b += src_pix_ptr[0];
-				sum_in_a += src_pix_ptr[3];
+				sum_in_r += stack_pix_ptr->r;
+				sum_in_g += stack_pix_ptr->g;
+				sum_in_b += stack_pix_ptr->b;
+				sum_in_a += stack_pix_ptr->a;
 				sum_r	+= sum_in_r;
 				sum_g	+= sum_in_g;
 				sum_b	+= sum_in_b;
@@ -360,35 +364,35 @@ StackBlurFilter::_Filter64(uint16* buffer,
 			src_pix_ptr = buffer + x * 4;
 			for (i = 0; i <= ry; i++) {
 				stack_pix_ptr	= &stack[i];
-				stack_pix_ptr->r = src_pix_ptr[2];
-				stack_pix_ptr->g = src_pix_ptr[1];
-				stack_pix_ptr->b = src_pix_ptr[0];
-				stack_pix_ptr->a = src_pix_ptr[3];
-				sum_r		   += src_pix_ptr[2] * (i + 1);
-				sum_g		   += src_pix_ptr[1] * (i + 1);
-				sum_b		   += src_pix_ptr[0] * (i + 1);
-				sum_a		   += src_pix_ptr[3] * (i + 1);
-				sum_out_r	   += src_pix_ptr[2];
-				sum_out_g	   += src_pix_ptr[1];
-				sum_out_b	   += src_pix_ptr[0];
-				sum_out_a	   += src_pix_ptr[3];
+				stack_pix_ptr->r = src_pix_ptr[2] >> 8;
+				stack_pix_ptr->g = src_pix_ptr[1] >> 8;
+				stack_pix_ptr->b = src_pix_ptr[0] >> 8;
+				stack_pix_ptr->a = src_pix_ptr[3] >> 8;
+				sum_r		   += stack_pix_ptr->r * (i + 1);
+				sum_g		   += stack_pix_ptr->g * (i + 1);
+				sum_b		   += stack_pix_ptr->b * (i + 1);
+				sum_a		   += stack_pix_ptr->a * (i + 1);
+				sum_out_r	   += stack_pix_ptr->r;
+				sum_out_g	   += stack_pix_ptr->g;
+				sum_out_b	   += stack_pix_ptr->b;
+				sum_out_a	   += stack_pix_ptr->a;
 			}
 			for (i = 1; i <= ry; i++) {
 				if (i <= hm)
 					src_pix_ptr += stride; 
 				stack_pix_ptr = &stack[i + ry];
-				stack_pix_ptr->r = src_pix_ptr[2];
-				stack_pix_ptr->g = src_pix_ptr[1];
-				stack_pix_ptr->b = src_pix_ptr[0];
-				stack_pix_ptr->a = src_pix_ptr[3];
-				sum_r		   += src_pix_ptr[2] * (ry + 1 - i);
-				sum_g		   += src_pix_ptr[1] * (ry + 1 - i);
-				sum_b		   += src_pix_ptr[0] * (ry + 1 - i);
-				sum_a		   += src_pix_ptr[3] * (ry + 1 - i);
-				sum_in_r		+= src_pix_ptr[2];
-				sum_in_g		+= src_pix_ptr[1];
-				sum_in_b		+= src_pix_ptr[0];
-				sum_in_a		+= src_pix_ptr[3];
+				stack_pix_ptr->r = src_pix_ptr[2] >> 8;
+				stack_pix_ptr->g = src_pix_ptr[1] >> 8;
+				stack_pix_ptr->b = src_pix_ptr[0] >> 8;
+				stack_pix_ptr->a = src_pix_ptr[3] >> 8;
+				sum_r		   += stack_pix_ptr->r * (ry + 1 - i);
+				sum_g		   += stack_pix_ptr->g * (ry + 1 - i);
+				sum_b		   += stack_pix_ptr->b * (ry + 1 - i);
+				sum_a		   += stack_pix_ptr->a * (ry + 1 - i);
+				sum_in_r		+= stack_pix_ptr->r;
+				sum_in_g		+= stack_pix_ptr->g;
+				sum_in_b		+= stack_pix_ptr->b;
+				sum_in_a		+= stack_pix_ptr->a;
 			}
 
 			stack_ptr = ry;
@@ -398,10 +402,14 @@ StackBlurFilter::_Filter64(uint16* buffer,
 			src_pix_ptr = buffer + x * 4 + yp * bpr;
 			dst_pix_ptr = buffer + x * 4;
 			for (y = 0; y < h; y++) {
-				dst_pix_ptr[2] = (sum_r * mul_sum) >> shr_sum;
-				dst_pix_ptr[1] = (sum_g * mul_sum) >> shr_sum;
 				dst_pix_ptr[0] = (sum_b * mul_sum) >> shr_sum;
+				dst_pix_ptr[1] = (sum_g * mul_sum) >> shr_sum;
+				dst_pix_ptr[2] = (sum_r * mul_sum) >> shr_sum;
 				dst_pix_ptr[3] = (sum_a * mul_sum) >> shr_sum;
+				dst_pix_ptr[0] = (dst_pix_ptr[0] << 8) | dst_pix_ptr[0];
+				dst_pix_ptr[1] = (dst_pix_ptr[1] << 8) | dst_pix_ptr[1];
+				dst_pix_ptr[2] = (dst_pix_ptr[2] << 8) | dst_pix_ptr[2];
+				dst_pix_ptr[3] = (dst_pix_ptr[3] << 8) | dst_pix_ptr[3];
 				dst_pix_ptr += stride;
 
 				sum_r -= sum_out_r;
@@ -424,15 +432,15 @@ StackBlurFilter::_Filter64(uint16* buffer,
 					++yp;
 				}
 	
-				stack_pix_ptr->r = src_pix_ptr[2];
-				stack_pix_ptr->g = src_pix_ptr[1];
-				stack_pix_ptr->b = src_pix_ptr[0];
-				stack_pix_ptr->a = src_pix_ptr[3];
+				stack_pix_ptr->r = src_pix_ptr[2] >> 8;
+				stack_pix_ptr->g = src_pix_ptr[1] >> 8;
+				stack_pix_ptr->b = src_pix_ptr[0] >> 8;
+				stack_pix_ptr->a = src_pix_ptr[3] >> 8;
 	
-				sum_in_r += src_pix_ptr[2];
-				sum_in_g += src_pix_ptr[1];
-				sum_in_b += src_pix_ptr[0];
-				sum_in_a += src_pix_ptr[3];
+				sum_in_r += stack_pix_ptr->r;
+				sum_in_g += stack_pix_ptr->g;
+				sum_in_b += stack_pix_ptr->b;
+				sum_in_a += stack_pix_ptr->a;
 				sum_r	+= sum_in_r;
 				sum_g	+= sum_in_g;
 				sum_b	+= sum_in_b;
