@@ -12,6 +12,8 @@
 
 #include <Bitmap.h>
 
+#include "RenderEngine.h"
+
 // constructor
 RenderBuffer::RenderBuffer(const BRect& bounds)
 	: fBits(new(std::nothrow) uint8[(bounds.IntegerWidth() + 1) * 8
@@ -126,19 +128,20 @@ RenderBuffer::Clear(BRect area, const rgb_color& color)
 	dst += (left - fLeft) * 8;
 	dst += ((uint32)area.top - fTop) * fBPR;
 
-	// TODO: Apply gamma for real!
-	uint16 linearR = color.red * 256 + color.red;
-	uint16 linearG = color.green * 256 + color.green;
-	uint16 linearB = color.blue * 256 + color.blue;
-	uint16 linearA = color.alpha * 256 + color.alpha;
+	agg::rgba16 linearColor(
+		RenderEngine::GammaToLinear(color.red),
+		RenderEngine::GammaToLinear(color.green),
+		RenderEngine::GammaToLinear(color.blue),
+		color.alpha * 256 + color.alpha);
+	linearColor.premultiply();
 
 	for (uint32 y = 0; y < height; y++) {
 		uint16* d = reinterpret_cast<uint16*>(dst);
 		for (uint32 x = left; x <= right; x++) {
-			d[0] = linearB;
-			d[1] = linearG;
-			d[2] = linearR;
-			d[3] = linearA;
+			d[0] = linearColor.b;
+			d[1] = linearColor.g;
+			d[2] = linearColor.r;
+			d[3] = linearColor.a;
 			d += 4;
 		}
 		dst += fBPR;
@@ -170,10 +173,12 @@ RenderBuffer::CopyTo(BBitmap* bitmap, BRect area) const
 		uint8* d = dst;
 		uint16* s = reinterpret_cast<uint16*>(src);
 		for (uint32 x = 0; x <= right; x++) {
-			// TODO: Proper conversion from linear RGB to sRGB!
-			d[0] = s[0] >> 8;
-			d[1] = s[1] >> 8;
-			d[2] = s[2] >> 8;
+			// TODO: Right now the bitmap is solid, i.e. no transparency.
+			// If there were transparency, we would have to demultiply before
+			// applying inverse gamma.
+			d[0] = RenderEngine::LinearToGamma(s[0]);
+			d[1] = RenderEngine::LinearToGamma(s[1]);
+			d[2] = RenderEngine::LinearToGamma(s[2]);
 			d[3] = s[3] >> 8;
 			d += 4;
 			s += 4;

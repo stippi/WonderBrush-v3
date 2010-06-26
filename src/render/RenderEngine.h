@@ -85,6 +85,10 @@ public:
 			void				RenderScanlines(
 									const ScanlineContainer& scanlines);
 
+	static	bool				InitGammaTables();
+	static	uint16				GammaToLinear(uint8 value);
+	static	uint8				LinearToGamma(uint16 value);
+
 private:
 			void				_RenderScanlines(
 									const ScanlineContainer* scanlines = NULL);

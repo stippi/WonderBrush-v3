@@ -153,6 +153,43 @@ RenderEngine::RenderScanlines(const ScanlineContainer& scanlines)
 	_RenderScanlines(&scanlines);
 }
 
+// #pragma mark - sRGB <-> linear RGB
+
+static const double kGamma = 2.2;
+static const double kInverseGamma = 1.0 / kGamma;
+
+static uint16 kGammaToLinear[256];
+static uint8 kLinearToGamma[16384];
+
+static bool dummy = RenderEngine::InitGammaTables();
+
+// InitGammaTables
+bool
+RenderEngine::InitGammaTables()
+{
+	for (uint32 i = 0; i < 256; i++)
+		kGammaToLinear[i] = (uint16)(pow(i / 255.0, kGamma) * 65535.0);
+	for (uint32 i = 0; i < 16384; i++)
+		kLinearToGamma[i] = (uint8)(pow(i / 16383.0, kInverseGamma) * 255.0);
+	return true;
+}
+
+// GammaToLinear
+uint16
+RenderEngine::GammaToLinear(uint8 value)
+{
+	return kGammaToLinear[value];
+}
+
+// LinearToGamma
+uint8
+RenderEngine::LinearToGamma(uint16 value)
+{
+	// With 14 bits precision, the 8 bit values 1 and 2 are not in the
+	// look up table.
+	return kLinearToGamma[value >> 2];
+}
+
 // #pragma mark -
 
 #define PRINT_TIMING 0
@@ -166,7 +203,6 @@ bigtime_t now = system_time();
 #endif
 
 	agg::rgba16 color(0, 0, 0, 65535);
-//	agg::rgba16 color(0, 0, 0, 255);
 
 	const Paint* paint = fState.FillPaint();
 	if (paint != NULL) {
@@ -174,11 +210,10 @@ bigtime_t now = system_time();
 			case Paint::COLOR:
 			{
 				rgb_color c = paint->Color();
-				// TODO: Proper conversion to linear RGB!
 				color = agg::rgba16(
-					c.red * 256 + c.red,
-					c.green * 256 + c.green,
-					c.blue * 256 + c.blue,
+					GammaToLinear(c.red),
+					GammaToLinear(c.green),
+					GammaToLinear(c.blue),
 					c.alpha * 256 + c.alpha);
 				break;
 			}
