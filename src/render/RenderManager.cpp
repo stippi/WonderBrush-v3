@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2008, Stephan Aßmus <superstippi@gmx.de>
+ * Copyright 2006-2010, Stephan Aßmus <superstippi@gmx.de>
  * Copyright 2007, Ingo Weinhold <ingo_weinhold@gmx.de>
  * All rights reserved. Distributed under the terms of the MIT License.
  *
@@ -18,6 +18,7 @@
 #include "bitmap_support.h"
 
 #include "LayerSnapshot.h"
+#include "RenderBuffer.h"
 #include "RenderThread.h"
 
 
@@ -138,41 +139,42 @@ private:
 
 // constructor
 RenderManager::RenderManager(Document* document)
-	:
-	Layer::Listener(),
-	fZoomLevel(1.0),
-	fScrollingDelayed(false),
-	fCleanArea(LONG_MAX, LONG_MAX, LONG_MIN, LONG_MIN),
+	: Layer::Listener()
 
-	fDocumentDirtyMap(NULL),
-	fSnapshotDirtyMap(NULL),
+	, fDisplayBitmap(NULL)
+	, fRenderBuffer(NULL)
 
-	fDocument(document),
-	fSnapshot(NULL),
+	, fZoomLevel(1.0)
+	, fScrollingDelayed(false)
+	, fCleanArea(LONG_MAX, LONG_MAX, LONG_MIN, LONG_MIN)
 
-	fInitialLayoutState(),
-	fLayoutContext(&fInitialLayoutState),
-	fLayoutDirtyFlags(0),
+	, fDocumentDirtyMap(NULL)
+	, fSnapshotDirtyMap(NULL)
 
-	fRenderThreads(NULL),
-	fRenderThreadCount(0),
+	, fDocument(document)
+	, fSnapshot(NULL)
 
-	fRenderInfos(NULL),
-	fRenderInfoCount(0),
-	fRenderInfoCapacity(0),
-	fCurrentRenderInfo(0),
+	, fInitialLayoutState()
+	, fLayoutContext(&fInitialLayoutState)
+	, fLayoutDirtyFlags(0)
 
-	fWaitingRenderThreadsSem(-1),
-	fWaitingRenderThreadCount(0),
+	, fRenderThreads(NULL)
+	, fRenderThreadCount(0)
 
-	fRenderQueueLock("render queue lock"),
+	, fRenderInfos(NULL)
+	, fRenderInfoCount(0)
+	, fRenderInfoCapacity(0)
+	, fCurrentRenderInfo(0)
 
-	fBitmapListener(NULL),
+	, fWaitingRenderThreadsSem(-1)
+	, fWaitingRenderThreadCount(0)
 
-	fLastRenderStartTime(-1)
+	, fRenderQueueLock("render queue lock")
+
+	, fBitmapListener(NULL)
+
+	, fLastRenderStartTime(-1)
 {
-	fDisplayBitmap[0] = NULL;
-	fDisplayBitmap[1] = NULL;
 }
 
 // Init
@@ -344,7 +346,7 @@ RenderManager::ScrollBy(const BPoint& offset)
 BRect
 RenderManager::Bounds() const
 {
-	return fDisplayBitmap[0]->Bounds();
+	return fDisplayBitmap->Bounds();
 }
 
 // SetBitmapListener
@@ -377,29 +379,21 @@ RenderManager::UnlockDisplay()
 const BBitmap*
 RenderManager::DisplayBitmap() const
 {
-	return fDisplayBitmap[0];
-}
-
-// BackBitmap
-const BBitmap*
-RenderManager::BackBitmap() const
-{
-	return fDisplayBitmap[1];
+	return fDisplayBitmap;
 }
 
 // TransferClean
 void
-RenderManager::TransferClean(const BBitmap* bitmap, const BRect& area)
+RenderManager::TransferClean(const RenderBuffer* bitmap, const BRect& area)
 {
 	// executed in a rendering thread
 	// it is ok to copy bitmap contents without holding the
 	// lock, since "flipping" is only done by which ever thread
 	// happens to be the *last* thread getting hold of the lock
-	const BBitmap* targetBitmap = BackBitmap();
-if (bitmap->Bounds() != targetBitmap->Bounds())
+if (bitmap->Bounds() != fRenderBuffer->Bounds())
 debugger("RenderManager::TransferClean() - mismatching bitmap sizes!");
-	clear_area(targetBitmap, (rgb_color){ 255, 255, 255, 255 }, area);
-	blend_area(bitmap, targetBitmap, area);
+	fRenderBuffer->Clear(area, (rgb_color){ 255, 255, 255, 255 });
+	bitmap->BlendTo(fRenderBuffer, area);
 
 	// hold the lock in as short a time as possible
 	if (!fRenderQueueLock.Lock())
@@ -657,8 +651,8 @@ void
 RenderManager::_BackToDisplay(BRect area)
 {
 	// done while holding the queue lock
-	copy_area(BackBitmap(), DisplayBitmap(), area);
-	demultiply_area(DisplayBitmap(), area);
+	fRenderBuffer->CopyTo(fDisplayBitmap, area);
+	demultiply_area(fDisplayBitmap, area);
 
 	if (fBitmapListener) {
 		BMessage message(MSG_BITMAP_CLEAN);
@@ -783,8 +777,8 @@ RenderManager::_CreateDisplayBitmaps(double zoomLevel)
 		locker.Lock();
 	}
 
-	BBitmap* oldDisplayBitmap = fDisplayBitmap[0];
-	delete fDisplayBitmap[1];
+	BBitmap* oldDisplayBitmap = fDisplayBitmap;
+	delete fRenderBuffer;
 
 	fZoomLevel = zoomLevel;
 
@@ -794,29 +788,28 @@ RenderManager::_CreateDisplayBitmaps(double zoomLevel)
 	bounds.right = ceilf(bounds.right * fZoomLevel);
 	bounds.bottom = ceilf(bounds.bottom * fZoomLevel);
 
-	fDisplayBitmap[0] = new(nothrow) BBitmap(bounds, B_BITMAP_ACCEPTS_VIEWS,
+	fDisplayBitmap = new(nothrow) BBitmap(bounds, B_BITMAP_ACCEPTS_VIEWS,
 		B_RGBA32);
-	fDisplayBitmap[1] = new(nothrow) BBitmap(bounds, B_BITMAP_NO_SERVER_LINK,
-		B_RGBA32);
+	fRenderBuffer = new(nothrow) RenderBuffer(bounds);
 
-	if (fDisplayBitmap[0] == NULL || !fDisplayBitmap[0]->IsValid()
-		|| fDisplayBitmap[1] == NULL || !fDisplayBitmap[1]->IsValid()) {
+	if (fDisplayBitmap == NULL || !fDisplayBitmap->IsValid()
+		|| fRenderBuffer == NULL || !fRenderBuffer->IsValid()) {
 		return B_NO_MEMORY;
 	}
 
 	// Transfer old display bitmap or clear new bitmap
 	if (oldDisplayBitmap != NULL) {
 		BView view(bounds, "temp", 0, 0);
-		fDisplayBitmap[0]->Lock();
-		fDisplayBitmap[0]->AddChild(&view);
+		fDisplayBitmap->Lock();
+		fDisplayBitmap->AddChild(&view);
 		view.DrawBitmap(oldDisplayBitmap, oldDisplayBitmap->Bounds(), bounds,
 			B_FILTER_BITMAP_BILINEAR);
 		view.Sync();
 		view.RemoveSelf();
-		fDisplayBitmap[0]->Unlock();
+		fDisplayBitmap->Unlock();
 		delete oldDisplayBitmap;
 	} else
-		memset(fDisplayBitmap[0]->Bits(), 0, fDisplayBitmap[0]->BitsLength());
+		memset(fDisplayBitmap->Bits(), 0, fDisplayBitmap->BitsLength());
 
 	// Every layer needs to be rerendered
 	QueueRedrawVisitor queueRedrawVisitor(this, fDocument->Bounds());
@@ -831,10 +824,10 @@ RenderManager::_CreateDisplayBitmaps(double zoomLevel)
 void
 RenderManager::_DestroyDisplayBitmaps()
 {
-	delete fDisplayBitmap[0];
-	delete fDisplayBitmap[1];
+	delete fDisplayBitmap;
+	delete fRenderBuffer;
 
-	fDisplayBitmap[0] = NULL;
-	fDisplayBitmap[1] = NULL;
+	fDisplayBitmap = NULL;
+	fRenderBuffer = NULL;
 }
 

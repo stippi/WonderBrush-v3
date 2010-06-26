@@ -14,9 +14,9 @@
 #include "RenderEngine.h"
 
 
-class BBitmap;
 class Layer;
 class LayerSnapshot;
+class RenderBuffer;
 class RenderManager;
 
 class RenderThread {
@@ -38,8 +38,7 @@ private:
 			RenderManager*		fRenderManager;
 			RenderEngine		fEngine;
 
-			BList				fLayerBitmaps;
-			BBitmap*			fScratchBitmap;
+			RenderBuffer*		fScratchBitmap;
 };
 
 #endif // RENDER_THREAD_H

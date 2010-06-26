@@ -1,15 +1,10 @@
 /*
- * Copyright 2007, Haiku. All rights reserved.
- * Distributed under the terms of the MIT License.
- *
- * Authors:
- *		Stephan Aßmus <superstippi@gmx.de>
+ * Copyright 2007-2010, Stephan Aßmus <superstippi@gmx.de>.
+ * All rights reserved.
  */
 #include "RectSnapshot.h"
 
 #include <stdio.h>
-
-#include <Bitmap.h>
 
 #include "support.h"
 
@@ -51,7 +46,8 @@ RectSnapshot::Sync()
 
 // Render
 void
-RectSnapshot::Render(RenderEngine& engine, BBitmap* bitmap, BRect area) const
+RectSnapshot::Render(RenderEngine& engine, RenderBuffer* bitmap,
+	BRect area) const
 {
 	engine.SetStyle(fStyle.Get());
 	engine.SetTransformation(LayoutedState().Matrix);

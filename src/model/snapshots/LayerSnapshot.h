@@ -14,7 +14,7 @@
 #include "ObjectSnapshot.h"
 
 
-class BBitmap;
+class RenderBuffer;
 class BRegion;
 class Layer;
 class ObjectSnapshot;
@@ -32,18 +32,18 @@ class LayerSnapshot : public ObjectSnapshot {
 	virtual	void				Layout(LayoutContext& context, uint32 flags);
 
 	virtual	void				Render(RenderEngine& engine,
-									BBitmap* bitmap, BRect area) const;
+									RenderBuffer* bitmap, BRect area) const;
 
 	// LayerSnapshot
 	inline	const ::Layer*		Layer() const
 									{ return fOriginal; }
 
-			BBitmap*			Bitmap() const	 { return fBitmap; }
+			RenderBuffer*		Bitmap() const	 { return fBitmap; }
 			BRect				Bounds() const;
 
 			BRect				Render(RenderEngine& engine, BRect area,
-									BBitmap* bitmap,
-									BBitmap* cacheBitmap,
+									RenderBuffer* bitmap,
+									RenderBuffer* cacheBitmap,
 									BRegion& validCacheRegion,
 									int32& cacheLevel) const;
 
@@ -58,7 +58,7 @@ class LayerSnapshot : public ObjectSnapshot {
 			const ::Layer*		fOriginal;
 			BList				fObjects;
 			BRect				fBounds;
-			BBitmap*			fBitmap;
+			RenderBuffer*		fBitmap;
 };
 
 #endif // LAYER_SNAPSHOT_H

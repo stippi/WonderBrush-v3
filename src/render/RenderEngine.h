@@ -1,5 +1,5 @@
 /*
- * Copyright 2009, Stephan Aßmus <superstippi@gmx.de>.
+ * Copyright 2009-2010, Stephan Aßmus <superstippi@gmx.de>.
  * All rights reserved.
  */
 #ifndef RENDER_ENGINE_H
@@ -22,8 +22,8 @@
 #include "LayoutState.h"
 #include "Scanline.h"
 
-class BBitmap;
 class BRect;
+class RenderBuffer;
 
 typedef agg::gamma_lut
 			<agg::int8u, agg::int8u>		GammaTable;
@@ -68,7 +68,7 @@ public:
 			void				Reset();
 			void				SetStyle(const Style* style);
 
-			void				AttachTo(BBitmap* bitmap);
+			void				AttachTo(RenderBuffer* bitmap);
 			void				SetClipping(const BRect& area);
 
 			void				SetTransformation(
@@ -76,7 +76,8 @@ public:
 			const Transformable& Transformation() const;
 
 			// Drawing methods
-			void				BlendArea(const BBitmap* source, BRect area);
+			void				BlendArea(const RenderBuffer* source,
+									BRect area);
 
 			void				DrawRectangle(const BRect& rect,
 									BRect area);

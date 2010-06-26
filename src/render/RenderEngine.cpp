@@ -1,15 +1,15 @@
 /*
- * Copyright 2009, Stephan Aßmus <superstippi@gmx.de>.
+ * Copyright 2009-2010, Stephan Aßmus <superstippi@gmx.de>.
  * All rights reserved.
  */
 #include "RenderEngine.h"
 
 #include <new>
 
-#include <Bitmap.h>
-
 #include <agg_renderer_scanline.h>
 #include <agg_rounded_rect.h>
+
+#include "RenderBuffer.h"
 
 using std::nothrow;
 
@@ -50,7 +50,7 @@ RenderEngine::SetStyle(const Style* style)
 
 // AttachTo
 void
-RenderEngine::AttachTo(BBitmap* bitmap)
+RenderEngine::AttachTo(RenderBuffer* bitmap)
 {
 	if (bitmap == NULL) {
 		fRenderingBuffer.attach(NULL, 0, 0, 0);
@@ -60,11 +60,9 @@ RenderEngine::AttachTo(BBitmap* bitmap)
 
 	// attach rendering buffer to bitmap
 	fRenderingBuffer.attach((uint8*)bitmap->Bits(),
-		bitmap->Bounds().IntegerWidth() + 1,
-		bitmap->Bounds().IntegerHeight() + 1, bitmap->BytesPerRow());
+		bitmap->Width(), bitmap->Height(), bitmap->BytesPerRow());
 
-	fBaseRenderer.clip_box(0, 0, bitmap->Bounds().IntegerWidth(),
-		bitmap->Bounds().IntegerHeight());
+	fBaseRenderer.clip_box(0, 0, bitmap->Width() - 1, bitmap->Height() - 1);
 }
 
 // SetClipping
@@ -100,7 +98,7 @@ RenderEngine::Transformation() const
 
 // BlendArea
 void
-RenderEngine::BlendArea(const BBitmap* source, BRect area)
+RenderEngine::BlendArea(const RenderBuffer* source, BRect area)
 {
 	area = area & source->Bounds();
 

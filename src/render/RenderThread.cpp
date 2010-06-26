@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2008, Stephan Aßmus <superstippi@gmx.de>
+ * Copyright 2007-2010, Stephan Aßmus <superstippi@gmx.de>
  * Copyright 2007, Ingo Weinhold <ingo_weinhold@gmx.de>
  * All rights reserved. Distributed under the terms of the MIT License.
  *
@@ -14,7 +14,6 @@
 #include <stdio.h>
 #include <string.h>
 
-#include <Bitmap.h>
 #include <Message.h>
 
 #if DEBUG_CACHING
@@ -28,6 +27,7 @@
 #include "Layer.h"
 #include "LayerSnapshot.h"
 #include "ObjectSnapshot.h"
+#include "RenderBuffer.h"
 #include "RenderManager.h"
 
 
@@ -91,7 +91,7 @@ RenderThread::Render(LayerSnapshot* layer, BRect area, double zoomLevel)
 //printf("RenderThread::Render(%p, (%f, %f, %f, %f))\n", layer,
 //area.left, area.top, area.right, area.bottom);
 	// TODO: Move change of zoom elsewhere and check Resize() success
-	// there. Otherwise we may access an invalid BBitmap here the next
+	// there. Otherwise we may access an invalid RenderBuffer here the next
 	// time this method is called after resizing.
 	BRect zoomedBounds(layer->Bounds());
 	zoomedBounds.left = floorf(zoomedBounds.left * zoomLevel);
@@ -102,9 +102,8 @@ RenderThread::Render(LayerSnapshot* layer, BRect area, double zoomLevel)
 		// Need to resize the bitmap and render everything
 //printf("  resizing scratch bitmap\n");
 		delete fScratchBitmap;
-		fScratchBitmap = new(std::nothrow) BBitmap(zoomedBounds,
-			B_BITMAP_NO_SERVER_LINK, B_RGBA32);
-		if (fScratchBitmap == NULL || fScratchBitmap->InitCheck() != B_OK)
+		fScratchBitmap = new(std::nothrow) RenderBuffer(zoomedBounds);
+		if (fScratchBitmap == NULL || !fScratchBitmap->IsValid())
 			return;
 		area = zoomedBounds;
 	}

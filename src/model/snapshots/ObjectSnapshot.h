@@ -11,8 +11,8 @@
 #include "LayoutState.h"
 #include "Transformable.h"
 
-class BBitmap;
 class Object;
+class RenderBuffer;
 class RenderEngine;
 
 class ObjectSnapshot : public Transformable {
@@ -32,8 +32,8 @@ public:
 	// once. This method may be more expensive than Layout(), therefor it is
 	// allowed to run in parallel to other render threads.
 	virtual	void				PrepareRendering(BRect documentBounds);
-	virtual	void				Render(RenderEngine& engine, BBitmap* bitmap,
-									BRect area) const;
+	virtual	void				Render(RenderEngine& engine,
+									RenderBuffer* bitmap, BRect area) const;
 
 	virtual	void				RebuildAreaForDirtyArea(BRect& area) const;
 									// TODO: could be BRegions...

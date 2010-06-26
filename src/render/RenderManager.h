@@ -31,6 +31,7 @@ class BBitmap;
 class BMessenger;
 class Document;
 class LayerSnapshot;
+class RenderBuffer;
 class RenderThread;
 
 enum {
@@ -73,9 +74,8 @@ public:
 			bool				LockDisplay();
 			void				UnlockDisplay();
 			const BBitmap*		DisplayBitmap() const;
-			const BBitmap*		BackBitmap() const;
 
-			void				TransferClean(const BBitmap* bitmap,
+			void				TransferClean(const RenderBuffer* bitmap,
 									const BRect& area);
 
 			void				PrepareDirtyInfosForNextRender();
@@ -117,7 +117,9 @@ private:
 			void				_DestroyDisplayBitmaps();
 
 private:
-			BBitmap*			fDisplayBitmap[2];
+			BBitmap*			fDisplayBitmap;
+			RenderBuffer*		fRenderBuffer;
+			
 //			BRect				fDisplayRect;
 			double				fZoomLevel;
 			bool				fScrollingDelayed;

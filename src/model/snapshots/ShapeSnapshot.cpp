@@ -1,13 +1,11 @@
 /*
- * Copyright 2007-2009, Stephan Aßmus <superstippi@gmx.de>.
+ * Copyright 2007-2010, Stephan Aßmus <superstippi@gmx.de>.
  * All rights reserved.
  */
 
 #include "ShapeSnapshot.h"
 
 #include <stdio.h>
-
-#include <Bitmap.h>
 
 #include "AutoLocker.h"
 #include "Shape.h"
@@ -124,7 +122,8 @@ printf("PrepareRendering(): %lld\n", system_time() - now);
 
 // Render
 void
-ShapeSnapshot::Render(RenderEngine& engine, BBitmap* bitmap, BRect area) const
+ShapeSnapshot::Render(RenderEngine& engine, RenderBuffer* bitmap,
+	BRect area) const
 {
 	engine.SetStyle(fStyle.Get());
 	engine.RenderScanlines(fScanlines);

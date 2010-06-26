@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2009, Stephan Aßmus <superstippi@gmx.de>.
+ * Copyright 2007-2010, Stephan Aßmus <superstippi@gmx.de>.
  * All rights reserved.
  */
 #ifndef STYLEABLE_SNAPSHOT_H
@@ -22,8 +22,8 @@ public:
 
 	virtual	bool				Sync();
 
-	virtual	void				Render(RenderEngine& engine, BBitmap* bitmap,
-									BRect area) const;
+	virtual	void				Render(RenderEngine& engine,
+									RenderBuffer* bitmap, BRect area) const;
 
 private:
 			const Styleable*	fOriginal;

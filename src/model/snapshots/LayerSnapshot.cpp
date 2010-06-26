@@ -9,14 +9,12 @@
 #include <stdio.h>
 #include <string.h>
 
-#include <Bitmap.h>
 #include <Region.h>
-
-#include "bitmap_support.h"
 
 #include "Layer.h"
 #include "LayoutContext.h"
 #include "Object.h"
+#include "RenderBuffer.h"
 #include "RenderEngine.h"
 
 
@@ -81,9 +79,10 @@ LayerSnapshot::Layout(LayoutContext& context, uint32 flags)
 	if (fBitmap == NULL || zoomedBounds != fBitmap->Bounds()) {
 //printf("  resizing bitmap\n");
 		delete fBitmap;
-		fBitmap = new (nothrow) BBitmap(zoomedBounds,
-			B_BITMAP_NO_SERVER_LINK, B_RGBA32);
-		memset(fBitmap->Bits(), 0, fBitmap->BitsLength());
+		fBitmap = new (nothrow) RenderBuffer(zoomedBounds);
+		if (!fBitmap->IsValid())
+			return;
+		fBitmap->Clear(zoomedBounds, (rgb_color){ 0, 0, 0, 0 });
 	}
 
 	ObjectSnapshot::Layout(context,flags);
@@ -99,7 +98,8 @@ LayerSnapshot::Layout(LayoutContext& context, uint32 flags)
 
 // Render
 void
-LayerSnapshot::Render(RenderEngine& engine, BBitmap* bitmap, BRect area) const
+LayerSnapshot::Render(RenderEngine& engine, RenderBuffer* bitmap,
+	BRect area) const
 {
 //printf("%p->LayerSnapshot::Render(BRect(%.1f, %.1f, %.1f, %.1f))\n", fOriginal,
 //area.left, area.top, area.right, area.bottom);
@@ -122,8 +122,9 @@ LayerSnapshot::Bounds() const
 
 // Render
 BRect
-LayerSnapshot::Render(RenderEngine& engine, BRect area, BBitmap* bitmap,
-	BBitmap* cacheBitmap, BRegion& validCacheRegion, int32& cacheLevel) const
+LayerSnapshot::Render(RenderEngine& engine, BRect area, RenderBuffer* bitmap,
+	RenderBuffer* cacheBitmap, BRegion& validCacheRegion,
+	int32& cacheLevel) const
 {
 //printf("%p->LayerSnapshot::Render(BRect(%.1f, %.1f, %.1f, %.1f)) objects\n",
 //fOriginal, area.left, area.top, area.right, area.bottom);
@@ -191,7 +192,7 @@ LayerSnapshot::Render(RenderEngine& engine, BRect area, BBitmap* bitmap,
 	// return the final visually changed area
 	visuallyChangedArea = visuallyChangedArea & bitmap->Bounds();
 //printf("transfer: "); largestDirtyArea.PrintToStream();
-	copy_area(bitmap, fBitmap, visuallyChangedArea);
+	bitmap->CopyTo(fBitmap, visuallyChangedArea);
 	return visuallyChangedArea;
 }
 

@@ -22,8 +22,8 @@ class FilterSnapshot : public ObjectSnapshot {
 
 	virtual	void				Layout(LayoutContext& context, uint32 flags);
 
-	virtual	void				Render(RenderEngine& engine, BBitmap* bitmap,
-									BRect area) const;
+	virtual	void				Render(RenderEngine& engine,
+									RenderBuffer* bitmap, BRect area) const;
 	virtual	void				RebuildAreaForDirtyArea(BRect& area) const;
 
  private:

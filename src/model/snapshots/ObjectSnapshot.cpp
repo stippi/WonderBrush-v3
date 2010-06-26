@@ -58,7 +58,7 @@ ObjectSnapshot::PrepareRendering(BRect documentBounds)
 
 // Render
 void
-ObjectSnapshot::Render(RenderEngine& engine, BBitmap* bitmap,
+ObjectSnapshot::Render(RenderEngine& engine, RenderBuffer* bitmap,
 	BRect area) const
 {
 	// "Area" is the area previously given in

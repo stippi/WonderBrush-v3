@@ -62,7 +62,7 @@ FilterSnapshot::Layout(LayoutContext& context, uint32 flags)
 
 // Render
 void
-FilterSnapshot::Render(RenderEngine& engine, BBitmap* bitmap,
+FilterSnapshot::Render(RenderEngine& engine, RenderBuffer* bitmap,
 	BRect area) const
 {
 	float extend = ceilf(fLayoutedFilterRadius) + 3;

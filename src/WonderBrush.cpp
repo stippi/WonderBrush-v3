@@ -48,6 +48,8 @@ WonderBrush::WonderBrush(BRect bounds)
 	Layer* subSubLayer = new Layer(bounds);
 	subLayer->AddObject(subSubLayer);
 
+	subSubLayer->RotateBy(BPoint(400, 300), -15);
+
 	subSubLayer->AddObject(new Rect(BRect(420, 320, 650, 390),
 		(rgb_color){ 185, 120, 120, 220 }));
 

@@ -1,13 +1,11 @@
 /*
- * Copyright 2007-2009, Stephan Aßmus <superstippi@gmx.de>.
+ * Copyright 2007-2010, Stephan Aßmus <superstippi@gmx.de>.
  * All rights reserved.
  */
 
 #include "StyleableSnapshot.h"
 
 #include <stdio.h>
-
-#include <Bitmap.h>
 
 #include "AutoLocker.h"
 #include "Paint.h"
@@ -45,7 +43,7 @@ StyleableSnapshot::Sync()
 
 // Render
 void
-StyleableSnapshot::Render(RenderEngine& engine, BBitmap* bitmap,
+StyleableSnapshot::Render(RenderEngine& engine, RenderBuffer* bitmap,
 	BRect area) const
 {
 	// TODO: Setup the RenderEngine here (everything contained in Style).
