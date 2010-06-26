@@ -26,12 +26,10 @@ GaussFilter::FilterRGB32(RenderBuffer* buffer, double sigma)
 	uint32 bpr = buffer->BytesPerRow();
 	uint8* bits = buffer->Bits();
 
-	for (int32 i = 0; i < height; i++) {
-		_FilterRow4(bits + i * bpr, width, false);
-	}
-	for (int32 i = 0; i < width; i++) {
-		_FilterColumn4(bits + i * 4, bpr, height, false);
-	}
+	for (int32 i = 0; i < height; i++)
+		_FilterRow4<uint8>(bits + i * bpr, width, false);
+	for (int32 i = 0; i < width; i++)
+		_FilterColumn4<uint8>(bits + i * 4, bpr, height, false);
 }
 
 
@@ -46,12 +44,28 @@ GaussFilter::FilterRGBA32(RenderBuffer* buffer, double sigma)
 	uint32 bpr = buffer->BytesPerRow();
 	uint8* bits = buffer->Bits();
 
-	for (int32 i = 0; i < height; i++) {
-		_FilterRow4(bits + i * bpr, width, true);
-	}
-	for (int32 i = 0; i < width; i++) {
-		_FilterColumn4(bits + i * 4, bpr, height, true);
-	}
+	for (int32 i = 0; i < height; i++)
+		_FilterRow4<uint8>(bits + i * bpr, width, true);
+	for (int32 i = 0; i < width; i++)
+		_FilterColumn4<uint8>(bits + i * 4, bpr, height, true);
+}
+
+
+void
+GaussFilter::FilterRGBA64(RenderBuffer* buffer, double sigma)
+{
+	if (!_Init(sigma))
+		return;
+
+	int32 width = buffer->Width();
+	int32 height = buffer->Height();
+	uint32 bpr = buffer->BytesPerRow() / 2;
+	uint16* bits = reinterpret_cast<uint16*>(buffer->Bits());
+
+	for (int32 i = 0; i < height; i++)
+		_FilterRow4<uint16>(bits + i * bpr, width, true);
+	for (int32 i = 0; i < width; i++)
+		_FilterColumn4<uint16>(bits + i * 4, bpr, height, true);
 }
 
 
@@ -66,12 +80,10 @@ GaussFilter::FilterGray8(RenderBuffer* buffer, double sigma)
 	uint32 bpr = buffer->BytesPerRow();
 	uint8* bits = buffer->Bits();
 
-	for (int32 i = 0; i < height; i++) {
-		_FilterRow1(bits + i * bpr, width);
-	}
-	for (int32 i = 0; i < width; i++) {
-		_FilterColumn1(bits + i * 4, bpr, height);
-	}
+	for (int32 i = 0; i < height; i++)
+		_FilterRow1<uint8>(bits + i * bpr, width);
+	for (int32 i = 0; i < width; i++)
+		_FilterColumn1<uint8>(bits + i * 4, bpr, height);
 }
 
 
@@ -99,12 +111,12 @@ GaussFilter::_Init(double sigma)
 	double q2 = q * q;
 	double q3 = q2 * q;
 
-	b0 = (calc_type)(1.57825 + 2.44413 * q + 1.4281 * q2 + 0.422205 * q3);
-	b1 = (calc_type)(2.44413 * q + 2.85619 * q2 + 1.26661 * q3);
-	b2 = (calc_type)(-(1.4281 * q2 + 1.26661 * q3));
-	b3 = (calc_type)(0.422205 * q3);
+	b0 = (CalcType)(1.57825 + 2.44413 * q + 1.4281 * q2 + 0.422205 * q3);
+	b1 = (CalcType)(2.44413 * q + 2.85619 * q2 + 1.26661 * q3);
+	b2 = (CalcType)(-(1.4281 * q2 + 1.26661 * q3));
+	b3 = (CalcType)(0.422205 * q3);
 
-	B = (calc_type)(1 - (b1 + b2 + b3) / b0);
+	B = (CalcType)(1 - (b1 + b2 + b3) / b0);
 
 	// NOTE: eliminate some extra multiplications
 	b1 /= b0;
@@ -116,10 +128,10 @@ GaussFilter::_Init(double sigma)
 
 
 void
-GaussFilter::_Filter(calc_type* buffer, int32 count)
+GaussFilter::_Filter(CalcType* buffer, int32 count)
 {
 	// forward
-	calc_type* b = buffer + 3;
+	CalcType* b = buffer + 3;
 	for (int32 i = 3; i < count + 6; i++) {
 		*b = B * b[0] + (b1 * b[-1] + b2 * b[-2] + b3 * b[-3]);
 		b++;
@@ -133,17 +145,18 @@ GaussFilter::_Filter(calc_type* buffer, int32 count)
 	}
 }
 
+template<typename ChannelType>
 void
-GaussFilter::_FilterRow4(uint8* buffer, int32 count, bool alpha)
+GaussFilter::_FilterRow4(ChannelType* buffer, int32 count, bool alpha)
 {
-	calc_type temp0[count + 6];
-	calc_type temp1[count + 6];
-	calc_type temp2[count + 6];
-	calc_type temp3[count + 6];
+	CalcType temp0[count + 6];
+	CalcType temp1[count + 6];
+	CalcType temp2[count + 6];
+	CalcType temp3[count + 6];
 
 	// copy buffer into temps
 
-	uint8* b = buffer;
+	ChannelType* b = buffer;
 	int32 it = 3;
 	if (alpha) {
 		for (int32 i = 0; i < count; i++, it++) {
@@ -188,34 +201,35 @@ GaussFilter::_FilterRow4(uint8* buffer, int32 count, bool alpha)
 	it = 3;
 	if (alpha) {
 		for (int32 i = 0; i < count; i++, it++) {
-			b[0] = (uint8)(temp0[it] + 0.5);
-			b[1] = (uint8)(temp1[it] + 0.5);
-			b[2] = (uint8)(temp2[it] + 0.5);
-			b[3] = (uint8)(temp3[it] + 0.5);
+			b[0] = (ChannelType)(temp0[it] + 0.5);
+			b[1] = (ChannelType)(temp1[it] + 0.5);
+			b[2] = (ChannelType)(temp2[it] + 0.5);
+			b[3] = (ChannelType)(temp3[it] + 0.5);
 			b += 4;
 		}
 	} else {
 		for (int32 i = 0; i < count; i++, it++) {
-			b[0] = (uint8)(temp0[it] + 0.5);
-			b[1] = (uint8)(temp1[it] + 0.5);
-			b[2] = (uint8)(temp2[it] + 0.5);
+			b[0] = (ChannelType)(temp0[it] + 0.5);
+			b[1] = (ChannelType)(temp1[it] + 0.5);
+			b[2] = (ChannelType)(temp2[it] + 0.5);
 			b += 4;
 		}
 	}
 }
 
+template<typename ChannelType>
 void
-GaussFilter::_FilterColumn4(uint8* buffer, uint32 skip,
+GaussFilter::_FilterColumn4(ChannelType* buffer, uint32 skip,
 							int32 count, bool alpha)
 {
-	calc_type temp0[count + 6];
-	calc_type temp1[count + 6];
-	calc_type temp2[count + 6];
-	calc_type temp3[count + 6];
+	CalcType temp0[count + 6];
+	CalcType temp1[count + 6];
+	CalcType temp2[count + 6];
+	CalcType temp3[count + 6];
 
 	// copy buffer into temps
 
-	uint8* b = buffer;
+	ChannelType* b = buffer;
 	int32 it = 3;
 	if (alpha) {
 		for (int32 i = 0; i < count; i++, it++) {
@@ -261,27 +275,28 @@ GaussFilter::_FilterColumn4(uint8* buffer, uint32 skip,
 	it = 3;
 	if (alpha) {
 		for (int32 i = 0; i < count; i++, it++) {
-			b[0] = (uint8)(temp0[it] + 0.5);
-			b[1] = (uint8)(temp1[it] + 0.5);
-			b[2] = (uint8)(temp2[it] + 0.5);
-			b[3] = (uint8)(temp3[it] + 0.5);
+			b[0] = (ChannelType)(temp0[it] + 0.5);
+			b[1] = (ChannelType)(temp1[it] + 0.5);
+			b[2] = (ChannelType)(temp2[it] + 0.5);
+			b[3] = (ChannelType)(temp3[it] + 0.5);
 			b += skip;
 		}
 	} else {
 		for (int32 i = 0; i < count; i++, it++) {
-			b[0] = (uint8)(temp0[it] + 0.5);
-			b[1] = (uint8)(temp1[it] + 0.5);
-			b[2] = (uint8)(temp2[it] + 0.5);
+			b[0] = (ChannelType)(temp0[it] + 0.5);
+			b[1] = (ChannelType)(temp1[it] + 0.5);
+			b[2] = (ChannelType)(temp2[it] + 0.5);
 			b += skip;
 		}
 	}
 }
 
 
+template<typename ChannelType>
 void
-GaussFilter::_FilterRow1(uint8* buffer, int32 count)
+GaussFilter::_FilterRow1(ChannelType* buffer, int32 count)
 {
-	calc_type temp[count + 6];
+	CalcType temp[count + 6];
 
 	for (int32 i = 0; i < count; i++)
 		temp[i + 3] = buffer[i];
@@ -292,13 +307,14 @@ GaussFilter::_FilterRow1(uint8* buffer, int32 count)
 	_Filter(temp, count);
 
 	for (int32 i = 0; i < count; i++)
-		buffer[i] = (uint8)(temp[i + 3] + 0.5);
+		buffer[i] = (ChannelType)(temp[i + 3] + 0.5);
 }
 
+template<typename ChannelType>
 void
-GaussFilter::_FilterColumn1(uint8* buffer, uint32 skip, int32 count)
+GaussFilter::_FilterColumn1(ChannelType* buffer, uint32 skip, int32 count)
 {
-	calc_type temp[count + 6];
+	CalcType temp[count + 6];
 
 	for (int32 i = 0; i < count; i++)
 		temp[i + 3] = buffer[i * skip];
@@ -309,7 +325,7 @@ GaussFilter::_FilterColumn1(uint8* buffer, uint32 skip, int32 count)
 	_Filter(temp, count);
 
 	for (int32 i = 0; i < count; i++)
-		buffer[i * skip] = (uint8)(temp[i + 3] + 0.5);
+		buffer[i * skip] = (ChannelType)(temp[i + 3] + 0.5);
 }
 
 
