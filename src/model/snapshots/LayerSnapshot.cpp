@@ -162,12 +162,12 @@ LayerSnapshot::Render(RenderEngine& engine, BRect area, RenderBuffer* bitmap,
 
 	// start clean
 	uint8* bits = (uint8*)bitmap->Bits();
-	uint32 bytes = (rebuildArea.IntegerWidth() + 1) * 4;
+	uint32 bytes = (rebuildArea.IntegerWidth() + 1) * 8;
 	uint32 height = rebuildArea.IntegerHeight() + 1;
 	uint32 bpr = bitmap->BytesPerRow();
 
 	bits += (int32)rebuildArea.top * bpr;
-	bits += (int32)rebuildArea.left * 4;
+	bits += (int32)rebuildArea.left * 8;
 
 	// clean out bitmap
 	for (uint32 y = 0; y < height; y++) {

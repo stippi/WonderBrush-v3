@@ -22,8 +22,6 @@
 #  include <Window.h>
 #endif
 
-#include "bitmap_support.h"
-
 #include "Layer.h"
 #include "LayerSnapshot.h"
 #include "ObjectSnapshot.h"

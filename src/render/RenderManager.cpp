@@ -15,8 +15,6 @@
 #include <Messenger.h>
 #include <View.h>
 
-#include "bitmap_support.h"
-
 #include "LayerSnapshot.h"
 #include "RenderBuffer.h"
 #include "RenderThread.h"
@@ -652,7 +650,6 @@ RenderManager::_BackToDisplay(BRect area)
 {
 	// done while holding the queue lock
 	fRenderBuffer->CopyTo(fDisplayBitmap, area);
-	demultiply_area(fDisplayBitmap, area);
 
 	if (fBitmapListener) {
 		BMessage message(MSG_BITMAP_CLEAN);

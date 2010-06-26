@@ -110,7 +110,7 @@ RenderEngine::BlendArea(const RenderBuffer* source, BRect area)
 	int32 left = (int32)area.left;
 	int32 top = (int32)area.top;
 
-	src += top * bpr + left * 4;
+	src += top * bpr + left * 8;
 
 	RenderingBuffer sourceBuffer;
 	sourceBuffer.attach(src, area.IntegerWidth() + 1,
@@ -119,6 +119,7 @@ RenderEngine::BlendArea(const RenderBuffer* source, BRect area)
 	PixelFormat sourcePixelFormat(sourceBuffer);
 
 	uint8 globalAlpha = 255;
+		// NOTE: Cover is in range 0..255 also for 16 bits/channel!
 
 	fBaseRenderer.blend_from(sourcePixelFormat, NULL, left, top,
 		globalAlpha);
@@ -164,7 +165,8 @@ RenderEngine::_RenderScanlines(const ScanlineContainer* scanlineContainer)
 bigtime_t now = system_time();
 #endif
 
-	agg::rgba8 color(0, 0, 0, 255);
+	agg::rgba16 color(0, 0, 0, 65535);
+//	agg::rgba16 color(0, 0, 0, 255);
 
 	const Paint* paint = fState.FillPaint();
 	if (paint != NULL) {
@@ -172,7 +174,12 @@ bigtime_t now = system_time();
 			case Paint::COLOR:
 			{
 				rgb_color c = paint->Color();
-				color = agg::rgba8(c.red, c.green, c.blue, c.alpha);
+				// TODO: Proper conversion to linear RGB!
+				color = agg::rgba16(
+					c.red * 256 + c.red,
+					c.green * 256 + c.green,
+					c.blue * 256 + c.blue,
+					c.alpha * 256 + c.alpha);
 				break;
 			}
 			case Paint::GRADIENT:

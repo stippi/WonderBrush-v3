@@ -29,14 +29,14 @@ typedef agg::gamma_lut
 			<agg::int8u, agg::int8u>		GammaTable;
 
 typedef agg::rendering_buffer				RenderingBuffer;
-typedef agg::pixfmt_bgra32_pre				PixelFormat;
+typedef agg::pixfmt_bgra64_pre				PixelFormat;
 typedef agg::renderer_base<PixelFormat>		BaseRenderer;
 typedef agg::renderer_scanline_aa_solid<BaseRenderer>
 											Renderer;
 
 typedef agg::scanline_p8					ScanlinePacked;
 typedef agg::scanline_bin					ScanlineBinary;
-typedef agg::span_allocator<agg::rgba8>		SpanColorAllocator;
+typedef agg::span_allocator<agg::rgba16>	SpanColorAllocator;
 
 typedef agg::rasterizer_compound_aa
 			<agg::rasterizer_sl_clip_dbl>	CompoundRasterizer;
