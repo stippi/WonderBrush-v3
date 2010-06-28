@@ -167,10 +167,17 @@ static bool dummy = RenderEngine::InitGammaTables();
 bool
 RenderEngine::InitGammaTables()
 {
+#if 1
 	for (uint32 i = 0; i < 256; i++)
 		kGammaToLinear[i] = (uint16)(pow(i / 255.0, kGamma) * 65535.0);
 	for (uint32 i = 0; i < 16384; i++)
 		kLinearToGamma[i] = (uint8)(pow(i / 16383.0, kInverseGamma) * 255.0);
+#else
+	for (uint32 i = 0; i < 256; i++)
+		kGammaToLinear[i] = i << 8 | i;
+	for (uint32 i = 0; i < 16384; i++)
+		kLinearToGamma[i] = i / 64;
+#endif
 	return true;
 }
 
