@@ -626,7 +626,13 @@ RenderManager::_TriggerRender()
 	// do a layout pass (will always push at least one more LayoutState,
 	// so the zoom level in the initial state is preserved)
 	fLayoutContext.Init(fZoomLevel);
+
+	LayoutState rootLayerState(fLayoutContext.State());
+	fLayoutContext.PushState(&rootLayerState);
+
 	fSnapshot->Layout(fLayoutContext, fLayoutDirtyFlags);
+
+	fLayoutContext.PopState();
 
 	// count sublayers
 	int32 count = 0;

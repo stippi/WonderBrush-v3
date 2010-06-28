@@ -67,9 +67,6 @@ void
 LayerSnapshot::Layout(LayoutContext& context, uint32 flags)
 {
 //printf("%p->LayerSnapshot::Layout()\n", Original());
-	LayoutState state(context.State());
-	context.PushState(&state);
-
 	// Allocate or resize bitmap for caching layer contents
 	BRect zoomedBounds(fBounds);
 	zoomedBounds.left = floorf(zoomedBounds.left * context.ZoomLevel());
@@ -85,15 +82,19 @@ LayerSnapshot::Layout(LayoutContext& context, uint32 flags)
 		fBitmap->Clear(zoomedBounds, (rgb_color){ 0, 0, 0, 0 });
 	}
 
-	ObjectSnapshot::Layout(context,flags);
+	ObjectSnapshot::Layout(context, flags);
 
 	int32 count = CountObjects();
 	for (int32 i = 0; i < count; i++) {
 		ObjectSnapshot* snapshot = ObjectAtFast(i);
-		snapshot->Layout(context, flags);
-	}
 
-	context.PopState();
+		LayoutState objectState(context.State());
+		context.PushState(&objectState);
+
+		snapshot->Layout(context, flags);
+
+		context.PopState();
+	}
 }
 
 // Render
