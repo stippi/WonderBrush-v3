@@ -23,7 +23,8 @@ public:
 			void				TransformObjectToCanvas(BPoint* point) const;
 			void				TransformCanvasToObject(BPoint* point) const;
 
-			void				TransformObjectToView(BPoint* point) const;
+			void				TransformObjectToView(BPoint* point,
+									bool round) const;
 			void				TransformViewToObject(BPoint* point) const;
 
 			void				TransformObjectToCanvas(BRect* bounds) const;

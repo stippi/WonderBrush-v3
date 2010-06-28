@@ -55,10 +55,14 @@ TransformViewState::TransformCanvasToObject(BPoint* point) const
 
 // TransformObjectToView
 void
-TransformViewState::TransformObjectToView(BPoint* point) const
+TransformViewState::TransformObjectToView(BPoint* point, bool round) const
 {
 	TransformObjectToCanvas(point);
 	TransformCanvasToView(point);
+	if (round) {
+		point->x = roundf(point->x) + 0.5;
+		point->y = roundf(point->y) + 0.5;
+	}
 }
 
 // TransformViewToObject
