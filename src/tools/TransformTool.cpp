@@ -57,7 +57,7 @@ TransformTool::MakeViewState(StateView* view, Document* document,
 {
 	// TODO: Remove test code...
 	TransformToolState* state = new TransformToolState(view,
-		BRect(150, 150, 280, 250));
+		BRect(150, 150, 280, 250), document);
 	Transformable t;
 	t.ScaleBy(BPoint(220, 200), 1.2, 1.5);
 	t.RotateBy(BPoint(200, 200), 10);

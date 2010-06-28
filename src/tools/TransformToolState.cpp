@@ -1,5 +1,5 @@
 /*
- * Copyright 2009 Stephan Aßmus <superstippi@gmx.de>
+ * Copyright 2009-2010 Stephan Aßmus <superstippi@gmx.de>
  * All rights reserved. Distributed under the terms of the MIT license.
  */
 
@@ -14,15 +14,18 @@
 
 #include "Command.h"
 #include "cursors.h"
+#include "Document.h"
+#include "Layer.h"
+#include "Rect.h"
+#include "Shape.h"
 #include "support.h"
 
 
 class TransformToolState::DragBoxState : public DragStateViewState::DragState {
 public:
 	DragBoxState(TransformToolState* parent)
-		:
-		DragState(parent),
-		fParent(parent)
+		: DragState(parent)
+		, fParent(parent)
 	{
 	}
 
@@ -72,10 +75,9 @@ public:
 	} Corner;
 
 	DragCornerState(TransformToolState* parent, Corner corner)
-		:
-		DragState(parent),
-		fParent(parent),
-		fCorner(corner)
+		: DragState(parent)
+		, fParent(parent)
+		, fCorner(corner)
 	{
 	}
 
@@ -363,10 +365,9 @@ public:
 	} Side;
 
 	DragSideState(TransformToolState* parent, Side side)
-		:
-		DragState(parent),
-		fParent(parent),
-		fSide(side)
+		: DragState(parent)
+		, fParent(parent)
+		, fSide(side)
 	{
 	}
 
@@ -526,31 +527,136 @@ private:
 };
 
 
+class TransformToolState::PickObjectState
+	: public DragStateViewState::DragState {
+public:
+	PickObjectState(TransformToolState* parent)
+		: DragState(parent)
+		, fParent(parent)
+		, fShape(NULL)
+		, fRect(NULL)
+	{
+	}
+
+	virtual void SetOrigin(BPoint origin)
+	{
+		// Setup tool and switch to drag box state
+		Object* object = NULL;
+		BRect box;
+		if (fShape != NULL) {
+			object = fShape;
+			box = fShape->Area();
+		} else if (fRect != NULL) {
+			object = fRect;
+			box = fRect->Area();
+		}
+
+		fParent->SetTransformable(object);
+
+		if (object == NULL)
+			return;
+
+		fParent->SetObjectToCanvasTransformation(object->Transformation());
+		fParent->SetBox(box);
+
+		fParent->SetDragState(fParent->fDragBoxState);
+		fParent->fDragBoxState->SetOrigin(origin);
+	}
+
+	virtual void DragTo(BPoint current, uint32 modifiers)
+	{
+		// Never reached.
+	}
+
+	virtual BCursor ViewCursor(BPoint current) const
+	{
+#ifdef __HAIKU__
+		if (fShape != NULL || fRect != NULL)
+			return BCursor(B_CURSOR_ID_FOLLOW_LINK);
+#endif
+		return BCursor(B_CURSOR_SYSTEM_DEFAULT);
+	}
+
+	virtual const char* CommandName() const
+	{
+		return "Pick object";
+	}
+
+	void SetObject(Object* object)
+	{
+		Shape* shape = dynamic_cast<Shape*>(object);
+		if (shape != NULL) {
+			SetShape(shape);
+			return;
+		}
+
+		Rect* rect = dynamic_cast<Rect*>(object);
+		if (rect != NULL) {
+			SetRect(rect);
+			return;
+		}
+		UnsetObject();
+	}
+
+	void SetShape(Shape* shape)
+	{
+		fShape = shape;
+		fRect = NULL;
+	}
+
+	void SetRect(Rect* rect)
+	{
+		fRect = rect;
+		fShape = NULL;
+	}
+
+	void UnsetObject()
+	{
+		fShape = NULL;
+		fRect = NULL;
+	}
+
+private:
+	TransformToolState*	fParent;
+	Shape*				fShape;
+	Rect*				fRect;
+};
+
+
 // #pragma mark -
 
 
 // constructor
-TransformToolState::TransformToolState(StateView* view, const BRect& box)
-	:
-	DragStateViewState(view),
-	fOriginalBox(box),
-	fModifiedBox(box),
+TransformToolState::TransformToolState(StateView* view, const BRect& box,
+		Document* document)
+	: DragStateViewState(view)
+	, fOriginalBox(box)
+	, fModifiedBox(box)
 
-	fDragBoxState(new (std::nothrow) DragBoxState(this)),
+	, fPickObjectState(new PickObjectState(this))
 
-	fDragLTState(new (std::nothrow) DragCornerState(this,
-		DragCornerState::LEFT_TOP)),
-	fDragRTState(new (std::nothrow) DragCornerState(this,
-		DragCornerState::RIGHT_TOP)),
-	fDragRBState(new (std::nothrow) DragCornerState(this,
-		DragCornerState::RIGHT_BOTTOM)),
-	fDragLBState(new (std::nothrow) DragCornerState(this,
-		DragCornerState::LEFT_BOTTOM)),
+	, fDragBoxState(new (std::nothrow) DragBoxState(this))
 
-	fDragLState(new (std::nothrow) DragSideState(this, DragSideState::LEFT)),
-	fDragTState(new (std::nothrow) DragSideState(this, DragSideState::TOP)),
-	fDragRState(new (std::nothrow) DragSideState(this, DragSideState::RIGHT)),
-	fDragBState(new (std::nothrow) DragSideState(this, DragSideState::BOTTOM))
+	, fDragLTState(new (std::nothrow) DragCornerState(this,
+		DragCornerState::LEFT_TOP))
+	, fDragRTState(new (std::nothrow) DragCornerState(this,
+		DragCornerState::RIGHT_TOP))
+	, fDragRBState(new (std::nothrow) DragCornerState(this,
+		DragCornerState::RIGHT_BOTTOM))
+	, fDragLBState(new (std::nothrow) DragCornerState(this,
+		DragCornerState::LEFT_BOTTOM))
+
+	, fDragLState(new (std::nothrow) DragSideState(this,
+		DragSideState::LEFT))
+	, fDragTState(new (std::nothrow) DragSideState(this,
+		DragSideState::TOP))
+	, fDragRState(new (std::nothrow) DragSideState(this,
+		DragSideState::RIGHT))
+	, fDragBState(new (std::nothrow) DragSideState(this,
+		DragSideState::BOTTOM))
+
+	, fDocument(document)
+	, fObject(NULL)
 {
 }
 
@@ -638,52 +744,58 @@ TransformToolState::Draw(BView* view, BRect updateRect)
 	BPoint lbF2(lb.x - insetFill1X, lb.y + insetFill1Y);
 	BPoint lbF3(lb.x - insetFill1X, lb.y + insetFill2Y);
 
-	TransformObjectToView(&lt);
-	TransformObjectToView(&rt);
-	TransformObjectToView(&rb);
-	TransformObjectToView(&lb);
+	uint32 flags = view->Flags();
+	bool round = true;
+	if (ViewspaceRotation() != 0.0) {
+		view->SetFlags(flags | B_SUBPIXEL_PRECISE);
+		round = false;
+	} else
+		view->SetFlags(flags & ~B_SUBPIXEL_PRECISE);
 
-	TransformObjectToView(&lt1);
-	TransformObjectToView(&lt2);
-	TransformObjectToView(&lt3);
+	TransformObjectToView(&lt, round);
+	TransformObjectToView(&rt, round);
+	TransformObjectToView(&rb, round);
+	TransformObjectToView(&lb, round);
 
-	TransformObjectToView(&rt1);
-	TransformObjectToView(&rt2);
-	TransformObjectToView(&rt3);
+	TransformObjectToView(&lt1, round);
+	TransformObjectToView(&lt2, round);
+	TransformObjectToView(&lt3, round);
 
-	TransformObjectToView(&rb1);
-	TransformObjectToView(&rb2);
-	TransformObjectToView(&rb3);
+	TransformObjectToView(&rt1, round);
+	TransformObjectToView(&rt2, round);
+	TransformObjectToView(&rt3, round);
 
-	TransformObjectToView(&lb1);
-	TransformObjectToView(&lb2);
-	TransformObjectToView(&lb3);
+	TransformObjectToView(&rb1, round);
+	TransformObjectToView(&rb2, round);
+	TransformObjectToView(&rb3, round);
 
-	TransformObjectToView(&ltF0);
-	TransformObjectToView(&ltF1);
-	TransformObjectToView(&ltF2);
-	TransformObjectToView(&ltF3);
+	TransformObjectToView(&lb1, round);
+	TransformObjectToView(&lb2, round);
+	TransformObjectToView(&lb3, round);
 
-	TransformObjectToView(&rtF0);
-	TransformObjectToView(&rtF1);
-	TransformObjectToView(&rtF2);
-	TransformObjectToView(&rtF3);
+	TransformObjectToView(&ltF0, round);
+	TransformObjectToView(&ltF1, round);
+	TransformObjectToView(&ltF2, round);
+	TransformObjectToView(&ltF3, round);
 
-	TransformObjectToView(&rbF0);
-	TransformObjectToView(&rbF1);
-	TransformObjectToView(&rbF2);
-	TransformObjectToView(&rbF3);
+	TransformObjectToView(&rtF0, round);
+	TransformObjectToView(&rtF1, round);
+	TransformObjectToView(&rtF2, round);
+	TransformObjectToView(&rtF3, round);
 
-	TransformObjectToView(&lbF0);
-	TransformObjectToView(&lbF1);
-	TransformObjectToView(&lbF2);
-	TransformObjectToView(&lbF3);
+	TransformObjectToView(&rbF0, round);
+	TransformObjectToView(&rbF1, round);
+	TransformObjectToView(&rbF2, round);
+	TransformObjectToView(&rbF3, round);
+
+	TransformObjectToView(&lbF0, round);
+	TransformObjectToView(&lbF1, round);
+	TransformObjectToView(&lbF2, round);
+	TransformObjectToView(&lbF3, round);
 
 	view->PushState();
 
 	view->MovePenTo(B_ORIGIN);
-	uint32 flags = view->Flags();
-	view->SetFlags(flags | B_SUBPIXEL_PRECISE);
 
 	// white corner fills
 	BShape shape;
@@ -782,6 +894,7 @@ TransformToolState::Draw(BView* view, BRect updateRect)
 	view->StrokeShape(&shape);
 
 	view->PopState();
+	view->SetFlags(flags);
 }
 
 // Bounds
@@ -794,7 +907,7 @@ TransformToolState::Bounds() const
 		max_c(fModifiedBox.left, fModifiedBox.right),
 		max_c(fModifiedBox.top, fModifiedBox.bottom));
 	TransformObjectToView(&bounds);
-	bounds.InsetBy(-8, -8);
+	bounds.InsetBy(-10, -10);
 	return bounds;
 }
 
@@ -897,7 +1010,27 @@ TransformToolState::DragStateFor(BPoint canvasWhere, float zoomLevel) const
 	if (fModifiedBox.Contains(where))
 		return fDragBoxState;
 
+	// If there is still no state, switch to the PickObjectsState
+	// and try to find an object
+	Object* pickedObject = _PickObject(fDocument->RootLayer(), canvasWhere,
+		true);
+	if (pickedObject != NULL) {
+		fPickObjectState->SetObject(pickedObject);
+		return fPickObjectState;
+	}
+
 	return NULL;
+}
+
+// SetTransformablee
+void
+TransformToolState::SetTransformable(Transformable* object)
+{
+	fObject = object;
+	if (fObject != NULL) {
+		// TODO: More setup (listener...)
+		fOriginalTransformation = *fObject;
+	}
 }
 
 // SetBox
@@ -915,6 +1048,28 @@ TransformToolState::SetModifiedBox(const BRect& box)
 {
 	fModifiedBox = box;
 	UpdateBounds();
+
+	if (fObject != NULL) {
+//		// TODO: This can't be right...
+//		Transformable newTransformation;
+//		newTransformation.TranslateBy(
+//			fModifiedBox.LeftTop() - fOriginalBox.LeftTop());
+//		newTransformation.ScaleBy(fModifiedBox.LeftTop(), LocalXScale(),
+//			LocalYScale());
+//		newTransformation.Multiply(fOriginalTransformation);
+//		fObject->SetTransformable(newTransformation);
+		BRect area;
+		area.left = min_c(fModifiedBox.left, fModifiedBox.right);
+		area.top = min_c(fModifiedBox.top, fModifiedBox.bottom);
+		area.right = max_c(fModifiedBox.left, fModifiedBox.right);
+		area.bottom = max_c(fModifiedBox.top, fModifiedBox.bottom);
+		Shape* shape = dynamic_cast<Shape*>(fObject);
+		if (shape != NULL)
+			shape->SetArea(area);
+		Rect* rect = dynamic_cast<Rect*>(fObject);
+		if (rect != NULL)
+			rect->SetArea(area);
+	}
 }
 
 // LocalXScale
@@ -934,4 +1089,37 @@ TransformToolState::LocalYScale() const
 		return 1.0;
 	return fModifiedBox.Height() / fOriginalBox.Height();
 }
+
+// #pragma mark -
+
+// _PickObject
+Object*
+TransformToolState::_PickObject(const Layer* layer, BPoint where,
+	bool recursive) const
+{
+	// search sublayers first
+	int32 count = layer->CountObjects();
+	for (int32 i = count - 1; i >= 0; i--) {
+		Object* object = layer->ObjectAtFast(i);
+		if (recursive) {
+			Layer* subLayer = dynamic_cast<Layer*>(object);
+			if (subLayer != NULL) {
+				Object* objectOnSubLayer = _PickObject(subLayer, where, true);
+				if (objectOnSubLayer)
+					return objectOnSubLayer;
+			}
+		}
+		// TODO: Implement Object::HitTest() method and use it here!
+		Rect* rect = dynamic_cast<Rect*>(object);
+		if (rect && rect->Area().Contains(where))
+			return object;
+		Shape* shape = dynamic_cast<Shape*>(object);
+		if (shape && shape->Area().Contains(where))
+			return object;
+	}
+
+	return NULL;
+}
+
+
 
