@@ -23,7 +23,7 @@ WonderBrush::WonderBrush(BRect bounds)
 		(rgb_color){ 200, 20, 80, 180 }));
 	fDocument->RootLayer()->AddObject(new Filter(10.0));
 	fDocument->RootLayer()->AddObject(new Rect(BRect(30, 40, 120, 200),
-		(rgb_color){ 90, 0, 20, 210 }));
+		(rgb_color){ 97, 215, 255, 255 }));
 	fDocument->RootLayer()->AddObject(new Rect(BRect(100, 140, 180, 170),
 		(rgb_color){ 255, 215, 20, 100 }));
 
@@ -38,12 +38,16 @@ WonderBrush::WonderBrush(BRect bounds)
 	fDocument->RootLayer()->AddObject(new Rect(BRect(200, 10, 280, 70),
 		(rgb_color){ 255, 200, 50, 80 }));
 
-	subLayer->AddObject(new Rect(BRect(150, 200, 210, 330),
-		(rgb_color){ 55, 120, 80, 120 }));
+	Rect* transformedRect = new Rect(BRect(150, 200, 210, 330),
+		(rgb_color){ 55, 120, 80, 120 });
+	transformedRect->ScaleBy(BPoint(180, 265), 1.0, 0.5);
+	subLayer->AddObject(transformedRect);
 	subLayer->AddObject(new Filter(20.0));
 
 	subLayer->AddObject(new Rect(BRect(120, 100, 510, 530),
-		(rgb_color){ 55, 180, 120, 200 }));
+		(rgb_color){ 110, 127, 0, 255 }));
+
+	subLayer->RotateBy(BPoint(400, 300), -30);
 
 	Layer* subSubLayer = new Layer(bounds);
 	subLayer->AddObject(subSubLayer);
@@ -51,10 +55,10 @@ WonderBrush::WonderBrush(BRect bounds)
 	subSubLayer->RotateBy(BPoint(400, 300), -15);
 
 	subSubLayer->AddObject(new Rect(BRect(420, 320, 650, 390),
-		(rgb_color){ 185, 120, 120, 220 }));
+		(rgb_color){ 0, 255, 0, 240 }));
 
 	subSubLayer->AddObject(new Shape(BRect(460, 185, 590, 300),
-		(rgb_color){ 255, 120, 180, 160 }));
+		(rgb_color){ 255, 0, 169, 255 }));
 
 	fEditLayer = fDocument->RootLayer();
 }
