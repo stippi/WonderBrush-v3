@@ -56,7 +56,7 @@ Object::Transformation() const
 	Transformable t;
 	if (fParent)
 		t = fParent->Transformation();
-	t.Multiply(*this);
+	t.PreMultiply(*this);
 	return t;
 }
 
@@ -132,5 +132,7 @@ void
 Object::TransformationChanged()
 {
 	UpdateChangeCounter();
+// TODO: Find another mechanism, probably by caching the previous global bounds.
+InvalidateParent();
 }
 
