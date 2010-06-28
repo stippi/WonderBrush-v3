@@ -79,10 +79,8 @@ StackBlurFilter::~StackBlurFilter()
 void
 StackBlurFilter::FilterRGBA64(RenderBuffer* buffer, double radius)
 {
-	if (radius < 1.0) {
-		printf("StackBlurFilter::Filter() - radius too small (< 1.0)\n");
+	if (radius < 1.0)
 		return;
-	}
 
 	int32 width = buffer->Width();
 	int32 height = buffer->Height();
@@ -98,10 +96,8 @@ StackBlurFilter::FilterRGBA64(RenderBuffer* buffer, double radius)
 void
 StackBlurFilter::FilterRGBA32(RenderBuffer* buffer, double radius)
 {
-	if (radius < 1.0) {
-		printf("StackBlurFilter::Filter() - radius too small (< 1.0)\n");
+	if (radius < 1.0)
 		return;
-	}
 
 	int32 width = buffer->Width();
 	int32 height = buffer->Height();
@@ -117,10 +113,8 @@ StackBlurFilter::FilterRGBA32(RenderBuffer* buffer, double radius)
 void
 StackBlurFilter::FilterGray8(RenderBuffer* buffer, double radius)
 {
-	if (radius < 1.0) {
-		printf("StackBlurFilter::Filter() - radius too small (< 1.0)\n");
+	if (radius < 1.0)
 		return;
-	}
 
 	int32 width = buffer->Width();
 	int32 height = buffer->Height();
@@ -136,10 +130,8 @@ StackBlurFilter::FilterGray8(RenderBuffer* buffer, double radius)
 void
 StackBlurFilter::Filter(BBitmap* bitmap, double radius)
 {
-	if (radius < 1.0) {
-		printf("StackBlurFilter::Filter() - radius too small (< 1.0)\n");
+	if (radius < 1.0)
 		return;
-	}
 
 	int32 width = bitmap->Bounds().IntegerWidth() + 1;
 	int32 height = bitmap->Bounds().IntegerHeight() + 1;
