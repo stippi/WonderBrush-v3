@@ -59,6 +59,8 @@ DragStateViewState::MouseDown(BPoint where, uint32 buttons, uint32 clicks)
 		delete fCurrentCommand;
 		fCurrentCommand = StartTransaction(fCurrentState->CommandName());
 	}
+
+	fView->SetMouseEventMask(B_POINTER_EVENTS, B_LOCK_WINDOW_FOCUS);
 }
 
 // MouseMoved
