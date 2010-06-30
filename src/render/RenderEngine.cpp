@@ -28,6 +28,22 @@ RenderEngine::RenderEngine()
 {
 }
 
+// constructor
+RenderEngine::RenderEngine(const Transformable& transformation)
+	: fState()
+
+	, fRenderingBuffer()
+	, fPixelFormat(fRenderingBuffer)
+	, fBaseRenderer(fPixelFormat)
+
+	, fScanline()
+	, fSpanAllocator()
+
+	, fRasterizer()
+{
+	SetTransformation(transformation);
+}
+
 // destructor
 RenderEngine::~RenderEngine()
 {
@@ -129,20 +145,17 @@ RenderEngine::BlendArea(const RenderBuffer* source, BRect area)
 void
 RenderEngine::DrawRectangle(const BRect& rect, BRect area)
 {
-// TODO: Fix this check, rect is untransformed, area is!
-//	if (!area.Intersects(rect))
-//		return;
-
-	agg::rounded_rect roundRect(rect.left, rect.top, rect.right, rect.bottom,
-		0.0);
+	if (!fState.Matrix.TransformBounds(rect).Intersects(area))
+		return;
 
 	fRasterizer.reset();
 
+	agg::rounded_rect roundRect(rect.left, rect.top, rect.right, rect.bottom,
+		0.0);
 	agg::conv_transform<agg::rounded_rect, Transformable>
 		transformedRoundRect(roundRect, fState.Matrix);
 
 	fRasterizer.add_path(transformedRoundRect);
-
 	_RenderScanlines();
 }
 
@@ -195,6 +208,34 @@ RenderEngine::LinearToGamma(uint16 value)
 	// With 14 bits precision, the 8 bit values 1 and 2 are not in the
 	// look up table.
 	return kLinearToGamma[value >> 2];
+}
+
+// #pragma mark - hit testing
+
+bool
+RenderEngine::HitTest(const BRect& rect, const BPoint& point)
+{
+	fRasterizer.reset();
+
+	agg::rounded_rect roundRect(rect.left, rect.top, rect.right, rect.bottom,
+		0.0);
+	agg::conv_transform<agg::rounded_rect, Transformable>
+		transformedRoundRect(roundRect, fState.Matrix);
+
+	fRasterizer.add_path(transformedRoundRect);
+	return _HitTest(point);
+}
+
+bool
+RenderEngine::HitTest(PathStorage& path, const BPoint& point)
+{
+	fRasterizer.reset();
+
+	agg::conv_transform<PathStorage, Transformable>
+		transformedPath(path, fState.Matrix);
+
+	fRasterizer.add_path(transformedPath);
+	return _HitTest(point);
 }
 
 // #pragma mark -
@@ -270,3 +311,11 @@ printf("RenderEngine::_RenderScanlines(): %lld, %ld scanlines\n",
 #endif
 	}
 }
+
+// _HitTest
+bool
+RenderEngine::_HitTest(const BPoint& point)
+{
+	return fRasterizer.hit_test(point.x, point.y);
+}
+

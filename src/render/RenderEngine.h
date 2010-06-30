@@ -58,6 +58,8 @@ typedef agg::conv_transform
 class RenderEngine {
 public:
 								RenderEngine();
+								RenderEngine(
+									const Transformable& transformation);
 	virtual						~RenderEngine();
 
 			// This method will compare the settings in the given state
@@ -89,9 +91,14 @@ public:
 	static	uint16				GammaToLinear(uint8 value);
 	static	uint8				LinearToGamma(uint16 value);
 
+			bool				HitTest(const BRect& rect,
+									const BPoint& point);
+			bool				HitTest(PathStorage& path,
+									const BPoint& point);
 private:
 			void				_RenderScanlines(
 									const ScanlineContainer* scanlines = NULL);
+			bool				_HitTest(const BPoint& point);
 
 			LayoutState			fState;
 
