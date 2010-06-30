@@ -92,7 +92,7 @@ Filter::ExtendDirtyArea(BRect& area) const
 	// affected by this object, if pixels in the given
 	// "area" change.
 
-	float extend = ceilf(fFilterRadius) + 3;
+	float extend = ceilf(fFilterRadius * Transformation().Scale()) + 3;
 		// + 1 to be on the save side with regards
 		// to pixel indices versus areas...
 	area.InsetBy(-extend, -extend);
