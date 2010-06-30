@@ -107,6 +107,7 @@ Application WonderBrush :
 	Document.cpp
 
 	# model/objects/snapshots
+	BoundedObject.cpp
 	Filter.cpp
 	FilterSnapshot.cpp
 	Layer.cpp
