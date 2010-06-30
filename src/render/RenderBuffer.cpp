@@ -120,9 +120,9 @@ RenderBuffer::Clear(BRect area, const rgb_color& color)
 	// make sure we don't clear out of bounds
 	area = area & Bounds();
 
-	uint32 left = (uint32)area.left;
-	uint32 right = (uint32)area.right;
-	uint32 height = area.IntegerHeight() + 1;
+	int32 left = (int32)area.left;
+	int32 right = (int32)area.right;
+	int32 height = area.IntegerHeight() + 1;
 
 	uint8* dst = fBits;
 	dst += (left - fLeft) * 8;
@@ -135,9 +135,9 @@ RenderBuffer::Clear(BRect area, const rgb_color& color)
 		color.alpha * 256 + color.alpha);
 	linearColor.premultiply();
 
-	for (uint32 y = 0; y < height; y++) {
+	for (int32 y = 0; y < height; y++) {
 		uint16* d = reinterpret_cast<uint16*>(dst);
-		for (uint32 x = left; x <= right; x++) {
+		for (int32 x = left; x <= right; x++) {
 			d[0] = linearColor.b;
 			d[1] = linearColor.g;
 			d[2] = linearColor.r;
@@ -156,23 +156,23 @@ RenderBuffer::CopyTo(BBitmap* bitmap, BRect area) const
 	area = area & bitmap->Bounds();
 	area = area & Bounds();
 
-	uint32 left = (uint32)area.left;
-	uint32 right = (uint32)area.right;
-	uint32 top = (uint32)area.top;
-	uint32 height = area.IntegerHeight() + 1;
+	int32 left = (int32)area.left;
+	int32 right = (int32)area.right;
+	int32 top = (int32)area.top;
+	int32 height = area.IntegerHeight() + 1;
 
 	uint8* dst = reinterpret_cast<uint8*>(bitmap->Bits());
 	uint32 dstBPR = bitmap->BytesPerRow();
-	dst += left * 4;
-	dst += top * dstBPR;
+	dst += (left - (int32)bitmap->Bounds().left) * 4;
+	dst += (top - (int32)bitmap->Bounds().top) * dstBPR;
 	uint8* src = fBits;
 	src += (left - fLeft) * 8;
 	src += (top - fTop) * fBPR;
 
-	for (uint32 y = 0; y < height; y++) {
+	for (int32 y = 0; y < height; y++) {
 		uint8* d = dst;
 		uint16* s = reinterpret_cast<uint16*>(src);
-		for (uint32 x = 0; x <= right; x++) {
+		for (int32 x = 0; x <= right; x++) {
 			// TODO: Right now the bitmap is solid, i.e. no transparency.
 			// If there were transparency, we would have to demultiply before
 			// applying inverse gamma.
@@ -198,15 +198,15 @@ RenderBuffer::CopyTo(RenderBuffer* buffer, BRect area) const
 
 	uint8* dst = buffer->Bits();
 	uint32 dstBPR = buffer->BytesPerRow();
-	dst += (int32)area.left * 8;
-	dst += (int32)area.top * dstBPR;
+	dst += ((int32)area.left - buffer->fLeft) * 8;
+	dst += ((int32)area.top - buffer->fTop) * dstBPR;
 	uint8* src = fBits;
 	src += ((int32)area.left - fLeft) * 8;
 	src += ((int32)area.top - fTop) * fBPR;
 	uint32 bytes = (area.IntegerWidth() + 1) * 8;
-	uint32 height = area.IntegerHeight() + 1;
+	int32 height = area.IntegerHeight() + 1;
 
-	for (uint32 y = 0; y < height; y++) {
+	for (int32 y = 0; y < height; y++) {
 		memcpy(dst, src, bytes);
 		src += fBPR;
 		dst += dstBPR;
@@ -221,22 +221,22 @@ RenderBuffer::BlendTo(RenderBuffer* buffer, BRect area) const
 	area = area & buffer->Bounds();
 	area = area & Bounds();
 
-	uint32 left = (uint32)area.left;
-	uint32 right = (uint32)area.right;
+	int32 left = (int32)area.left;
+	int32 right = (int32)area.right;
 
 	uint8* dst = buffer->Bits();
 	uint32 dstBPR = buffer->BytesPerRow();
-	dst += left * 8;
-	dst += (uint32)area.top * dstBPR;
+	dst += (left - buffer->fLeft) * 8;
+	dst += ((uint32)area.top - buffer->fTop) * dstBPR;
 	uint8* src = fBits;
 	src += (left - fLeft) * 8;
 	src += ((uint32)area.top - fTop) * fBPR;
-	uint32 height = area.IntegerHeight() + 1;
+	int32 height = area.IntegerHeight() + 1;
 
-	for (uint32 y = 0; y < height; y++) {
+	for (int32 y = 0; y < height; y++) {
 		uint16* d = reinterpret_cast<uint16*>(dst);
 		uint16* s = reinterpret_cast<uint16*>(src);
-		for (uint32 x = left; x <= right; x++) {
+		for (int32 x = left; x <= right; x++) {
 
 			uint16 alpha = 65535 - s[3];
 #if 0
