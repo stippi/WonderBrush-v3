@@ -10,6 +10,7 @@
 #include <List.h>
 #include <Rect.h>
 
+#include "RenderEngine.h"
 #include "Styleable.h"
 
 class Shape;
@@ -42,9 +43,12 @@ public:
 
 	virtual	const char*			DefaultName() const;
 
+	virtual	bool				HitTest(const BPoint& canvasPoint) const;
+
 	// Shape
 			void				SetArea(const BRect& area);
-	virtual	BRect				Area() const;
+			BRect				Area() const;
+	virtual	BRect				Bounds();
 
 			bool				AddListener(ShapeListener* listener);
 			void				RemoveListener(ShapeListener* listener);
@@ -55,6 +59,9 @@ private:
 
 			void				_NotifyDeleted();
 
+			void				_GetPath(PathStorage& path) const;
+
+private:
 			BRect				fArea;
 
 			BList				fListeners;

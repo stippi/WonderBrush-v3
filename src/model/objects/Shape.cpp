@@ -84,6 +84,16 @@ Shape::DefaultName() const
 	return "Shape";
 }
 
+// HitTest
+bool
+Shape::HitTest(const BPoint& canvasPoint) const
+{
+	PathStorage path;
+	_GetPath(path);
+	RenderEngine engine(Transformation());
+	return engine.HitTest(path, canvasPoint);
+}
+
 // #pragma mark -
 
 // SetArea
@@ -98,12 +108,19 @@ Shape::SetArea(const BRect& area)
 
 	_NotifyAreaChanged(oldArea, fArea);
 
-	InvalidateParent(oldArea, fArea);
+	UpdateBounds();
 }
 
 // Area
 BRect
 Shape::Area() const
+{
+	return fArea;
+}
+
+// Bounds
+BRect
+Shape::Bounds()
 {
 	return fArea;
 }
@@ -158,5 +175,27 @@ Shape::_NotifyDeleted()
 		ShapeListener* listener = (ShapeListener*)listeners.ItemAtFast(i);
 		listener->Deleted(this);
 	}
+}
+
+// _GetPath
+void
+Shape::_GetPath(PathStorage& path) const
+{
+	path.move_to(fArea.left, fArea.top);
+	path.line_to((fArea.left + fArea.right) / 2,
+		fArea.top + fArea.Height() / 3);
+
+	path.line_to(fArea.right, fArea.top);
+	path.line_to(fArea.right - fArea.Width() / 3,
+		(fArea.top + fArea.bottom) / 2);
+
+	path.line_to(fArea.right, fArea.bottom);
+	path.line_to((fArea.left + fArea.right) / 2,
+		fArea.bottom - fArea.Height() / 3);
+
+	path.line_to(fArea.left, fArea.bottom);
+	path.line_to(fArea.left + fArea.Width() / 3,
+		(fArea.top + fArea.bottom) / 2);
+	path.close_polygon();
 }
 

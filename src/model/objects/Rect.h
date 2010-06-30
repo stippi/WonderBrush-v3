@@ -1,9 +1,6 @@
 /*
- * Copyright 2007, Haiku. All rights reserved.
- * Distributed under the terms of the MIT License.
- *
- * Authors:
- *		Stephan Aßmus <superstippi@gmx.de>
+ * Copyright 2007-2010, Stephan Aßmus <superstippi@gmx.de>.
+ * All rights reserved.
  */
 #ifndef RECT_H
 #define RECT_H
@@ -40,9 +37,12 @@ public:
 
 	virtual	const char*			DefaultName() const;
 
+	virtual	bool				HitTest(const BPoint& canvasPoint) const;
+
 	// Rect
 			void				SetArea(const BRect& area);
-	virtual	BRect				Area() const;
+			BRect				Area() const;
+	virtual	BRect				Bounds();
 
 			bool				AddListener(RectListener* listener);
 			void				RemoveListener(RectListener* listener);

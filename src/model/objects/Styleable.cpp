@@ -1,5 +1,5 @@
 /*
- * Copyright 2009, Stephan Aßmus <superstippi@gmx.de>. All rights reserved.
+ * Copyright 2009-2010, Stephan Aßmus <superstippi@gmx.de>. All rights reserved.
  */
 
 #include "Styleable.h"
@@ -12,7 +12,7 @@
 
 // constructor
 Styleable::Styleable()
-	: Object()
+	: BoundedObject()
 	, fStyle(new(std::nothrow) ::Style(), true)
 {
 	fStyle->SetFillPaint(Paint(kBlack));
@@ -20,7 +20,7 @@ Styleable::Styleable()
 
 // constructor
 Styleable::Styleable(const rgb_color& color)
-	: Object()
+	: BoundedObject()
 	, fStyle(new(std::nothrow) ::Style(), true)
 {
 	fStyle->SetFillPaint(Paint(color));
@@ -38,7 +38,7 @@ Styleable::~Styleable()
 void
 Styleable::AddProperties(PropertyObject* object) const
 {
-	Object::AddProperties(object);
+	BoundedObject::AddProperties(object);
 	fStyle->AddProperties(object);
 }
 
@@ -48,14 +48,14 @@ Styleable::SetToPropertyObject(const PropertyObject* object)
 {
 	AutoNotificationSuspender _(this);
 
-	Object::SetToPropertyObject(object);
+	BoundedObject::SetToPropertyObject(object);
 
 	AutoNotificationSuspender styleSuspender(fStyle.Get());
 	fStyle->SetToPropertyObject(object);
 
 	if (HasPendingNotifications() || fStyle->HasPendingNotifications()) {
 		UpdateChangeCounter();
-		InvalidateParent(Area());
+		InvalidateParent(TransformedBounds());
 		return true;
 	}
 	return false;
@@ -69,7 +69,7 @@ Styleable::SetStyle(::Style* style)
 {
 	if (fStyle.SetTo(style)) {
 		UpdateChangeCounter();
-		InvalidateParent(Area());
+		InvalidateParent(TransformedBounds());
 	}
 }
 

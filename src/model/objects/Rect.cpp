@@ -1,10 +1,12 @@
 /*
- * Copyright 2007-2009, Stephan Aßmus <superstippi@gmx.de>.
+ * Copyright 2007-2010, Stephan Aßmus <superstippi@gmx.de>.
  * All rights reserved.
  */
+
 #include "Rect.h"
 
 #include "RectSnapshot.h"
+#include "RenderEngine.h"
 
 // constructor
 RectListener::RectListener()
@@ -69,6 +71,14 @@ Rect::DefaultName() const
 	return "Rect";
 }
 
+// HitTest
+bool
+Rect::HitTest(const BPoint& canvasPoint) const
+{
+	RenderEngine engine(Transformation());
+	return engine.HitTest(fArea, canvasPoint);
+}
+
 // #pragma mark -
 
 // SetArea
@@ -83,12 +93,19 @@ Rect::SetArea(const BRect& area)
 
 	_NotifyAreaChanged(oldArea, fArea);
 
-	InvalidateParent(oldArea, fArea);
+	UpdateBounds();
 }
 
 // Area
 BRect
 Rect::Area() const
+{
+	return fArea;
+}
+
+// Bounds
+BRect
+Rect::Bounds()
 {
 	return fArea;
 }

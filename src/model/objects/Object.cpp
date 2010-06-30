@@ -107,6 +107,13 @@ Object::InvalidateParent()
 		fParent->Invalidate(fParent->Bounds(), fParent->IndexOf(this));
 }
 
+// HitTest
+bool
+Object::HitTest(const BPoint& canvasPoint) const
+{
+	return false;
+}
+
 // UpdateChangeCounter
 void
 Object::UpdateChangeCounter()
@@ -132,7 +139,6 @@ void
 Object::TransformationChanged()
 {
 	UpdateChangeCounter();
-// TODO: Find another mechanism, probably by caching the previous global bounds.
-InvalidateParent();
+	InvalidateParent();
 }
 

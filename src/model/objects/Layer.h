@@ -43,6 +43,8 @@ class Layer : public Object {
 
 	virtual	const char*			DefaultName() const;
 
+	virtual	bool				HitTest(const BPoint& canvasPoint) const;
+
 	// Layer
 			bool				AddObject(Object* object);
 			bool				AddObject(Object* object, int32 index);
@@ -56,6 +58,10 @@ class Layer : public Object {
 			void				Invalidate(const BRect& area,
 									int32 objectIndex = 0);
 			void				ObjectChanged(Object* object);
+
+			bool				HitTest(const BPoint& canvasPoint,
+									Layer** layer, Object** object,
+									bool recursive) const;
 
 			bool				AddListener(Listener* listener);
 			void				RemoveListener(Listener* listener);

@@ -1,16 +1,16 @@
 /*
- * Copyright 2009, Stephan Aßmus <superstippi@gmx.de>. All rights reserved.
+ * Copyright 2009-2010, Stephan Aßmus <superstippi@gmx.de>. All rights reserved.
  */
 #ifndef STYLEABLE_H
 #define STYLEABLE_H
 
 #include <GraphicsDefs.h>
 
-#include "Object.h"
+#include "BoundedObject.h"
 
 class Style;
 
-class Styleable : public Object {
+class Styleable : public BoundedObject {
 public:
 								Styleable();
 								Styleable(const rgb_color& color);
@@ -24,8 +24,6 @@ public:
 			void				SetStyle(::Style* style);
 	inline	::Style*			Style() const
 									{ return fStyle.Get(); }
-
-	virtual	BRect				Area() const = 0;
 
 private:
 			Reference< ::Style>	fStyle;

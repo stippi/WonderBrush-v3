@@ -85,6 +85,18 @@ Layer::DefaultName() const
 	return "Layer";
 }
 
+// HitTest
+bool
+Layer::HitTest(const BPoint& canvasPoint) const
+{
+	for (int32 i = CountObjects() - 1; i >= 0; i--) {
+		Object* object = ObjectAtFast(i);
+		if (object->HitTest(canvasPoint))
+			return true;
+	}
+	return false;
+}
+
 // #pragma mark -
 
 // AddObject
@@ -209,6 +221,31 @@ Layer::ObjectChanged(Object* object)
 		Listener* listener = (Listener*)listeners.ItemAtFast(i);
 		listener->ObjectChanged(this, object, index);
 	}
+}
+
+// HitTest
+bool
+Layer::HitTest(const BPoint& canvasPoint, Layer** _layer, Object** _object,
+	bool recursive) const
+{
+	for (int32 i = CountObjects() - 1; i >= 0; i--) {
+		Object* object = ObjectAtFast(i);
+		Layer* subLayer = dynamic_cast<Layer*>(object);
+		if (subLayer != NULL) {
+			if (recursive
+				&& subLayer->HitTest(canvasPoint, _layer, _object,
+					recursive)) {
+				return true;
+			}
+		} else if (object->HitTest(canvasPoint)) {
+			if (_layer != NULL)
+				*_layer = const_cast<Layer*>(this);
+			if (_object != NULL)
+				*_object = object;
+			return true;
+		}
+	}
+	return false;
 }
 
 // #pragma mark -

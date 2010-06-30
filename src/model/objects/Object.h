@@ -43,6 +43,8 @@ public:
 			void				InvalidateParent(const BRect& area);
 			void				InvalidateParent();
 
+	virtual	bool				HitTest(const BPoint& canvasPoint) const;
+
 			void				UpdateChangeCounter();
 	inline	uint32				ChangeCounter() const
 									{ return fChangeCounter; }
