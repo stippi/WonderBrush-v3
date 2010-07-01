@@ -318,7 +318,6 @@ PickToolState::ObjectSelected(const Selectable& selectable,
 		return;
 	}
 
-printf("PickToolState::ObjectSelected(%p)\n", selectable.Get());
 	Object* object = dynamic_cast<Object*>(selectable.Get());
 	Layer* layer = object != NULL ? object->Parent() : NULL;
 	SetObject(layer, object);
@@ -334,7 +333,6 @@ PickToolState::ObjectDeselected(const Selectable& selectable,
 		return;
 	}
 
-printf("PickToolState::ObjectDeselected(%p)\n", selectable.Get());
 	Object* object = dynamic_cast<Object*>(selectable.Get());
 	if (object == fRect || object == fShape)
 		SetObject(NULL, NULL);

@@ -533,31 +533,17 @@ public:
 	PickObjectState(TransformToolState* parent)
 		: DragState(parent)
 		, fParent(parent)
-		, fShape(NULL)
-		, fRect(NULL)
+		, fObject(NULL)
 	{
 	}
 
 	virtual void SetOrigin(BPoint origin)
 	{
 		// Setup tool and switch to drag box state
-		Object* object = NULL;
-		BRect box;
-		if (fShape != NULL) {
-			object = fShape;
-			box = fShape->Area();
-		} else if (fRect != NULL) {
-			object = fRect;
-			box = fRect->Area();
-		}
+		fParent->SetObject(fObject);
 
-		fParent->SetTransformable(object);
-
-		if (object == NULL)
+		if (fObject == NULL)
 			return;
-
-		fParent->SetObjectToCanvasTransformation(object->Transformation());
-		fParent->SetBox(box);
 
 		fParent->SetDragState(fParent->fDragBoxState);
 		fParent->fDragBoxState->SetOrigin(origin);
@@ -571,7 +557,7 @@ public:
 	virtual BCursor ViewCursor(BPoint current) const
 	{
 #ifdef __HAIKU__
-		if (fShape != NULL || fRect != NULL)
+		if (fObject != NULL)
 			return BCursor(B_CURSOR_ID_FOLLOW_LINK);
 #endif
 		return BCursor(B_CURSOR_SYSTEM_DEFAULT);
@@ -584,42 +570,12 @@ public:
 
 	void SetObject(Object* object)
 	{
-		Shape* shape = dynamic_cast<Shape*>(object);
-		if (shape != NULL) {
-			SetShape(shape);
-			return;
-		}
-
-		Rect* rect = dynamic_cast<Rect*>(object);
-		if (rect != NULL) {
-			SetRect(rect);
-			return;
-		}
-		UnsetObject();
-	}
-
-	void SetShape(Shape* shape)
-	{
-		fShape = shape;
-		fRect = NULL;
-	}
-
-	void SetRect(Rect* rect)
-	{
-		fRect = rect;
-		fShape = NULL;
-	}
-
-	void UnsetObject()
-	{
-		fShape = NULL;
-		fRect = NULL;
+		fObject = object;
 	}
 
 private:
 	TransformToolState*	fParent;
-	Shape*				fShape;
-	Rect*				fRect;
+	Object*				fObject;
 };
 
 
@@ -628,7 +584,7 @@ private:
 
 // constructor
 TransformToolState::TransformToolState(StateView* view, const BRect& box,
-		Document* document)
+		Document* document, Selection* selection)
 	: DragStateViewState(view)
 	, fOriginalBox(box)
 	, fModifiedBox(box)
@@ -656,13 +612,18 @@ TransformToolState::TransformToolState(StateView* view, const BRect& box,
 		DragSideState::BOTTOM))
 
 	, fDocument(document)
+	, fSelection(selection)
 	, fObject(NULL)
 {
+	fSelection->AddListener(this);
 }
 
 // destructor
 TransformToolState::~TransformToolState()
 {
+	fSelection->RemoveListener(this);
+
+	delete fPickObjectState;
 	delete fDragBoxState;
 	delete fDragLTState;
 	delete fDragRTState;
@@ -672,6 +633,45 @@ TransformToolState::~TransformToolState()
 	delete fDragTState;
 	delete fDragRState;
 	delete fDragBState;
+}
+
+// MouseDown
+void
+TransformToolState::MouseDown(BPoint where, uint32 buttons, uint32 clicks)
+{
+	if (!fDocument->WriteLock())
+		return;
+
+	DragStateViewState::MouseDown(where, buttons, clicks);
+
+	fDocument->WriteUnlock();
+}
+
+// MouseMoved
+void
+TransformToolState::MouseMoved(BPoint where, uint32 transit,
+	const BMessage* dragMessage)
+{
+	if (!fDocument->WriteLock())
+		return;
+
+	DragStateViewState::MouseMoved(where, transit, dragMessage);
+
+	fDocument->WriteUnlock();
+}
+
+// MouseUp
+Command*
+TransformToolState::MouseUp()
+{
+	if (!fDocument->WriteLock())
+		return NULL;
+
+	Command* command = DragStateViewState::MouseUp();
+
+	fDocument->WriteUnlock();
+
+	return command;
 }
 
 // Draw
@@ -1011,15 +1011,71 @@ TransformToolState::DragStateFor(BPoint canvasWhere, float zoomLevel) const
 		return fDragBoxState;
 
 	// If there is still no state, switch to the PickObjectsState
-	// and try to find an object
-	Object* pickedObject = _PickObject(fDocument->RootLayer(), canvasWhere,
-		true);
-	if (pickedObject != NULL) {
-		fPickObjectState->SetObject(pickedObject);
-		return fPickObjectState;
+	// and try to find an object. If nothing is picked, unset on mouse down.
+	Object* pickedObject = NULL;
+	fDocument->RootLayer()->HitTest(canvasWhere, NULL, &pickedObject, true);
+	fPickObjectState->SetObject(pickedObject);
+	return fPickObjectState;
+}
+
+// #pragma mark -
+
+// ObjectSelected
+void
+TransformToolState::ObjectSelected(const Selectable& selectable,
+	const Selection::Controller* controller)
+{
+	if (controller == this) {
+		// ignore changes triggered by ourself
+		return;
 	}
 
-	return NULL;
+	Object* object = dynamic_cast<Object*>(selectable.Get());
+	SetObject(object);
+}
+
+// ObjectDeselected
+void
+TransformToolState::ObjectDeselected(const Selectable& selectable,
+	const Selection::Controller* controller)
+{
+	if (controller == this) {
+		// ignore changes triggered by ourself
+		return;
+	}
+
+	Object* object = dynamic_cast<Object*>(selectable.Get());
+	if (object == fObject)
+		SetObject(NULL);
+}
+
+// #pragma mark -
+
+// SetObject
+void
+TransformToolState::SetObject(Object* object)
+{
+	BRect box;
+	Shape* shape = dynamic_cast<Shape*>(object);
+	Rect* rect = dynamic_cast<Rect*>(object);
+
+	if (shape != NULL) {
+		fSelection->Select(Selectable(shape), this);
+		box = shape->Bounds();
+	} else if (rect != NULL) {
+		fSelection->Select(Selectable(rect), this);
+		box = rect->Bounds();
+	} else {
+		fSelection->DeselectAll(this);
+	}
+
+	if (object != NULL)
+		SetObjectToCanvasTransformation(object->Transformation());
+	else
+		SetObjectToCanvasTransformation(Transformable());
+
+	SetTransformable(object);
+	SetBox(box);
 }
 
 // SetTransformablee
@@ -1089,37 +1145,5 @@ TransformToolState::LocalYScale() const
 		return 1.0;
 	return fModifiedBox.Height() / fOriginalBox.Height();
 }
-
-// #pragma mark -
-
-// _PickObject
-Object*
-TransformToolState::_PickObject(const Layer* layer, BPoint where,
-	bool recursive) const
-{
-	// search sublayers first
-	int32 count = layer->CountObjects();
-	for (int32 i = count - 1; i >= 0; i--) {
-		Object* object = layer->ObjectAtFast(i);
-		if (recursive) {
-			Layer* subLayer = dynamic_cast<Layer*>(object);
-			if (subLayer != NULL) {
-				Object* objectOnSubLayer = _PickObject(subLayer, where, true);
-				if (objectOnSubLayer)
-					return objectOnSubLayer;
-			}
-		}
-		// TODO: Implement Object::HitTest() method and use it here!
-		Rect* rect = dynamic_cast<Rect*>(object);
-		if (rect && rect->Area().Contains(where))
-			return object;
-		Shape* shape = dynamic_cast<Shape*>(object);
-		if (shape && shape->Area().Contains(where))
-			return object;
-	}
-
-	return NULL;
-}
-
 
 

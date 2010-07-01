@@ -55,14 +55,8 @@ ViewState*
 TransformTool::MakeViewState(StateView* view, Document* document,
 	Selection* selection)
 {
-	// TODO: Remove test code...
-	TransformToolState* state = new TransformToolState(view,
-		BRect(150, 150, 280, 250), document);
-	Transformable t;
-	t.ScaleBy(BPoint(220, 200), 1.2, 1.5);
-	t.RotateBy(BPoint(200, 200), 10);
-	state->SetObjectToCanvasTransformation(t);
-	return state;
+	return new(std::nothrow) TransformToolState(view, BRect(0, 0, -1, -1),
+		document, selection);
 }
 
 // MakeConfigView
