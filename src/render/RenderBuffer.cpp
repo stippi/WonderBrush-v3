@@ -11,6 +11,7 @@
 #include <string.h>
 
 #include <Bitmap.h>
+#include <debugger.h>
 
 #include "RenderEngine.h"
 
@@ -41,6 +42,13 @@ RenderBuffer::RenderBuffer(uint32 width, uint32 height)
 
 // constructor
 RenderBuffer::RenderBuffer(RenderBuffer* bitmap, BRect area, bool adopt)
+	: fBits(NULL)
+	, fWidth(0)
+	, fHeight(0)
+	, fBPR(0)
+	, fLeft(0)
+	, fTop(0)
+	, fAdopted(false)
 {
 	area = area & bitmap->Bounds();
 
@@ -61,8 +69,13 @@ RenderBuffer::RenderBuffer(RenderBuffer* bitmap, BRect area, bool adopt)
 // constructor
 RenderBuffer::RenderBuffer(uint8* buffer, uint32 width, uint32 height,
 		uint32 bytesPerRow, bool adopt)
-	: fLeft(0)
+	: fBits(NULL)
+	, fWidth(0)
+	, fHeight(0)
+	, fBPR(0)
+	, fLeft(0)
 	, fTop(0)
+	, fAdopted(false)
 {
 	Attach(buffer, width, height, bytesPerRow, adopt);
 }
@@ -86,12 +99,17 @@ void
 RenderBuffer::Attach(uint8* buffer, uint32 width, uint32 height,
 	uint32 bytesPerRow, bool adopt)
 {
+	if (!fAdopted)
+		delete[] fBits;
+
 	fWidth = width;
 	fHeight = height;
 	fAdopted = adopt;
 	if (adopt) {
 		fBits = buffer;
 		fBPR = bytesPerRow;
+		if (fBPR < width * 8)
+			debugger("Buffer size insufficient for given width.");
 	} else {
 		fBPR = width * 8;
 		fBits = new uint8[fBPR * height];
