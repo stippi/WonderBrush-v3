@@ -216,6 +216,7 @@ bool
 RenderEngine::HitTest(const BRect& rect, const BPoint& point)
 {
 	fRasterizer.reset();
+	fRasterizer.clip_box(point.x, point.y, point.x + 1, point.y + 1);
 
 	agg::rounded_rect roundRect(rect.left, rect.top, rect.right, rect.bottom,
 		0.0);
@@ -230,6 +231,7 @@ bool
 RenderEngine::HitTest(PathStorage& path, const BPoint& point)
 {
 	fRasterizer.reset();
+	fRasterizer.clip_box(point.x, point.y, point.x + 1, point.y + 1);
 
 	agg::conv_transform<PathStorage, Transformable>
 		transformedPath(path, fState.Matrix);
