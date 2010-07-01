@@ -172,7 +172,7 @@ RenderBuffer::CopyTo(BBitmap* bitmap, BRect area) const
 	for (int32 y = 0; y < height; y++) {
 		uint8* d = dst;
 		uint16* s = reinterpret_cast<uint16*>(src);
-		for (int32 x = 0; x <= right; x++) {
+		for (int32 x = left; x <= right; x++) {
 			// TODO: Right now the bitmap is solid, i.e. no transparency.
 			// If there were transparency, we would have to demultiply before
 			// applying inverse gamma.
@@ -203,7 +203,7 @@ RenderBuffer::CopyTo(RenderBuffer* buffer, BRect area) const
 	uint8* src = fBits;
 	src += ((int32)area.left - fLeft) * 8;
 	src += ((int32)area.top - fTop) * fBPR;
-	uint32 bytes = (area.IntegerWidth() + 1) * 8;
+	int32 bytes = (area.IntegerWidth() + 1) * 8;
 	int32 height = area.IntegerHeight() + 1;
 
 	for (int32 y = 0; y < height; y++) {
