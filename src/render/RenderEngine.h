@@ -7,6 +7,7 @@
 
 #include <agg_conv_transform.h>
 #include <agg_gamma_lut.h>
+#include <agg_image_accessors.h>
 #include <agg_path_storage.h>
 #include <agg_pixfmt_rgba.h>
 #include <agg_rasterizer_compound_aa.h>
@@ -16,6 +17,8 @@
 #include <agg_scanline_bin.h>
 #include <agg_scanline_p.h>
 #include <agg_span_allocator.h>
+#include <agg_span_image_filter_rgba.h>
+#include <agg_span_interpolator_linear.h>
 #include <agg_trans_perspective.h>
 
 #include "ObjectCache.h"
@@ -82,6 +85,8 @@ public:
 									BRect area);
 
 			void				DrawRectangle(const BRect& rect,
+									BRect area);
+			void				DrawImage(const RenderBuffer* buffer,
 									BRect area);
 
 			void				RenderScanlines(

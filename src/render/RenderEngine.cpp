@@ -159,6 +159,58 @@ RenderEngine::DrawRectangle(const BRect& rect, BRect area)
 	_RenderScanlines();
 }
 
+// DrawImage
+void
+RenderEngine::DrawImage(const RenderBuffer* buffer, BRect area)
+{
+	if (!fState.Matrix.TransformBounds(buffer->Bounds())
+			.Intersects(area)) {
+		return;
+	}
+
+	agg::rendering_buffer srcBuffer;
+	srcBuffer.attach(buffer->Bits(), buffer->Width(), buffer->Height(),
+		buffer->BytesPerRow());
+
+	PixelFormat srcPixelFormat(srcBuffer);
+
+	typedef agg::span_interpolator_linear<Transformable> Interpolator;
+	typedef agg::span_image_filter_rgba_bilinear_clip<PixelFormat,
+		Interpolator> SpanGenerator;
+//	typedef agg::image_accessor_clone<PixelFormat> ImageAccessor;
+//	ImageAccessor imageAccessor(srcPixelFormat);
+//	typedef agg::span_image_filter_rgba_2x2<ImageAccessor,
+//		Interpolator> SpanGenerator;
+
+	Transformable imgMatrix = fState.Matrix;
+	imgMatrix.Invert();
+
+	Interpolator interpolator(imgMatrix);
+
+	// path encloses image
+	BRect imageRect = buffer->Bounds();
+	// convert to pixel coords (versus pixel indices)
+	imageRect.right++;
+	imageRect.bottom++;
+
+	fRasterizer.reset();
+
+	agg::rounded_rect roundRect(imageRect.left, imageRect.top, imageRect.right,
+		imageRect.bottom, 0.0);
+	agg::conv_transform<agg::rounded_rect, Transformable>
+		transformedRoundRect(roundRect, fState.Matrix);
+
+	fRasterizer.add_path(transformedRoundRect);
+
+	SpanGenerator spanGenerator(srcPixelFormat,
+		agg::rgba_pre(0, 0, 0, 0), interpolator);
+//	SpanGenerator spanGenerator(imageAccessor, interpolator);
+//	SpanGenerator spanGenerator(imageAccessor, interpolator, filter);
+
+	agg::render_scanlines_aa(fRasterizer, fScanline, fBaseRenderer,
+		fSpanAllocator, spanGenerator);
+}
+
 // RenderScanlines
 void
 RenderEngine::RenderScanlines(const ScanlineContainer& scanlines)

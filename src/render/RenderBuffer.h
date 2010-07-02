@@ -8,6 +8,8 @@
 #include <GraphicsDefs.h>
 #include <Rect.h>
 
+#include "Referenceable.h"
+
 class BBitmap;
 
 // The RenderBuffer is very similar to a BBitmap, with the additional features
@@ -23,12 +25,13 @@ class BBitmap;
 // It is not possible/intended to shift the buffer in the coordinate space
 // during the copy process.
 
-class RenderBuffer {
+class RenderBuffer : public Referenceable {
 public:
 								RenderBuffer(const BRect& bounds);
 								RenderBuffer(uint32 width, uint32 height);
 								RenderBuffer(RenderBuffer* bitmap, BRect area,
 									bool adopt);
+								RenderBuffer(const BBitmap* bitmap);
 								RenderBuffer(uint8* buffer,
 									uint32 width, uint32 height,
 									uint32 bytesPerRow, bool adopt);
@@ -63,8 +66,8 @@ private:
 			uint32				fWidth;
 			uint32				fHeight;
 			uint32				fBPR;
-			uint32				fLeft;
-			uint32				fTop;
+			int32				fLeft;
+			int32				fTop;
 			bool				fAdopted;
 };
 

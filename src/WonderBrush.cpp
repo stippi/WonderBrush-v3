@@ -1,11 +1,15 @@
 #include "WonderBrush.h"
 
+#include <Bitmap.h>
 #include <String.h>
+#include <TranslationUtils.h>
 
 #include "Document.h"
 #include "Filter.h"
+#include "Image.h"
 #include "Layer.h"
 #include "Rect.h"
+#include "RenderBuffer.h"
 #include "Shape.h"
 #include "Window.h"
 
@@ -37,6 +41,22 @@ WonderBrush::WonderBrush(BRect bounds)
 	fDocument->RootLayer()->AddObject(shape);
 	fDocument->RootLayer()->AddObject(new Rect(BRect(200, 10, 280, 70),
 		(rgb_color){ 255, 200, 50, 80 }));
+
+	BBitmap* bitmap = BTranslationUtils::GetBitmap(
+		"/boot/home/Desktop/gamma_dalai_lama_gray.jpg");
+	if (bitmap != NULL) {
+		RenderBuffer* buffer = new RenderBuffer(bitmap);
+		Image* image = new Image(buffer);
+		image->ScaleBy(BPoint(buffer->Width() / 2, buffer->Height() / 2),
+			0.5, 0.5);
+//		image->RotateBy(BPoint(buffer->Width() / 2, buffer->Height() / 2),
+//			2);
+		fDocument->RootLayer()->AddObject(image);
+
+		buffer->RemoveReference();
+		delete bitmap;
+	} else
+		printf("Test bitmap file not found or failed to load.\n");
 
 	Rect* transformedRect = new Rect(BRect(150, 200, 210, 330),
 		(rgb_color){ 55, 120, 80, 120 });

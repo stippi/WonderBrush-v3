@@ -110,6 +110,8 @@ Application WonderBrush :
 	BoundedObject.cpp
 	Filter.cpp
 	FilterSnapshot.cpp
+	Image.cpp
+	ImageSnapshot.cpp
 	Layer.cpp
 	LayerObserver.cpp
 	LayerSnapshot.cpp

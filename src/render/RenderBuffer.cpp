@@ -22,8 +22,8 @@ RenderBuffer::RenderBuffer(const BRect& bounds)
 	, fWidth(bounds.IntegerWidth() + 1)
 	, fHeight(bounds.IntegerHeight() + 1)
 	, fBPR(fWidth * 8)
-	, fLeft(static_cast<uint32>(bounds.left))
-	, fTop(static_cast<uint32>(bounds.top))
+	, fLeft(static_cast<int32>(bounds.left))
+	, fTop(static_cast<int32>(bounds.top))
 	, fAdopted(false)
 {
 }
@@ -38,6 +38,59 @@ RenderBuffer::RenderBuffer(uint32 width, uint32 height)
 	, fTop(0)
 	, fAdopted(false)
 {
+}
+
+// constructor
+RenderBuffer::RenderBuffer(const BBitmap* bitmap)
+	: fBits(new(std::nothrow) uint8[(bitmap->Bounds().IntegerWidth() + 1) * 8
+		* (bitmap->Bounds().IntegerHeight() + 1)])
+	, fWidth(bitmap->Bounds().IntegerWidth() + 1)
+	, fHeight(bitmap->Bounds().IntegerHeight() + 1)
+	, fBPR(fWidth * 8)
+	, fLeft(static_cast<int32>(bitmap->Bounds().left))
+	, fTop(static_cast<int32>(bitmap->Bounds().top))
+	, fAdopted(false)
+{
+	uint8* dst = fBits;
+	uint8* src = reinterpret_cast<uint8*>(bitmap->Bits());
+	uint32 srcBPR = bitmap->BytesPerRow();
+
+	for (uint32 y = 0; y < fHeight; y++) {
+		uint16* d = reinterpret_cast<uint16*>(dst);
+		uint8* s = src;
+		if (bitmap->ColorSpace() == B_RGBA32) {
+			for (uint32 x = 0; x < fWidth; x++) {
+				agg::rgba16 color(
+					RenderEngine::GammaToLinear(s[2]),
+					RenderEngine::GammaToLinear(s[1]),
+					RenderEngine::GammaToLinear(s[0]),
+					s[3] >> 8);
+				color.premultiply();
+				d[0] = color.b;
+				d[1] = color.g;
+				d[2] = color.r;
+				d[3] = color.a;
+				d += 4;
+				s += 4;
+			}
+		} else if (bitmap->ColorSpace() == B_RGB32) {
+			for (uint32 x = 0; x < fWidth; x++) {
+				agg::rgba16 color(
+					RenderEngine::GammaToLinear(s[2]),
+					RenderEngine::GammaToLinear(s[1]),
+					RenderEngine::GammaToLinear(s[0]),
+					65535);
+				d[0] = color.b;
+				d[1] = color.g;
+				d[2] = color.r;
+				d[3] = color.a;
+				d += 4;
+				s += 4;
+			}
+		}
+		src += srcBPR;
+		dst += fBPR;
+	}
 }
 
 // constructor
@@ -144,7 +197,7 @@ RenderBuffer::Clear(BRect area, const rgb_color& color)
 
 	uint8* dst = fBits;
 	dst += (left - fLeft) * 8;
-	dst += ((uint32)area.top - fTop) * fBPR;
+	dst += ((int32)area.top - fTop) * fBPR;
 
 	agg::rgba16 linearColor(
 		RenderEngine::GammaToLinear(color.red),
@@ -245,10 +298,10 @@ RenderBuffer::BlendTo(RenderBuffer* buffer, BRect area) const
 	uint8* dst = buffer->Bits();
 	uint32 dstBPR = buffer->BytesPerRow();
 	dst += (left - buffer->fLeft) * 8;
-	dst += ((uint32)area.top - buffer->fTop) * dstBPR;
+	dst += ((int32)area.top - buffer->fTop) * dstBPR;
 	uint8* src = fBits;
 	src += (left - fLeft) * 8;
-	src += ((uint32)area.top - fTop) * fBPR;
+	src += ((int32)area.top - fTop) * fBPR;
 	int32 height = area.IntegerHeight() + 1;
 
 	for (int32 y = 0; y < height; y++) {
