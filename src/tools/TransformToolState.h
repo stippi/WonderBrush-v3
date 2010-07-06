@@ -6,8 +6,11 @@
 #ifndef TRANSFORM_TOOL_STATE_H
 #define TRANSFORM_TOOL_STATE_H
 
+#include "AbstractLOAdapter.h"
 #include "DragStateViewState.h"
+#include "Rect.h"
 #include "Selection.h"
+#include "Shape.h"
 
 class Document;
 class Layer;
@@ -15,6 +18,32 @@ class Object;
 
 class TransformToolState : public DragStateViewState,
 	public Selection::Controller, public Selection::Listener {
+private:
+	class RectLOAdapater : public RectListener,
+		public AbstractLOAdapter {
+	public:
+								RectLOAdapater(BHandler* handler);
+		virtual					~RectLOAdapater();
+
+		virtual	void			AreaChanged(Rect* rect,
+									const BRect& oldArea,
+									const BRect& newArea);
+		virtual	void			Deleted(Rect* rect);
+	};
+
+	class ShapeLOAdapater : public ShapeListener,
+		public AbstractLOAdapter {
+	public:
+								ShapeLOAdapater(BHandler* handler);
+		virtual					~ShapeLOAdapater();
+
+		virtual	void			AreaChanged(Shape* shape,
+									const BRect& oldArea,
+									const BRect& newArea);
+		virtual	void			Deleted(Shape* shape);
+	};
+
+
 public:
 								TransformToolState(StateView* view,
 									const BRect& box, Document* document,
@@ -22,6 +51,8 @@ public:
 	virtual						~TransformToolState();
 
 	// ViewState interface
+	virtual	bool				MessageReceived(BMessage* message,
+									Command** _command);
 	virtual void				MouseDown(BPoint where, uint32 buttons,
 									uint32 clicks);
 	virtual void				MouseMoved(BPoint where, uint32 transit,
@@ -48,7 +79,8 @@ public:
 			void				SetObject(Object* object);
 			void				SetTransformable(Transformable* object);
 			void				SetBox(const BRect& box);
-			void				SetModifiedBox(const BRect& box);
+			void				SetModifiedBox(const BRect& box,
+									bool apply = true);
 	inline	const BRect&		Box() const
 									{ return fOriginalBox; }
 	inline	const BRect&		ModifiedBox() const
@@ -56,6 +88,10 @@ public:
 
 			float				LocalXScale() const;
 			float				LocalYScale() const;
+
+private:
+			void				_RegisterObject(Transformable* object);
+			void				_UnregisterObject(Transformable* object);
 
 private:
 			BRect				fOriginalBox;
@@ -88,6 +124,9 @@ private:
 
 			Transformable*		fObject;
 			Transformable		fOriginalTransformation;
+
+			RectLOAdapater		fRectLOAdapter;
+			ShapeLOAdapater		fShapeLOAdapter;
 };
 
 #endif // TRANSFORM_TOOL_STATE_H

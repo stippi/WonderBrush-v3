@@ -12,7 +12,8 @@
 
 #include <agg_math.h>
 
-#include "Command.h"
+#include "ChangeAreaCommand.h"
+#include "CommandStack.h"
 #include "cursors.h"
 #include "Document.h"
 #include "Layer.h"
@@ -20,6 +21,83 @@
 #include "Shape.h"
 #include "support.h"
 
+
+enum {
+	MSG_OBJECT_AREA_CHANGED		= 'oacd',
+	MSG_OBJECT_DELETED			= 'odlt',
+};
+
+// constructor
+TransformToolState::RectLOAdapater::RectLOAdapater(BHandler* handler)
+	: RectListener()
+	, AbstractLOAdapter(handler)
+{
+}
+
+// destructor
+TransformToolState::RectLOAdapater::~RectLOAdapater()
+{
+}
+
+// AreaChanged
+void
+TransformToolState::RectLOAdapater::AreaChanged(Rect* rect, const BRect& oldArea,
+	const BRect& newArea)
+{
+	BMessage message(MSG_OBJECT_AREA_CHANGED);
+	message.AddPointer("object", rect);
+	message.AddRect("area", newArea);
+
+	DeliverMessage(message);
+}
+
+// Deleted
+void
+TransformToolState::RectLOAdapater::Deleted(Rect* rect)
+{
+	BMessage message(MSG_OBJECT_DELETED);
+	message.AddPointer("object", rect);
+
+	DeliverMessage(message);
+}
+
+// #pragma mark -
+
+// constructor
+TransformToolState::ShapeLOAdapater::ShapeLOAdapater(BHandler* handler)
+	: ShapeListener()
+	, AbstractLOAdapter(handler)
+{
+}
+
+// destructor
+TransformToolState::ShapeLOAdapater::~ShapeLOAdapater()
+{
+}
+
+// AreaChanged
+void
+TransformToolState::ShapeLOAdapater::AreaChanged(Shape* shape, const BRect& oldArea,
+	const BRect& newArea)
+{
+	BMessage message(MSG_OBJECT_AREA_CHANGED);
+	message.AddPointer("object", shape);
+	message.AddRect("area", newArea);
+
+	DeliverMessage(message);
+}
+
+// Deleted
+void
+TransformToolState::ShapeLOAdapater::Deleted(Shape* shape)
+{
+	BMessage message(MSG_OBJECT_DELETED);
+	message.AddPointer("object", shape);
+
+	DeliverMessage(message);
+}
+
+// #pragma mark -
 
 class TransformToolState::DragBoxState : public DragStateViewState::DragState {
 public:
@@ -614,6 +692,9 @@ TransformToolState::TransformToolState(StateView* view, const BRect& box,
 	, fDocument(document)
 	, fSelection(selection)
 	, fObject(NULL)
+
+	, fRectLOAdapter(view)
+	, fShapeLOAdapter(view)
 {
 	fSelection->AddListener(this);
 }
@@ -633,6 +714,37 @@ TransformToolState::~TransformToolState()
 	delete fDragTState;
 	delete fDragRState;
 	delete fDragBState;
+}
+
+// MessageReceived
+bool
+TransformToolState::MessageReceived(BMessage* message, Command** _command)
+{
+	bool handled = true;
+
+	switch (message->what) {
+		case MSG_OBJECT_AREA_CHANGED: {
+			Object* object;
+			BRect area;
+			if (message->FindPointer("object", (void**)&object) == B_OK
+				&& message->FindRect("area", &area) == B_OK)
+				if (object == fObject && !IsDragging())
+					SetModifiedBox(area, false);
+			break;
+		}
+		case MSG_OBJECT_DELETED: {
+			Object* object;
+			if (message->FindPointer("object", (void**)&object) == B_OK)
+				if (object == fObject)
+					SetObject(NULL);
+			break;
+		}
+
+		default:
+			handled = ViewState::MessageReceived(message, _command);
+	}
+
+	return handled;
 }
 
 // MouseDown
@@ -1082,7 +1194,12 @@ TransformToolState::SetObject(Object* object)
 void
 TransformToolState::SetTransformable(Transformable* object)
 {
+	_UnregisterObject(fObject);
+
 	fObject = object;
+
+	_RegisterObject(fObject);
+
 	if (fObject != NULL) {
 		// TODO: More setup (listener...)
 		fOriginalTransformation = *fObject;
@@ -1100,12 +1217,15 @@ TransformToolState::SetBox(const BRect& box)
 
 // SetModifiedBox
 void
-TransformToolState::SetModifiedBox(const BRect& box)
+TransformToolState::SetModifiedBox(const BRect& box, bool apply)
 {
+	if (fModifiedBox == box)
+		return;
+
 	fModifiedBox = box;
 	UpdateBounds();
 
-	if (fObject != NULL) {
+	if (apply && fObject != NULL && fDocument->WriteLock()) {
 //		// TODO: This can't be right...
 //		Transformable newTransformation;
 //		newTransformation.TranslateBy(
@@ -1119,12 +1239,19 @@ TransformToolState::SetModifiedBox(const BRect& box)
 		area.top = min_c(fModifiedBox.top, fModifiedBox.bottom);
 		area.right = max_c(fModifiedBox.left, fModifiedBox.right);
 		area.bottom = max_c(fModifiedBox.top, fModifiedBox.bottom);
+
+		Command* command = NULL;
+
 		Shape* shape = dynamic_cast<Shape*>(fObject);
 		if (shape != NULL)
-			shape->SetArea(area);
+			command = new ChangeAreaCommand<Shape>(shape, area);
 		Rect* rect = dynamic_cast<Rect*>(fObject);
 		if (rect != NULL)
-			rect->SetArea(area);
+			command = new ChangeAreaCommand<Rect>(rect, area);
+
+		fDocument->CommandStack()->Perform(command);
+
+		fDocument->WriteUnlock();
 	}
 }
 
@@ -1146,4 +1273,37 @@ TransformToolState::LocalYScale() const
 	return fModifiedBox.Height() / fOriginalBox.Height();
 }
 
+// #pragma mark -
+
+// _RegisterObject
+void
+TransformToolState::_RegisterObject(Transformable* object)
+{
+	Shape* shape = dynamic_cast<Shape*>(object);
+	Rect* rect = dynamic_cast<Rect*>(object);
+
+	if (shape != NULL) {
+		shape->AddReference();
+		shape->AddListener(&fShapeLOAdapter);
+	} else if (rect != NULL) {
+		rect->AddReference();
+		rect->AddListener(&fRectLOAdapter);
+	}
+}
+
+// _UnregisterObject
+void
+TransformToolState::_UnregisterObject(Transformable* object)
+{
+	Shape* shape = dynamic_cast<Shape*>(object);
+	Rect* rect = dynamic_cast<Rect*>(object);
+
+	if (shape != NULL) {
+		shape->RemoveListener(&fShapeLOAdapter);
+		shape->RemoveReference();
+	} else if (rect != NULL) {
+		rect->RemoveListener(&fRectLOAdapter);
+		rect->RemoveReference();
+	}
+}
 
