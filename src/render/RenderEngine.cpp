@@ -223,8 +223,8 @@ RenderEngine::RenderScanlines(const ScanlineContainer& scanlines)
 static const double kGamma = 2.2;
 static const double kInverseGamma = 1.0 / kGamma;
 
-static uint16 kGammaToLinear[256];
-static uint8 kLinearToGamma[16384];
+static uint16 sGammaToLinear[256];
+static uint8 sLinearToGamma[16384];
 
 static bool dummy = RenderEngine::InitGammaTables();
 
@@ -233,15 +233,36 @@ bool
 RenderEngine::InitGammaTables()
 {
 #if 1
-	for (uint32 i = 0; i < 256; i++)
-		kGammaToLinear[i] = (uint16)(pow(i / 255.0, kGamma) * 65535.0);
-	for (uint32 i = 0; i < 16384; i++)
-		kLinearToGamma[i] = (uint8)(pow(i / 16383.0, kInverseGamma) * 255.0);
+	for (uint32 i = 0; i < 16384; i++) {
+		uint16 value = pow(i / 16383.0, kInverseGamma) * 256.0;
+		sLinearToGamma[i] = value < 256 ? value : 255;
+//if (i % 5 == 0 || i > 16370 || i < 14)
+//printf("[%5lu]: %3u\n", i, sLinearToGamma[i]);
+if (i < 10)
+printf("[%5lu]: %3u\n", i, sLinearToGamma[i]);
+	}
+
+	for (int32 i = 16383; i >= 0; i--) {
+		sGammaToLinear[sLinearToGamma[i]] = (i << 2) + (i >> 12);
+	}
+
+	for (uint32 i = 0; i < 256; i++) {
+//		uint32 value = pow(i / 255.0, kGamma) * 65536.0;
+//		sGammaToLinear[i] = value < 65536 ? value : 65535;
+
+//printf("[%3lu]: -> %.5f -> %.5f\n", i,
+//pow(i / 255.0, kGamma) * 65536.0,
+//pow(sGammaToLinear[i] / 65535.0, kInverseGamma) * 256.0);
+
+if (i != sLinearToGamma[sGammaToLinear[i] >> 2])
+printf("[%3lu]: %5u/%5u -> %3u\n", i, sGammaToLinear[i],
+sGammaToLinear[i] >> 2, sLinearToGamma[sGammaToLinear[i] >> 2]);
+	}
 #else
 	for (uint32 i = 0; i < 256; i++)
-		kGammaToLinear[i] = i << 8 | i;
+		sGammaToLinear[i] = i << 8 | i;
 	for (uint32 i = 0; i < 16384; i++)
-		kLinearToGamma[i] = i / 64;
+		sLinearToGamma[i] = i / 64;
 #endif
 	return true;
 }
@@ -250,7 +271,7 @@ RenderEngine::InitGammaTables()
 uint16
 RenderEngine::GammaToLinear(uint8 value)
 {
-	return kGammaToLinear[value];
+	return sGammaToLinear[value];
 }
 
 // LinearToGamma
@@ -259,7 +280,7 @@ RenderEngine::LinearToGamma(uint16 value)
 {
 	// With 14 bits precision, the 8 bit values 1 and 2 are not in the
 	// look up table.
-	return kLinearToGamma[value >> 2];
+	return sLinearToGamma[value >> 2];
 }
 
 // #pragma mark - hit testing
