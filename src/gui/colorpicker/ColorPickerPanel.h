@@ -1,5 +1,5 @@
 /* 
- * Copyright 2002-2006, Stephan Aßmus <superstippi@gmx.de>
+ * Copyright 2002-2010, Stephan Aßmus <superstippi@gmx.de>
  * All rights reserved. Distributed under the terms of the MIT license.
  *		
  */
@@ -14,7 +14,7 @@
 class ColorPickerView;
 
 class ColorPickerPanel : public Panel {
- public:
+public:
 								ColorPickerPanel(BRect frame,
 												 rgb_color color,
 												 selected_color_mode mode
@@ -34,13 +34,18 @@ class ColorPickerPanel : public Panel {
 
 			void				SetMessage(BMessage* message);
 			void				SetTarget(BHandler* target);
+			const BHandler*		Target() const
+									{ return fTarget; }
 
- private:
+	static	ColorPickerPanel*	DefaultPanel();
 
-	ColorPickerView*			fColorPickerView;
-	BWindow*					fWindow;
-	BMessage*					fMessage;
-	BHandler*					fTarget;
+private:
+	static	ColorPickerPanel*	sDefaultPanel;
+
+			ColorPickerView*	fColorPickerView;
+			BWindow*			fWindow;
+			BMessage*			fMessage;
+			BHandler*			fTarget;
 };
 
 #endif // COLOR_PICKER_PANEL_H

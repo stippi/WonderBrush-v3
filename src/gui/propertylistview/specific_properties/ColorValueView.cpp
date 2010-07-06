@@ -1,9 +1,6 @@
 /*
- * Copyright 2006, Haiku.
+ * Copyright 2006, 2010, Stephan Aßmus <superstippi@gmx.de>.
  * Distributed under the terms of the MIT License.
- *
- * Authors:
- *		Stephan Aßmus <superstippi@gmx.de>
  */
 
 #include "ColorValueView.h"
@@ -16,11 +13,13 @@
 
 #include "support_ui.h"
 
+#include "ColorPickerPanel.h"
 #include "PropertyItemView.h"
 #include "SwatchValueView.h"
 
 enum {
-	MSG_VALUE_CHANGED	= 'vchd',
+	MSG_RUN_COLOR_PICKER	= 'rncp',
+	MSG_VALUE_CHANGED		= 'vchd',
 };
 
 // constructor
@@ -29,8 +28,7 @@ ColorValueView::ColorValueView(ColorProperty* property)
 	  fProperty(property)
 {
 	fSwatchView = new SwatchValueView("swatch property view",
-									  NULL, this,/*new BMessage(MSG_SET_COLOR), this,*/
-									  fProperty->Value());
+		new BMessage(MSG_RUN_COLOR_PICKER), this, fProperty->Value());
 	fSwatchView->SetDroppedMessage(new BMessage(MSG_VALUE_CHANGED));
 	AddChild(fSwatchView);
 }
@@ -38,6 +36,12 @@ ColorValueView::ColorValueView(ColorProperty* property)
 // destructor
 ColorValueView::~ColorValueView()
 {
+	ColorPickerPanel* panel = ColorPickerPanel::DefaultPanel();
+	if (panel->Lock()) {
+		if (panel->Target() == this)
+			panel->SetTarget(NULL);
+		panel->Unlock();
+	}
 }
 
 // Draw
@@ -82,10 +86,19 @@ ColorValueView::MessageReceived(BMessage* message)
 		case B_PASTE:
 			fSwatchView->MessageReceived(message);
 			break;
-//		case MSG_SET_COLOR:
-//			if (BWindow* window = Window())
-//				window->PostMessage(message, window);
-//			break;
+		case MSG_RUN_COLOR_PICKER: {
+			ColorPickerPanel* panel = ColorPickerPanel::DefaultPanel();
+			if (panel->Lock()) {
+				// TODO: This isn't such a good idea, since the panel
+				// can outlive the ColorValueView! In Icon-O-Matic, the
+				// panel sends to a central place like the window.
+				panel->SetColor(fProperty->Value());
+				panel->SetMessage(new BMessage(B_PASTE));
+				panel->SetTarget(this);
+				panel->Unlock();
+			}
+			break;
+		}
 		case MSG_VALUE_CHANGED: {
 			rgb_color c;
 			if (restore_color_from_message(message, c) >= B_OK

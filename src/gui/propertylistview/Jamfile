@@ -1,6 +1,7 @@
 SubDir TOP src gui propertylistview ;
 
 # <pe-inc>
+SubDirHdrs $(TOP) src gui colorpicker ;
 SubDirHdrs $(TOP) src gui misc ;
 SubDirHdrs $(TOP) src gui propertylistview ;
 SubDirHdrs $(TOP) src gui propertylistview specific_properties ;

@@ -8,7 +8,9 @@
 
 #include <stdio.h>
 
+#include <Autolock.h>
 #include <Application.h>
+#include <Locker.h>
 
 #if LIB_LAYOUT
 #  include <MBorder.h>
@@ -29,6 +31,9 @@ enum {
 	MSG_CANCEL					= 'cncl',
 	MSG_DONE					= 'done',
 };
+
+ColorPickerPanel*
+ColorPickerPanel::sDefaultPanel = NULL;
 
 // constructor
 ColorPickerPanel::ColorPickerPanel(BRect frame, rgb_color color,
@@ -178,3 +183,23 @@ ColorPickerPanel::SetTarget(BHandler* target)
 {
 	fTarget = target;
 }
+
+// DefaultPanel
+ColorPickerPanel*
+ColorPickerPanel::DefaultPanel()
+{
+	static BLocker locker;
+	BAutolock _(&locker);
+
+	if (sDefaultPanel == NULL) {
+		sDefaultPanel = new ColorPickerPanel(BRect(0, 0, 350, 350),
+			(rgb_color){ 0, 0, 0, 255 });
+		sDefaultPanel->CenterOnScreen();
+		sDefaultPanel->Show();
+	} else {
+		sDefaultPanel->Activate();
+	}
+
+	return sDefaultPanel;
+}
+

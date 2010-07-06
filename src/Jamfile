@@ -175,8 +175,8 @@ Application WonderBrush :
 		libscrollview.a
 		libcolumntreeview.a
 		libstateview.a
-		libcolorpicker.a
 		libpropertylistview.a
+		libcolorpicker.a
 		libproperty.a
 
 		libagg.a
