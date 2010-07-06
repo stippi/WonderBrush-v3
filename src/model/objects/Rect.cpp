@@ -39,6 +39,7 @@ Rect::Rect()
 	, fArea(10, 10, 60, 60)
 	, fListeners(4)
 {
+	InitBounds();
 }
 
 // constructor
@@ -47,6 +48,7 @@ Rect::Rect(const BRect& area, const rgb_color& color)
 	, fArea(area)
 	, fListeners(4)
 {
+	InitBounds();
 }
 
 // destructor

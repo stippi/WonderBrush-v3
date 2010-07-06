@@ -38,6 +38,7 @@ Shape::Shape()
 	, fArea(10, 10, 60, 60)
 	, fListeners(4)
 {
+	InitBounds();
 }
 
 // constructor
@@ -46,6 +47,7 @@ Shape::Shape(const BRect& area, const rgb_color& color)
 	, fArea(area)
 	, fListeners(4)
 {
+	InitBounds();
 }
 
 // destructor

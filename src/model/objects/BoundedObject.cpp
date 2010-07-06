@@ -28,6 +28,14 @@ BoundedObject::TransformationChanged()
 
 // #pragma mark -
 
+// InitBounds
+void
+BoundedObject::InitBounds()
+{
+	Transformable globalTransform = Transformation();
+	fTransformedBounds = globalTransform.TransformBounds(Bounds());
+}
+
 // UpdateBounds
 void
 BoundedObject::UpdateBounds()
