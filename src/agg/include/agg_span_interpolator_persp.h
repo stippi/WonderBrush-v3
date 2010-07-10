@@ -40,6 +40,14 @@ namespace agg
         span_interpolator_persp_exact() {}
 
         //--------------------------------------------------------------------
+        span_interpolator_persp_exact(const trans_type& transformation)
+            : m_trans_dir(transformation)
+            , m_trans_inv(transformation)
+        {
+        	m_trans_inv.invert();
+        }
+
+        //--------------------------------------------------------------------
         // Arbitrary quadrangle transformations
         span_interpolator_persp_exact(const double* src, const double* dst) 
         {
