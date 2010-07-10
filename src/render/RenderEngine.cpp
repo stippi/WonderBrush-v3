@@ -6,8 +6,15 @@
 
 #include <new>
 
+#include <agg_image_accessors.h>
 #include <agg_renderer_scanline.h>
 #include <agg_rounded_rect.h>
+#include <agg_span_image_filter_rgba.h>
+#include <agg_span_interpolator_linear.h>
+#include <agg_span_interpolator_trans.h>
+#include <agg_span_interpolator_persp.h>
+#include <agg_span_subdiv_adaptor.h>
+
 
 #include "RenderBuffer.h"
 
@@ -174,18 +181,8 @@ RenderEngine::DrawImage(const RenderBuffer* buffer, BRect area)
 
 	PixelFormat srcPixelFormat(srcBuffer);
 
-	typedef agg::span_interpolator_linear<Transformable> Interpolator;
-	typedef agg::span_image_filter_rgba_bilinear_clip<PixelFormat,
-		Interpolator> SpanGenerator;
-//	typedef agg::image_accessor_clone<PixelFormat> ImageAccessor;
-//	ImageAccessor imageAccessor(srcPixelFormat);
-//	typedef agg::span_image_filter_rgba_2x2<ImageAccessor,
-//		Interpolator> SpanGenerator;
-
 	Transformable imgMatrix = fState.Matrix;
 	imgMatrix.Invert();
-
-	Interpolator interpolator(imgMatrix);
 
 	// path encloses image
 	BRect imageRect = buffer->Bounds();
@@ -202,13 +199,83 @@ RenderEngine::DrawImage(const RenderBuffer* buffer, BRect area)
 
 	fRasterizer.add_path(transformedRoundRect);
 
-	SpanGenerator spanGenerator(srcPixelFormat,
-		agg::rgba_pre(0, 0, 0, 0), interpolator);
-//	SpanGenerator spanGenerator(imageAccessor, interpolator);
-//	SpanGenerator spanGenerator(imageAccessor, interpolator, filter);
+//bigtime_t now = system_time();
+	if (fState.Matrix.IsPerspective()) {
+//printf("Perspective\n");
+		typedef agg::span_interpolator_persp_exact<> Interpolator;
+		Interpolator interpolator(imgMatrix);
+		if (!interpolator.is_valid())
+			return;
+	
+		typedef agg::image_accessor_clone<PixelFormat> ImageAccessor;
+		ImageAccessor imageAccessor(srcPixelFormat);
+	
+		typedef agg::span_subdiv_adaptor<Interpolator> SubdivAdaptor;
+		SubdivAdaptor subdivAdaptor(interpolator);
+	
+		typedef agg::span_image_resample_rgba<ImageAccessor,
+			SubdivAdaptor> SpanGenerator;
+		
+		agg::image_filter_hanning filterKernel;
+		agg::image_filter_lut filter(filterKernel, true);
+	
+		SpanGenerator spanGenerator(imageAccessor, subdivAdaptor, filter);
+//		spanGenerator.blur(...);
+	
+		agg::render_scanlines_aa(fRasterizer, fScanline, fBaseRenderer,
+			fSpanAllocator, spanGenerator);
+	} else {
+		if (fState.Matrix.Scale() >= 0.5) {
+//printf("Bilinear\n");
+			typedef agg::span_interpolator_trans<Transformable> Interpolator;
+			Interpolator interpolator(imgMatrix);
+		
+			typedef agg::span_image_filter_rgba_bilinear_clip<PixelFormat,
+				Interpolator> SpanGenerator;
+			SpanGenerator spanGenerator(srcPixelFormat,
+				agg::rgba_pre(0, 0, 0, 0), interpolator);
+		
+			agg::render_scanlines_aa(fRasterizer, fScanline, fBaseRenderer,
+				fSpanAllocator, spanGenerator);
+		} else {
+//printf("Resampling\n");
+			// NOTE: This is only slightly faster (~8%) than the full blown
+			// perspective case above, despite having a much simpler
+			// transformer and no sub-division adapter. However, it preserves
+			// a little more sharpness as well.
+			typedef agg::span_interpolator_linear<agg::trans_affine>
+				Interpolator;
+			agg::trans_affine imgMatrixAffine(
+				imgMatrix.sx,
+				imgMatrix.shy,
+				imgMatrix.shx,
+				imgMatrix.sy,
+				imgMatrix.tx,
+				imgMatrix.ty);
+			Interpolator interpolator(imgMatrixAffine);
 
-	agg::render_scanlines_aa(fRasterizer, fScanline, fBaseRenderer,
-		fSpanAllocator, spanGenerator);
+			typedef agg::image_accessor_clone<PixelFormat> ImageAccessor;
+			ImageAccessor imageAccessor(srcPixelFormat);
+
+			typedef agg::span_image_resample_rgba_affine<ImageAccessor>
+				SpanGenerator;
+
+//			agg::image_filter_bilinear filterKernel;
+			agg::image_filter_hanning filterKernel;
+				// almost as fast as bilinear, but slightly crisper
+//			agg::image_filter_blackman filterKernel(3.0);
+				// 6.81 times slower than hanning, much crisper
+			agg::image_filter_lut filter(filterKernel, true);
+
+			SpanGenerator spanGenerator(imageAccessor, interpolator, filter);
+//			spanGenerator.blur(...);
+
+			agg::render_scanlines_aa(fRasterizer, fScanline, fBaseRenderer,
+				fSpanAllocator, spanGenerator);
+		}
+	}
+//printf("DrawImage(%u, %u): %lldµs\n", fRenderingBuffer.width(),
+//	fRenderingBuffer.height(), system_time() - now);
 }
 
 // RenderScanlines
