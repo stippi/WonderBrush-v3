@@ -103,6 +103,13 @@ Transformable::Invert()
 	invert();
 }
 
+// IsValid
+bool
+Transformable::IsValid() const
+{
+	return ((sx * sy - shy * shx) != 0.0);
+}
+
 // IsIdentity
 bool
 Transformable::IsIdentity() const
@@ -132,11 +139,11 @@ Transformable::IsNotDistorted() const
 	return sx == sy && w0 == 0.0 && w1 == 0.0 && w2 == 1.0;
 }
 
-// IsValid
+// IsPerspective
 bool
-Transformable::IsValid() const
+Transformable::IsPerspective() const
 {
-	return ((sx * sy - shy * shx) != 0.0);
+	return w0 != 0.0 || w1 != 0.0 || w2 != 1.0;
 }
 
 // Transform

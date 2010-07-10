@@ -29,10 +29,11 @@ public:
 
 			void				Invert();
 
+			bool				IsValid() const;
 			bool				IsIdentity() const;
 			bool				IsTranslationOnly() const;
 			bool				IsNotDistorted() const;
-			bool				IsValid() const;
+			bool				IsPerspective() const;
 
 								// transforms coordiantes
 			void				Transform(double* x, double* y) const;
