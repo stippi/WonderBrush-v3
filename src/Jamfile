@@ -169,7 +169,6 @@ Application WonderBrush :
 
 	# .
 	WonderBrush.cpp
-	main.cpp
 
 	:
 		libscrollview.a
@@ -191,6 +190,32 @@ Application WonderBrush :
 		be
 	;
 # </pe-src>
+
+Application Resizer :
+
+	# render
+	LayoutState.cpp
+	RenderBuffer.cpp
+	RenderEngine.cpp
+
+	# support
+	Debug.cpp
+	support.cpp
+	Referenceable.cpp
+	Transformable.cpp
+
+	# .
+	Resizer.cpp
+
+	:
+		libagg.a
+
+		tracker
+		$(STDC++LIB)
+		$(SUPC++LIB)
+		translation
+		be
+	;
 
 SubInclude TOP src agg ;
 SubInclude TOP src gui ;
