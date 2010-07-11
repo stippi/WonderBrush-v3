@@ -25,6 +25,7 @@ InspectorView::InspectorView()
 // destructor
 InspectorView::~InspectorView()
 {
+	SetMenu(NULL);
 	SetSelection(NULL);
 	_SetObject(NULL);
 }
