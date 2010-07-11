@@ -82,17 +82,6 @@ Object::ExtendDirtyArea(BRect& area) const
 
 // InvalidateParent
 void
-Object::InvalidateParent(BRect untransformedOldBounds,
-	BRect untransformedNewBounds)
-{
-	// TODO: The global transformation is uncached!
-	Transformable globalTransform = Transformation();
-	InvalidateParent(globalTransform.TransformBounds(untransformedOldBounds)
-		| globalTransform.TransformBounds(untransformedNewBounds));
-}
-
-// InvalidateParent
-void
 Object::InvalidateParent(const BRect& area)
 {
 	if (fParent)

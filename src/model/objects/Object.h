@@ -38,8 +38,6 @@ public:
 
 	virtual	void				ExtendDirtyArea(BRect& area) const;
 
-			void				InvalidateParent(BRect untransformedOldBounds,
-									BRect untransformedNewBounds);
 			void				InvalidateParent(const BRect& area);
 			void				InvalidateParent();
 
