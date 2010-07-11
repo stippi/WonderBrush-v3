@@ -124,6 +124,10 @@ ColorPickerPanel::ColorPickerPanel(BRect frame, rgb_color color,
 // destructor
 ColorPickerPanel::~ColorPickerPanel()
 {
+	// TODO: Race condition with DefaultPanel().
+	if (this == sDefaultPanel)
+		sDefaultPanel = NULL;
+
 	delete fMessage;
 }
 
