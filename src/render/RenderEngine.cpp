@@ -291,7 +291,8 @@ static const double kGamma = 2.2;
 static const double kInverseGamma = 1.0 / kGamma;
 
 static uint16 sGammaToLinear[256];
-static uint8 sLinearToGamma[16384];
+//static uint8 sLinearToGamma[16384];
+static uint8 sLinearToGamma[65536];
 
 static bool dummy = RenderEngine::InitGammaTables();
 
@@ -300,30 +301,21 @@ bool
 RenderEngine::InitGammaTables()
 {
 #if 1
-	for (uint32 i = 0; i < 16384; i++) {
-		uint16 value = pow(i / 16383.0, kInverseGamma) * 256.0;
-		sLinearToGamma[i] = value < 256 ? value : 255;
-//if (i % 5 == 0 || i > 16370 || i < 14)
-//printf("[%5lu]: %3u\n", i, sLinearToGamma[i]);
-if (i < 10)
-printf("[%5lu]: %3u\n", i, sLinearToGamma[i]);
-	}
-
-	for (int32 i = 16383; i >= 0; i--) {
-		sGammaToLinear[sLinearToGamma[i]] = (i << 2) + (i >> 12);
-	}
-
+//	for (uint32 i = 0; i < 16384; i++) {
+//		uint16 value = pow(i / 16383.0, kInverseGamma) * 256.0;
+//		sLinearToGamma[i] = value < 256 ? value : 255;
+//	}
+//
+//	for (int32 i = 16383; i >= 0; i--) {
+//		sGammaToLinear[sLinearToGamma[i]] = (i << 2) + (i >> 12);
+//	}
 	for (uint32 i = 0; i < 256; i++) {
-//		uint32 value = pow(i / 255.0, kGamma) * 65536.0;
-//		sGammaToLinear[i] = value < 65536 ? value : 65535;
-
-//printf("[%3lu]: -> %.5f -> %.5f\n", i,
-//pow(i / 255.0, kGamma) * 65536.0,
-//pow(sGammaToLinear[i] / 65535.0, kInverseGamma) * 256.0);
-
-if (i != sLinearToGamma[sGammaToLinear[i] >> 2])
-printf("[%3lu]: %5u/%5u -> %3u\n", i, sGammaToLinear[i],
-sGammaToLinear[i] >> 2, sLinearToGamma[sGammaToLinear[i] >> 2]);
+		sGammaToLinear[i] = round(pow(i / 255.0, kGamma) * 65535.0);
+	}
+	sLinearToGamma[0] = 0;
+	sLinearToGamma[1] = 1;
+	for (uint32 i = 2; i < 65536; i++) {
+		sLinearToGamma[i] = round(pow(i / 65535.0, kInverseGamma) * 255.0);
 	}
 #else
 	for (uint32 i = 0; i < 256; i++)
@@ -347,7 +339,8 @@ RenderEngine::LinearToGamma(uint16 value)
 {
 	// With 14 bits precision, the 8 bit values 1 and 2 are not in the
 	// look up table.
-	return sLinearToGamma[value >> 2];
+//	return sLinearToGamma[value >> 2];
+	return sLinearToGamma[value];
 }
 
 // #pragma mark - hit testing
