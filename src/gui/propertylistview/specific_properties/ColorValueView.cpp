@@ -24,8 +24,9 @@ enum {
 
 // constructor
 ColorValueView::ColorValueView(ColorProperty* property)
-	: PropertyEditorView(),
-	  fProperty(property)
+	: PropertyEditorView()
+	, fProperty(property)
+	, fColorPickerPanel(NULL)
 {
 	fSwatchView = new SwatchValueView("swatch property view",
 		new BMessage(MSG_RUN_COLOR_PICKER), this, fProperty->Value());
@@ -36,11 +37,10 @@ ColorValueView::ColorValueView(ColorProperty* property)
 // destructor
 ColorValueView::~ColorValueView()
 {
-	ColorPickerPanel* panel = ColorPickerPanel::DefaultPanel();
-	if (panel->Lock()) {
-		if (panel->Target() == this)
-			panel->SetTarget(NULL);
-		panel->Unlock();
+	if (fColorPickerPanel != NULL && fColorPickerPanel->Lock()) {
+		if (fColorPickerPanel->Target() == this)
+			fColorPickerPanel->SetTarget(NULL);
+		fColorPickerPanel->Unlock();
 	}
 }
 
@@ -87,15 +87,15 @@ ColorValueView::MessageReceived(BMessage* message)
 			fSwatchView->MessageReceived(message);
 			break;
 		case MSG_RUN_COLOR_PICKER: {
-			ColorPickerPanel* panel = ColorPickerPanel::DefaultPanel();
-			if (panel->Lock()) {
+			fColorPickerPanel = ColorPickerPanel::DefaultPanel();
+			if (fColorPickerPanel->Lock()) {
 				// TODO: This isn't such a good idea, since the panel
 				// can outlive the ColorValueView! In Icon-O-Matic, the
 				// panel sends to a central place like the window.
-				panel->SetColor(fProperty->Value());
-				panel->SetMessage(new BMessage(B_PASTE));
-				panel->SetTarget(this);
-				panel->Unlock();
+				fColorPickerPanel->SetColor(fProperty->Value());
+				fColorPickerPanel->SetMessage(new BMessage(B_PASTE));
+				fColorPickerPanel->SetTarget(this);
+				fColorPickerPanel->Unlock();
 			}
 			break;
 		}

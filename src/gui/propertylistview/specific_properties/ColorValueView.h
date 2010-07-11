@@ -12,6 +12,7 @@
 #include "ColorProperty.h"
 #include "PropertyEditorView.h"
 
+class ColorPickerPanel;
 class SwatchValueView;
 
 class ColorValueView : public PropertyEditorView {
@@ -38,6 +39,7 @@ class ColorValueView : public PropertyEditorView {
 			ColorProperty*		fProperty;
 
 			SwatchValueView*	fSwatchView;
+			ColorPickerPanel*	fColorPickerPanel;
 };
 
 #endif // COLOR_VALUE_VIEW_H
