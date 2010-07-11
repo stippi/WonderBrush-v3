@@ -42,6 +42,10 @@ BoundedObject::UpdateBounds()
 {
 	Transformable globalTransform = Transformation();
 	BRect newTransformedBounds = globalTransform.TransformBounds(Bounds());
+	newTransformedBounds.left = floorf(newTransformedBounds.left) - 1.0f;
+	newTransformedBounds.top = floorf(newTransformedBounds.top) - 1.0f;
+	newTransformedBounds.right = ceilf(newTransformedBounds.right) + 1.0f;
+	newTransformedBounds.bottom = ceilf(newTransformedBounds.bottom) + 1.0f;
 
 	bool oldValid = fTransformedBounds.IsValid();
 	bool newValid = newTransformedBounds.IsValid();
