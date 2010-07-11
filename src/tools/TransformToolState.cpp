@@ -16,6 +16,7 @@
 #include "CommandStack.h"
 #include "cursors.h"
 #include "Document.h"
+#include "Image.h"
 #include "Layer.h"
 #include "Rect.h"
 #include "Shape.h"
@@ -1168,15 +1169,11 @@ void
 TransformToolState::SetObject(Object* object)
 {
 	BRect box;
-	Shape* shape = dynamic_cast<Shape*>(object);
-	Rect* rect = dynamic_cast<Rect*>(object);
+	BoundedObject* boundedObject = dynamic_cast<BoundedObject*>(object);
 
-	if (shape != NULL) {
-		fSelection->Select(Selectable(shape), this);
-		box = shape->Bounds();
-	} else if (rect != NULL) {
-		fSelection->Select(Selectable(rect), this);
-		box = rect->Bounds();
+	if (boundedObject != NULL) {
+		fSelection->Select(Selectable(boundedObject), this);
+		box = boundedObject->Bounds();
 	} else {
 		fSelection->DeselectAll(this);
 	}
@@ -1226,30 +1223,31 @@ TransformToolState::SetModifiedBox(const BRect& box, bool apply)
 	UpdateBounds();
 
 	if (apply && fObject != NULL && fDocument->WriteLock()) {
-//		// TODO: This can't be right...
-//		Transformable newTransformation;
-//		newTransformation.TranslateBy(
-//			fModifiedBox.LeftTop() - fOriginalBox.LeftTop());
-//		newTransformation.ScaleBy(fModifiedBox.LeftTop(), LocalXScale(),
-//			LocalYScale());
-//		newTransformation.Multiply(fOriginalTransformation);
-//		fObject->SetTransformable(newTransformation);
 		BRect area;
 		area.left = min_c(fModifiedBox.left, fModifiedBox.right);
 		area.top = min_c(fModifiedBox.top, fModifiedBox.bottom);
 		area.right = max_c(fModifiedBox.left, fModifiedBox.right);
 		area.bottom = max_c(fModifiedBox.top, fModifiedBox.bottom);
 
-		Command* command = NULL;
-
 		Shape* shape = dynamic_cast<Shape*>(fObject);
-		if (shape != NULL)
-			command = new ChangeAreaCommand<Shape>(shape, area);
 		Rect* rect = dynamic_cast<Rect*>(fObject);
-		if (rect != NULL)
-			command = new ChangeAreaCommand<Rect>(rect, area);
-
-		fDocument->CommandStack()->Perform(command);
+		Image* image = dynamic_cast<Image*>(fObject);
+		if (shape != NULL) {
+			Command* command = new ChangeAreaCommand<Shape>(shape, area);
+			fDocument->CommandStack()->Perform(command);
+		} else if (rect != NULL) {
+			Command* command = new ChangeAreaCommand<Rect>(rect, area);
+			fDocument->CommandStack()->Perform(command);
+		} else if (image != NULL) {
+			// TODO: This can't be right...
+			Transformable newTransformation;
+			newTransformation.TranslateBy(
+				fModifiedBox.LeftTop() - fOriginalBox.LeftTop());
+			newTransformation.ScaleBy(fModifiedBox.LeftTop(), LocalXScale(),
+				LocalYScale());
+			newTransformation.Multiply(fOriginalTransformation);
+			image->SetTransformable(newTransformation);
+		}
 
 		fDocument->WriteUnlock();
 	}
