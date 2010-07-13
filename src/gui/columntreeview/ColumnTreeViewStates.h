@@ -28,6 +28,7 @@ public:
 	virtual	void				Released(BPoint point, uint32 buttons,
 										 uint32 modifiers);
 	virtual	uint32				ItemFlags(ColumnTreeItem* item);
+	virtual	void				Draw(BView* into, BRect updateRect);
 
 			void				GetMouseButtons(uint32 *buttons,
 												int32* clicks) const;
@@ -56,13 +57,15 @@ public:
 	virtual	void				Released(BPoint point, uint32 buttons,
 									uint32 modifiers);
 	virtual	void				Exited(BPoint point, const BMessage* message);
+	virtual	void				Draw(BView* into, BRect updateRect);
 
 private:
 			void				_IndicateDropTarget(BPoint point);
 
 			BMessage			fDragMessage;
-			BRect				fDirtyArea;
+			BRect				fDropFrame;
 			int32				fItemIndex;
+			int32				fLevel;
 };
 
 // IgnoreState

@@ -224,6 +224,8 @@ ColumnTreeView::Draw(BView* view, BRect updateRect)
 			view->FillRect(rect);
 		}
 	}
+	// Let the current state draw, if it wants to.
+	fState->Draw(view, updateRect);
 }
 
 // FrameResized

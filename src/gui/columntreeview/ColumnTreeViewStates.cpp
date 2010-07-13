@@ -71,6 +71,12 @@ State::ItemFlags(ColumnTreeItem* item)
 	return item->Flags();
 }
 
+// Draw
+void
+State::Draw(BView* into, BRect updateRect)
+{
+}
+
 // GetMouseButtons
 void
 State::GetMouseButtons(uint32 *buttons, int32* clicks) const
@@ -130,7 +136,8 @@ DraggingState::DraggingState(ColumnTreeView* listView, BPoint point,
 		const BMessage* dragMessage)
 	: State(listView, point),
 	  fDragMessage(*dragMessage),
-	  fItemIndex(-2)
+	  fItemIndex(-2),
+	  fLevel(-1)
 {
 ldebug("DraggingState::DraggingState()\n");
 	_IndicateDropTarget(point);
@@ -139,7 +146,8 @@ ldebug("DraggingState::DraggingState()\n");
 // destructor
 DraggingState::~DraggingState()
 {
-	fListView->Invalidate(fDirtyArea);
+	if (fDropFrame.IsValid())
+		fListView->Invalidate(fDropFrame);
 }
 
 // Moved
@@ -163,19 +171,56 @@ DraggingState::Exited(BPoint point, const BMessage* message)
 	fListView->_ChangeState(new OutsideState(fListView));
 }
 
+// Draw
+void
+DraggingState::Draw(BView* into, BRect updateRect)
+{
+	if (!fDropFrame.IsValid())
+		return;
+
+	into->SetHighColor(255, 0, 0);
+	into->StrokeRect(fDropFrame);
+}
+
+// _IndicateDropTarget
 void
 DraggingState::_IndicateDropTarget(BPoint point)
 {
 	// TODO: For real...
+	// TODO: This needs to move into a virtual method of
+	// ColumneListView, since we cannot know where insertions
+	// are possible. For example, a ColumnTreeView subclass may
+	// have a special item kind which can have sub-items at all.
 	int32 index = fListView->IndexOf(point);
-	if (index != fItemIndex) {
-		fItemIndex = index;
-		BRect frame = fListView->ItemFrame(fItemIndex);
-		fListView->SetHighColor(255, 0, 0);
-		fListView->StrokeRect(frame);
+	BRect frame = fListView->ItemFrame(index);
+	ColumnTreeItem* item = fListView->ItemAt(index);
+	float indentation = fListView->IndentationOf(item) + 8;
+	int32 level = fListView->LevelOf(item);
+	int32 subCount = fListView->CountSubItems(item);
+ 	if (point.y < (frame.top + frame.bottom) / 2) {
+		// insertion before item
+		frame.bottom = frame.top + 1;
+	} else {
+		// insertion after item
+		index += 1;
+		frame.top = frame.bottom + 1;
+		frame.bottom = frame.top + 1;
+		if (subCount > 0) {
+			// insertion at sublevel
+			item = fListView->SubItemAt(item, 0);
+			level = fListView->LevelOf(item);
+			indentation = fListView->IndentationOf(item) + 8;
+		}
+	}
+	frame.left = indentation;
 
-		fListView->Invalidate(fDirtyArea);
-		fDirtyArea = frame;
+	if (frame != fDropFrame) {
+		fItemIndex = index;
+		fLevel = level;
+
+		fListView->Invalidate(fDropFrame);
+		fDropFrame = frame;
+		fListView->Invalidate(fDropFrame);
 	}
 }
 
