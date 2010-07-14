@@ -137,7 +137,7 @@ DraggingState::DraggingState(ColumnTreeView* listView, BPoint point,
 	: State(listView, point),
 	  fDragMessage(*dragMessage),
 	  fItemIndex(-2),
-	  fLevel(-1)
+	  fParentItem(NULL)
 {
 ldebug("DraggingState::DraggingState()\n");
 	_IndicateDropTarget(point);
@@ -186,37 +186,19 @@ DraggingState::Draw(BView* into, BRect updateRect)
 void
 DraggingState::_IndicateDropTarget(BPoint point)
 {
-	// TODO: For real...
-	// TODO: This needs to move into a virtual method of
-	// ColumneListView, since we cannot know where insertions
-	// are possible. For example, a ColumnTreeView subclass may
-	// have a special item kind which can have sub-items at all.
-	int32 index = fListView->IndexOf(point);
-	BRect frame = fListView->ItemFrame(index);
-	ColumnTreeItem* item = fListView->ItemAt(index);
-	float indentation = fListView->IndentationOf(item) + 8;
-	int32 level = fListView->LevelOf(item);
-	int32 subCount = fListView->CountSubItems(item);
- 	if (point.y < (frame.top + frame.bottom) / 2) {
-		// insertion before item
+	int32 index = -1;
+	ColumnTreeItem* parent = NULL;
+	BRect frame;
+	if (fListView->GetDropInfo(point, fDragMessage, &parent, &index)) {
+		frame = fListView->ItemFrame(index);
 		frame.bottom = frame.top + 1;
-	} else {
-		// insertion after item
-		index += 1;
-		frame.top = frame.bottom + 1;
-		frame.bottom = frame.top + 1;
-		if (subCount > 0) {
-			// insertion at sublevel
-			item = fListView->SubItemAt(item, 0);
-			level = fListView->LevelOf(item);
-			indentation = fListView->IndentationOf(item) + 8;
-		}
+		int32 level = parent != NULL ? fListView->LevelOf(parent) + 1 : 1;
+		frame.left = fListView->IndentationOf(level) + 8;
 	}
-	frame.left = indentation;
 
 	if (frame != fDropFrame) {
 		fItemIndex = index;
-		fLevel = level;
+		fParentItem = parent;
 
 		fListView->Invalidate(fDropFrame);
 		fDropFrame = frame;

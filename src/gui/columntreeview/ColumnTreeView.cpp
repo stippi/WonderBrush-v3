@@ -725,8 +725,19 @@ ColumnTreeView::IsEmpty() const
 float
 ColumnTreeView::IndentationOf(ColumnTreeItem* item) const
 {
-	if (item && fModel && fItemHandle)
-		return fItemHandle->GetIndentation(fModel->LevelOf(item));
+	if (item && fModel)
+		return IndentationOf(fModel->LevelOf(item));
+	return 0.0f;
+}
+
+// IndentationOf
+/*!	Returns the indentation of the given level.
+*/
+float
+ColumnTreeView::IndentationOf(int32 level) const
+{
+	if (fItemHandle)
+		return fItemHandle->GetIndentation(level);
 	return 0.0f;
 }
 
@@ -828,6 +839,26 @@ ColumnTreeView::CountSubItems(ColumnTreeItem* super)
 	if (!fModel)
 		return 0;
 	return fModel->CountSubItems(super);
+}
+
+// CountSubItemsRecursive
+/*!	\brief Returns the number of all items below a given superitem.
+	\param super The superitem.
+	\return The number of items below the given superitem.
+*/
+int32
+ColumnTreeView::CountSubItemsRecursive(ColumnTreeItem* super)
+{
+	if (!fModel)
+		return 0;
+	int32 subCount = fModel->CountSubItems(super);
+	int32 count = subCount;
+	for (int32 i = 0; i < subCount; i++) {
+		ColumnTreeItem* item = fModel->SubItemAt(super, i);
+		if (item != NULL)
+			count += CountSubItemsRecursive(item);
+	}
+	return count;
 }
 
 // SubItemAt
@@ -962,6 +993,45 @@ ColumnTreeView::InitiateDrag(BPoint point, int32 index, bool wasSelected,
 	BMessage* _message)
 {
 	return false;
+}
+
+// GetDropInfo
+bool
+ColumnTreeView::GetDropInfo(BPoint point, const BMessage& dragMessage,
+	ColumnTreeItem** _super, int32* _dropIndex)
+{
+	int32 index = IndexOf(point);
+	if (index < 0)
+		return false;
+
+	ColumnTreeItem* item = ItemAt(index);
+
+	BRect frame = ItemFrame(index);
+ 	if (point.y >= (frame.top + frame.bottom) / 2) {
+		// insertion after item
+		index += 1;
+		// If the item already has sub-items (and is expanded), we can't
+		// insert an item before the first sub-item that is at the same
+		// level as the item. To still be able to insert an item after the
+		// hovered item, account for all sub items.
+		if (item->IsExpanded())
+			index += CountSubItemsRecursive(item);
+	}
+
+	if (_super != NULL)
+		*_super = SuperItemOf(item);
+
+	if (_dropIndex != NULL)
+		*_dropIndex = index;
+
+	return true;
+}
+
+// HandleDrop
+void
+ColumnTreeView::HandleDrop(const BMessage& dragMessage, ColumnTreeItem* super,
+	int32 index)
+{
 }
 
 // ItemDoubleClicked

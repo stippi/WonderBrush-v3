@@ -99,6 +99,7 @@ public:
 			BRect				ItemFrame(int32 index) const
 										{ return _ItemFrame(index); }
 			float				IndentationOf(ColumnTreeItem* item) const;
+			float				IndentationOf(int32 level) const;
 	virtual	void				MakeEmpty();
 		// TODO: return value should be bool
 
@@ -115,6 +116,7 @@ public:
 			bool				RemoveSubItems(ColumnTreeItem* super,
 											   int32 index, int32 count);
 			int32				CountSubItems(ColumnTreeItem* super);
+			int32				CountSubItemsRecursive(ColumnTreeItem* super);
 			ColumnTreeItem*		SubItemAt(ColumnTreeItem* super,
 										  int32 index);
 			int32				SubItemIndexOf(ColumnTreeItem* item);
@@ -129,6 +131,11 @@ public:
 	virtual	bool				InitiateDrag(BPoint point, int32 index,
 									bool wasSelected,
 									BMessage* _message = NULL);
+	virtual	bool				GetDropInfo(BPoint point,
+									const BMessage& dragMessage,
+									ColumnTreeItem** super, int32* dropIndex);
+	virtual	void				HandleDrop(const BMessage& dragMessage,
+									ColumnTreeItem* super, int32 index);
 	virtual	void				ItemDoubleClicked(int32 index);
 
 	// item visibility
