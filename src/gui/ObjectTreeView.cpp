@@ -15,6 +15,7 @@
 #include "ColumnTreeViewColors.h"
 #include "CommandStack.h"
 #include "Document.h"
+#include "MoveObjectsCommand.h"
 #include "Object.h"
 #include "RenameObjectCommand.h"
 #include "TextViewPopup.h"
@@ -342,6 +343,57 @@ void
 ObjectTreeView::HandleDrop(const BMessage& dragMessage, ColumnTreeItem* super,
 	int32 index)
 {
+	Layer* insertionLayer = fDocument->RootLayer();
+	if (super != NULL) {
+		ObjectColumnTreeItem* item
+			= dynamic_cast<ObjectColumnTreeItem*>(super);
+		if (item == NULL)
+			return;
+
+		insertionLayer = dynamic_cast<Layer*>(item->object);
+		if (insertionLayer == NULL)
+			return;
+	}
+
+	type_code type;
+	int32 count;
+	if (dragMessage.GetInfo("object", &type, &count) != B_OK
+		|| type != B_POINTER_TYPE) {
+		return;
+	}
+
+	Object** objects = new(std::nothrow) Object*[count];
+	if (objects == NULL)
+		return;
+
+	for (int32 i = 0; i < count; i++) {
+		if (dragMessage.FindPointer("object", i, (void**)&objects[i])
+			!= B_OK) {
+			delete[] objects;
+			return;
+		}
+	}
+
+	// Translate insertion index from flat list index into sub-item index.
+	int32 insertionIndex = index;
+
+	int32 offset = super != NULL ? IndexOf(super) : 0;
+	int32 level = super != NULL ? LevelOf(super) + 1 : 0;
+	for (int32 i = offset; i < index; i++) {
+		ColumnTreeItem* otherItem = ItemAt(i);
+		if (otherItem != NULL && LevelOf(otherItem) == level)
+			offset += CountSubItemsRecursive(otherItem, true);
+	}
+	insertionIndex -= offset;
+
+	MoveObjectsCommand* command = new(std::nothrow) MoveObjectsCommand(
+		objects, count, insertionLayer, insertionIndex);
+	if (command == NULL) {
+		delete[] objects;
+		return;
+	}
+
+	fDocument->CommandStack()->Perform(command);
 }
 
 // SelectionChanged
@@ -512,6 +564,7 @@ ObjectTreeView::_HandleRenameObject(BMessage* message)
 void
 ObjectTreeView::_ObjectAdded(Layer* layer, Object* object, int32 index)
 {
+printf("ObjectTreeView::_ObjectAdded(%p, %p, %ld)\n", layer, object, index);
 	if (!layer->HasObject(object))
 		return;
 
@@ -531,7 +584,14 @@ ObjectTreeView::_ObjectAdded(Layer* layer, Object* object, int32 index)
 void
 ObjectTreeView::_ObjectRemoved(Layer* layer, Object* object, int32 index)
 {
-	// TODO ...
+printf("ObjectTreeView::_ObjectRemoved(%p, %p, %ld)\n", layer, object, index);
+	ObjectColumnTreeItem* parentItem = _FindLayerTreeViewItem(layer);
+	ObjectColumnTreeItem* item = dynamic_cast<ObjectColumnTreeItem*>(
+		SubItemAt(parentItem, index));
+printf("  parent: %p, item: %p (%p/%p)\n", parentItem, item, object,
+	item->object);
+	ColumnTreeItem* toast = RemoveSubItem(parentItem, index);
+printf("  removed: %p/%p\n", toast, item);
 }
 
 // _ObjectChanged
