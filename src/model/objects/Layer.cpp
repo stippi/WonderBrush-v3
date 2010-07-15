@@ -1,5 +1,5 @@
 /*
- * Copyright 2007, Haiku. All rights reserved.
+ * Copyright 2007-2010, Haiku. All rights reserved.
  * Distributed under the terms of the MIT License.
  *
  * Authors:
@@ -8,6 +8,8 @@
 #include "Layer.h"
 
 #include <new>
+
+#include <stdio.h>
 
 #include "LayerSnapshot.h"
 
@@ -110,6 +112,7 @@ Layer::AddObject(Object* object)
 bool
 Layer::AddObject(Object* object, int32 index)
 {
+printf("%p->Layer::AddObject(%p, %ld)\n", this, object, index);
 	if (object && fObjects.AddItem(object, index)) {
 		BList listeners(fListeners);
 		int32 count = listeners.CountItems();
@@ -130,6 +133,7 @@ Object*
 Layer::RemoveObject(int32 index)
 {
 	Object* object = (Object*)fObjects.RemoveItem(index);
+printf("%p->Layer::RemoveObject(%ld): %p\n", this, index, object);
 	if (object) {
 		BList listeners(fListeners);
 		int32 count = listeners.CountItems();
@@ -142,6 +146,13 @@ Layer::RemoveObject(int32 index)
 		UpdateChangeCounter();
 	}
 	return object;
+}
+
+// RemoveObject
+bool
+Layer::RemoveObject(Object* object)
+{
+	return RemoveObject(IndexOf(object)) != NULL;
 }
 
 // ObjectAt
