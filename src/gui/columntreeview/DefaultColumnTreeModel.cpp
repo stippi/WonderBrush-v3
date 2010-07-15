@@ -575,10 +575,11 @@ DefaultColumnTreeModel::AddSubItem(ColumnTreeItem* super, ColumnTreeItem* item,
 ColumnTreeItem*
 DefaultColumnTreeModel::RemoveSubItem(ColumnTreeItem* super, int32 index)
 {
+	// TODO: The returned item is already deleted! (At least the nodes?!)
 	ColumnTreeItem* item = SubItemAt(super, index);
 	if (item && RemoveSubItems(super, index, 1))
 		return item;
-	return  NULL;
+	return NULL;
 }
 
 // RemoveSubItems
@@ -588,7 +589,7 @@ DefaultColumnTreeModel::RemoveSubItems(ColumnTreeItem* super, int32 index,
 {
 	// get parent node, check parameters
 	Node* parent = _GetNode(super);
-	if (parent || index < 0 || count < 0
+	if (parent == NULL || index < 0 || count < 0
 		|| index + count > parent->CountChildren()) {
 		return false;
 	}
