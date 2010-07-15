@@ -16,7 +16,7 @@ public:
 		, fNextName(newName)
 	{
 	}
-	
+
 	virtual ~RenameObjectCommand()
 	{
 	}
@@ -45,7 +45,7 @@ public:
 		name << "Rename Object";
 	}
 
- private:
+private:
 			Object*				fObject;
 			BString				fNextName;
 };
