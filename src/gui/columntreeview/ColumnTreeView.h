@@ -116,7 +116,8 @@ public:
 			bool				RemoveSubItems(ColumnTreeItem* super,
 											   int32 index, int32 count);
 			int32				CountSubItems(ColumnTreeItem* super);
-			int32				CountSubItemsRecursive(ColumnTreeItem* super);
+			int32				CountSubItemsRecursive(ColumnTreeItem* super,
+									bool visibleItemsOnly);
 			ColumnTreeItem*		SubItemAt(ColumnTreeItem* super,
 										  int32 index);
 			int32				SubItemIndexOf(ColumnTreeItem* item);

@@ -847,16 +847,18 @@ ColumnTreeView::CountSubItems(ColumnTreeItem* super)
 	\return The number of items below the given superitem.
 */
 int32
-ColumnTreeView::CountSubItemsRecursive(ColumnTreeItem* super)
+ColumnTreeView::CountSubItemsRecursive(ColumnTreeItem* super, bool visible)
 {
-	if (!fModel)
+	if (!fModel || !super)
+		return 0;
+	if (visible && !super->IsExpanded())
 		return 0;
 	int32 subCount = fModel->CountSubItems(super);
 	int32 count = subCount;
 	for (int32 i = 0; i < subCount; i++) {
 		ColumnTreeItem* item = fModel->SubItemAt(super, i);
 		if (item != NULL)
-			count += CountSubItemsRecursive(item);
+			count += CountSubItemsRecursive(item, visible);
 	}
 	return count;
 }
@@ -1001,22 +1003,23 @@ ColumnTreeView::GetDropInfo(BPoint point, const BMessage& dragMessage,
 	ColumnTreeItem** _super, int32* _dropIndex)
 {
 	int32 index = IndexOf(point);
-	if (index < 0)
-		return false;
-
 	ColumnTreeItem* item = ItemAt(index);
 
-	BRect frame = ItemFrame(index);
- 	if (point.y >= (frame.top + frame.bottom) / 2) {
-		// insertion after item
-		index += 1;
-		// If the item already has sub-items (and is expanded), we can't
-		// insert an item before the first sub-item that is at the same
-		// level as the item. To still be able to insert an item after the
-		// hovered item, account for all sub items.
-		if (item->IsExpanded())
-			index += CountSubItemsRecursive(item);
-	}
+	BRect frame;
+	if (item != NULL) {
+		frame = ItemFrame(index);
+	 	if (point.y >= (frame.top + frame.bottom) / 2) {
+			// insertion after item
+			index += 1;
+			// If the item already has sub-items (and is expanded), we can't
+			// insert an item before the first sub-item that is at the same
+			// level as the item. To still be able to insert an item after the
+			// hovered item, account for all sub items.
+			if (item->IsExpanded())
+				index += CountSubItemsRecursive(item, true);
+		}
+	} else if (Bounds().Contains(point))
+		index = CountItems();
 
 	if (_super != NULL)
 		*_super = SuperItemOf(item);
