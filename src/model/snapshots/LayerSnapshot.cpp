@@ -226,28 +226,48 @@ LayerSnapshot::CountObjects() const
 void
 LayerSnapshot::_Sync()
 {
+	BList removedSnapshots;
+
 	int32 count = fOriginal->CountObjects();
 	for (int32 i = 0; i < count; i++) {
 		Object* object = fOriginal->ObjectAtFast(i);
 		ObjectSnapshot* snapshot = ObjectAt(i);
 
-		if (!snapshot) {
-			// create new snapshot of object at index
-			fObjects.AddItem(object->Snapshot());
-			continue;
-		}
-		if (snapshot->Original() == object) {
-			// correct snapshot already at index
-			snapshot->Sync();
-			continue;
-		}
-
-		while (snapshot && snapshot->Original() != object) {
+		while (snapshot != NULL) {
+			if (snapshot->Original() == object) {
+				// correct snapshot already at index
+				snapshot->Sync();
+				break;
+			}
 			// delete all snapshots until they match again
 			fObjects.RemoveItem(i);
-			delete snapshot;
+			removedSnapshots.AddItem(snapshot);
 			snapshot = ObjectAt(i);
 		}
+
+		if (snapshot == NULL) {
+			// create new snapshot of object at index
+			bool foundRemoved = false;
+			for (int32 j = removedSnapshots.CountItems() - 1; j >= 0; j--) {
+				ObjectSnapshot* removedSnapshot
+					= reinterpret_cast<ObjectSnapshot*>(
+						removedSnapshots.ItemAtFast(j));
+				if (removedSnapshot->Original() == object) {
+					removedSnapshots.RemoveItem(j);
+					fObjects.AddItem(removedSnapshot);
+					foundRemoved = true;
+					break;
+				}
+			}
+			if (!foundRemoved)
+				fObjects.AddItem(object->Snapshot());
+		}
+	}
+
+	// Delete the old snapshots we no longer needed
+	for (int32 i = removedSnapshots.CountItems() - 1; i >= 0; i--) {
+		delete reinterpret_cast<ObjectSnapshot*>(
+			removedSnapshots.ItemAtFast(i));
 	}
 
 	fBounds = fOriginal->Bounds();
