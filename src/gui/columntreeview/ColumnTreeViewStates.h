@@ -65,7 +65,7 @@ private:
 			BMessage			fDragMessage;
 			BRect				fDropFrame;
 			int32				fItemIndex;
-			ColumnTreeItem*		fParentItem;
+			ColumnTreeItem*		fSuperItem;
 };
 
 // IgnoreState

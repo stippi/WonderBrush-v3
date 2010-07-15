@@ -137,7 +137,7 @@ DraggingState::DraggingState(ColumnTreeView* listView, BPoint point,
 	: State(listView, point),
 	  fDragMessage(*dragMessage),
 	  fItemIndex(-2),
-	  fParentItem(NULL)
+	  fSuperItem(NULL)
 {
 ldebug("DraggingState::DraggingState()\n");
 	_IndicateDropTarget(point);
@@ -161,6 +161,8 @@ DraggingState::Moved(BPoint point, uint32 transit, const BMessage* message)
 void
 DraggingState::Released(BPoint point, uint32 buttons, uint32 modifiers)
 {
+	fListView->HandleDrop(fDragMessage, fSuperItem, fItemIndex);
+
 	ReleaseState(point);
 }
 
@@ -187,18 +189,37 @@ void
 DraggingState::_IndicateDropTarget(BPoint point)
 {
 	int32 index = -1;
-	ColumnTreeItem* parent = NULL;
+	ColumnTreeItem* super = NULL;
 	BRect frame;
-	if (fListView->GetDropInfo(point, fDragMessage, &parent, &index)) {
-		frame = fListView->ItemFrame(index);
-		frame.bottom = frame.top + 1;
-		int32 level = parent != NULL ? fListView->LevelOf(parent) + 1 : 1;
-		frame.left = fListView->IndentationOf(level) + 8;
+	if (fListView->GetDropInfo(point, fDragMessage, &super, &index)) {
+		int32 level;
+		int32 spacing = 9;
+		if (super == NULL
+			|| (fListView->CountSubItems(super) > 0 && super->IsExpanded())) {
+			// Draw the insertion mark between items. In the case that
+			// the super item has no sub-items yet, or it is currently
+			// collapsed, let the drop mark be that item's frame, to indicate
+			// that the insertion will take place as a sub-item.
+			frame = fListView->ItemFrame(index);
+			frame.bottom = frame.top + 1;
+			level = super != NULL ? fListView->LevelOf(super) + 1 : 1;
+		} else {
+			frame = fListView->ItemFrame(index - 1);
+			level = fListView->LevelOf(super);
+			spacing = 4;
+		}
+		// Handle insertion behind all other items
+		if (!frame.IsValid()) {
+			frame = fListView->ItemFrame(fListView->CountItems() - 1);
+			frame.top = frame.bottom + 1;
+			frame.bottom = frame.top + 1;
+		}
+		frame.left = fListView->IndentationOf(level) + spacing;
 	}
 
 	if (frame != fDropFrame) {
 		fItemIndex = index;
-		fParentItem = parent;
+		fSuperItem = super;
 
 		fListView->Invalidate(fDropFrame);
 		fDropFrame = frame;
