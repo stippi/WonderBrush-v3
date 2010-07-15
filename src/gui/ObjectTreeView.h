@@ -46,6 +46,11 @@ public:
 	virtual	bool				InitiateDrag(BPoint point, int32 index,
 									bool wasSelected,
 									BMessage* _message = NULL);
+	virtual	bool				GetDropInfo(BPoint point,
+									const BMessage& dragMessage,
+									ColumnTreeItem** super, int32* dropIndex);
+	virtual	void				HandleDrop(const BMessage& dragMessage,
+									ColumnTreeItem* super, int32 index);
 
 	virtual	void				SelectionChanged();
 

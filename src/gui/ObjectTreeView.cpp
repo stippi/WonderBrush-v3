@@ -185,6 +185,10 @@ ObjectTreeView::MessageReceived(BMessage* message)
 			// not interested
 			break;
 
+		case MSG_DRAG_SORT_OBJECTS:
+			// Eat this message, we have already processed it via HandleDrop().
+			break;
+
 		default:
 			ColumnTreeView::MessageReceived(message);
 	}
@@ -293,6 +297,51 @@ ObjectTreeView::InitiateDrag(BPoint point, int32 index, bool wasSelected,
 	} catch (...) {
 	}
 	return false;
+}
+
+// GetDropInfo
+bool
+ObjectTreeView::GetDropInfo(BPoint point, const BMessage& dragMessage,
+	ColumnTreeItem** _super, int32* _dropIndex)
+{
+	// Check the situation that a Layer does not have any children yet.
+	// In that case we must make it possible to drop items as children,
+	// but the ColumnTreeView does not know about this situation.
+	int32 index = IndexOf(point);
+	if (index >= 0) {
+		ObjectColumnTreeItem* item = dynamic_cast<ObjectColumnTreeItem*>(
+			ItemAt(index));
+	
+		if (dynamic_cast<Layer*>(item->object) != NULL
+			&& (CountSubItems(item) == 0 || !item->IsExpanded())) {
+	
+			BRect frame = ItemFrame(index);
+			if (point.y > frame.top + frame.Height() / 4
+				&& point.y < frame.bottom - frame.Height() / 4) {
+				// Drop will add items as new children.
+				*_super = item;
+				*_dropIndex = index + 1;
+				return true;
+			}
+		}
+	}
+
+	// TODO: We need to check if the user is hovering items that are being
+	// dragged. There are situations in which this is valid -- for example
+	// when making a non-contiguous selection, it shall be possible to drop
+	// the items such that they are inserted at the drop index as contiguous
+	// sibblings. But when dragging a layer, it should not be possible to
+	// drop the layer in the hierarchy below that layer, unless a copy is
+	// being made.
+
+	return ColumnTreeView::GetDropInfo(point, dragMessage, _super, _dropIndex);
+}
+
+// HandleDrop
+void
+ObjectTreeView::HandleDrop(const BMessage& dragMessage, ColumnTreeItem* super,
+	int32 index)
+{
 }
 
 // SelectionChanged
