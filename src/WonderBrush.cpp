@@ -80,6 +80,9 @@ WonderBrush::WonderBrush(BRect bounds)
 	subSubLayer->AddObject(new Shape(BRect(460, 185, 590, 300),
 		(rgb_color){ 255, 0, 169, 255 }));
 
+	Layer* subSubSubLayer = new Layer(bounds);
+	subSubLayer->AddObject(subSubSubLayer);
+
 	fEditLayer = fDocument->RootLayer();
 }
 
