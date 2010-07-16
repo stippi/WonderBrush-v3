@@ -137,6 +137,7 @@ DraggingState::DraggingState(ColumnTreeView* listView, BPoint point,
 	: State(listView, point),
 	  fDragMessage(*dragMessage),
 	  fItemIndex(-2),
+	  fSubItemIndex(-2),
 	  fSuperItem(NULL)
 {
 ldebug("DraggingState::DraggingState()\n");
@@ -161,7 +162,7 @@ DraggingState::Moved(BPoint point, uint32 transit, const BMessage* message)
 void
 DraggingState::Released(BPoint point, uint32 buttons, uint32 modifiers)
 {
-	fListView->HandleDrop(fDragMessage, fSuperItem, fItemIndex);
+	fListView->HandleDrop(fDragMessage, fSuperItem, fSubItemIndex, fItemIndex);
 
 	ReleaseState(point);
 }
@@ -188,10 +189,12 @@ DraggingState::Draw(BView* into, BRect updateRect)
 void
 DraggingState::_IndicateDropTarget(BPoint point)
 {
+	int32 subIndex = -1;
 	int32 index = -1;
 	ColumnTreeItem* super = NULL;
 	BRect frame;
-	if (fListView->GetDropInfo(point, fDragMessage, &super, &index)) {
+	if (fListView->GetDropInfo(point, fDragMessage, &super, &subIndex,
+		&index)) {
 		int32 level;
 		int32 spacing = 9;
 		if (super == NULL
@@ -219,6 +222,7 @@ DraggingState::_IndicateDropTarget(BPoint point)
 
 	if (frame != fDropFrame) {
 		fItemIndex = index;
+		fSubItemIndex = subIndex;
 		fSuperItem = super;
 
 		fListView->Invalidate(fDropFrame);

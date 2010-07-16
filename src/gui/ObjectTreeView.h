@@ -48,9 +48,11 @@ public:
 									BMessage* _message = NULL);
 	virtual	bool				GetDropInfo(BPoint point,
 									const BMessage& dragMessage,
-									ColumnTreeItem** super, int32* dropIndex);
+									ColumnTreeItem** _super,
+									int32* _subItemIndex, int32* _itemIndex);
 	virtual	void				HandleDrop(const BMessage& dragMessage,
-									ColumnTreeItem* super, int32 index);
+									ColumnTreeItem* super, int32 subItemIndex,
+									int32 itemIndex);
 
 	virtual	void				SelectionChanged();
 

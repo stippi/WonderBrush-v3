@@ -65,6 +65,7 @@ private:
 			BMessage			fDragMessage;
 			BRect				fDropFrame;
 			int32				fItemIndex;
+			int32				fSubItemIndex;
 			ColumnTreeItem*		fSuperItem;
 };
 

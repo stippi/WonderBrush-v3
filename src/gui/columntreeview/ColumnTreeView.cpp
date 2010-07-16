@@ -1000,10 +1000,11 @@ ColumnTreeView::InitiateDrag(BPoint point, int32 index, bool wasSelected,
 // GetDropInfo
 bool
 ColumnTreeView::GetDropInfo(BPoint point, const BMessage& dragMessage,
-	ColumnTreeItem** _super, int32* _dropIndex)
+	ColumnTreeItem** _super, int32* _subItemIndex, int32* _itemIndex)
 {
 	int32 index = IndexOf(point);
 	ColumnTreeItem* item = ItemAt(index);
+	int32 subIndex = SubItemIndexOf(item);
 
 	BRect frame;
 	if (item != NULL) {
@@ -1011,6 +1012,7 @@ ColumnTreeView::GetDropInfo(BPoint point, const BMessage& dragMessage,
 	 	if (point.y >= (frame.top + frame.bottom) / 2) {
 			// insertion after item
 			index += 1;
+			subIndex += 1;
 			// If the item already has sub-items (and is expanded), we can't
 			// insert an item before the first sub-item that is at the same
 			// level as the item. To still be able to insert an item after the
@@ -1018,14 +1020,19 @@ ColumnTreeView::GetDropInfo(BPoint point, const BMessage& dragMessage,
 			if (item->IsExpanded())
 				index += CountSubItemsRecursive(item, true);
 		}
-	} else if (Bounds().Contains(point))
+	} else if (Bounds().Contains(point)) {
 		index = CountItems();
+		subIndex = CountSubItems(NULL);
+	}
 
 	if (_super != NULL)
 		*_super = SuperItemOf(item);
 
-	if (_dropIndex != NULL)
-		*_dropIndex = index;
+	if (_subItemIndex != NULL)
+		*_subItemIndex = subIndex;
+
+	if (_itemIndex != NULL)
+		*_itemIndex = index;
 
 	return true;
 }
@@ -1033,7 +1040,7 @@ ColumnTreeView::GetDropInfo(BPoint point, const BMessage& dragMessage,
 // HandleDrop
 void
 ColumnTreeView::HandleDrop(const BMessage& dragMessage, ColumnTreeItem* super,
-	int32 index)
+	int32 subItemIndex, int32 itemIndex)
 {
 }
 

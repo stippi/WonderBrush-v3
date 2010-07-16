@@ -303,7 +303,7 @@ ObjectTreeView::InitiateDrag(BPoint point, int32 index, bool wasSelected,
 // GetDropInfo
 bool
 ObjectTreeView::GetDropInfo(BPoint point, const BMessage& dragMessage,
-	ColumnTreeItem** _super, int32* _dropIndex)
+	ColumnTreeItem** _super, int32* _subItemIndex, int32* _itemIndex)
 {
 	// Check the situation that a Layer does not have any children yet.
 	// In that case we must make it possible to drop items as children,
@@ -312,16 +312,18 @@ ObjectTreeView::GetDropInfo(BPoint point, const BMessage& dragMessage,
 	if (index >= 0) {
 		ObjectColumnTreeItem* item = dynamic_cast<ObjectColumnTreeItem*>(
 			ItemAt(index));
-	
+
+		int32 subItemCount = CountSubItems(item);
 		if (dynamic_cast<Layer*>(item->object) != NULL
-			&& (CountSubItems(item) == 0 || !item->IsExpanded())) {
+			&& (subItemCount == 0 || !item->IsExpanded())) {
 	
 			BRect frame = ItemFrame(index);
 			if (point.y > frame.top + frame.Height() / 4
 				&& point.y < frame.bottom - frame.Height() / 4) {
 				// Drop will add items as new children.
 				*_super = item;
-				*_dropIndex = index + 1;
+				*_subItemIndex = subItemCount;
+				*_itemIndex = index + 1;
 				return true;
 			}
 		}
@@ -335,13 +337,14 @@ ObjectTreeView::GetDropInfo(BPoint point, const BMessage& dragMessage,
 	// drop the layer in the hierarchy below that layer, unless a copy is
 	// being made.
 
-	return ColumnTreeView::GetDropInfo(point, dragMessage, _super, _dropIndex);
+	return ColumnTreeView::GetDropInfo(point, dragMessage, _super,
+		_subItemIndex, _itemIndex);
 }
 
 // HandleDrop
 void
 ObjectTreeView::HandleDrop(const BMessage& dragMessage, ColumnTreeItem* super,
-	int32 index)
+	int32 subItemIndex, int32 itemIndex)
 {
 	Layer* insertionLayer = fDocument->RootLayer();
 	if (super != NULL) {
@@ -374,20 +377,8 @@ ObjectTreeView::HandleDrop(const BMessage& dragMessage, ColumnTreeItem* super,
 		}
 	}
 
-	// Translate insertion index from flat list index into sub-item index.
-	int32 insertionIndex = index;
-
-	int32 offset = super != NULL ? IndexOf(super) : 0;
-	int32 level = super != NULL ? LevelOf(super) + 1 : 0;
-	for (int32 i = offset; i < index; i++) {
-		ColumnTreeItem* otherItem = ItemAt(i);
-		if (otherItem != NULL && LevelOf(otherItem) == level)
-			offset += CountSubItemsRecursive(otherItem, true);
-	}
-	insertionIndex -= offset;
-
 	MoveObjectsCommand* command = new(std::nothrow) MoveObjectsCommand(
-		objects, count, insertionLayer, insertionIndex);
+		objects, count, insertionLayer, subItemIndex);
 	if (command == NULL) {
 		delete[] objects;
 		return;
