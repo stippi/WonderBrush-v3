@@ -226,20 +226,24 @@ LayerSnapshot::CountObjects() const
 void
 LayerSnapshot::_Sync()
 {
+//printf("%p->LayerSnapshot::_Sync()\n", Original());
 	BList removedSnapshots;
 
 	int32 count = fOriginal->CountObjects();
-	for (int32 i = 0; i < count; i++) {
+	int32 i = 0;
+	for (; i < count; i++) {
 		Object* object = fOriginal->ObjectAtFast(i);
 		ObjectSnapshot* snapshot = ObjectAt(i);
 
 		while (snapshot != NULL) {
 			if (snapshot->Original() == object) {
 				// correct snapshot already at index
+//printf("%p - [%ld] syncing %p\n", Original(), i, snapshot);
 				snapshot->Sync();
 				break;
 			}
 			// delete all snapshots until they match again
+//printf("%p - [%ld] removing %p\n", Original(), i, snapshot);
 			fObjects.RemoveItem(i);
 			removedSnapshots.AddItem(snapshot);
 			snapshot = ObjectAt(i);
@@ -248,29 +252,48 @@ LayerSnapshot::_Sync()
 		if (snapshot == NULL) {
 			// create new snapshot of object at index
 			bool foundRemoved = false;
-			for (int32 j = removedSnapshots.CountItems() - 1; j >= 0; j--) {
+			int32 removedCount = removedSnapshots.CountItems();
+			for (int32 j = 0; j < removedCount; j++) {
 				ObjectSnapshot* removedSnapshot
 					= reinterpret_cast<ObjectSnapshot*>(
 						removedSnapshots.ItemAtFast(j));
 				if (removedSnapshot->Original() == object) {
 					removedSnapshots.RemoveItem(j);
 					fObjects.AddItem(removedSnapshot);
+//printf("%p - [%ld] syncing %p (removed)\n", Original(), i, removedSnapshot);
+					removedSnapshot->Sync();
 					foundRemoved = true;
 					break;
 				}
 			}
-			if (!foundRemoved)
-				fObjects.AddItem(object->Snapshot());
+			if (!foundRemoved) {
+				snapshot = object->Snapshot();
+//printf("%p - [%ld] cloning %p\n", Original(), i, snapshot);
+				fObjects.AddItem(snapshot);
+			}
 		}
+	}
+
+	// In case all object snapshots matched, we still need to remove
+	// any additional snapshots at the end.
+	count = CountObjects();
+	for (; i < count; i++) {
+		ObjectSnapshot* snapshot = reinterpret_cast<ObjectSnapshot*>(
+			fObjects.RemoveItem(i));
+//printf("%p - deleting [%ld] %p\n", Original(), i, snapshot);
+		delete snapshot;
 	}
 
 	// Delete the old snapshots we no longer needed
 	for (int32 i = removedSnapshots.CountItems() - 1; i >= 0; i--) {
-		delete reinterpret_cast<ObjectSnapshot*>(
+		ObjectSnapshot* snapshot = reinterpret_cast<ObjectSnapshot*>(
 			removedSnapshots.ItemAtFast(i));
+//printf("%p - deleting removed %p\n", Original(), snapshot);
+		delete snapshot;
 	}
 
 	fBounds = fOriginal->Bounds();
+//printf("%p->LayerSnapshot::_Sync() - done\n", Original());
 }
 
 // _MakeEmpty
