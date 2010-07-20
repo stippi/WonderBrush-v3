@@ -48,6 +48,7 @@ public:
 			const Selectable&	SelectableAtFast(uint32 index) const;
 			uint32				CountSelected() const;
 			bool				IsEmpty() const;
+			bool				IsSelected(const Selectable& object) const;
 
 	// listener support
 			bool				AddListener(Listener* listener);

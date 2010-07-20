@@ -138,6 +138,17 @@ Selection::IsEmpty() const
 	return fSelected.empty();
 }
 
+// IsSelected
+bool
+Selection::IsSelected(const Selectable& object) const
+{
+	for (int i = fSelected.size() - 1; i >= 0; i--) {
+		if (fSelected[i] == object)
+			return true;
+	}
+	return false;
+}
+
 // #pragma mark -
 
 // AddListener
