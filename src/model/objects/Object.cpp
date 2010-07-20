@@ -29,6 +29,7 @@ void
 Object::SetParent(Layer* layer)
 {
 	fParent = layer;
+	UpdateChangeCounter();
 }
 
 // Level
