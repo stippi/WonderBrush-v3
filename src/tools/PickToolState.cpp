@@ -524,24 +524,11 @@ PickToolState::_Invalidate(BRect area)
 void
 PickToolState::_SendPickNotification()
 {
-//	if (!fView->Window())
-//		return;
-//
-//	BMessage notification(MSG_OBJECT_PICKED);
-//	if (fRect)
-//		notification.AddPointer("object", (Object*)fRect);
-//	else if (fShape)
-//		notification.AddPointer("object", (Object*)fShape);
+//	if (fRect != NULL)
+//		fSelection->Select(Selectable(fRect), this);
+//	else if (fShape != NULL)
+//		fSelection->Select(Selectable(fShape), this);
 //	else
-//		notification.AddPointer("object", (Object*)NULL);
-//
-//	fView->Window()->PostMessage(&notification);
-
-	if (fRect != NULL)
-		fSelection->Select(Selectable(fRect), this);
-	else if (fShape != NULL)
-		fSelection->Select(Selectable(fShape), this);
-	else
-		fSelection->DeselectAll(this);
+//		fSelection->DeselectAll(this);
 }
 
