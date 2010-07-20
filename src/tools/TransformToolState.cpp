@@ -619,7 +619,7 @@ public:
 	virtual void SetOrigin(BPoint origin)
 	{
 		// Setup tool and switch to drag box state
-		fParent->SetObject(fObject);
+		fParent->SetObject(fObject, true);
 
 		if (fObject == NULL)
 			return;
@@ -1166,22 +1166,23 @@ TransformToolState::ObjectDeselected(const Selectable& selectable,
 
 // SetObject
 void
-TransformToolState::SetObject(Object* object)
+TransformToolState::SetObject(Object* object, bool modifySelection)
 {
 	BRect box;
 	BoundedObject* boundedObject = dynamic_cast<BoundedObject*>(object);
 
-	if (boundedObject != NULL) {
-		fSelection->Select(Selectable(boundedObject), this);
+	if (boundedObject != NULL)
 		box = boundedObject->Bounds();
-	} else {
-		fSelection->DeselectAll(this);
-	}
 
-	if (object != NULL)
+	if (object != NULL) {
+		if (modifySelection)
+			fSelection->Select(Selectable(boundedObject), this);
 		SetObjectToCanvasTransformation(object->Transformation());
-	else
+	} else {
+		if (modifySelection)
+			fSelection->DeselectAll(this);
 		SetObjectToCanvasTransformation(Transformable());
+	}
 
 	SetTransformable(object);
 	SetBox(box);

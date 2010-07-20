@@ -76,7 +76,8 @@ public:
 									const Selection::Controller* controller);
 
 	// TransformToolState
-			void				SetObject(Object* object);
+			void				SetObject(Object* object,
+									bool modifySelection = false);
 			void				SetTransformable(Transformable* object);
 			void				SetBox(const BRect& box);
 			void				SetModifiedBox(const BRect& box,
