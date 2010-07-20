@@ -55,6 +55,7 @@ public:
 
 	virtual	void				AreaInvalidated(Layer* layer,
 									const BRect& area);
+	virtual	void				AllAreasInvalidated();
 
 	virtual	void				ListenerAttached(Layer* layer);
 
@@ -100,6 +101,7 @@ private:
 									BRect area);
 			void				_QueueRedraw(const Layer* layer, BRect area);
 			bool				_HasDirtyLayers() const;
+			void				_TriggerRenderIfNotBusy();
 			void				_TriggerRender();
 			void				_BackToDisplay(BRect area);
 

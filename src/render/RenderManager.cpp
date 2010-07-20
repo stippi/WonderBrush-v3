@@ -272,7 +272,7 @@ RenderManager::ObjectAdded(Layer* layer, Object* object, int32 index)
 	// in the thread that added the layer
 	Layer* subLayer = dynamic_cast<Layer*>(object);
 	if (subLayer != NULL) {
-printf("RenderManager::ObjectAdded(%p)\n", subLayer);
+//printf("RenderManager::ObjectAdded(%p)\n", subLayer);
 		Layer::AddListenerRecursive(subLayer, this);
 	}
 }
@@ -284,7 +284,7 @@ RenderManager::ObjectRemoved(Layer* layer, Object* object, int32 index)
 	// see ObjectAdded on why it is ok to add listener without locking
 	Layer* subLayer = dynamic_cast<Layer*>(object);
 	if (subLayer != NULL) {
-printf("RenderManager::ObjectRemoved(%p)\n", subLayer);
+//printf("RenderManager::ObjectRemoved(%p)\n", subLayer);
 		Layer::RemoveListenerRecursive(subLayer, this);
 	}
 }
@@ -293,10 +293,22 @@ printf("RenderManager::ObjectRemoved(%p)\n", subLayer);
 void
 RenderManager::AreaInvalidated(Layer* layer, const BRect& area)
 {
-//printf("RenderManager::AreaInvalidated(%p)\n", layer);
+//printf("RenderManager::AreaInvalidated(%p, "
+//"BRect(%.1f, %.1f, %.1f, %.1f))\n", layer,
+//area.left, area.top, area.right, area.bottom);
 	// This is a synchronous notification, therefore the document
 	// is already properly locked.
 	_QueueRedraw(layer, area);
+}
+
+// AllAreasInvalidated
+void
+RenderManager::AllAreasInvalidated()
+{
+	if (fRenderQueueLock.Lock()) {
+		_TriggerRenderIfNotBusy();
+		fRenderQueueLock.Unlock();
+	}
 }
 
 // ListenerAttached
@@ -590,15 +602,8 @@ RenderManager::_QueueRedraw(const Layer* layer, BRect area)
 		return;
 	}
 
-	if (fWaitingRenderThreadCount < fRenderThreadCount) {
-//		printf("rendering in progress (%ld/%ld threads waiting)\n",
-//			fWaitingRenderThreadCount, fRenderThreadCount);
-		// rendering in progress
-	} else {
-//		printf("triggering render\n");
-		// idle, trigger rendering
-		_TriggerRender();
-	}
+	if (UpdatesEnabled())
+		_TriggerRenderIfNotBusy();
 
 	fRenderQueueLock.Unlock();
 }
@@ -608,6 +613,21 @@ bool
 RenderManager::_HasDirtyLayers() const
 {
 	return (fDocumentDirtyMap->Size() > 0);
+}
+
+// _TriggerRenderIfNotBusy
+void
+RenderManager::_TriggerRenderIfNotBusy()
+{
+	if (fWaitingRenderThreadCount < fRenderThreadCount) {
+//		printf("rendering in progress (%ld/%ld threads waiting)\n",
+//			fWaitingRenderThreadCount, fRenderThreadCount);
+		// rendering in progress
+	} else {
+//		printf("triggering render\n");
+		// idle, trigger rendering
+		_TriggerRender();
+	}
 }
 
 // _TriggerRender

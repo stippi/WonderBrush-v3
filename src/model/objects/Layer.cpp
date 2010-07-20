@@ -11,6 +11,7 @@
 
 #include <stdio.h>
 
+#include "BoundedObject.h"
 #include "LayerSnapshot.h"
 
 
@@ -44,9 +45,38 @@ Layer::Listener::ObjectChanged(Layer* layer, Object* object, int32 index)
 {
 }
 
+// SuspendUpdates
+void
+Layer::Listener::SuspendUpdates(bool suspend)
+{
+	if (!suspend && fUpdatesSuspended == 0)
+		debugger("SuspendUpdates(false) with enabled updates.");
+
+	if (suspend)
+		fUpdatesSuspended++;
+	else
+		fUpdatesSuspended--;
+
+	if (fUpdatesSuspended == 0)
+		AllAreasInvalidated();
+}
+
+// UpdatesEnabled
+bool
+Layer::Listener::UpdatesEnabled() const
+{
+	return fUpdatesSuspended == 0;
+}
+
 // AreaInvalidated
 void
 Layer::Listener::AreaInvalidated(Layer* layer, const BRect& area)
+{
+}
+
+// AllAreasInvalidated
+void
+Layer::Listener::AllAreasInvalidated()
 {
 }
 
@@ -112,7 +142,7 @@ Layer::AddObject(Object* object)
 bool
 Layer::AddObject(Object* object, int32 index)
 {
-printf("%p->Layer::AddObject(%p, %ld)\n", this, object, index);
+//printf("%p->Layer::AddObject(%p, %ld)\n", this, object, index);
 	if (object && fObjects.AddItem(object, index)) {
 		BList listeners(fListeners);
 		int32 count = listeners.CountItems();
@@ -121,8 +151,15 @@ printf("%p->Layer::AddObject(%p, %ld)\n", this, object, index);
 			listener->ObjectAdded(this, object, index);
 		}
 
-		object->SetParent(this);
 		UpdateChangeCounter();
+		object->SetParent(this);
+
+		BoundedObject* boundedObject = dynamic_cast<BoundedObject*>(object);
+		if (boundedObject != NULL)
+			boundedObject->UpdateBounds();
+		else
+			Invalidate(Bounds(), index);
+
 		return true;
 	}
 	return false;
@@ -132,9 +169,25 @@ printf("%p->Layer::AddObject(%p, %ld)\n", this, object, index);
 Object*
 Layer::RemoveObject(int32 index)
 {
-	Object* object = (Object*)fObjects.RemoveItem(index);
-printf("%p->Layer::RemoveObject(%ld): %p\n", this, index, object);
+	Object* object = ObjectAt(index);
+//printf("%p->Layer::RemoveObject(%ld): %p\n", this, index, object);
 	if (object) {
+		BRect invalidArea;
+		BoundedObject* boundedObject = dynamic_cast<BoundedObject*>(object);
+		if (boundedObject != NULL)
+			invalidArea = boundedObject->TransformedBounds();
+		else
+			invalidArea = Bounds();
+
+		object->SetParent(NULL);
+		UpdateChangeCounter();
+
+		if (fObjects.RemoveItem(index) == NULL) {
+			// Should not happen, but roll back in any case.
+			object->SetParent(this);
+			return NULL;
+		}
+
 		BList listeners(fListeners);
 		int32 count = listeners.CountItems();
 		for (int32 i = 0; i < count; i++) {
@@ -142,8 +195,7 @@ printf("%p->Layer::RemoveObject(%ld): %p\n", this, index, object);
 			listener->ObjectRemoved(this, object, index);
 		}
 
-		object->SetParent(NULL);
-		UpdateChangeCounter();
+		Invalidate(invalidArea, index);
 	}
 	return object;
 }
@@ -192,6 +244,18 @@ Layer::HasObject(Object* object) const
 
 // #pragma mark -
 
+// SuspendUpdates
+void
+Layer::SuspendUpdates(bool suspend)
+{
+	BList listeners(fListeners);
+	int32 count = listeners.CountItems();
+	for (int32 i = 0; i < count; i++) {
+		Listener* listener = (Listener*)listeners.ItemAtFast(i);
+		listener->SuspendUpdates(suspend);
+	}
+}
+
 // Invalidate
 void
 Layer::Invalidate(const BRect& area, int32 objectIndex)
@@ -211,11 +275,17 @@ Layer::Invalidate(const BRect& area, int32 objectIndex)
 	count = listeners.CountItems();
 	for (int32 i = 0; i < count; i++) {
 		Listener* listener = (Listener*)listeners.ItemAtFast(i);
+		listener->SuspendUpdates(true);
 		listener->AreaInvalidated(this, visuallyChangedArea);
 	}
 
 	if (Parent())
 		Parent()->Invalidate(visuallyChangedArea, Parent()->IndexOf(this));
+
+	for (int32 i = 0; i < count; i++) {
+		Listener* listener = (Listener*)listeners.ItemAtFast(i);
+		listener->SuspendUpdates(false);
+	}
 }
 
 // ObjectChanged

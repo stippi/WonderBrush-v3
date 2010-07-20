@@ -29,10 +29,16 @@ class Layer : public Object {
 		virtual	void			ObjectChanged(Layer* layer, Object* object,
 									int32 index);
 
+				void			SuspendUpdates(bool suspend);
+				bool			UpdatesEnabled() const;
 		virtual	void			AreaInvalidated(Layer* layer,
 									const BRect& area);
+		virtual	void			AllAreasInvalidated();
 
 		virtual	void			ListenerAttached(Layer* layer);
+
+	private:
+				int32			fUpdatesSuspended;
 	};
 
 								Layer(const BRect& bounds);
@@ -56,6 +62,7 @@ class Layer : public Object {
 			int32				CountObjects() const;
 			bool				HasObject(Object* object) const;
 
+			void				SuspendUpdates(bool suspend);
 			void				Invalidate(const BRect& area,
 									int32 objectIndex = 0);
 			void				ObjectChanged(Object* object);
