@@ -37,7 +37,6 @@
 enum {
 	MSG_UNDO				= 'undo',
 	MSG_REDO				= 'redo',
-	MSG_SELECTION_CHANGED	= 'slch',
 	MSG_SET_TOOL			= 'sltl'
 };
 
@@ -68,10 +67,10 @@ Window::Window(BRect frame, const char* title, Document* document,
 	fEditMenu = new BMenu("Edit");
 	menuBar->AddItem(fEditMenu);
 	BMessage* message = new BMessage(MSG_UNDO);
-	fUndoMI = new BMenuItem("Undo", message);
+	fUndoMI = new BMenuItem("Undo", message, 'Y');
 	fEditMenu->AddItem(fUndoMI);
 	message = new BMessage(MSG_REDO);
-	fRedoMI = new BMenuItem("Undo", message);
+	fRedoMI = new BMenuItem("Redo", message, 'Y', B_SHIFT_KEY);
 	fEditMenu->AddItem(fRedoMI);
 
 	BMenuBar* objectMenuBar = new BMenuBar("object menu");
@@ -101,8 +100,6 @@ Window::Window(BRect frame, const char* title, Document* document,
 		BORDER_BOTTOM);
 	objectTreeScrollView->SetExplicitMinSize(BSize(150, B_SIZE_UNSET));
 	objectTreeScrollView->SetExplicitMaxSize(BSize(250, B_SIZE_UNSET));
-
-	fLayerTreeView->SetSelectionMessage(new BMessage(MSG_SELECTION_CHANGED));
 
 	fRenderManager = new RenderManager(fDocument);
 	// TODO: Check error
@@ -214,24 +211,6 @@ Window::MessageReceived(BMessage* message)
 				_ObjectChanged(notifier);
 			break;
 		}
-
-//		case MSG_SELECTION_CHANGED:
-//		{
-//			int32 index;
-//			if (message->FindInt32("index", &index) == B_OK) {
-//				ObjectColumnTreeItem* item
-//					= dynamic_cast<ObjectColumnTreeItem*>(
-//						fLayerTreeView->ItemAt(index));
-//				if (item) {
-//					Object* object = item->object;
-//					Layer* layer = object->Parent();
-//					if (!layer)
-//						layer = fDocument->RootLayer();
-//					fPickState->SetObject(layer, object);
-//				}
-//			}
-//			break;
-//		}
 
 		case MSG_SET_TOOL: {
 			int32 index;
