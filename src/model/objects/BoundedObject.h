@@ -17,7 +17,6 @@ public:
 
 	virtual	void				TransformationChanged();
 
-protected:
 			void				InitBounds();
 			void				UpdateBounds();
 
