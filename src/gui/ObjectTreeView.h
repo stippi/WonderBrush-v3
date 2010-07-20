@@ -76,6 +76,8 @@ private:
 									int32 index);
 			void				_ObjectChanged(Layer* layer, Object* object,
 									int32 index);
+			void				_ObjectSelected(Object* object,
+									bool selected);
 
 			ObjectColumnTreeItem* _FindLayerTreeViewItem(const Object* object);
 
@@ -88,6 +90,7 @@ private:
 			Document*			fDocument;
 			Selection*			fSelection;
 			LayerObserver		fLayerObserver;
+			bool				fIgnoreSelectionChanged;
 };
 
 

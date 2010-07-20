@@ -51,7 +51,8 @@ ObjectColumnTreeItem::Update()
 enum {
 	MSG_RENAME_OBJECT			= 'rnoj',
 	MSG_RENAME_SELECTED_ITEM	= 'rnit',
-	MSG_DRAG_SORT_OBJECTS		= 'drgo'
+	MSG_DRAG_SORT_OBJECTS		= 'drgo',
+	MSG_OBJECT_SELECTED			= 'objs'
 };
 
 
@@ -62,7 +63,8 @@ ObjectTreeView::ObjectTreeView(BRect frame, Document* document,
 	ColumnTreeView(frame),
 	fDocument(document),
 	fSelection(selection),
-	fLayerObserver(this)
+	fLayerObserver(this),
+	fIgnoreSelectionChanged(false)
 {
 }
 
@@ -74,7 +76,8 @@ ObjectTreeView::ObjectTreeView(Document* document, Selection* selection)
 	ColumnTreeView(),
 	fDocument(document),
 	fSelection(selection),
-	fLayerObserver(this)
+	fLayerObserver(this),
+	fIgnoreSelectionChanged(false)
 {
 }
 
@@ -185,6 +188,17 @@ ObjectTreeView::MessageReceived(BMessage* message)
 		case LayerObserver::MSG_AREA_INVALIDATED:
 			// not interested
 			break;
+
+		case MSG_OBJECT_SELECTED:
+		{
+			Object* object;
+			bool selected;
+			if (message->FindPointer("object", (void**)&object) == B_OK
+				&& message->FindBool("selected", &selected) == B_OK) {
+				_ObjectSelected(object, selected);
+			}
+			break;
+		}
 
 		case MSG_DRAG_SORT_OBJECTS:
 			// Eat this message, we have already processed it via HandleDrop().
@@ -378,7 +392,7 @@ ObjectTreeView::HandleDrop(const BMessage& dragMessage, ColumnTreeItem* super,
 	}
 
 	MoveObjectsCommand* command = new(std::nothrow) MoveObjectsCommand(
-		objects, count, insertionLayer, subItemIndex);
+		objects, count, insertionLayer, subItemIndex, fSelection);
 	if (command == NULL) {
 		delete[] objects;
 		return;
@@ -391,6 +405,10 @@ ObjectTreeView::HandleDrop(const BMessage& dragMessage, ColumnTreeItem* super,
 void
 ObjectTreeView::SelectionChanged()
 {
+	// Do not mess with the selection while adding/removing items.
+	if (fIgnoreSelectionChanged)
+		return;
+
 	// Sync the selections
 	int32 count = CountSelectedItems();
 	if (count == 0) {
@@ -412,7 +430,7 @@ ObjectTreeView::SelectionChanged()
 
 // ObjectSelected
 void
-ObjectTreeView::ObjectSelected(const Selectable& object,
+ObjectTreeView::ObjectSelected(const Selectable& selectable,
 	const Selection::Controller* controller)
 {
 	if (controller == this) {
@@ -420,12 +438,26 @@ ObjectTreeView::ObjectSelected(const Selectable& object,
 		return;
 	}
 
-	SelectItem(dynamic_cast<Object*>(object.Get()));
+	Object* object = dynamic_cast<Object*>(selectable.Get());
+	if (object == NULL || Window() == NULL)
+		return;
+
+	// Theoretically, all selection notifications are triggered in the
+	// correct thread, i.e. the window thread, since the selection is
+	// unique per window. But the object added/removed notifications can
+	// be triggered from other window threads and need to be asynchronous.
+	// This means the selection notifications need to be asynchronous as
+	// well, to keep the chain of events in order.
+
+	BMessage message(MSG_OBJECT_SELECTED);
+	message.AddPointer("object", object);
+	message.AddBool("selected", true);
+	Window()->PostMessage(&message, this);
 }
 
 // ObjectDeselected
 void
-ObjectTreeView::ObjectDeselected(const Selectable& object,
+ObjectTreeView::ObjectDeselected(const Selectable& selectable,
 	const Selection::Controller* controller)
 {
 	if (controller == this) {
@@ -433,8 +465,16 @@ ObjectTreeView::ObjectDeselected(const Selectable& object,
 		return;
 	}
 
-//printf("ObjectTreeView::ObjectDeselected(%p)\n", object.Get());
-	// TODO...
+	Object* object = dynamic_cast<Object*>(selectable.Get());
+	if (object == NULL || Window() == NULL)
+		return;
+
+	// See ObjectSelected() on why we need an asynchronous notification.
+
+	BMessage message(MSG_OBJECT_SELECTED);
+	message.AddPointer("object", object);
+	message.AddBool("selected", false);
+	Window()->PostMessage(&message, this);
 }
 
 // #pragma mark -
@@ -443,6 +483,7 @@ ObjectTreeView::ObjectDeselected(const Selectable& object,
 void
 ObjectTreeView::SelectItem(Object* object)
 {
+printf("ObjectTreeView::SelectItem(%p)\n", object);
 	ColumnTreeItem* item = _FindLayerTreeViewItem(object);
 	if (item != NULL)
 		Select(IndexOf(item));
@@ -555,9 +596,11 @@ ObjectTreeView::_HandleRenameObject(BMessage* message)
 void
 ObjectTreeView::_ObjectAdded(Layer* layer, Object* object, int32 index)
 {
-printf("ObjectTreeView::_ObjectAdded(%p, %p, %ld)\n", layer, object, index);
+//printf("ObjectTreeView::_ObjectAdded(%p, %p, %ld)\n", layer, object, index);
 	if (!layer->HasObject(object))
 		return;
+
+	fIgnoreSelectionChanged = true;
 
 	ObjectColumnTreeItem* parentItem = _FindLayerTreeViewItem(layer);
 
@@ -569,20 +612,26 @@ printf("ObjectTreeView::_ObjectAdded(%p, %p, %ld)\n", layer, object, index);
 
 	if (Layer* subLayer = dynamic_cast<Layer*>(object))
 		_RecursiveAddItems(subLayer, item);
+
+	fIgnoreSelectionChanged = false;
 }
 
 // _ObjectRemoved
 void
 ObjectTreeView::_ObjectRemoved(Layer* layer, Object* object, int32 index)
 {
-printf("ObjectTreeView::_ObjectRemoved(%p, %p, %ld)\n", layer, object, index);
+//printf("ObjectTreeView::_ObjectRemoved(%p, %p, %ld)\n", layer, object, index);
 	ObjectColumnTreeItem* parentItem = _FindLayerTreeViewItem(layer);
-	ObjectColumnTreeItem* item = dynamic_cast<ObjectColumnTreeItem*>(
-		SubItemAt(parentItem, index));
-printf("  parent: %p, item: %p (%p/%p)\n", parentItem, item, object,
-	item->object);
-	ColumnTreeItem* toast = RemoveSubItem(parentItem, index);
-printf("  removed: %p/%p\n", toast, item);
+//	ObjectColumnTreeItem* item = dynamic_cast<ObjectColumnTreeItem*>(
+//		SubItemAt(parentItem, index));
+
+	fIgnoreSelectionChanged = true;
+
+	// TODO: A bug in DefaultColumnTreeModel already deleted the returned
+	// item:
+	RemoveSubItem(parentItem, index);
+
+	fIgnoreSelectionChanged = false;
 }
 
 // _ObjectChanged
@@ -594,6 +643,28 @@ ObjectTreeView::_ObjectChanged(Layer* layer, Object* object, int32 index)
 		return;
 	item->Update();
 	InvalidateItem(item);
+}
+
+//
+// _ObjectSelected
+void
+ObjectTreeView::_ObjectSelected(Object* object, bool selected)
+{
+	fIgnoreSelectionChanged = true;
+
+	ColumnTreeItem* item = _FindLayerTreeViewItem(object);
+	if (item != NULL) {
+		int32 index = IndexOf(item);
+		if (selected) {
+//printf("selecting: %ld\n", index);
+			Select(index, true);
+		} else {
+//printf("deselecting: %ld\n", index);
+			Deselect(index);
+		}
+	}
+
+	fIgnoreSelectionChanged = false;
 }
 
 // _FindLayerTreeViewItem
