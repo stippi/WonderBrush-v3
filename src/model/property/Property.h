@@ -42,6 +42,7 @@ class Property : public BArchivable {
 	virtual	bool				InterpolateTo(const Property* other,
 											  float scale);
 
+	virtual	const char*			Name() const;
 	inline	uint32				Identifier() const
 									{ return fIdentifier; }
 

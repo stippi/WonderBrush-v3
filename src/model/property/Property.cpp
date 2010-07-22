@@ -17,6 +17,8 @@
 
 #include "support.h"
 
+#include "CommonPropertyIDs.h"
+
 using std::nothrow;
 
 // constructor
@@ -86,6 +88,13 @@ void
 Property::SetEditable(bool editable)
 {
 	fEditable = editable;
+}
+
+// Name
+const char*
+Property::Name() const
+{
+	return name_for_id(fIdentifier);
 }
 
 // #pragma mark -
