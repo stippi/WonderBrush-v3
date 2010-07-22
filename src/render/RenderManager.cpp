@@ -767,7 +767,7 @@ RenderManager::_TraverseLayerSnapshots(LayerSnapshotVisitor* visitor,
 void
 RenderManager::_AllRenderThreadsDone()
 {
-bool scrollingDelayed = fScrollingDelayed;
+//bool scrollingDelayed = fScrollingDelayed;
 	// executed in a rendering thread
 	if (fCleanArea.IsValid()) {
 		_BackToDisplay(fCleanArea);
