@@ -12,6 +12,7 @@ LayoutState::LayoutState()
 	// TODO: Default to global Null paints! (black/white or whatever)
 	, fFillPaint(NULL)
 	, fStrokePaint(NULL)
+	, fStrokeProperties(NULL)
 {
 }
 
@@ -21,7 +22,11 @@ LayoutState::LayoutState(LayoutState* previous)
 	, Matrix(previous->Matrix)
 	, fFillPaint(NULL)
 	, fStrokePaint(NULL)
+	, fStrokeProperties(NULL)
 {
+	SetFillPaint(previous->fFillPaint);
+	SetStrokePaint(previous->fStrokePaint);
+	SetStrokeProperties(previous->fStrokeProperties);
 }
 
 // destructor
@@ -39,6 +44,7 @@ LayoutState::operator=(const LayoutState& other)
 	Matrix = other.Matrix;
 	SetFillPaint(other.fFillPaint);
 	SetStrokePaint(other.fStrokePaint);
+	SetStrokeProperties(other.fStrokeProperties);
 
 	return *this;
 }
@@ -47,33 +53,41 @@ LayoutState::operator=(const LayoutState& other)
 void
 LayoutState::SetFillPaint(Paint* paint)
 {
-	_SetPaint(fFillPaint, paint);
+	_SetMember(fFillPaint, paint);
 }
 
 // SetStrokePaint
 void
 LayoutState::SetStrokePaint(Paint* paint)
 {
-	_SetPaint(fStrokePaint, paint);
+	_SetMember(fStrokePaint, paint);
 }
 
-// _SetPaint
+// SetStrokeProperties
 void
-LayoutState::_SetPaint(Paint*& member, Paint* paint)
+LayoutState::SetStrokeProperties(::StrokeProperties* properties)
 {
-	// The theory here is that the paint objects held by a LayoutState
-	// are always only additional references to existing paint objects
-	// that never change through the LayoutState. So all the LayoutState
-	// needs to do is to add/remove references.
-	if (member == paint)
+	_SetMember(fStrokeProperties, properties);
+}
+
+// _SetMember
+template <typename MemberType>
+void
+LayoutState::_SetMember(MemberType*& member, MemberType* newMember)
+{
+	// The theory here is that the objects held by a LayoutState are
+	// always only additional references to existing objects that never
+	// change through the LayoutState. So all the LayoutState needs to do
+	// is to add/remove references.
+	if (member == newMember)
 		return;
 
 	if (member != NULL)
 		member->RemoveReference();
 
-	if (paint != NULL)
-		paint->AddReference();
+	if (newMember != NULL)
+		newMember->AddReference();
 
-	member = paint;
+	member = newMember;
 }
 

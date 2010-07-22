@@ -25,17 +25,24 @@ public:
 
 			void				SetFillPaint(Paint* paint);
 			void				SetStrokePaint(Paint* paint);
+			void				SetStrokeProperties(
+									::StrokeProperties* properties);
 
 	inline	const Paint*		FillPaint() const
 									{ return fFillPaint; }
 	inline	const Paint*		StrokePaint() const
 									{ return fStrokePaint; }
+	inline	const ::StrokeProperties* StrokeProperties() const
+									{ return fStrokeProperties; }
 
 private:
-			void				_SetPaint(Paint*& member, Paint* paint);
+			template <typename MemberType>
+			void				_SetMember(MemberType*& member,
+									MemberType* newMember);
 
 			Paint*				fFillPaint;
 			Paint*				fStrokePaint;
+			::StrokeProperties*	fStrokeProperties;
 };
 
 #endif // LAYOUT_STATE_H
