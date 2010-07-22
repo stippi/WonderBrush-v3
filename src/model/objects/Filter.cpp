@@ -43,9 +43,9 @@ Filter::DefaultName() const
 
 // AddProperties
 void
-Filter::AddProperties(PropertyObject* object) const
+Filter::AddProperties(PropertyObject* object, uint32 flags) const
 {
-	BaseObject::AddProperties(object);
+	BaseObject::AddProperties(object, flags);
 
 	object->AddProperty(new (std::nothrow) FloatProperty(
 		PROPERTY_FILTER_RADIUS, fFilterRadius, 0.0f, 10000.0f));
@@ -53,10 +53,10 @@ Filter::AddProperties(PropertyObject* object) const
 
 // SetToPropertyObject
 bool
-Filter::SetToPropertyObject(const PropertyObject* object)
+Filter::SetToPropertyObject(const PropertyObject* object, uint32 flags)
 {
 	AutoNotificationSuspender _(this);
-	BaseObject::SetToPropertyObject(object);
+	BaseObject::SetToPropertyObject(object, flags);
 
 	// filter radius
 	SetFilterRadius(object->Value(PROPERTY_FILTER_RADIUS, fFilterRadius));

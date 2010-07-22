@@ -18,10 +18,14 @@ class Gradient;
 class Paint : public BaseObject, public Listener {
 public:
 	enum {
-		NONE		= 0,
-		COLOR		= 1,
-		GRADIENT	= 2,
-		PATTERN		= 3
+		NONE			= 0,
+		COLOR			= 1,
+		GRADIENT		= 2,
+		PATTERN			= 3
+	};
+	enum {
+		FILL_PAINT		= 1 << 0,
+		STROKE_PAINT	= 1 << 1,
 	};
 
 								Paint();
@@ -36,9 +40,11 @@ public:
 	virtual	status_t			Unarchive(const BMessage* archive);
 	virtual	status_t			Archive(BMessage* into,
 									bool deep = true) const;
-	virtual	void				AddProperties(PropertyObject* object) const;
+	virtual	void				AddProperties(PropertyObject* object,
+									uint32 flags = 0) const;
 	virtual	bool				SetToPropertyObject(
-									const PropertyObject* object);
+									const PropertyObject* object,
+									uint32 flags = 0);
 	virtual	const char*			DefaultName() const;
 
 	// Listener interface
@@ -59,7 +65,7 @@ public:
 									{ return fType; }
 
 	static	void				AddTypeProperty(PropertyObject* object,
-									uint32 type);
+									uint32 propertyID, uint32 type);
 
 			void				SetColor(const rgb_color& color);
 	inline	rgb_color			Color() const

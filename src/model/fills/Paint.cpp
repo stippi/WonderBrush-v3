@@ -154,17 +154,23 @@ Paint::Archive(BMessage* into, bool deep) const
 
 // AddProperties
 void
-Paint::AddProperties(PropertyObject* object) const
+Paint::AddProperties(PropertyObject* object, uint32 flags) const
 {
-	AddTypeProperty(object, fType);
+	uint32 typeID = PROPERTY_FILL_PAINT_TYPE;
+	uint32 colorID = PROPERTY_FILL_PAINT_COLOR;
+	if ((flags & STROKE_PAINT) != 0) {
+		typeID = PROPERTY_STROKE_PAINT_TYPE;
+		colorID = PROPERTY_STROKE_PAINT_COLOR;
+	}
+
+	AddTypeProperty(object, typeID, fType);
 
 	switch (fType) {
 		default:
 		case NONE:
 			break;
 		case COLOR:
-			object->AddProperty(new ColorProperty(PROPERTY_PAINT_COLOR,
-				Color()));
+			object->AddProperty(new ColorProperty(colorID, Color()));
 			break;
 		case GRADIENT:
 			// TODO: ...
@@ -177,15 +183,22 @@ Paint::AddProperties(PropertyObject* object) const
 
 // SetToPropertyObject
 bool
-Paint::SetToPropertyObject(const PropertyObject* object)
+Paint::SetToPropertyObject(const PropertyObject* object, uint32 flags)
 {
 	AutoNotificationSuspender _(this);
 
-	BaseObject::SetToPropertyObject(object);
+	BaseObject::SetToPropertyObject(object, flags);
+
+	uint32 typeID = PROPERTY_FILL_PAINT_TYPE;
+	uint32 colorID = PROPERTY_FILL_PAINT_COLOR;
+	if ((flags & STROKE_PAINT) != 0) {
+		typeID = PROPERTY_STROKE_PAINT_TYPE;
+		colorID = PROPERTY_STROKE_PAINT_COLOR;
+	}
 
 	// Adopt the type first
 	OptionProperty* typeProperty = dynamic_cast<OptionProperty*>(
-		object->FindProperty(PROPERTY_PAINT_TYPE));
+		object->FindProperty(typeID));
 	if (typeProperty != NULL)
 		SetType(typeProperty->CurrentOptionID());
 
@@ -201,7 +214,7 @@ Paint::SetToPropertyObject(const PropertyObject* object)
 		case COLOR:
 		{
 			ColorProperty* colorProperty = dynamic_cast<ColorProperty*>(
-				object->FindProperty(PROPERTY_PAINT_COLOR));
+				object->FindProperty(colorID));
 			if (colorProperty != NULL)
 				SetColor(colorProperty->Value());
 			break;
@@ -401,9 +414,9 @@ Paint::SetType(uint32 type)
 
 // AddTypeProperty
 /*static*/ void
-Paint::AddTypeProperty(PropertyObject* object, uint32 type)
+Paint::AddTypeProperty(PropertyObject* object, uint32 propertyID, uint32 type)
 {
-	OptionProperty* typeProperty = new OptionProperty(PROPERTY_PAINT_TYPE);
+	OptionProperty* typeProperty = new OptionProperty(propertyID);
 	typeProperty->AddOption(NONE, "None");
 	typeProperty->AddOption(COLOR, "Color");
 	typeProperty->AddOption(GRADIENT, "Gradient");

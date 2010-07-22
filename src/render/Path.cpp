@@ -195,9 +195,9 @@ Path::Archive(BMessage* into, bool deep) const
 
 // AddProperties
 void
-Path::AddProperties(PropertyObject* object) const
+Path::AddProperties(PropertyObject* object, uint32 flags) const
 {
-	BaseObject::AddProperties(object);
+	BaseObject::AddProperties(object, flags);
 
 	// closed
 	object->AddProperty(new(std::nothrow) BoolProperty(PROPERTY_CLOSED,
@@ -214,10 +214,10 @@ Path::AddProperties(PropertyObject* object) const
 
 // SetToPropertyObject
 bool
-Path::SetToPropertyObject(const PropertyObject* object)
+Path::SetToPropertyObject(const PropertyObject* object, uint32 flags)
 {
 	AutoNotificationSuspender _(this);
-	BaseObject::SetToPropertyObject(object);
+	BaseObject::SetToPropertyObject(object, flags);
 
 	// closed
 	SetClosed(object->Value(PROPERTY_CLOSED, fClosed));

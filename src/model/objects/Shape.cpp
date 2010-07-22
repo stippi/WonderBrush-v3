@@ -67,16 +67,16 @@ Shape::Snapshot() const
 
 // AddProperties
 void
-Shape::AddProperties(PropertyObject* object) const
+Shape::AddProperties(PropertyObject* object, uint32 flags) const
 {
-	Styleable::AddProperties(object);
+	Styleable::AddProperties(object, flags);
 }
 
 // SetToPropertyObject
 bool
-Shape::SetToPropertyObject(const PropertyObject* object)
+Shape::SetToPropertyObject(const PropertyObject* object, uint32 flags)
 {
-	return Styleable::SetToPropertyObject(object);
+	return Styleable::SetToPropertyObject(object, flags);
 }
 
 // DefaultName

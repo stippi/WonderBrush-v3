@@ -36,24 +36,25 @@ Styleable::~Styleable()
 
 // AddProperties
 void
-Styleable::AddProperties(PropertyObject* object) const
+Styleable::AddProperties(PropertyObject* object, uint32 flags) const
 {
-	BoundedObject::AddProperties(object);
-	fStyle->AddProperties(object);
+	BoundedObject::AddProperties(object, flags);
+	fStyle->AddProperties(object, flags);
 }
 
 // SetToPropertyObject
 bool
-Styleable::SetToPropertyObject(const PropertyObject* object)
+Styleable::SetToPropertyObject(const PropertyObject* object, uint32 flags)
 {
 	AutoNotificationSuspender _(this);
 
-	BoundedObject::SetToPropertyObject(object);
+	BoundedObject::SetToPropertyObject(object, flags);
 
 	AutoNotificationSuspender styleSuspender(fStyle.Get());
-	fStyle->SetToPropertyObject(object);
+	if (fStyle->SetToPropertyObject(object, flags))
+		Notify();
 
-	if (HasPendingNotifications() || fStyle->HasPendingNotifications()) {
+	if (HasPendingNotifications()) {
 		UpdateChangeCounter();
 		InvalidateParent(TransformedBounds());
 		return true;

@@ -88,7 +88,7 @@ BaseObject::MakePropertyObject() const
 
 // AddProperties
 void
-BaseObject::AddProperties(PropertyObject* object) const
+BaseObject::AddProperties(PropertyObject* object, uint32 flags) const
 {
 	object->AddProperty(new(std::nothrow) StringProperty(PROPERTY_NAME,
 		fName.String()));
@@ -96,7 +96,7 @@ BaseObject::AddProperties(PropertyObject* object) const
 
 // SetToPropertyObject
 bool
-BaseObject::SetToPropertyObject(const PropertyObject* object)
+BaseObject::SetToPropertyObject(const PropertyObject* object, uint32 flags)
 {
 	AutoNotificationSuspender _(this);
 

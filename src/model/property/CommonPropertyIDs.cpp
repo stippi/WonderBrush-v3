@@ -90,16 +90,36 @@ name_for_id(int32 id)
 			name = "Filter Radius";
 			break;
 
-		case PROPERTY_PAINT_TYPE:
+		case PROPERTY_GROUP_STROKE_PAINT:
+			name = "Stroke";
+			break;
+		case PROPERTY_GROUP_FILL_PAINT:
+			name = "Fill";
+			break;
+
+		case PROPERTY_FILL_PAINT_TYPE:
 			name = "Type";
 			break;
-		case PROPERTY_PAINT_COLOR:
+		case PROPERTY_FILL_PAINT_COLOR:
 			name = "Color";
 			break;
-		case PROPERTY_PAINT_GRADIENT:
+		case PROPERTY_FILL_PAINT_GRADIENT:
 			name = "Gradient";
 			break;
-		case PROPERTY_PAINT_PATTERN:
+		case PROPERTY_FILL_PAINT_PATTERN:
+			name = "Pattern";
+			break;
+
+		case PROPERTY_STROKE_PAINT_TYPE:
+			name = "Type";
+			break;
+		case PROPERTY_STROKE_PAINT_COLOR:
+			name = "Color";
+			break;
+		case PROPERTY_STROKE_PAINT_GRADIENT:
+			name = "Gradient";
+			break;
+		case PROPERTY_STROKE_PAINT_PATTERN:
 			name = "Pattern";
 			break;
 

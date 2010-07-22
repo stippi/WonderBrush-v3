@@ -11,6 +11,9 @@
 
 #include "ui_defines.h"
 
+#include "CommonPropertyIDs.h"
+#include "PropertyObjectProperty.h"
+
 
 PaintCache Style::sPaintCache;
 Style Style::sNullStyle;
@@ -120,52 +123,75 @@ Style::DefaultName() const
 
 // AddProperties
 void
-Style::AddProperties(PropertyObject* object) const
+Style::AddProperties(PropertyObject* object, uint32 flags) const
 {
-	BaseObject::AddProperties(object);
+//	BaseObject::AddProperties(object, flags);
+
+	PropertyObjectProperty* fillProperties
+		= new(std::nothrow) PropertyObjectProperty(
+			PROPERTY_GROUP_FILL_PAINT);
+	if (fillProperties == NULL || !object->AddProperty(fillProperties)) {
+		delete fillProperties;
+		return;
+	}
+
+	PropertyObjectProperty* strokeProperties
+		= new(std::nothrow) PropertyObjectProperty(
+			PROPERTY_GROUP_STROKE_PAINT);
+	if (strokeProperties == NULL || !object->AddProperty(strokeProperties)) {
+		delete strokeProperties;
+		return;
+	}
 
 	if (fFillPaint != NULL)
-		fFillPaint->AddProperties(object);
-	else
-		Paint::AddTypeProperty(object, Paint::NONE);
+		fFillPaint->AddProperties(&fillProperties->Value());
+	else {
+		Paint::AddTypeProperty(&fillProperties->Value(),
+			PROPERTY_FILL_PAINT_TYPE, Paint::NONE);
+	}
 
 	if (fStrokePaint != NULL)
-		fStrokePaint->AddProperties(object);
-	else
-		Paint::AddTypeProperty(object, Paint::NONE);
+		fStrokePaint->AddProperties(&strokeProperties->Value());
+	else {
+		Paint::AddTypeProperty(&strokeProperties->Value(),
+			PROPERTY_STROKE_PAINT_TYPE, Paint::NONE);
+	}
 }
 
 // SetToPropertyObject
 bool
-Style::SetToPropertyObject(const PropertyObject* object)
+Style::SetToPropertyObject(const PropertyObject* object, uint32 flags)
 {
 	AutoNotificationSuspender _(this);
-	BaseObject::SetToPropertyObject(object);
+//	BaseObject::SetToPropertyObject(object, flags);
 
 	// TODO: ...
 
-	bool ret = HasPendingNotifications();
-
-	Paint paint;
-
+	Paint fillPaint;
 	if (fFillPaint != NULL)
-		paint = *fFillPaint;
+		fillPaint = *fFillPaint;
 
-	// TODO: These really need to be sub-PropertyObjects!
-	if (paint.SetToPropertyObject(object)) {
-		SetFillPaint(paint);
-		ret = true;
+	if (fillPaint.SetToPropertyObject(object, flags | Paint::FILL_PAINT)) {
+		if (fillPaint.Type() == Paint::NONE)
+			UnsetFillPaint();
+		else
+			SetFillPaint(fillPaint);
+		Notify();
 	}
 
+	Paint strokePaint;
 	if (fStrokePaint != NULL)
-		paint = *fStrokePaint;
+		strokePaint = *fStrokePaint;
 
-	if (paint.SetToPropertyObject(object)) {
-		SetStrokePaint(paint);
-		ret = true;
+	if (strokePaint.SetToPropertyObject(object, flags | Paint::STROKE_PAINT)) {
+		if (strokePaint.Type() == Paint::NONE)
+			UnsetStrokePaint();
+		else
+			SetStrokePaint(strokePaint);
+		Notify();
 	}
 
-	return ret;
+	return HasPendingNotifications();
 }
 
 // SetFillPaint
@@ -200,7 +226,15 @@ Style::UnsetStrokePaint()
 void
 Style::SetStrokeProperties(const ::StrokeProperties& properties)
 {
-	// TODO
+	uint64 setProperties = properties.SetProperties();
+	if (setProperties == 0) {
+		::StrokeProperties* heapProperties
+			= new(std::nothrow) ::StrokeProperties(properties);
+		_SetProperty(fStrokeProperties, heapProperties, setProperties);
+		// Get rid of the creator reference.
+		heapProperties->RemoveReference();
+	} else
+		_SetProperty< ::StrokeProperties>(fStrokeProperties, NULL, 0);
 }
 
 // SetStrokeProperties

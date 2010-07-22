@@ -59,9 +59,11 @@ public:
 	virtual	status_t			Archive(BMessage* into,
 									bool deep = true) const;
 
-	virtual	void				AddProperties(PropertyObject* object) const;
+	virtual	void				AddProperties(PropertyObject* object,
+									uint32 flags = 0) const;
 	virtual	bool				SetToPropertyObject(
-									const PropertyObject* object);
+									const PropertyObject* object,
+									uint32 flags = 0);
 
 	// Path
 			Path&				operator=(const Path& from);
