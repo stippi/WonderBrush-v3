@@ -16,28 +16,34 @@
 #include "support_ui.h"
 #include "ui_defines.h"
 
-#include "CommonPropertyIDs.h"
-#include "Property.h"
+#include "PropertyObjectProperty.h"
 #include "PropertyEditorFactory.h"
 #include "PropertyEditorView.h"
 #include "PropertyListView.h"
 
+static const float kIndentationWidth = 10.0f;
+static const float kSpacing = 5.0f;
+
 // constructor
-PropertyItemView::PropertyItemView(Property* property)
+PropertyItemView::PropertyItemView(Property* property, int32 indentation)
 	: BView(BRect(0.0, 0.0, 10.0, 10.0), "property item",
 			B_FOLLOW_LEFT_RIGHT | B_FOLLOW_TOP,
-			B_NAVIGABLE | B_WILL_DRAW | B_FRAME_EVENTS | B_FULL_UPDATE_ON_RESIZE),
+			B_NAVIGABLE | B_WILL_DRAW | B_FRAME_EVENTS
+				| B_FULL_UPDATE_ON_RESIZE),
 	  fParent(NULL),
 	  fEditorView(/*factory->*/EditorFor(property)),
 	  	// NOTE: can be NULL if property is NULL or unkown
 	  fSelected(false),
 	  fEnabled(true),
-	  fLabelWidth(0.0)
+	  fLabelWidth(0.0),
+	  fIndentation(indentation)
 {
 	if (fEditorView) {
 		AddChild(fEditorView);
 		fEditorView->SetItemView(this);
 	}
+	if (dynamic_cast<PropertyObjectProperty*>(property) != NULL)
+		SetFont(be_bold_font);
 }
 
 // destructor
@@ -64,21 +70,23 @@ PropertyItemView::Draw(BRect updateRect)
 		BFont font;
 		GetFont(&font);
 		
-		BString truncated(name_for_id(property->Identifier()));
-		font.TruncateString(&truncated, B_TRUNCATE_MIDDLE, fLabelWidth - 10.0);
+		BString truncated(property->Name());
+		float spacing = kSpacing * 2;
+		spacing += kIndentationWidth * fIndentation;
+		font.TruncateString(&truncated, B_TRUNCATE_END, fLabelWidth - spacing);
 
 		font_height fh;
 		font.GetHeight(&fh);
 
 		FillRect(BRect(b.left, b.top, b.left + fLabelWidth, b.bottom), B_SOLID_LOW);
-		DrawString(truncated.String(), BPoint(b.left + 5.0,
-											  floorf(b.top + b.Height() / 2.0
-												  		   + fh.ascent / 2.0)));
+		DrawString(truncated.String(), BPoint(
+			b.left + kSpacing + kIndentationWidth * fIndentation,
+			floorf(b.top + b.Height() / 2.0 + fh.ascent / 2.0)));
 
 		// draw a "separator" line behind the label
 		SetHighColor(tint_color(LowColor(), B_DARKEN_1_TINT));
 		StrokeLine(BPoint(b.left + fLabelWidth - 1.0, b.top),
-				   BPoint(b.left + fLabelWidth - 1.0, b.bottom), B_SOLID_HIGH);
+			BPoint(b.left + fLabelWidth - 1.0, b.bottom), B_SOLID_HIGH);
 	}
 }
 
@@ -114,11 +122,12 @@ PropertyItemView::MouseDown(BPoint where)
 
 		if (BMessage* message = Window()->CurrentMessage()) {
 			int32 clicks;
-			if (message->FindInt32("clicks", &clicks) >= B_OK)
+			if (message->FindInt32("clicks", &clicks) >= B_OK) {
 				if (clicks >= 2)
 					fParent->DoubleClicked(this);
 				else
 					fParent->Clicked(this);
+			}
 		}
 	}
 }
@@ -154,8 +163,10 @@ float
 PropertyItemView::PreferredLabelWidth() const
 {
 	float width = 0.0;
-	if (const Property* property = GetProperty())
-		width = ceilf(StringWidth(name_for_id(property->Identifier())) + 10.0);
+	if (const Property* property = GetProperty()) {
+		width = ceilf(StringWidth(property->Name()) + 2 * kSpacing);
+		width += kIndentationWidth * fIndentation;
+	}
 	return width;
 }
 

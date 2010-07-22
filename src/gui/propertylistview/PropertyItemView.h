@@ -17,7 +17,8 @@ class PropertyListView;
 
 class PropertyItemView : public BView {
  public:
-								PropertyItemView(Property* property);
+								PropertyItemView(Property* property,
+									int32 indentation);
 	virtual						~PropertyItemView();
 
 	// BView interface
@@ -58,6 +59,7 @@ class PropertyItemView : public BView {
 	bool						fSelected;
 	bool						fEnabled;
 	float						fLabelWidth;
+	int32						fIndentation;
 };
 
 #endif // PROPERTY_ITEM_VIEW_H

@@ -88,6 +88,15 @@ private:
 
 			BRect				_ItemsRect() const;
 			void				_LayoutItems();
+			bool				_AdoptItemsRecursive(
+									const PropertyObject* object,
+									int32& viewIndex);
+			void				_BuildItemsRecursive(
+									const PropertyObject* object,
+									int32& indentation);
+			bool				_RecursiveFindProperty(uint32 propertyID,
+									PropertyObject*& object,
+									Property*& property) const;
 
 			void				_CheckMenuStatus();
 

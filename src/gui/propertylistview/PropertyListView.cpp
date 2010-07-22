@@ -26,6 +26,7 @@
 #include "Property.h"
 #include "PropertyItemView.h"
 #include "PropertyObject.h"
+#include "PropertyObjectProperty.h"
 #include "Scrollable.h"
 #include "Scroller.h"
 #include "ScrollView.h"
@@ -260,7 +261,7 @@ PropertyListView::MinSize()
 {
 	// We need a stable min size: the BView implementation uses
 	// GetPreferredSize(), which by default just returns the current size.
-	return BLayoutUtils::ComposeSize(ExplicitMinSize(), BSize(10, 10));
+	return BLayoutUtils::ComposeSize(ExplicitMinSize(), BSize(100, 50));
 }
 
 
@@ -276,7 +277,7 @@ PropertyListView::PreferredSize()
 {
 	// We need a stable preferred size: the BView implementation uses
 	// GetPreferredSize(), which by default just returns the current size.
-	return BLayoutUtils::ComposeSize(ExplicitPreferredSize(), BSize(100, 50));
+	return BLayoutUtils::ComposeSize(ExplicitPreferredSize(), BSize(100, 120));
 }
 
 #endif // __HAIKU__
@@ -379,26 +380,12 @@ PropertyListView::SetTo(PropertyObject* object)
 	// work, but we keep being defensive
 	if (fPropertyObject && object &&
 		fPropertyObject->ContainsSameProperties(*object)) {
-		// iterate over view items and update their value views
-		bool error = false;
-		for (int32 i = 0; PropertyItemView* item = _ItemAt(i); i++) {
-			Property* property = object->PropertyAt(i);
-			if (!item->AdoptProperty(property)) {
-				// the reason for this can be that the property is
-				// unkown to the PropertyEditorFactory and therefor
-				// there is no editor view at this item
-				fprintf(stderr, "PropertyListView::_SetTo() - "
-								"property mismatch at %ld\n", i);
-				error = true;
-				break;
-			}
-			if (property)
-				item->SetEnabled(property->IsEditable());
-		}
-		// we didn't need to make empty, but transfer ownership
-		// of the object
-		if (!error) {
-			// if the "adopt" process went only halfway,
+		// We don't need to _MakeEmpty(), but can transfer ownership
+		// of the object.
+		// Iterate over view items and update their value views.
+		int32 viewIndex = 0;
+		if (_AdoptItemsRecursive(object, viewIndex)) {
+			// If the "adopt" process went only halfway,
 			// some properties of the original object
 			// are still referenced, so we can only
 			// delete the original object if the process
@@ -428,11 +415,8 @@ PropertyListView::SetTo(PropertyObject* object)
 
 		if (fPropertyObject) {
 			// fill with content
-			for (int32 i = 0; Property* property = fPropertyObject->PropertyAt(i); i++) {
-				PropertyItemView* item = new PropertyItemView(property);
-				item->SetEnabled(property->IsEditable());
-				_AddItem(item);
-			}
+			int32 indentation = 0;
+			_BuildItemsRecursive(fPropertyObject, indentation);
 			_LayoutItems();
 
 			// restore scroll pos, selection and focus
@@ -496,19 +480,36 @@ PropertyListView::IsEditingMultipleObjects()
 void
 PropertyListView::UpdateObject(uint32 propertyID)
 {
-	Property* previous = fSavedProperties->FindProperty(propertyID);
-	Property* current = fPropertyObject->FindProperty(propertyID);
-	if (previous && current) {
-		// call hook function
-		PropertyChanged(previous, current);
-		// update saved property if it is still contained
-		// in the saved properties (if not, the notification
-		// mechanism has caused to update the properties
-		// and "previous" and "current" are toast)
-		if (fSavedProperties->HasProperty(previous)
-			&& fPropertyObject->HasProperty(current))
-			previous->SetValue(current);
+	PropertyObject* savedObject = fSavedProperties;
+	PropertyObject* currentObject = fPropertyObject;
+	Property* saved = NULL;
+	Property* current = NULL;
+
+	if (!_RecursiveFindProperty(propertyID, savedObject, saved)
+		|| !_RecursiveFindProperty(propertyID, currentObject, current)) {
+		fprintf(stderr, "PropertyListView::UpdateObject(%lu) - "
+			"properties not found!\n", propertyID);
+		return;
 	}
+	// call hook function
+	PropertyChanged(saved, current);
+
+	// update saved property if it is still contained
+	// in the saved properties (if not, the notification
+	// mechanism has caused to update the properties
+	// and "previous" and "current" are toast)
+	PropertyObject* newSavedObject = fSavedProperties;
+	PropertyObject* newCurrentObject = fPropertyObject;
+	Property* newSaved = NULL;
+	Property* newCurrent = NULL;
+
+	if (!_RecursiveFindProperty(propertyID, newSavedObject, newSaved)
+		|| !_RecursiveFindProperty(propertyID, newCurrentObject, newCurrent)) {
+		return;
+	}
+	
+	if (newSaved == saved)
+		newSaved->SetValue(newCurrent);
 }
 
 // ScrollOffsetChanged
@@ -693,6 +694,88 @@ PropertyListView::_LayoutItems()
 
 		AddChild(item);
 	}
+}
+
+// _AdoptItemsRecursive
+bool
+PropertyListView::_AdoptItemsRecursive(const PropertyObject* object,
+	int32& viewIndex)
+{
+	int32 count = object->CountProperties();
+	for (int32 i = 0; i < count; i++) {
+		Property* property = object->PropertyAtFast(i);
+
+		PropertyItemView* item = _ItemAt(viewIndex);
+		if (item == NULL)
+			return false;
+
+		if (!item->AdoptProperty(property)) {
+			// the reason for this can be that the property is
+			// unkown to the PropertyEditorFactory and therefor
+			// there is no editor view at this item
+			fprintf(stderr, "PropertyListView::_SetTo() - "
+							"property mismatch at %ld\n", viewIndex);
+			return false;
+		}
+
+		viewIndex++;
+		item->SetEnabled(property->IsEditable());
+
+		PropertyObjectProperty* subObjectProperty
+			= dynamic_cast<PropertyObjectProperty*>(property);
+		if (subObjectProperty != NULL) {
+			if (!_AdoptItemsRecursive(&subObjectProperty->Value(), viewIndex))
+				return false;
+		}
+	}
+
+	return true;
+}
+
+// _BuildItemsRecursive
+void
+PropertyListView::_BuildItemsRecursive(const PropertyObject* object,
+	int32& indentation)
+{
+	int32 count = object->CountProperties();
+	for (int32 i = 0; i < count; i++) {
+		Property* property = object->PropertyAtFast(i);
+		PropertyItemView* item = new PropertyItemView(property, indentation);
+		item->SetEnabled(property->IsEditable());
+		_AddItem(item);
+
+		PropertyObjectProperty* subObjectProperty
+			= dynamic_cast<PropertyObjectProperty*>(property);
+		if (subObjectProperty != NULL) {
+			indentation++;
+			_BuildItemsRecursive(&subObjectProperty->Value(), indentation);
+			indentation--;
+		}
+	}
+}
+
+// _RecursiveFindProperty
+bool
+PropertyListView::_RecursiveFindProperty(uint32 propertyID,
+	PropertyObject*& object, Property*& property) const
+{
+	property = object->FindProperty(propertyID, false);
+	if (property != NULL)
+		return true;
+
+	// search in sub-objects
+	PropertyObject* parent = object;
+	int32 count = parent->CountProperties();
+	for (int32 i = 0; i < count; i++) {
+		PropertyObjectProperty* subProperty
+			= dynamic_cast<PropertyObjectProperty*>(parent->PropertyAtFast(i));
+		if (subProperty == NULL)
+			continue;
+		object = &subProperty->Value();
+		if (_RecursiveFindProperty(propertyID, object, property))
+			return true;
+	}
+	return false;
 }
 
 // _CheckMenuStatus

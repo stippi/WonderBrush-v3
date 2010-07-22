@@ -27,6 +27,7 @@ StaticLibrary libpropertylistview.a :
 	BoolValueView.cpp
 	ColorValueView.cpp
 	FloatValueView.cpp
+	EmptyValueView.cpp
 	IconValueView.cpp
 	Int64ValueView.cpp
 	IntValueView.cpp

@@ -1,9 +1,6 @@
 /*
- * Copyright 2006, Haiku.
- * Distributed under the terms of the MIT License.
- *
- * Authors:
- *		Stephan Aßmus <superstippi@gmx.de>
+ * Copyright 2006-2010, Stephan Aßmus <superstippi@gmx.de>.
+ * All rights reserved. Distributed under the terms of the MIT License.
  */
 
 #include "PropertyEditorFactory.h"
@@ -13,9 +10,11 @@
 #include "IconProperty.h"
 #include "Int64Property.h"
 #include "OptionProperty.h"
+#include "PropertyObjectProperty.h"
 
 #include "BoolValueView.h"
 #include "ColorValueView.h"
+#include "EmptyValueView.h"
 #include "FloatValueView.h"
 #include "IconValueView.h"
 #include "IntValueView.h"
@@ -56,6 +55,8 @@ EditorFor(Property* p)
 		return view;
 	}
 
+	if (dynamic_cast<PropertyObjectProperty*>(p) != NULL)
+		return new EmptyValueView(p);
 
 	return NULL;
 }
