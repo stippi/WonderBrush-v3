@@ -52,6 +52,7 @@ public:
 									float* _height);
 
 #ifdef __HAIKU__
+	virtual	BSize				MinSize();
 	virtual	BSize				MaxSize();
 #endif
 

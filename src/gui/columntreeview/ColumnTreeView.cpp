@@ -377,6 +377,15 @@ ColumnTreeView::GetPreferredSize(float* _width, float* _height)
 #ifdef __HAIKU__
 
 BSize
+ColumnTreeView::MinSize()
+{
+	float width;
+	float height;
+	GetPreferredSize(&width, &height);
+	return BLayoutUtils::ComposeSize(ExplicitMinSize(), BSize(width, height));
+}
+
+BSize
 ColumnTreeView::MaxSize()
 {
 	return BLayoutUtils::ComposeSize(ExplicitMaxSize(),
