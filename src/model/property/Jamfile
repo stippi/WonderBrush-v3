@@ -22,6 +22,7 @@ StaticLibrary libproperty.a :
 	CommonPropertyIDs.cpp
 	Property.cpp
 	PropertyObject.cpp
+	PropertyObjectProperty.cpp
 ;
 # </pe-src>
 

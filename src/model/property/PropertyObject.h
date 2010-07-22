@@ -1,9 +1,6 @@
 /*
- * Copyright 2006, Haiku.
- * Distributed under the terms of the MIT License.
- *
- * Authors:
- *		Stephan Aßmus <superstippi@gmx.de>
+ * Copyright 2006-2010, Stephan Aßmus <superstippi@gmx.de>.
+ * All rights reserved. Distributed under the terms of the MIT License.
  */
 
 #ifndef PROPERTY_OBJECT_H
@@ -16,7 +13,7 @@ class BString;
 class Property;
 
 class PropertyObject : public Notifier {
- public:
+public:
 								PropertyObject();
 								PropertyObject(const PropertyObject& other);
 	virtual						~PropertyObject();
@@ -30,15 +27,16 @@ class PropertyObject : public Notifier {
 			Property*			PropertyAtFast(int32 index) const;
 			int32				CountProperties() const;
 
-			Property*			FindProperty(uint32 propertyID) const;
+			Property*			FindProperty(uint32 propertyID,
+									bool recursive = true) const;
 			bool				HasProperty(Property* property) const;
 
 			bool				ContainsSameProperties(
 									const PropertyObject& other) const;
- private:
+private:
 			status_t			Assign(const PropertyObject& other);
 
- public:
+public:
 			void				DeleteProperties();
 			bool				DeleteProperty(uint32 propertyID);
 
@@ -72,7 +70,7 @@ class PropertyObject : public Notifier {
 			bool				Value(uint32 propertyID,
 									  bool defaultValue) const;
 
- private:
+private:
 			BList				fProperties;
 };
 

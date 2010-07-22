@@ -15,7 +15,7 @@
 #include <OS.h>
 
 #include "Int64Property.h"
-#include "Property.h"
+#include "PropertyObjectProperty.h"
 
 #ifndef DEBUG
 #	define DEBUG 0
@@ -159,13 +159,22 @@ PropertyObject::CountProperties() const
 
 // FindProperty
 Property*
-PropertyObject::FindProperty(uint32 propertyID) const
+PropertyObject::FindProperty(uint32 propertyID, bool recursive) const
 {
 	int32 count = fProperties.CountItems();
 	for (int32 i = 0; i < count; i++) {
 		Property* p = (Property*)fProperties.ItemAtFast(i);
 		if (p->Identifier() == propertyID)
 			return p;
+		if (recursive) {
+			PropertyObjectProperty* subProperties
+				= dynamic_cast<PropertyObjectProperty*>(p);
+			if (subProperties != NULL) {
+				p = subProperties->Value().FindProperty(propertyID, true);
+				if (p != NULL)
+					return p;
+			}
+		}
 	}
 	return NULL;
 }
@@ -181,6 +190,9 @@ PropertyObject::HasProperty(Property* property) const
 bool
 PropertyObject::ContainsSameProperties(const PropertyObject& other) const
 {
+	if (this == &other)
+		return true;
+
 	bool equal = false;
 	int32 count = CountProperties();
 	if (count == other.CountProperties()) {
@@ -191,6 +203,22 @@ PropertyObject::ContainsSameProperties(const PropertyObject& other) const
 			if (ownProperty->Identifier() != otherProperty->Identifier()) {
 				equal = false;
 				break;
+			}
+			// Check sub property objects recursively.
+			PropertyObjectProperty* ownSubObjectProperty
+				= dynamic_cast<PropertyObjectProperty*>(ownProperty);
+			PropertyObjectProperty* otherSubObjectProperty
+				= dynamic_cast<PropertyObjectProperty*>(otherProperty);
+			if (ownSubObjectProperty != NULL
+				&& otherSubObjectProperty != NULL) {
+				if (!ownSubObjectProperty->Value().ContainsSameProperties(
+					otherSubObjectProperty->Value())) {
+					return false;
+				}
+			} else {
+				// One of them is NULL, so both need to be NULL at this point.
+				if (ownSubObjectProperty != otherSubObjectProperty)
+					return false;
 			}
 		}
 	}
