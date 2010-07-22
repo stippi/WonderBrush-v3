@@ -7,7 +7,6 @@
 
 #include <stdio.h>
 
-#include "CommonPropertyIDs.h"
 #include "BaseObject.h"
 #include "Property.h"
 #include "PropertyObject.h"
@@ -38,9 +37,9 @@ status_t
 SetPropertiesCommand::InitCheck()
 {
 	return fObjects && fOldProperties && fNewProperties
-		   && fObjectCount > 0 && fOldProperties->CountProperties() > 0
-		   && fOldProperties->ContainsSameProperties(*fNewProperties) ?
-		   B_OK : B_NO_INIT;
+		&& fObjectCount > 0 && fOldProperties->CountProperties() > 0
+		&& fOldProperties->ContainsSameProperties(*fNewProperties)
+		? B_OK : B_NO_INIT;
 }
 
 // Perform
@@ -75,8 +74,7 @@ SetPropertiesCommand::GetName(BString& name)
 		else
 			name << "Paste Properties";
 	} else {
-		BString property = name_for_id(
-			fOldProperties->PropertyAt(0)->Identifier());
+		BString property = fOldProperties->PropertyAt(0)->Name();
 		if (fObjectCount > 1)
 			name << "Multi Set " << property;
 		else
