@@ -127,37 +127,10 @@ Style::AddProperties(PropertyObject* object, uint32 flags) const
 {
 //	BaseObject::AddProperties(object, flags);
 
-	PropertyObjectProperty* fillProperties
-		= new(std::nothrow) PropertyObjectProperty(
-			PROPERTY_GROUP_FILL_PAINT);
-	if (fillProperties == NULL || !object->AddProperty(fillProperties)) {
-		delete fillProperties;
-		return;
-	}
-
-	PropertyObjectProperty* strokeProperties
-		= new(std::nothrow) PropertyObjectProperty(
-			PROPERTY_GROUP_STROKE_PAINT);
-	if (strokeProperties == NULL || !object->AddProperty(strokeProperties)) {
-		delete strokeProperties;
-		return;
-	}
-
-	if (fFillPaint != NULL) {
-		fFillPaint->AddProperties(&fillProperties->Value(),
-			flags | Paint::FILL_PAINT);
-	} else {
-		Paint::AddTypeProperty(&fillProperties->Value(),
-			PROPERTY_FILL_PAINT_TYPE, Paint::NONE);
-	}
-
-	if (fStrokePaint != NULL) {
-		fStrokePaint->AddProperties(&strokeProperties->Value(),
-			flags | Paint::STROKE_PAINT);
-	} else {
-		Paint::AddTypeProperty(&strokeProperties->Value(),
-			PROPERTY_STROKE_PAINT_TYPE, Paint::NONE);
-	}
+	_AddPaintProperties(fFillPaint, PROPERTY_GROUP_FILL_PAINT,
+		PROPERTY_FILL_PAINT_TYPE, object, flags | Paint::FILL_PAINT);
+	_AddPaintProperties(fStrokePaint, PROPERTY_GROUP_STROKE_PAINT,
+		PROPERTY_STROKE_PAINT_TYPE, object, flags | Paint::STROKE_PAINT);
 }
 
 // SetToPropertyObject
@@ -168,30 +141,10 @@ Style::SetToPropertyObject(const PropertyObject* object, uint32 flags)
 //	BaseObject::SetToPropertyObject(object, flags);
 
 	// TODO: ...
-
-	Paint fillPaint;
-	if (fFillPaint != NULL)
-		fillPaint = *fFillPaint;
-
-	if (fillPaint.SetToPropertyObject(object, flags | Paint::FILL_PAINT)) {
-		if (fillPaint.Type() == Paint::NONE)
-			UnsetFillPaint();
-		else
-			SetFillPaint(fillPaint);
-		Notify();
-	}
-
-	Paint strokePaint;
-	if (fStrokePaint != NULL)
-		strokePaint = *fStrokePaint;
-
-	if (strokePaint.SetToPropertyObject(object, flags | Paint::STROKE_PAINT)) {
-		if (strokePaint.Type() == Paint::NONE)
-			UnsetStrokePaint();
-		else
-			SetStrokePaint(strokePaint);
-		Notify();
-	}
+	_SetPaintToPropertyObject(fFillPaint, FILL_PAINT, object,
+		flags | Paint::FILL_PAINT);
+	_SetPaintToPropertyObject(fStrokePaint, STROKE_PAINT, object,
+		flags | Paint::STROKE_PAINT);
 
 	return HasPendingNotifications();
 }
@@ -314,5 +267,40 @@ Style::_UnsetProperty(PropertyType*& member, CacheType& cache,
 	Notify();
 }
 
+// _AddPaintProperties
+void
+Style::_AddPaintProperties(const Paint* paint, uint32 groupID,
+	uint32 paintTypeID, PropertyObject* object, uint32 flags) const
+{
+	PropertyObjectProperty* paintProperties
+		= new(std::nothrow) PropertyObjectProperty(groupID);
+	if (paintProperties == NULL || !object->AddProperty(paintProperties)) {
+		delete paintProperties;
+		return;
+	}
 
+	if (paint != NULL)
+		paint->AddProperties(&paintProperties->Value(), flags);
+	else {
+		Paint::AddTypeProperty(&paintProperties->Value(), paintTypeID,
+			Paint::NONE);
+	}
+}
+
+// _SetPaintToPropertyObject
+void
+Style::_SetPaintToPropertyObject(SharedPaint*& member, uint64 setProperty,
+	const PropertyObject* object, uint32 flags)
+{
+	Paint paint;
+	if (member != NULL)
+		paint = *member;
+
+	if (paint.SetToPropertyObject(object, flags)) {
+		if (paint.Type() == Paint::NONE)
+			_UnsetProperty(member, sPaintCache, setProperty);
+		else
+			_SetProperty(member, paint, sPaintCache, setProperty);
+	}
+}
 

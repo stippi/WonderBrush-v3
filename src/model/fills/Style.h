@@ -73,6 +73,15 @@ private:
 									CacheType& cache,
 									uint64 setProperty);
 
+			void				_AddPaintProperties(const Paint* paint,
+									uint32 groupID, uint32 paintTypeID,
+									PropertyObject* object,
+									uint32 flags) const;
+			void				_SetPaintToPropertyObject(SharedPaint*& member,
+									uint64 setProperty,
+									const PropertyObject* object,
+									uint32 flags);
+
 private:
 	static	PaintCache			sPaintCache;
 	static	Style				sNullStyle;
