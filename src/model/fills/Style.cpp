@@ -143,16 +143,18 @@ Style::AddProperties(PropertyObject* object, uint32 flags) const
 		return;
 	}
 
-	if (fFillPaint != NULL)
-		fFillPaint->AddProperties(&fillProperties->Value());
-	else {
+	if (fFillPaint != NULL) {
+		fFillPaint->AddProperties(&fillProperties->Value(),
+			flags | Paint::FILL_PAINT);
+	} else {
 		Paint::AddTypeProperty(&fillProperties->Value(),
 			PROPERTY_FILL_PAINT_TYPE, Paint::NONE);
 	}
 
-	if (fStrokePaint != NULL)
-		fStrokePaint->AddProperties(&strokeProperties->Value());
-	else {
+	if (fStrokePaint != NULL) {
+		fStrokePaint->AddProperties(&strokeProperties->Value(),
+			flags | Paint::STROKE_PAINT);
+	} else {
 		Paint::AddTypeProperty(&strokeProperties->Value(),
 			PROPERTY_STROKE_PAINT_TYPE, Paint::NONE);
 	}
