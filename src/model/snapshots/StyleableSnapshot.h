@@ -28,7 +28,7 @@ public:
 private:
 			const Styleable*	fOriginal;
 protected:
-			Reference<Style>	fStyle;
+						Style	fStyle;
 };
 
 #endif // SHAPE_SNAPSHOT_H

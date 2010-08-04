@@ -17,7 +17,7 @@
 StyleableSnapshot::StyleableSnapshot(const Styleable* styleable)
 	: ObjectSnapshot(styleable)
 	, fOriginal(styleable)
-	, fStyle(styleable->Style())
+	, fStyle(*styleable->Style())
 {
 }
 
@@ -33,9 +33,7 @@ bool
 StyleableSnapshot::Sync()
 {
 	if (ObjectSnapshot::Sync()) {
-		// TODO: The point here is that Style needs to be a copy too,
-		// just like objects snapshot other data!
-		fStyle.SetTo(fOriginal->Style());
+		fStyle = *fOriginal->Style();
 		return true;
 	}
 	return false;
