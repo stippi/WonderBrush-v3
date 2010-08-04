@@ -1,24 +1,28 @@
 /*
- * Copyright 2009 Stephan Aßmus <superstippi@gmx.de>
+ * Copyright 2009-2010 Stephan Aßmus <superstippi@gmx.de>
  * All rights reserved.
  */
 
 #ifndef STROKE_PROPERTIES_H
 #define STROKE_PROPERTIES_H
 
+#include <agg_math_stroke.h>
+
 #include "Referenceable.h"
 #include "SetProperty.h"
 
 enum CapMode {
-	ButtCap									= 0,
-	SquareCap								= 1,
-	RoundCap								= 2
+	ButtCap									= agg::butt_cap,
+	SquareCap								= agg::square_cap,
+	RoundCap								= agg::round_cap
 };
 
 enum JoinMode {
-	MiterJoin								= 0,
-	RoundJoin								= 1,
-	BevelJoin								= 2,
+	MiterJoin								= agg::miter_join,
+	MiterJoinRevert							= agg::miter_join_revert,
+	RoundJoin								= agg::round_join,
+	BevelJoin								= agg::bevel_join,
+	MiterJoinRound							= agg::miter_join_round
 };
 
 class StrokeProperties : public Referenceable {
@@ -90,6 +94,16 @@ public:
 		*this = other;
 	}
 
+	StrokeProperties& operator=(const StrokeProperties& other)
+	{
+		fWidth = other.fWidth;
+		fMiterLimit = other.fMiterLimit;
+		fSetProperties = other.fSetProperties;
+		fCapMode = other.fCapMode;
+		fJoinMode = other.fJoinMode;
+		return *this;
+	}
+
 	bool operator==(const StrokeProperties& other) const
 	{
 		return fWidth == other.fWidth && fMiterLimit == other.fMiterLimit
@@ -127,17 +141,22 @@ public:
 		return fSetProperties;
 	}
 
-private:
-	StrokeProperties& operator=(const StrokeProperties& other)
+	inline size_t HashKey() const
 	{
-		fWidth = other.fWidth;
-		fMiterLimit = other.fMiterLimit;
-		fSetProperties = other.fSetProperties;
-		fCapMode = other.fCapMode;
-		fJoinMode = other.fJoinMode;
-		return *this;
+		// TODO: ...
+		return 0;
 	}
 
+	template<typename Converter>
+	inline void SetupAggConverter(Converter& converter) const
+	{
+		converter.width(fWidth);
+		converter.line_cap(static_cast<agg::line_cap_e>(fCapMode));
+		converter.line_join(static_cast<agg::line_join_e>(fJoinMode));
+		converter.miter_limit(fMiterLimit);
+	}
+
+private:
 	float		fWidth;
 	float		fMiterLimit;
 	uint32		fSetProperties : 10;
