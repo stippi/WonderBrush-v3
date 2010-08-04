@@ -271,7 +271,7 @@ SwatchView::_StrokeRect(BRect r, rgb_color leftTop,
 void
 SwatchView::_DragColor()
 {
-	BBitmap *bitmap = new BBitmap(BRect(0.0, 0.0, 15.0, 15.0), B_RGB32);
+	BBitmap *bitmap = new BBitmap(BRect(0.0, 0.0, 15.0, 15.0), B_RGBA32);
 	BMessage message = make_color_drop_message(fColor, bitmap);
 
 	DragMessage(&message, bitmap, B_OP_ALPHA, BPoint(9.0, 9.0));
