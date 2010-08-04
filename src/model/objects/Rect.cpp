@@ -109,7 +109,9 @@ Rect::Area() const
 BRect
 Rect::Bounds()
 {
-	return fArea;
+	BRect bounds = fArea;
+	Style()->ExtendBounds(bounds);
+	return bounds;
 }
 
 // #pragma mark -

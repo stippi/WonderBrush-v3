@@ -124,7 +124,9 @@ Shape::Area() const
 BRect
 Shape::Bounds()
 {
-	return fArea;
+	BRect bounds = fArea;
+	Style()->ExtendBounds(bounds);
+	return bounds;
 }
 
 // #pragma mark -
