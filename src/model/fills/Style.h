@@ -12,10 +12,13 @@
 #include "SharedObjectCache.h"
 #include "StrokeProperties.h"
 
+typedef SharedObject<Paint>					SharedPaint;
+typedef SharedObjectCache<Paint>			PaintCache;
 
-typedef SharedObject<Paint>			SharedPaint;
-typedef SharedObjectCache<Paint>	PaintCache;
+typedef SharedObject<StrokeProperties>		SharedStrokeProperties;
+typedef SharedObjectCache<StrokeProperties>	StrokePropertiesCache;
 
+class BRect;
 
 class Style : public BaseObject {
 public:
@@ -37,6 +40,7 @@ public:
 									uint32 flags = 0);
 
 	// Style
+			Style&				operator=(const Style& other);
 
 			void				SetFillPaint(const Paint& paint);
 			void				UnsetFillPaint();
@@ -50,10 +54,11 @@ public:
 
 			void				SetStrokeProperties(
 									const ::StrokeProperties& properties);
-			void				SetStrokeProperties(
-									::StrokeProperties* properties);
+			void				UnsetStrokeProperties();
 			::StrokeProperties*	StrokeProperties() const
 									{ return fStrokeProperties; }
+
+			void				ExtendBounds(BRect& bounds) const;
 
 private:
 			template<typename PropertyType>
@@ -84,6 +89,7 @@ private:
 
 private:
 	static	PaintCache			sPaintCache;
+	static	StrokePropertiesCache sStrokePropertiesCache;
 	static	Style				sNullStyle;
 
 			uint64				fSetProperties;
@@ -91,7 +97,7 @@ private:
 			SharedPaint*		fFillPaint;
 			SharedPaint*		fStrokePaint;
 
-			::StrokeProperties*	fStrokeProperties;
+			SharedStrokeProperties*	fStrokeProperties;
 };
 
 #endif // STYLE_H

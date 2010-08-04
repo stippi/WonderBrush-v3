@@ -9,6 +9,8 @@
 
 #include <new>
 
+#include <Rect.h>
+
 #include "ui_defines.h"
 
 #include "CommonPropertyIDs.h"
@@ -16,6 +18,7 @@
 
 
 PaintCache Style::sPaintCache;
+StrokePropertiesCache Style::sStrokePropertiesCache;
 Style Style::sNullStyle;
 
 //static int
@@ -61,25 +64,21 @@ Style::Style()
 	fStrokePaint(NULL),
 	fStrokeProperties(NULL)
 {
+	SetFillPaint(Paint::EmptyPaint());
+	SetStrokePaint(Paint::EmptyPaint());
+	SetStrokeProperties(::StrokeProperties());
 }
 
 // constructor
 Style::Style(const Style& other)
 	:
 	BaseObject(other),
-	fSetProperties(other.fSetProperties),
+	fSetProperties(0),
 	fFillPaint(NULL),
 	fStrokePaint(NULL),
 	fStrokeProperties(NULL)
 {
-	// We can directly add another reference to
-	if (other.fFillPaint != NULL)
-		SetFillPaint(*other.fFillPaint);
-
-	if (other.fStrokePaint != NULL)
-		SetFillPaint(*other.fStrokePaint);
-
-	SetStrokeProperties(other.fStrokeProperties);
+	*this = other;
 }
 
 // destructor
@@ -87,6 +86,7 @@ Style::~Style()
 {
 	UnsetFillPaint();
 	UnsetStrokePaint();
+	UnsetStrokeProperties();
 }
 
 // #pragma mark - BaseObject
@@ -140,13 +140,41 @@ Style::SetToPropertyObject(const PropertyObject* object, uint32 flags)
 	AutoNotificationSuspender _(this);
 //	BaseObject::SetToPropertyObject(object, flags);
 
-	// TODO: ...
+	// TODO: stroke stuff...
 	_SetPaintToPropertyObject(fFillPaint, FILL_PAINT, object,
 		flags | Paint::FILL_PAINT);
 	_SetPaintToPropertyObject(fStrokePaint, STROKE_PAINT, object,
 		flags | Paint::STROKE_PAINT);
 
 	return HasPendingNotifications();
+}
+
+// #pragma mark -
+
+// operator=
+Style&
+Style::operator=(const Style& other)
+{
+	// We can directly add another reference to the SharedPaints and
+	// StrokeProperties.
+	fSetProperties = other.fSetProperties;
+
+	if (other.fFillPaint != NULL)
+		SetFillPaint(*other.fFillPaint);
+	else
+		UnsetFillPaint();
+
+	if (other.fStrokePaint != NULL)
+		SetStrokePaint(*other.fStrokePaint);
+	else
+		UnsetStrokePaint();
+
+	if (other.fStrokeProperties != NULL)
+		SetStrokeProperties(*other.fStrokeProperties);
+	else
+		UnsetStrokeProperties();
+
+	return *this;
 }
 
 // SetFillPaint
@@ -181,25 +209,38 @@ Style::UnsetStrokePaint()
 void
 Style::SetStrokeProperties(const ::StrokeProperties& properties)
 {
-	uint64 setProperties = properties.SetProperties();
-	if (setProperties == 0) {
-		::StrokeProperties* heapProperties
-			= new(std::nothrow) ::StrokeProperties(properties);
-		_SetProperty(fStrokeProperties, heapProperties, setProperties);
-		// Get rid of the creator reference.
-		heapProperties->RemoveReference();
-	} else
-		_SetProperty< ::StrokeProperties>(fStrokeProperties, NULL, 0);
+	_SetProperty(fStrokeProperties, properties, sStrokePropertiesCache,
+		properties.SetProperties());
 }
 
-// SetStrokeProperties
+// UnsetStrokeProperties
 void
-Style::SetStrokeProperties(::StrokeProperties* properties)
+Style::UnsetStrokeProperties()
 {
-	uint64 setProperties = 0;
-	if (properties != NULL)
-		setProperties = properties->SetProperties();
-	_SetProperty(fStrokeProperties, properties, setProperties);
+	uint64 properties = STROKE_WIDTH | STROKE_JOIN_MODE | STROKE_CAP_MODE 
+		| STROKE_MITER_LIMIT;
+	_UnsetProperty(fStrokeProperties, sStrokePropertiesCache, properties);
+}
+
+// ExtendBounds
+void
+Style::ExtendBounds(BRect& bounds) const
+{
+	if (fStrokePaint == NULL || fStrokePaint->Type() == Paint::NONE)
+		return;
+
+	if (fStrokeProperties == NULL)
+		return;
+
+	float maxStrokeWidth = fStrokeProperties->Width();
+
+	if (fStrokeProperties->JoinMode() == MiterJoin
+		|| fStrokeProperties->JoinMode() == MiterJoinRevert
+		|| fStrokeProperties->JoinMode() == MiterJoinRound) {
+		maxStrokeWidth *= fStrokeProperties->MiterLimit();
+	}
+
+	bounds.InsetBy(-maxStrokeWidth, -maxStrokeWidth);
 }
 
 // #pragma mark -
@@ -296,11 +337,14 @@ Style::_SetPaintToPropertyObject(SharedPaint*& member, uint64 setProperty,
 	if (member != NULL)
 		paint = *member;
 
-	if (paint.SetToPropertyObject(object, flags)) {
-		if (paint.Type() == Paint::NONE)
-			_UnsetProperty(member, sPaintCache, setProperty);
-		else
-			_SetProperty(member, paint, sPaintCache, setProperty);
-	}
+	// We never unset the Paint member, since that would make it hard
+	// to revert changing only certain properties of the paint. Like for
+	// example when we have a color paint, then set the paint type to none,
+	// nobody would store the previous color if we would unset the paint
+	// entirely. If we set the type back to color, we would get the default
+	// color. Keeping the paint even if its type is 'none' means we can change
+	// any single property of the paint while still storing the others.
+	if (paint.SetToPropertyObject(object, flags))
+		_SetProperty(member, paint, sPaintCache, setProperty);
 }
 
