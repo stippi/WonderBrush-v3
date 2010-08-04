@@ -15,8 +15,8 @@
 #include <agg_span_interpolator_persp.h>
 #include <agg_span_subdiv_adaptor.h>
 
-
 #include "RenderBuffer.h"
+#include "SetProperty.h"
 
 using std::nothrow;
 
@@ -58,15 +58,13 @@ RenderEngine::~RenderEngine()
 
 // SetState
 void
-RenderEngine::SetStyle(const Style* style)
+RenderEngine::SetStyle(const Style& style)
 {
 	// TODO: Check what values are different first, before assigning,
 	// and apply them to the internal objects...
-	if (style == NULL)
-		return;
-
-	fState.SetFillPaint(style->FillPaint());
-	fState.SetStrokePaint(style->StrokePaint());
+	fState.SetFillPaint(style.FillPaint());
+	fState.SetStrokePaint(style.StrokePaint());
+	fState.SetStrokeProperties(style.StrokeProperties());
 
 	// TODO: More stuff from style...
 }
@@ -155,15 +153,30 @@ RenderEngine::DrawRectangle(const BRect& rect, BRect area)
 	if (!fState.Matrix.TransformBounds(rect).Intersects(area))
 		return;
 
-	fRasterizer.reset();
-
 	agg::rounded_rect roundRect(rect.left, rect.top, rect.right, rect.bottom,
 		0.0);
 	agg::conv_transform<agg::rounded_rect, Transformable>
 		transformedRoundRect(roundRect, fState.Matrix);
 
-	fRasterizer.add_path(transformedRoundRect);
-	_RenderScanlines();
+	if (fState.FillPaint() != NULL
+		&& fState.FillPaint()->Type() != Paint::NONE) {
+		fRasterizer.reset();
+		fRasterizer.add_path(transformedRoundRect);
+		_RenderScanlines(true);
+	}
+
+	if (fState.StrokePaint() != NULL
+		&& fState.StrokePaint()->Type() != Paint::NONE) {
+		fRasterizer.reset();
+
+		agg::conv_stroke<agg::conv_transform<agg::rounded_rect,
+			Transformable> > strokedRoundRect(transformedRoundRect);
+
+		fState.StrokeProperties()->SetupAggConverter(strokedRoundRect);
+
+		fRasterizer.add_path(strokedRoundRect);
+		_RenderScanlines(false);
+	}
 }
 
 // DrawImage
@@ -280,9 +293,10 @@ RenderEngine::DrawImage(const RenderBuffer* buffer, BRect area)
 
 // RenderScanlines
 void
-RenderEngine::RenderScanlines(const ScanlineContainer& scanlines)
+RenderEngine::RenderScanlines(const ScanlineContainer& scanlines,
+	bool fillPaint)
 {
-	_RenderScanlines(&scanlines);
+	_RenderScanlines(fillPaint, &scanlines);
 }
 
 // #pragma mark - sRGB <-> linear RGB
@@ -379,7 +393,8 @@ RenderEngine::HitTest(PathStorage& path, const BPoint& point)
 
 // _RenderScanlines
 void
-RenderEngine::_RenderScanlines(const ScanlineContainer* scanlineContainer)
+RenderEngine::_RenderScanlines(bool fillPaint,
+	const ScanlineContainer* scanlineContainer)
 {
 #if PRINT_TIMING
 bigtime_t now = system_time();
@@ -387,7 +402,7 @@ bigtime_t now = system_time();
 
 	agg::rgba16 color(0, 0, 0, 65535);
 
-	const Paint* paint = fState.FillPaint();
+	const Paint* paint = fillPaint ? fState.FillPaint() : fState.StrokePaint();
 	if (paint != NULL) {
 		switch (paint->Type()) {
 			case Paint::COLOR:
@@ -409,7 +424,7 @@ bigtime_t now = system_time();
 
 			case Paint::NONE:
 			default:
-				break;
+				return;
 		}
 	}
 

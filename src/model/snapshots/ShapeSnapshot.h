@@ -33,9 +33,14 @@ public:
 									RenderBuffer* bitmap, BRect area) const;
 
 private:
-			void				_RasterizeShape(Rasterizer& rasterizer,
+			void				_RasterizeShape(Rasterizer& fillRasterizer,
+									Rasterizer& strokeRasterizer,
 									BRect documentBounds) const;
 			void				_ClearScanlines();
+			void				_StoreScanlines(Rasterizer& rasterizer,
+									ScanlineContainer& container);
+			void				_ValidateScanlines(
+									ScanlineContainer& container);
 
 private:
 			const Shape*		fOriginal;
@@ -44,9 +49,12 @@ private:
 			BLocker				fRasterizerLock;
 	volatile bool				fNeedsRasterizing;
 
-			Rasterizer			fRasterizer;
+			Rasterizer			fFillRasterizer;
+			Rasterizer			fStrokeRasterizer;
 
-			ScanlineContainer	fScanlines;
+			ScanlineContainer	fFillScanlines;
+			ScanlineContainer	fStrokeScanlines;
+
 			CoverAllocator		fCoverAllocator;
 			SpanAllocator		fSpanAllocator;
 };

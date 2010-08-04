@@ -5,6 +5,7 @@
 #ifndef RENDER_ENGINE_H
 #define RENDER_ENGINE_H
 
+#include <agg_conv_stroke.h>
 #include <agg_conv_transform.h>
 #include <agg_gamma_lut.h>
 #include <agg_path_storage.h>
@@ -68,7 +69,7 @@ public:
 			// the blending mode differs, the renderer will be adjusted
 			// accordingly...)
 			void				Reset();
-			void				SetStyle(const Style* style);
+			void				SetStyle(const Style& style);
 
 			void				AttachTo(RenderBuffer* bitmap);
 			void				SetClipping(const BRect& area);
@@ -87,7 +88,8 @@ public:
 									BRect area);
 
 			void				RenderScanlines(
-									const ScanlineContainer& scanlines);
+									const ScanlineContainer& scanlines,
+									bool fillPaint);
 
 	static	bool				InitGammaTables();
 	static	uint16				GammaToLinear(uint8 value);
@@ -98,7 +100,7 @@ public:
 			bool				HitTest(PathStorage& path,
 									const BPoint& point);
 private:
-			void				_RenderScanlines(
+			void				_RenderScanlines(bool fillPaint,
 									const ScanlineContainer* scanlines = NULL);
 			bool				_HitTest(const BPoint& point);
 

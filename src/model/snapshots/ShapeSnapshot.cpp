@@ -19,12 +19,16 @@ ShapeSnapshot::ShapeSnapshot(const Shape* shape)
 	, fRasterizerLock("shape lock")
 	, fNeedsRasterizing(true)
 
-	, fRasterizer()
-	, fScanlines()
+	, fFillRasterizer()
+	, fStrokeRasterizer()
+
+	, fFillScanlines()
+	, fStrokeScanlines()
+
 	, fCoverAllocator()
 	, fSpanAllocator()
 {
-	fRasterizer.filling_rule(agg::fill_non_zero);
+	fFillRasterizer.filling_rule(agg::fill_non_zero);
 }
 
 // destructor
@@ -85,33 +89,18 @@ printf("PrepareRendering(): already prepared\n");
 bigtime_t now = system_time();
 #endif
 
-	_RasterizeShape(fRasterizer, documentBounds);
+	_RasterizeShape(fFillRasterizer, fStrokeRasterizer, documentBounds);
 
 	_ClearScanlines();
 
-	// generate scanlines
-	if (fRasterizer.rewind_scanlines()) {
-		Scanline* scanline;
-		do {
-			scanline = fScanlines.AppendObject();
-			if (scanline == NULL)
-				return;
-			scanline->SetAllocators(&fCoverAllocator, &fSpanAllocator);
-			scanline->reset(fRasterizer.min_x(), fRasterizer.max_x());
-		} while (fRasterizer.sweep_scanline(*scanline));
+	_StoreScanlines(fFillRasterizer, fFillScanlines);
+	_StoreScanlines(fStrokeRasterizer, fStrokeScanlines);
 
-		// The last added scanline was not used anymore, so just remove it
-		// again.
-		fScanlines.RemoveObject();
+	_ValidateScanlines(fFillScanlines);
+	_ValidateScanlines(fStrokeScanlines);
 
-		// Validate the data to avoid stale pointers after relocation of
-		// memory buffers.
-		uint32 count = fScanlines.CountObjects();
-		for (uint32 i = 0; i < count; i++) {
-			scanline = fScanlines.ObjectAtFast(i);
-			scanline->Validate();
-		}
-	}
+	fFillRasterizer.reset();
+	fStrokeRasterizer.reset();
 
 #if PRINT_TIMING
 printf("PrepareRendering(): %lld\n", system_time() - now);
@@ -125,14 +114,15 @@ void
 ShapeSnapshot::Render(RenderEngine& engine, RenderBuffer* bitmap,
 	BRect area) const
 {
-	engine.SetStyle(fStyle.Get());
-	engine.RenderScanlines(fScanlines);
+	engine.SetStyle(fStyle);
+	engine.RenderScanlines(fFillScanlines, true);
+	engine.RenderScanlines(fStrokeScanlines, false);
 }
 
 // _RasterizeShape
 void
-ShapeSnapshot::_RasterizeShape(Rasterizer& rasterizer,
-	BRect bounds) const
+ShapeSnapshot::_RasterizeShape(Rasterizer& fillRasterizer,
+	Rasterizer& strokeRasterizer, BRect bounds) const
 {
 	PathStorage path;
 	path.move_to(fArea.left, fArea.top);
@@ -154,11 +144,24 @@ ShapeSnapshot::_RasterizeShape(Rasterizer& rasterizer,
 
 	TransformedPath transformedPath(path, LayoutedState().Matrix);
 
-	rasterizer.reset();
-	rasterizer.clip_box(bounds.left, bounds.top, bounds.right + 1,
-		bounds.bottom + 1);
+	if (fStyle.FillPaint() != NULL
+		&& fStyle.FillPaint()->Type() != Paint::NONE) {
+		fillRasterizer.clip_box(bounds.left, bounds.top, bounds.right + 1,
+			bounds.bottom + 1);
+	
+		fillRasterizer.add_path(transformedPath);
+	}
+	if (fStyle.StrokePaint() != NULL
+		&& fStyle.StrokePaint()->Type() != Paint::NONE
+		&& fStyle.StrokeProperties() != NULL) {
+		agg::conv_stroke<TransformedPath> strokedPath(transformedPath);
+		fStyle.StrokeProperties()->SetupAggConverter(strokedPath);
 
-	rasterizer.add_path(transformedPath);
+		strokeRasterizer.clip_box(bounds.left, bounds.top, bounds.right + 1,
+			bounds.bottom + 1);
+
+		strokeRasterizer.add_path(strokedPath);
+	}
 }
 
 // _ClearScanlines
@@ -167,5 +170,42 @@ ShapeSnapshot::_ClearScanlines()
 {
 	fCoverAllocator.Clear();
 	fSpanAllocator.Clear();
-	fScanlines.Clear();
+	fFillScanlines.Clear();
+	fStrokeScanlines.Clear();
+}
+
+// _StoreScanlines
+void
+ShapeSnapshot::_StoreScanlines(Rasterizer& rasterizer,
+	ScanlineContainer& container)
+{
+	// generate scanlines
+	if (!rasterizer.rewind_scanlines())
+		return;
+
+	Scanline* scanline;
+	do {
+		scanline = container.AppendObject();
+		if (scanline == NULL)
+			return;
+		scanline->SetAllocators(&fCoverAllocator, &fSpanAllocator);
+		scanline->reset(rasterizer.min_x(), rasterizer.max_x());
+	} while (rasterizer.sweep_scanline(*scanline));
+
+	// The last added scanline was not used anymore, so just remove it
+	// again.
+	container.RemoveObject();
+}
+
+// _ValidateScanlines
+void
+ShapeSnapshot::_ValidateScanlines(ScanlineContainer& container)
+{
+	// Validate the data to avoid stale pointers after relocation of
+	// memory buffers.
+	uint32 count = container.CountObjects();
+	for (uint32 i = 0; i < count; i++) {
+		Scanline* scanline = container.ObjectAtFast(i);
+		scanline->Validate();
+	}
 }
