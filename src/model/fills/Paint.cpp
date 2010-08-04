@@ -18,68 +18,73 @@
 
 // constructor
 Paint::Paint()
-	:
-	BaseObject(),
-	fType(NONE),
-	fColors(NULL),
+	: BaseObject()
+	, fType(NONE)
+	, fColor((rgb_color){0, 0, 0, 255})
+	, fGradient(NULL)
 
-	fGammaCorrectedColors(NULL),
-	fGammaCorrectedColorsValid(false)
+	, fColors(NULL)
+
+	, fGammaCorrectedColors(NULL)
+	, fGammaCorrectedColorsValid(false)
 {
-	fData.gradient = NULL;
 }
 
 // constructor
 Paint::Paint(const Paint& other)
-	:
-	BaseObject(other),
-	fType(NONE),
-	fColors(NULL),
+	: BaseObject(other)
+	, fType(NONE)
+	, fColor((rgb_color){0, 0, 0, 255})
+	, fGradient(NULL)
 
-	fGammaCorrectedColors(NULL),
-	fGammaCorrectedColorsValid(false)
+	, fColors(NULL)
+
+	, fGammaCorrectedColors(NULL)
+	, fGammaCorrectedColorsValid(false)
 {
-	fData.gradient = NULL;
-
 	*this = other;
 }
 
 // constructor
 Paint::Paint(const rgb_color& color)
-	:
-	BaseObject(),
-	fType(COLOR),
-	fColors(NULL),
+	: BaseObject()
+	, fType(COLOR)
+	, fColor(color)
+	, fGradient(NULL)
 
-	fGammaCorrectedColors(NULL),
-	fGammaCorrectedColorsValid(false)
+	, fColors(NULL)
+
+	, fGammaCorrectedColors(NULL)
+	, fGammaCorrectedColorsValid(false)
 {
-	(rgb_color&)fData.color = color;
 }
 
 // constructor
 Paint::Paint(const ::Gradient* gradient)
-	:
-	BaseObject(),
-	fType(GRADIENT),
-	fColors(NULL),
+	: BaseObject()
+	, fType(GRADIENT)
+	, fColor((rgb_color){0, 0, 0, 255})
+	, fGradient(NULL)
 
-	fGammaCorrectedColors(NULL),
-	fGammaCorrectedColorsValid(false)
+	, fColors(NULL)
+
+	, fGammaCorrectedColors(NULL)
+	, fGammaCorrectedColorsValid(false)
 {
-	fData.gradient = NULL;
 	SetGradient(gradient);
 }
 
 // constructor
 Paint::Paint(BMessage* archive)
-	:
-	BaseObject(),
-	fType(NONE),
-	fColors(NULL),
+	: BaseObject()
+	, fType(NONE)
+	, fColor((rgb_color){0, 0, 0, 255})
+	, fGradient(NULL)
 
-	fGammaCorrectedColors(NULL),
-	fGammaCorrectedColorsValid(false)
+	, fColors(NULL)
+
+	, fGammaCorrectedColors(NULL)
+	, fGammaCorrectedColorsValid(false)
 {
 	Unarchive(archive);
 }
@@ -87,8 +92,8 @@ Paint::Paint(BMessage* archive)
 // destructor
 Paint::~Paint()
 {
-	if (fType == GRADIENT)
-		SetGradient(NULL);
+	SetGradient(NULL);
+	// TODO: pattern...
 }
 
 // #pragma mark -
@@ -131,13 +136,13 @@ Paint::Archive(BMessage* into, bool deep) const
 				break;
 
 			case COLOR:
-				ret = into->AddInt32("color", fData.color);
+				ret = into->AddInt32("color", *(int32*)&fColor);
 				break;
 
 			case GRADIENT:
 			{
 				BMessage gradientArchive;
-				ret = fData.gradient->Archive(&gradientArchive, deep);
+				ret = fGradient->Archive(&gradientArchive, deep);
 				if (ret == B_OK)
 					ret = into->AddMessage("gradient", &gradientArchive);
 				break;
@@ -256,33 +261,14 @@ Paint::DefaultName() const
 void
 Paint::ObjectChanged(const Notifier* object)
 {
-	if (object == fData.gradient && fColors) {
-		fData.gradient->MakeGradient((uint32*)fColors, 256);
+	if (object == fGradient && fColors != NULL) {
+		fGradient->MakeGradient((uint32*)fColors, 256);
 		fGammaCorrectedColorsValid = false;
 		Notify();
 	}
 }
 
 // #pragma mark -
-
-// Unset
-void
-Paint::Unset()
-{
-	switch (fType) {
-		default:
-		case NONE:
-			break;
-		case GRADIENT:
-			SetGradient(NULL);
-			break;
-		case PATTERN:
-			// TODO: ...
-			break;
-	}
-
-	fType = NONE;
-}
 
 // operator=
 Paint&
@@ -291,27 +277,10 @@ Paint::operator=(const Paint& other)
 	if (&other == this)
 		return *this;
 
-	Unset();
-
 	fType = other.fType;
-
-	switch (fType) {
-		default:
-		case NONE:
-			break;
-
-		case COLOR:
-			fData.color = other.fData.color;
-			break;
-
-		case GRADIENT:
-			SetGradient(other.fData.gradient);
-			break;
-
-		case PATTERN:
-			// TODO: ...
-			break;
-	}
+	fColor = other.fColor;
+	SetGradient(other.fGradient);
+	// TODO: pattern...
 
 	return *this;
 }
@@ -320,31 +289,9 @@ Paint::operator=(const Paint& other)
 bool
 Paint::operator==(const Paint& other) const
 {
-	if (fType != other.fType)
-		return false;
-	switch (fType) {
-		default:
-		case NONE:
-			return true;
-
-		case COLOR:
-			return other.fData.color == fData.color;
-
-		case GRADIENT:
-			if (fData.gradient == NULL) {
-				if (other.fData.gradient == NULL)
-					return true;
-				return false;
-			} else {
-				if (other.fData.gradient == NULL)
-					return false;
-				return *other.fData.gradient == *fData.gradient;
-			}
-
-		case PATTERN:
-			// TODO: ...
-			return true;
-	}
+	return fType == other.fType && fColor == other.fColor
+		&& fGradient == other.fGradient;
+		// TODO: pattern...
 }
 
 // operator!=
@@ -358,7 +305,7 @@ Paint::operator!=(const Paint& other) const
 Paint*
 Paint::Clone() const
 {
-	return new (std::nothrow) Paint(*this);
+	return new(std::nothrow) Paint(*this);
 }
 
 // HasTransparency
@@ -371,13 +318,13 @@ Paint::HasTransparency() const
 			return false;
 
 		case COLOR:
-			return ((rgb_color&)fData.color).alpha < 255;
+			return fColor.alpha < 255;
 
 		case GRADIENT:
-			if (fData.gradient != NULL) {
-				int32 count = fData.gradient->CountColors();
+			if (fGradient != NULL) {
+				int32 count = fGradient->CountColors();
 				for (int32 i = 0; i < count; i++) {
-					Gradient::ColorStop* stop = fData.gradient->ColorAtFast(i);
+					Gradient::ColorStop* stop = fGradient->ColorAtFast(i);
 					if (stop->color.alpha < 255)
 						return true;
 				}
@@ -394,8 +341,17 @@ Paint::HasTransparency() const
 size_t
 Paint::HashKey() const
 {
-	// TODO: Shrink, maybe 6 bits per component?
-	return (size_t&)fData.color;
+	size_t hash = 0;
+	hash |= fType << 30;
+	hash |= (fColor.red & 0x0f) << 26;
+	hash |= (fColor.green & 0x0f) << 22;
+	hash |= (fColor.blue & 0x0f) << 18;
+	hash |= (fColor.alpha & 0x0f) << 14;
+	hash |= ((uint32)fGradient & 0xff) << 6;
+
+	// TODO: pattern...
+
+	return hash;
 }
 
 // #pragma mark -
@@ -407,7 +363,6 @@ Paint::SetType(uint32 type)
 	if (fType == type)
 		return;
 
-	Unset();
 	fType = type;
 	Notify();
 }
@@ -429,15 +384,14 @@ Paint::AddTypeProperty(PropertyObject* object, uint32 propertyID, uint32 type)
 void
 Paint::SetColor(const rgb_color& color)
 {
-	if (fType != COLOR) {
-		Unset();
+	if (fType != COLOR)
 		fType = COLOR;
-	} else {
-		if (fData.color == *(uint32*)&color)
+	else {
+		if (fColor == color)
 			return;
 	}
 
-	fData.color = (uint32&)color;
+	fColor = color;
 	Notify();
 }
 
@@ -445,39 +399,38 @@ Paint::SetColor(const rgb_color& color)
 void
 Paint::SetGradient(const ::Gradient* gradient)
 {
-	if (fType != GRADIENT) {
-		Unset();
+	if (gradient != NULL && fType != GRADIENT)
 		fType = GRADIENT;
-	} else {
-		if (fData.gradient == NULL && gradient == NULL)
+	else {
+		if (fGradient == NULL && gradient == NULL)
 			return;
 	}
 
 	if (gradient != NULL) {
-		if (fData.gradient == NULL) {
-			fData.gradient = new (std::nothrow) ::Gradient(*gradient);
-			if (fData.gradient != NULL) {
-				fData.gradient->AddListener(this);
+		if (fGradient == NULL) {
+			fGradient = new (std::nothrow) ::Gradient(*gradient);
+			if (fGradient != NULL) {
+				fGradient->AddListener(this);
 				// generate gradient
 				fColors = new agg::rgba8[256];
-				fData.gradient->MakeGradient((uint32*)fColors, 256);
+				fGradient->MakeGradient((uint32*)fColors, 256);
 				fGammaCorrectedColorsValid = false;
 
 				Notify();
 			}
 		} else {
-			if (*fData.gradient != *gradient) {
-				*fData.gradient = *gradient;
+			if (*fGradient != *gradient) {
+				*fGradient = *gradient;
 				// Notification is triggered in ObjectChanged()
 			}
 		}
 	} else {
-		fData.gradient->RemoveListener(this);
+		fGradient->RemoveListener(this);
 		delete[] fColors;
 		delete[] fGammaCorrectedColors;
 		fColors = NULL;
 		fGammaCorrectedColors = NULL;
-		fData.gradient = NULL;
+		fGradient = NULL;
 
 		Notify();
 	}
@@ -507,5 +460,12 @@ Paint::SetGradient(const ::Gradient* gradient)
 //	return fGammaCorrectedColors;
 //}
 
+Paint
+Paint::sEmptyPaint;
 
+/*static*/ const Paint&
+Paint::EmptyPaint()
+{
+	return sEmptyPaint;
+}
 

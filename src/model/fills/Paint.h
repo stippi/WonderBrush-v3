@@ -51,8 +51,6 @@ public:
 	virtual	void				ObjectChanged(const Notifier* object);
 
 	// Paint
-			void				Unset();
-
 			Paint&				operator=(const Paint& other);
 			bool				operator==(const Paint& other) const;
 			bool				operator!=(const Paint& other) const;
@@ -69,11 +67,11 @@ public:
 
 			void				SetColor(const rgb_color& color);
 	inline	rgb_color			Color() const
-									{ return (rgb_color&)fData.color; }
+									{ return fColor; }
 
 			void				SetGradient(const ::Gradient* gradient);
 	inline	::Gradient*			Gradient() const
-									{ return fData.gradient; }
+									{ return fGradient; }
 
 	inline	const agg::rgba8*	Colors() const
 									{ return fColors; }
@@ -81,12 +79,12 @@ public:
 //	inline	const agg::rgba8*	GammaCorrectedColors(
 //									const GammaTable& table) const;
 
+	static	const Paint&		EmptyPaint();
+
 private:
 			uint32				fType;
-			union {
-				uint32			color;
-				::Gradient*		gradient;
-			}					fData;
+			rgb_color			fColor;
+			::Gradient*			fGradient;
 
 			// hold gradient color array
 			agg::rgba8*			fColors;
@@ -94,6 +92,8 @@ private:
 			// for caching gamma corrected gradient color array
 	mutable	agg::rgba8*			fGammaCorrectedColors;
 	mutable	bool				fGammaCorrectedColorsValid;
+
+	static	Paint				sEmptyPaint;
 };
 
 #endif	// PAINT_H
