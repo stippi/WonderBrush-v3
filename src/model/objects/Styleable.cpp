@@ -6,6 +6,8 @@
 
 #include <new>
 
+#include <stdio.h>
+
 #include "Paint.h"
 #include "Style.h"
 #include "ui_defines.h"
@@ -29,7 +31,6 @@ Styleable::Styleable(const rgb_color& color)
 // destructor
 Styleable::~Styleable()
 {
-	fStyle->RemoveReference();
 }
 
 // #pragma mark -
@@ -56,7 +57,7 @@ Styleable::SetToPropertyObject(const PropertyObject* object, uint32 flags)
 
 	if (HasPendingNotifications()) {
 		UpdateChangeCounter();
-		InvalidateParent(TransformedBounds());
+		UpdateBounds();
 		return true;
 	}
 	return false;
