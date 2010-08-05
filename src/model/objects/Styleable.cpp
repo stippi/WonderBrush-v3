@@ -51,7 +51,6 @@ Styleable::SetToPropertyObject(const PropertyObject* object, uint32 flags)
 
 	BoundedObject::SetToPropertyObject(object, flags);
 
-	AutoNotificationSuspender styleSuspender(fStyle.Get());
 	if (fStyle->SetToPropertyObject(object, flags))
 		Notify();
 
