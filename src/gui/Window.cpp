@@ -94,12 +94,10 @@ Window::Window(BRect frame, const char* title, Document* document,
 //	fLayerTreeView->SetModel(fLayerTreeModel);
 	fLayerTreeView->SetModel(new DefaultColumnTreeModel);
 	ScrollView* objectTreeScrollView = new ScrollView(fLayerTreeView,
-		SCROLL_HORIZONTAL | SCROLL_VERTICAL | SCROLL_HORIZONTAL_MAGIC
-		| SCROLL_VERTICAL_MAGIC | SCROLL_VISIBLE_RECT_IS_CHILD_BOUNDS,
+		SCROLL_HORIZONTAL | SCROLL_VERTICAL/* | SCROLL_HORIZONTAL_MAGIC
+		| SCROLL_VERTICAL_MAGIC*/ | SCROLL_VISIBLE_RECT_IS_CHILD_BOUNDS,
 		"layer tree", B_WILL_DRAW | B_FRAME_EVENTS, B_PLAIN_BORDER,
 		BORDER_BOTTOM);
-	objectTreeScrollView->SetExplicitMinSize(BSize(150, B_SIZE_UNSET));
-	objectTreeScrollView->SetExplicitMaxSize(BSize(250, B_SIZE_UNSET));
 
 	fRenderManager = new RenderManager(fDocument);
 	// TODO: Check error
@@ -116,6 +114,11 @@ Window::Window(BRect frame, const char* title, Document* document,
 	fInspectorView->SetMenu(fPropertyMenu);
 	fInspectorView->SetCommandStack(fDocument->CommandStack());
 	fInspectorView->SetSelection(&fSelection);
+
+	ScrollView* inspectorScrollView = new ScrollView(fInspectorView,
+		SCROLL_VERTICAL/* | SCROLL_VERTICAL_MAGIC*/,
+		"inspector", B_WILL_DRAW | B_FRAME_EVENTS, B_PLAIN_BORDER, 0);
+
 
 	BLayoutBuilder::Group<>(this, B_VERTICAL)
 		.Add(menuBar)
@@ -134,7 +137,7 @@ Window::Window(BRect frame, const char* title, Document* document,
 						.AddGroup(B_VERTICAL, 0.0f, 0.35f)
 							.Add(new BSeparatorView(B_HORIZONTAL))
 							.Add(propertyMenuBar)
-							.Add(fInspectorView)
+							.Add(inspectorScrollView)
 						.End()
 					.End()
 				.End()
@@ -144,8 +147,13 @@ Window::Window(BRect frame, const char* title, Document* document,
 				.Add(new BSeparatorView(B_VERTICAL))
 				.Add(canvasScrollView)
 			.End()
-		.End();
+		.End()
+	;
 
+	objectTreeScrollView->SetExplicitMinSize(BSize(150, B_SIZE_UNSET));
+	objectTreeScrollView->SetExplicitMaxSize(BSize(250, B_SIZE_UNSET));
+	inspectorScrollView->SetExplicitMinSize(BSize(150, B_SIZE_UNSET));
+	inspectorScrollView->SetExplicitMaxSize(BSize(250, B_SIZE_UNSET));
 
 //	SetLayout(new BGroupLayout(B_VERTICAL));
 //	AddChild(menuBar);
