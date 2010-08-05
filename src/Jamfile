@@ -102,6 +102,7 @@ Application WonderBrush :
 #	Color.cpp
 	Gradient.cpp
 	Paint.cpp
+	StrokeProperties.cpp
 	Style.cpp
 
 	# model/document
