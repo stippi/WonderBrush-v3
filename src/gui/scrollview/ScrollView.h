@@ -37,12 +37,10 @@ public:
 									uint32 resizingMode, uint32 viewFlags,
 									uint32 borderStyle = B_FANCY_BORDER,
 									uint32 borderFlags = BORDER_ALL);
-#ifdef __HAIKU__
 								ScrollView(BView* child, uint32 scrollingFlags,
 									const char *name, uint32 viewFlags,
 									uint32 borderStyle = B_FANCY_BORDER,
 									uint32 borderFlags = BORDER_ALL);
-#endif // __HAIKU__
 	virtual						~ScrollView();
 
 	virtual	void				AllAttached();
@@ -50,12 +48,9 @@ public:
 	virtual	void				FrameResized(float width, float height);
 	virtual	void				WindowActivated(bool activated);
 
-#ifdef __HAIKU__
-
 	virtual	BSize				MinSize();
+	virtual	BSize				MaxSize();
 	virtual	BSize				PreferredSize();
-
-#endif // __HAIKU__
 
 			uint32				ScrollingFlags() const;
 			void				SetVisibleRectIsChildBounds(bool flag);
@@ -129,9 +124,8 @@ private:
 			BRect				_ChildRect(bool hbar, bool vbar) const;
 			BRect				_GuessVisibleRect(bool hbar, bool vbar) const;
 			BRect				_MaxVisibleRect() const;
-#ifdef __HAIKU__
+
 	virtual	BSize				_Size(BSize childSize);
-#endif
 
 			void				_SetScrolling(bool scrolling);
 

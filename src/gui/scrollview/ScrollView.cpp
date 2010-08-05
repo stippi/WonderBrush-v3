@@ -295,8 +295,6 @@ ScrollView::ScrollView(BView* child, uint32 scrollingFlags, BRect frame,
 	_Init(child, scrollingFlags, borderStyle, borderFlags);
 }
 
-#ifdef __HAIKU__
-
 // constructor
 ScrollView::ScrollView(BView* child, uint32 scrollingFlags, const char* name,
 		uint32 viewFlags, uint32 borderStyle, uint32 borderFlags)
@@ -306,8 +304,6 @@ ScrollView::ScrollView(BView* child, uint32 scrollingFlags, const char* name,
 {
 	_Init(child, scrollingFlags, borderStyle, borderFlags);
 }
-
-#endif // __HAIKU__
 
 // destructor
 ScrollView::~ScrollView()
@@ -383,25 +379,32 @@ void ScrollView::WindowActivated(bool activated)
 		Invalidate();
 }
 
-#ifdef __HAIKU__
-
 // MinSize
 BSize
 ScrollView::MinSize()
 {
-	BSize size = (fChild ? fChild->MinSize() : BSize(-1, -1));
-	return _Size(size);
+	BSize size = fChild ? fChild->MinSize()
+		: BSize(B_SIZE_UNSET, B_SIZE_UNSET);
+	return BLayoutUtils::ComposeSize(ExplicitMinSize(), _Size(size));
+}
+
+// MaxSize
+BSize
+ScrollView::MaxSize()
+{
+	BSize size = fChild ? fChild->MaxSize()
+		: BSize(B_SIZE_UNSET, B_SIZE_UNSET);
+	return BLayoutUtils::ComposeSize(ExplicitMaxSize(), _Size(size));
 }
 
 // PreferredSize
 BSize
 ScrollView::PreferredSize()
 {
-	BSize size = (fChild ? fChild->PreferredSize() : BSize(-1, -1));
-	return _Size(size);
+	BSize size = fChild ? fChild->PreferredSize()
+		: BSize(B_SIZE_UNSET, B_SIZE_UNSET);
+	return BLayoutUtils::ComposeSize(ExplicitPreferredSize(), _Size(size));
 }
-
-#endif // __HAIKU__
 
 // #pragma mark -
 
@@ -873,6 +876,10 @@ ScrollView::_UpdateScrollBarVisibility()
 	// If anything has changed, update the scroll corner as well.
 	if (changed && fScrollCorner)
 		set_visible_state(fScrollCorner, fHVisible && fVVisible, &fCornerVisible);
+
+//	ResetLayoutInvalidation();
+//	InvalidateLayout(true);
+
 	return changed;
 }
 
@@ -962,23 +969,29 @@ ScrollView::_MaxVisibleRect() const
 	return _GuessVisibleRect(true, true);
 }
 
-#ifdef __HAIKU__
-
+// _Size
 BSize
 ScrollView::_Size(BSize size)
 {
-	if (fVVisible)
+	bool hScrollbar
+		= (fScrollingFlags
+			& (SCROLL_HORIZONTAL | SCROLL_HORIZONTAL_MAGIC)) != 0;
+	bool vScrollbar
+		= (fScrollingFlags
+			& (SCROLL_VERTICAL | SCROLL_VERTICAL_MAGIC)) != 0;
+
+	if (hScrollbar)
 		size.width += B_V_SCROLL_BAR_WIDTH;
-	if (fHVisible)
+	if (vScrollbar)
 		size.height += B_H_SCROLL_BAR_HEIGHT;
 
 	switch (fBorderStyle) {
 		case B_NO_BORDER:
 			// one line of pixels from scrollbar possibly hidden
 			if (fBorderFlags & BORDER_RIGHT)
-				size.width += fVVisible ? -1 : 0;
+				size.width += vScrollbar ? -1 : 0;
 			if (fBorderFlags & BORDER_BOTTOM)
-				size.height += fHVisible ? -1 : 0;
+				size.height += hScrollbar ? -1 : 0;
 			break;
 
 		case B_PLAIN_BORDER:
@@ -988,9 +1001,9 @@ ScrollView::_Size(BSize size)
 				size.height += 1;
 			// one line of pixels in frame possibly from scrollbar
 			if (fBorderFlags & BORDER_RIGHT)
-				size.width += fVVisible ? 0 : 1;
+				size.width += vScrollbar ? 0 : 1;
 			if (fBorderFlags & BORDER_BOTTOM)
-				size.height += fHVisible ? 0 : 1;
+				size.height += hScrollbar ? 0 : 1;
 			break;
 
 		case B_FANCY_BORDER:
@@ -1001,16 +1014,14 @@ ScrollView::_Size(BSize size)
 				size.height += 2;
 			// one line of pixels in frame possibly from scrollbar
 			if (fBorderFlags & BORDER_RIGHT)
-				size.width += fVVisible ? 1 : 2;
+				size.width += vScrollbar ? 1 : 2;
 			if (fBorderFlags & BORDER_BOTTOM)
-				size.height += fHVisible ? 1 : 2;
+				size.height += hScrollbar ? 1 : 2;
 			break;
 	}
 
-	return BLayoutUtils::ComposeSize(ExplicitMinSize(), size);
+	return size;
 }
-
-#endif // __HAIKU__
 
 // _SetScrolling
 void
