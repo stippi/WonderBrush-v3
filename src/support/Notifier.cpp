@@ -92,7 +92,8 @@ Notifier::SuspendNotifications(bool suspend)
 
 	if (fSuspended < 0) {
 		fprintf(stderr, "Notifier::SuspendNotifications(false) - "
-						"error: suspend level below zero!\n");
+						"error: suspend level below zero: %ld\n", fSuspended);
+		debugger("");
 		fSuspended = 0;
 	}
 
