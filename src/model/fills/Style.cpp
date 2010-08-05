@@ -66,7 +66,7 @@ Style::Style()
 {
 	SetFillPaint(Paint::EmptyPaint());
 	SetStrokePaint(Paint::EmptyPaint());
-	SetStrokeProperties(::StrokeProperties());
+	SetStrokeProperties(::StrokeProperties(1.0f, ButtCap, MiterJoin, 4.0f));
 }
 
 // constructor
@@ -140,11 +140,17 @@ Style::SetToPropertyObject(const PropertyObject* object, uint32 flags)
 	AutoNotificationSuspender _(this);
 //	BaseObject::SetToPropertyObject(object, flags);
 
-	// TODO: stroke stuff...
 	_SetPaintToPropertyObject(fFillPaint, FILL_PAINT, object,
 		flags | Paint::FILL_PAINT);
 	_SetPaintToPropertyObject(fStrokePaint, STROKE_PAINT, object,
 		flags | Paint::STROKE_PAINT);
+
+	::StrokeProperties strokeProperties;
+	if (fStrokeProperties != NULL)
+		strokeProperties = *fStrokeProperties;
+
+	if (strokeProperties.SetToPropertyObject(object, flags))
+		SetStrokeProperties(strokeProperties);
 
 	return HasPendingNotifications();
 }
@@ -320,9 +326,14 @@ Style::_AddPaintProperties(const Paint* paint, uint32 groupID,
 		return;
 	}
 
-	if (paint != NULL)
+	if (paint != NULL) {
 		paint->AddProperties(&paintProperties->Value(), flags);
-	else {
+		if (paint == fStrokePaint && paint->Type() != Paint::NONE
+			&& fStrokeProperties != NULL) {
+			fStrokeProperties->AddProperties(
+				&paintProperties->Value(), flags);
+		}
+	} else {
 		Paint::AddTypeProperty(&paintProperties->Value(), paintTypeID,
 			Paint::NONE);
 	}

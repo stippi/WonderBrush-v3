@@ -8,7 +8,7 @@
 
 #include <agg_math_stroke.h>
 
-#include "Referenceable.h"
+#include "BaseObject.h"
 #include "SetProperty.h"
 
 enum CapMode {
@@ -25,7 +25,7 @@ enum JoinMode {
 	MiterJoinRound				= agg::miter_join_round
 };
 
-class StrokeProperties : public Referenceable {
+class StrokeProperties : public BaseObject {
 public:
 								StrokeProperties();
 								StrokeProperties(float width);
@@ -41,6 +41,18 @@ public:
 								StrokeProperties(
 									const StrokeProperties& other);
 
+	// BaseObject interface
+	virtual	status_t			Unarchive(const BMessage* archive);
+	virtual	status_t			Archive(BMessage* into,
+									bool deep = true) const;
+	virtual	void				AddProperties(PropertyObject* object,
+									uint32 flags = 0) const;
+	virtual	bool				SetToPropertyObject(
+									const PropertyObject* object,
+									uint32 flags = 0);
+	virtual	const char*			DefaultName() const;
+
+	// StrokeProperties
 			StrokeProperties&	operator=(const StrokeProperties& other);
 
 			bool				operator==(
@@ -49,15 +61,19 @@ public:
 			bool				operator!=(
 									const StrokeProperties& other) const;
 
+			void				SetWidth(float width);
 	inline	float				Width() const
 									{ return fWidth; }
 
+			void				SetMiterLimit(float miterLimit);
 	inline	float				MiterLimit() const
 									{ return fMiterLimit; }
 
+			void				SetCapMode(::CapMode capMode);
 	inline	::CapMode			CapMode() const
 									{ return (::CapMode)fCapMode; }
 
+			void				SetJoinMode(::JoinMode joinMode);
 	inline	::JoinMode			JoinMode() const
 									{ return (::JoinMode)fJoinMode; }
 
