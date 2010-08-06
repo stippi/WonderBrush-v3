@@ -19,8 +19,7 @@ ShapeSnapshot::ShapeSnapshot(const Shape* shape)
 	, fRasterizerLock("shape lock")
 	, fNeedsRasterizing(true)
 
-	, fFillRasterizer()
-	, fStrokeRasterizer()
+	, fRasterizer()
 
 	, fFillScanlines()
 	, fStrokeScanlines()
@@ -28,7 +27,7 @@ ShapeSnapshot::ShapeSnapshot(const Shape* shape)
 	, fCoverAllocator()
 	, fSpanAllocator()
 {
-	fFillRasterizer.filling_rule(agg::fill_non_zero);
+	fRasterizer.filling_rule(agg::fill_non_zero);
 }
 
 // destructor
@@ -89,18 +88,7 @@ printf("PrepareRendering(): already prepared\n");
 bigtime_t now = system_time();
 #endif
 
-	_RasterizeShape(fFillRasterizer, fStrokeRasterizer, documentBounds);
-
-	_ClearScanlines();
-
-	_StoreScanlines(fFillRasterizer, fFillScanlines);
-	_StoreScanlines(fStrokeRasterizer, fStrokeScanlines);
-
-	_ValidateScanlines(fFillScanlines);
-	_ValidateScanlines(fStrokeScanlines);
-
-	fFillRasterizer.reset();
-	fStrokeRasterizer.reset();
+	_RasterizeShape(fRasterizer, documentBounds);
 
 #if PRINT_TIMING
 printf("PrepareRendering(): %lld\n", system_time() - now);
@@ -121,9 +109,11 @@ ShapeSnapshot::Render(RenderEngine& engine, RenderBuffer* bitmap,
 
 // _RasterizeShape
 void
-ShapeSnapshot::_RasterizeShape(Rasterizer& fillRasterizer,
-	Rasterizer& strokeRasterizer, BRect bounds) const
+ShapeSnapshot::_RasterizeShape(Rasterizer& rasterizer, BRect bounds)
 {
+	_ClearScanlines();
+
+	// TODO: Get the vertex iterator from somewhere...
 	PathStorage path;
 	path.move_to(fArea.left, fArea.top);
 	path.line_to((fArea.left + fArea.right) / 2,
@@ -142,26 +132,33 @@ ShapeSnapshot::_RasterizeShape(Rasterizer& fillRasterizer,
 		(fArea.top + fArea.bottom) / 2);
 	path.close_polygon();
 
-	TransformedPath transformedPath(path, LayoutedState().Matrix);
+	rasterizer.clip_box(bounds.left, bounds.top, bounds.right + 1,
+		bounds.bottom + 1);
 
 	if (fStyle.FillPaint() != NULL
 		&& fStyle.FillPaint()->Type() != Paint::NONE) {
-		fillRasterizer.clip_box(bounds.left, bounds.top, bounds.right + 1,
-			bounds.bottom + 1);
+		TransformedPath transformedPath(path, LayoutedState().Matrix);
 	
-		fillRasterizer.add_path(transformedPath);
+		rasterizer.add_path(transformedPath);
+		_StoreScanlines(rasterizer, fFillScanlines);
+		rasterizer.reset();
 	}
 	if (fStyle.StrokePaint() != NULL
 		&& fStyle.StrokePaint()->Type() != Paint::NONE
 		&& fStyle.StrokeProperties() != NULL) {
-		agg::conv_stroke<TransformedPath> strokedPath(transformedPath);
+		agg::conv_stroke<PathStorage> strokedPath(path);
 		fStyle.StrokeProperties()->SetupAggConverter(strokedPath);
 
-		strokeRasterizer.clip_box(bounds.left, bounds.top, bounds.right + 1,
-			bounds.bottom + 1);
+		agg::conv_transform<agg::conv_stroke<PathStorage>, Transformation>
+			transformedPath(strokedPath, LayoutedState().Matrix);
 
-		strokeRasterizer.add_path(strokedPath);
+		rasterizer.add_path(transformedPath);
+		_StoreScanlines(rasterizer, fStrokeScanlines);
+		rasterizer.reset();
 	}
+
+	_ValidateScanlines(fFillScanlines);
+	_ValidateScanlines(fStrokeScanlines);
 }
 
 // _ClearScanlines

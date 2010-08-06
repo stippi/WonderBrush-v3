@@ -155,11 +155,12 @@ RenderEngine::DrawRectangle(const BRect& rect, BRect area)
 
 	agg::rounded_rect roundRect(rect.left, rect.top, rect.right, rect.bottom,
 		0.0);
-	agg::conv_transform<agg::rounded_rect, Transformable>
-		transformedRoundRect(roundRect, fState.Matrix);
 
 	if (fState.FillPaint() != NULL
 		&& fState.FillPaint()->Type() != Paint::NONE) {
+		agg::conv_transform<agg::rounded_rect, Transformable>
+			transformedRoundRect(roundRect, fState.Matrix);
+
 		fRasterizer.reset();
 		fRasterizer.add_path(transformedRoundRect);
 		_RenderScanlines(true);
@@ -167,14 +168,15 @@ RenderEngine::DrawRectangle(const BRect& rect, BRect area)
 
 	if (fState.StrokePaint() != NULL
 		&& fState.StrokePaint()->Type() != Paint::NONE) {
-		fRasterizer.reset();
-
-		agg::conv_stroke<agg::conv_transform<agg::rounded_rect,
-			Transformable> > strokedRoundRect(transformedRoundRect);
-
+		agg::conv_stroke<agg::rounded_rect> strokedRoundRect(
+			roundRect);
 		fState.StrokeProperties()->SetupAggConverter(strokedRoundRect);
 
-		fRasterizer.add_path(strokedRoundRect);
+		agg::conv_transform<agg::conv_stroke<agg::rounded_rect>, Transformable>
+			transformedRoundRect(strokedRoundRect, fState.Matrix);
+
+		fRasterizer.reset();
+		fRasterizer.add_path(transformedRoundRect);
 		_RenderScanlines(false);
 	}
 }
