@@ -1,10 +1,8 @@
 /*
- * Copyright 2007-2010, Haiku. All rights reserved.
- * Distributed under the terms of the MIT License.
- *
- * Authors:
- *		Stephan Aßmus <superstippi@gmx.de>
+ * Copyright 2007-2010, Stephan Aßmus <superstippi@gmx.de>.
+ * All rights reserved.
  */
+
 #include "Layer.h"
 
 #include <new>
@@ -13,7 +11,7 @@
 
 #include "BoundedObject.h"
 #include "LayerSnapshot.h"
-
+#include "OptionProperty.h"
 
 using std::nothrow;
 
@@ -91,6 +89,8 @@ Layer::Listener::ListenerAttached(Layer* layer)
 // constructor
 Layer::Layer(const BRect& bounds)
 	: fBounds(bounds)
+	, fGlobalAlpha(255)
+	, fBlendingMode(CompOpDstOver)
 	, fObjects(64)
 	, fListeners(8)
 {
@@ -103,11 +103,26 @@ Layer::~Layer()
 
 // #pragma mark -
 
-// Snapshot
-ObjectSnapshot*
-Layer::Snapshot() const
+// Unarchive
+status_t
+Layer::Unarchive(const BMessage* archive)
 {
-	return new (nothrow) LayerSnapshot(this);
+	status_t status = Object::Unarchive(archive);
+
+	// TODO: ...
+
+	return status;
+}
+
+// Archive
+status_t
+Layer::Archive(BMessage* into, bool deep) const
+{
+	status_t status = Object::Archive(into, deep);
+
+	// TODO: ...
+
+	return status;
 }
 
 // DefaultName
@@ -115,6 +130,86 @@ const char*
 Layer::DefaultName() const
 {
 	return "Layer";
+}
+
+// AddProperties
+void
+Layer::AddProperties(PropertyObject* object, uint32 flags) const
+{
+	Object::AddProperties(object, flags);
+
+	IntProperty* globalAlpha = new(std::nothrow) IntProperty(
+		PROPERTY_OPACITY, fGlobalAlpha, 0, 255);
+	if (globalAlpha == NULL || !object->AddProperty(globalAlpha)) {
+		delete globalAlpha;
+		return;
+	}
+
+	OptionProperty* blendingMode = new(std::nothrow) OptionProperty(
+		PROPERTY_BLENDING_MODE);
+	if (blendingMode == NULL || !object->AddProperty(blendingMode)) {
+		delete blendingMode;
+		return;
+	}
+	blendingMode->AddOption(CompOpClear, "Clear");
+	blendingMode->AddOption(CompOpSrc, "Source");
+	blendingMode->AddOption(CompOpDst, "Destination");
+	blendingMode->AddOption(CompOpSrcOver, "Source over");
+	blendingMode->AddOption(CompOpDstOver, "Destination over");
+	blendingMode->AddOption(CompOpSrcIn, "Source in");
+	blendingMode->AddOption(CompOpDstIn, "Destination in");
+	blendingMode->AddOption(CompOpSrcOut, "Source out");
+	blendingMode->AddOption(CompOpDstOut, "Destination out");
+	blendingMode->AddOption(CompOpSrcAtop, "Source atop");
+	blendingMode->AddOption(CompOpDstAtop, "Destination atop");
+	blendingMode->AddOption(CompOpXor, "XOR");
+	blendingMode->AddOption(CompOpPlus, "Plus");
+	blendingMode->AddOption(CompOpMinus, "Minus");
+	blendingMode->AddOption(CompOpMultiply, "Multiply");
+	blendingMode->AddOption(CompOpScreen, "Screen");
+	blendingMode->AddOption(CompOpOverlay, "Overlay");
+	blendingMode->AddOption(CompOpDarken, "Darken");
+	blendingMode->AddOption(CompOpLighten, "Lighten");
+	blendingMode->AddOption(CompOpDodge, "Dodge");
+	blendingMode->AddOption(CompOpColorBurn, "Color burn");
+	blendingMode->AddOption(CompOpHardLight, "Hard light");
+	blendingMode->AddOption(CompOpSoftLight, "Soft light");
+	blendingMode->AddOption(CompOpDifference, "Difference");
+	blendingMode->AddOption(CompOpExclusion, "Exclusion");
+	blendingMode->AddOption(CompOpContrast, "Contrast");
+	blendingMode->AddOption(CompOpInvert, "Invert");
+	blendingMode->AddOption(CompOpInvertRGB, "Invert RGB");
+
+	blendingMode->SetCurrentOptionID(fBlendingMode);
+}
+
+// SetToPropertyObject
+bool
+Layer::SetToPropertyObject(const PropertyObject* object, uint32 flags)
+{
+	AutoNotificationSuspender _(this); 
+
+	Object::SetToPropertyObject(object, flags);
+
+	SetGlobalAlpha(object->Value(PROPERTY_OPACITY, (int32)fGlobalAlpha));
+
+	OptionProperty* blendingMode = dynamic_cast<OptionProperty*>(
+		object->FindProperty(PROPERTY_BLENDING_MODE));
+	if (blendingMode != NULL) {
+		SetBlendingMode(static_cast< ::BlendingMode>(
+			blendingMode->CurrentOptionID()));
+	}
+
+	return HasPendingNotifications();
+}
+
+// #pragma mark -
+
+// Snapshot
+ObjectSnapshot*
+Layer::Snapshot() const
+{
+	return new (nothrow) LayerSnapshot(this);
 }
 
 // HitTest
@@ -386,5 +481,34 @@ Layer::RemoveListenerRecursive(Layer* layer, Listener* listener)
 	layer->RemoveListener(listener);
 }
 
+// SetGlobalAlpha
+void
+Layer::SetGlobalAlpha(uint8 globalAlpha)
+{
+	if (fGlobalAlpha == globalAlpha)
+		return;
 
+	fGlobalAlpha = globalAlpha;
+	UpdateChangeCounter();
+	InvalidateParent(fBounds);
+	Notify();
+}
+
+// SetBlendingMode
+void
+Layer::SetBlendingMode(::BlendingMode blendingMode)
+{
+	if (blendingMode < kMinBlendingMode)
+		blendingMode = kMinBlendingMode;
+	if (blendingMode > kMaxBlendingMode)
+		blendingMode = kMaxBlendingMode;
+
+	if (fBlendingMode == blendingMode)
+		return;
+
+	fBlendingMode = blendingMode;
+	UpdateChangeCounter();
+	InvalidateParent(fBounds);
+	Notify();
+}
 

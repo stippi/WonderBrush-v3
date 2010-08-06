@@ -17,17 +17,17 @@
 #include "RenderBuffer.h"
 #include "RenderEngine.h"
 
-
 using std::nothrow;
-
 
 // constructor
 LayerSnapshot::LayerSnapshot(const ::Layer* layer)
 	: ObjectSnapshot(layer)
 	, fOriginal(layer)
 	, fObjects(20)
-	, fBounds(layer->Bounds())
+	, fBounds()
 	, fBitmap(NULL)
+	, fGlobalAlpha(255)
+	, fBlendingMode(CompOpDstOver)
 {
 	_Sync();
 }
@@ -109,7 +109,7 @@ LayerSnapshot::Render(RenderEngine& engine, RenderBuffer* bitmap,
 		debugger("Layer bitmap not allocated!");
 	if (fBitmap->Bounds() != bitmap->Bounds())
 		debugger("Layer bitmap has wrong size!");
-	engine.BlendArea(fBitmap, area);
+	engine.BlendArea(fBitmap, area, fGlobalAlpha);
 }
 
 // #pragma mark -
@@ -293,6 +293,8 @@ LayerSnapshot::_Sync()
 	}
 
 	fBounds = fOriginal->Bounds();
+	fGlobalAlpha = fOriginal->GlobalAlpha();
+	fBlendingMode = fOriginal->BlendingMode();
 //printf("%p->LayerSnapshot::_Sync() - done\n", Original());
 }
 

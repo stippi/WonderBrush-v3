@@ -25,6 +25,9 @@ name_for_id(int32 id)
 		case PROPERTY_OPACITY:
 			name = "Opacity";
 			break;
+		case PROPERTY_BLENDING_MODE:
+			name = "Mode";
+			break;
 		case PROPERTY_COLOR:
 			name = "Color";
 			break;

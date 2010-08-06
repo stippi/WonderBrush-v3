@@ -1,27 +1,22 @@
 /*
- * Copyright 2007, Haiku. All rights reserved.
- * Distributed under the terms of the MIT License.
- *
- * Authors:
- *		Stephan Aßmus <superstippi@gmx.de>
+ * Copyright 2007-2010, Stephan Aßmus <superstippi@gmx.de>.
+ * All rights reserved.
  */
 #ifndef LAYER_SNAPSHOT_H
 #define LAYER_SNAPSHOT_H
 
-
 #include <List.h>
 
+#include "BlendingMode.h"
 #include "ObjectSnapshot.h"
-
 
 class RenderBuffer;
 class BRegion;
 class Layer;
 class ObjectSnapshot;
 
-
 class LayerSnapshot : public ObjectSnapshot {
- public:
+public:
 								LayerSnapshot(const ::Layer* layer);
 	virtual						~LayerSnapshot();
 
@@ -59,6 +54,8 @@ class LayerSnapshot : public ObjectSnapshot {
 			BList				fObjects;
 			BRect				fBounds;
 			RenderBuffer*		fBitmap;
+			uint8				fGlobalAlpha;
+			::BlendingMode		fBlendingMode;
 };
 
 #endif // LAYER_SNAPSHOT_H

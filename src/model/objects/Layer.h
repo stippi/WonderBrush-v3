@@ -1,24 +1,21 @@
 /*
- * Copyright 2007, Haiku. All rights reserved.
- * Distributed under the terms of the MIT License.
- *
- * Authors:
- *		Stephan Aßmus <superstippi@gmx.de>
+ * Copyright 2007-2010, Stephan Aßmus <superstippi@gmx.de>.
+ * All rights reserved.
  */
+
 #ifndef LAYER_H
 #define LAYER_H
-
 
 #include <List.h>
 #include <Rect.h>
 
+#include "BlendingMode.h"
 #include "Object.h"
 
-
 class Layer : public Object {
- public:
+public:
 	class Listener {
-	 public:
+	public:
 								Listener();
 		virtual					~Listener();
 
@@ -44,10 +41,20 @@ class Layer : public Object {
 								Layer(const BRect& bounds);
 	virtual						~Layer();
 
-	// Object interface
-	virtual	ObjectSnapshot*		Snapshot() const;
+	// BaseObject interface
+	virtual	status_t			Unarchive(const BMessage* archive);
+	virtual status_t			Archive(BMessage* into,
+										bool deep = true) const;
 
 	virtual	const char*			DefaultName() const;
+	virtual	void				AddProperties(PropertyObject* object,
+									uint32 flags = 0) const;
+	virtual	bool				SetToPropertyObject(
+									const PropertyObject* object,
+									uint32 flags = 0);
+
+	// Object interface
+	virtual	ObjectSnapshot*		Snapshot() const;
 
 	virtual	bool				HitTest(const BPoint& canvasPoint) const;
 
@@ -81,8 +88,19 @@ class Layer : public Object {
 
 			BRect				Bounds() const
 									{ return fBounds; }
- private:
+
+			void				SetGlobalAlpha(uint8 globalAlpha);
+			uint8				GlobalAlpha() const
+									{ return fGlobalAlpha; }
+
+			void				SetBlendingMode(::BlendingMode blendingMode);
+			::BlendingMode		BlendingMode() const
+									{ return fBlendingMode; }
+
+private:
 			BRect				fBounds;
+			uint8				fGlobalAlpha;
+			::BlendingMode		fBlendingMode;
 
 			BList				fObjects;
 			BList				fListeners;

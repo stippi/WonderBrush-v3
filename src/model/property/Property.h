@@ -143,7 +143,7 @@ class FloatProperty : public Property {
 
 // UInt8Property
 class UInt8Property : public Property {
- public:
+public:
 								UInt8Property(uint32 identifier,
 											  uint8 value = 255);
 								UInt8Property(const UInt8Property& other);
@@ -172,7 +172,7 @@ class UInt8Property : public Property {
 	inline	uint8				Value() const
 									{ return fValue; }
 
- private:
+private:
 			uint8				fValue;
 };
 

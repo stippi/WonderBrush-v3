@@ -119,7 +119,7 @@ RenderEngine::Transformation() const
 
 // BlendArea
 void
-RenderEngine::BlendArea(const RenderBuffer* source, BRect area)
+RenderEngine::BlendArea(const RenderBuffer* source, BRect area, uint8 opacity)
 {
 	area = area & source->Bounds();
 
@@ -139,11 +139,8 @@ RenderEngine::BlendArea(const RenderBuffer* source, BRect area)
 
 	PixelFormat sourcePixelFormat(sourceBuffer);
 
-	uint8 globalAlpha = 255;
-		// NOTE: Cover is in range 0..255 also for 16 bits/channel!
-
-	fBaseRenderer.blend_from(sourcePixelFormat, NULL, left, top,
-		globalAlpha);
+	// NOTE: Cover (opacity) is in range 0..255 also for 16 bits/channel!
+	fBaseRenderer.blend_from(sourcePixelFormat, NULL, left, top, opacity);
 }
 
 // DrawRectangle

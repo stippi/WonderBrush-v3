@@ -80,7 +80,7 @@ public:
 
 			// Drawing methods
 			void				BlendArea(const RenderBuffer* source,
-									BRect area);
+									BRect area, uint8 opacity = 255);
 
 			void				DrawRectangle(const BRect& rect,
 									BRect area);

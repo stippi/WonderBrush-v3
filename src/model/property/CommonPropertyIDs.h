@@ -15,6 +15,7 @@ enum {
 	PROPERTY_NAME						= 'name',
 
 	PROPERTY_OPACITY					= 'alpa',
+	PROPERTY_BLENDING_MODE				= 'blnd',
 	PROPERTY_COLOR						= 'colr',
 
 	PROPERTY_WIDTH						= 'wdth',
