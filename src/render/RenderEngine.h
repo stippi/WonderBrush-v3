@@ -19,6 +19,7 @@
 #include <agg_span_allocator.h>
 #include <agg_trans_perspective.h>
 
+#include "BlendingMode.h"
 #include "ObjectCache.h"
 #include "LayoutState.h"
 #include "Scanline.h"
@@ -31,7 +32,13 @@ typedef agg::gamma_lut
 
 typedef agg::rendering_buffer				RenderingBuffer;
 typedef agg::pixfmt_bgra64_pre				PixelFormat;
+typedef agg::comp_op_adaptor_rgba_pre<agg::rgba16, agg::order_bgra>
+											CompOpBlender;
+typedef agg::pixfmt_custom_blend_rgba<CompOpBlender, RenderingBuffer>
+											CompOpPixelFormat;
 typedef agg::renderer_base<PixelFormat>		BaseRenderer;
+typedef agg::renderer_base<CompOpPixelFormat>
+											CompOpBaseRenderer;
 typedef agg::renderer_scanline_aa_solid<BaseRenderer>
 											Renderer;
 
@@ -80,7 +87,8 @@ public:
 
 			// Drawing methods
 			void				BlendArea(const RenderBuffer* source,
-									BRect area, uint8 opacity = 255);
+									BRect area, uint8 opacity = 255,
+									BlendingMode blendingMode = CompOpSrcOver);
 
 			void				DrawRectangle(const BRect& rect,
 									BRect area);
@@ -107,8 +115,12 @@ private:
 			LayoutState			fState;
 
 			RenderingBuffer		fRenderingBuffer;
+
 			PixelFormat			fPixelFormat;
 			BaseRenderer		fBaseRenderer;
+
+			CompOpPixelFormat	fCompOpPixelFormat;
+			CompOpBaseRenderer	fCompOpBaseRenderer;
 
 			ScanlinePacked		fScanline;
 			SpanColorAllocator	fSpanAllocator;

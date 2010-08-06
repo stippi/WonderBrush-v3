@@ -90,7 +90,7 @@ Layer::Listener::ListenerAttached(Layer* layer)
 Layer::Layer(const BRect& bounds)
 	: fBounds(bounds)
 	, fGlobalAlpha(255)
-	, fBlendingMode(CompOpDstOver)
+	, fBlendingMode(CompOpSrcOver)
 	, fObjects(64)
 	, fListeners(8)
 {

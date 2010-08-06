@@ -27,7 +27,7 @@ LayerSnapshot::LayerSnapshot(const ::Layer* layer)
 	, fBounds()
 	, fBitmap(NULL)
 	, fGlobalAlpha(255)
-	, fBlendingMode(CompOpDstOver)
+	, fBlendingMode(CompOpSrcOver)
 {
 	_Sync();
 }
@@ -109,7 +109,7 @@ LayerSnapshot::Render(RenderEngine& engine, RenderBuffer* bitmap,
 		debugger("Layer bitmap not allocated!");
 	if (fBitmap->Bounds() != bitmap->Bounds())
 		debugger("Layer bitmap has wrong size!");
-	engine.BlendArea(fBitmap, area, fGlobalAlpha);
+	engine.BlendArea(fBitmap, area, fGlobalAlpha, fBlendingMode);
 }
 
 // #pragma mark -

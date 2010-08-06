@@ -25,8 +25,12 @@ RenderEngine::RenderEngine()
 	: fState()
 
 	, fRenderingBuffer()
+
 	, fPixelFormat(fRenderingBuffer)
 	, fBaseRenderer(fPixelFormat)
+
+	, fCompOpPixelFormat(fRenderingBuffer)
+	, fCompOpBaseRenderer(fCompOpPixelFormat)
 
 	, fScanline()
 	, fSpanAllocator()
@@ -40,8 +44,12 @@ RenderEngine::RenderEngine(const Transformable& transformation)
 	: fState()
 
 	, fRenderingBuffer()
+
 	, fPixelFormat(fRenderingBuffer)
 	, fBaseRenderer(fPixelFormat)
+
+	, fCompOpPixelFormat(fRenderingBuffer)
+	, fCompOpBaseRenderer(fCompOpPixelFormat)
 
 	, fScanline()
 	, fSpanAllocator()
@@ -76,6 +84,7 @@ RenderEngine::AttachTo(RenderBuffer* bitmap)
 	if (bitmap == NULL) {
 		fRenderingBuffer.attach(NULL, 0, 0, 0);
 		fBaseRenderer.clip_box(0, 0, 0, 0);
+		fCompOpBaseRenderer.clip_box(0, 0, 0, 0);
 		return;
 	}
 
@@ -84,6 +93,8 @@ RenderEngine::AttachTo(RenderBuffer* bitmap)
 		bitmap->Width(), bitmap->Height(), bitmap->BytesPerRow());
 
 	fBaseRenderer.clip_box(0, 0, bitmap->Width() - 1, bitmap->Height() - 1);
+	fCompOpBaseRenderer.clip_box(0, 0, bitmap->Width() - 1,
+		bitmap->Height() - 1);
 }
 
 // SetClipping
@@ -96,6 +107,9 @@ RenderEngine::SetClipping(const BRect& area)
 	clipping = area & clipping;
 
 	fBaseRenderer.clip_box(
+		(int32)clipping.left, (int32)clipping.top,
+		(int32)clipping.right, (int32)clipping.bottom);
+	fCompOpBaseRenderer.clip_box(
 		(int32)clipping.left, (int32)clipping.top,
 		(int32)clipping.right, (int32)clipping.bottom);
 	fRasterizer.clip_box(
@@ -119,8 +133,11 @@ RenderEngine::Transformation() const
 
 // BlendArea
 void
-RenderEngine::BlendArea(const RenderBuffer* source, BRect area, uint8 opacity)
+RenderEngine::BlendArea(const RenderBuffer* source, BRect area, uint8 opacity,
+	BlendingMode blendingMode)
 {
+	// NOTE: Cover (opacity) is in range 0..255 also for 16 bits/channel!
+
 	area = area & source->Bounds();
 
 	if (!area.IsValid())
@@ -139,8 +156,17 @@ RenderEngine::BlendArea(const RenderBuffer* source, BRect area, uint8 opacity)
 
 	PixelFormat sourcePixelFormat(sourceBuffer);
 
-	// NOTE: Cover (opacity) is in range 0..255 also for 16 bits/channel!
-	fBaseRenderer.blend_from(sourcePixelFormat, NULL, left, top, opacity);
+	switch (blendingMode) {
+		case CompOpSrcOver:
+			fBaseRenderer.blend_from(sourcePixelFormat, NULL, left, top,
+				opacity);
+			break;
+		default:
+			fCompOpPixelFormat.comp_op(blendingMode);
+			fCompOpBaseRenderer.blend_from(sourcePixelFormat, NULL, left, top,
+				opacity);
+			break;
+	}
 }
 
 // DrawRectangle
