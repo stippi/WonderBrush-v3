@@ -83,6 +83,23 @@ WonderBrush::WonderBrush(BRect bounds)
 	Layer* subSubSubLayer = new Layer(bounds);
 	subSubLayer->AddObject(subSubSubLayer);
 
+	Style* style = new Style();
+	style->SetFillPaint(Paint((rgb_color){ 255, 175, 252, 210 }));
+	style->SetStrokePaint(Paint((rgb_color){ 20, 60, 255, 150 }));
+	style->SetStrokeProperties(StrokeProperties(5.0f, ButtCap, RoundJoin,
+		4.0f));
+	fDocument->GlobalResources().AddObject(style);
+
+	Shape* shapeWidthGlobalStyle = new Shape();
+	shapeWidthGlobalStyle->SetArea(BRect(120, 80, 230, 190));
+	shapeWidthGlobalStyle->SetStyle(style);
+	subSubSubLayer->AddObject(shapeWidthGlobalStyle);
+	
+	Rect* rectWidthGlobalStyle = new Rect();
+	rectWidthGlobalStyle->SetArea(BRect(150, 330, 240, 420));
+	rectWidthGlobalStyle->SetStyle(style);
+	subLayer->AddObject(rectWidthGlobalStyle);
+
 	fEditLayer = fDocument->RootLayer();
 }
 
