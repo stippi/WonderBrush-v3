@@ -36,8 +36,7 @@ Document::Document(const BRect& bounds)
 	RWLocker("document rw lock"),
 	fCommandStack(new (nothrow) ::CommandStack(this)),
 	fRootLayer(new (nothrow) Layer(bounds)),
-	fGlobalPaths(),
-	fGlobalStyles(),
+	fGlobalResources(),
 	fListeners(8)
 {
 }

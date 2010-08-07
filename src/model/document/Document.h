@@ -1,9 +1,6 @@
 /*
- * Copyright 2007, Haiku. All rights reserved.
- * Distributed under the terms of the MIT License.
- *
- * Authors:
- *		Stephan Aßmus <superstippi@gmx.de>
+ * Copyright 2007-2010, Stephan Aßmus <superstippi@gmx.de>.
+ * All rights reserved.
  */
 #ifndef DOCUMENT_H
 #define DOCUMENT_H
@@ -14,13 +11,13 @@
 #include "NotifyingList.h"
 #include "RWLocker.h"
 
+class BaseObject;
 class CommandStack;
 class Layer;
 class Path;
 class Style;
 
-typedef NotifyingList<Path> PathList;
-typedef NotifyingList<Style> StyleList;
+typedef NotifyingList<BaseObject> ResourceList;
 
 class Document : public RWLocker {
 public:
@@ -48,11 +45,10 @@ public:
 									{ return fRootLayer; }
 			bool				HasLayer(Layer* layer) const;
 
-	inline	PathList*			GlobalPaths()
-									{ return &fGlobalPaths; }
-
-	inline	StyleList*			GlobalStyles()
-									{ return &fGlobalStyles; }
+	inline	ResourceList&		GlobalResources()
+									{ return fGlobalResources; }
+	inline	const ResourceList&	GlobalResources() const
+									{ return fGlobalResources; }
 
 private:
 			bool				_HasLayer(Layer* parent, Layer* child) const;
@@ -60,8 +56,7 @@ private:
 			::CommandStack*		fCommandStack;
 			Layer*				fRootLayer;
 
-			PathList			fGlobalPaths;
-			StyleList			fGlobalStyles;
+			ResourceList		fGlobalResources;
 
 			BList				fListeners;
 };
