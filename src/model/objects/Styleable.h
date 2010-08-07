@@ -7,10 +7,11 @@
 #include <GraphicsDefs.h>
 
 #include "BoundedObject.h"
+#include "Listener.h"
 
 class Style;
 
-class Styleable : public BoundedObject {
+class Styleable : public BoundedObject, public Listener {
 public:
 								Styleable();
 								Styleable(const rgb_color& color);
@@ -22,6 +23,9 @@ public:
 	virtual	bool				SetToPropertyObject(
 									const PropertyObject* object,
 									uint32 flags = 0);
+	// Listener interface
+	virtual	void				ObjectChanged(const Notifier* object);
+
 	// Styleable
 			void				SetStyle(::Style* style);
 	inline	::Style*			Style() const

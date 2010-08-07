@@ -31,6 +31,7 @@ Styleable::Styleable(const rgb_color& color)
 // destructor
 Styleable::~Styleable()
 {
+	SetStyle(NULL);
 }
 
 // #pragma mark -
@@ -51,15 +52,22 @@ Styleable::SetToPropertyObject(const PropertyObject* object, uint32 flags)
 
 	BoundedObject::SetToPropertyObject(object, flags);
 
-	if (fStyle->SetToPropertyObject(object, flags))
-		Notify();
+	fStyle->SetToPropertyObject(object, flags);
 
-	if (HasPendingNotifications()) {
+	return HasPendingNotifications();
+}
+
+// #pragma mark -
+
+void
+Styleable::ObjectChanged(const Notifier* object)
+{
+	if (object == fStyle.Get()) {
 		UpdateChangeCounter();
 		UpdateBounds();
-		return true;
+		// Forward notification
+		Notify();
 	}
-	return false;
 }
 
 // #pragma mark -
@@ -68,9 +76,15 @@ Styleable::SetToPropertyObject(const PropertyObject* object, uint32 flags)
 void
 Styleable::SetStyle(::Style* style)
 {
+	if (style == fStyle.Get())
+		return;
+
+	if (fStyle.Get())
+		fStyle->RemoveListener(this);
+
 	if (fStyle.SetTo(style)) {
-		UpdateChangeCounter();
-		InvalidateParent(TransformedBounds());
+		fStyle->AddListener(this);
+		ObjectChanged(style);
 	}
 }
 
