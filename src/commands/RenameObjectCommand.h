@@ -5,12 +5,12 @@
 #ifndef RENAME_OBJECT_ACTION_H
 #define RENAME_OBJECT_ACTION_H
 
+#include "BaseObject.h"
 #include "Command.h"
-#include "Object.h"
 
 class RenameObjectCommand : public Command {
 public:
-	RenameObjectCommand(Object* object, const char* newName)
+	RenameObjectCommand(BaseObject* object, const char* newName)
 		: Command()
 		, fObject(object)
 		, fNextName(newName)
@@ -46,7 +46,7 @@ public:
 	}
 
 private:
-			Object*				fObject;
+			BaseObject*			fObject;
 			BString				fNextName;
 };
 
