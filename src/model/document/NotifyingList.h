@@ -6,25 +6,66 @@
 #ifndef NOTIFYING_LIST_H
 #define NOTIFYING_LIST_H
 
-
 #include <stdio.h>
 
 #include <debugger.h>
 #include <List.h>
+#include <Message.h>
 
+#include "AbstractLOAdapter.h"
 
 template<typename ObjectType>
 class NotifyingList {
 public:
 
 	class Listener {
-	 public:
+	public:
 								Listener() {}
 		virtual					~Listener() {}
 
-		virtual	void			ObjectAdded(ObjectType* object,
-									int32 index) = 0;
-		virtual	void			ObjectRemoved(ObjectType* object) = 0;
+		virtual	void			ObjectAdded(const NotifyingList* list,
+									ObjectType* object, int32 index) = 0;
+		virtual	void			ObjectRemoved(const NotifyingList* list,
+									ObjectType* object, int32 index) = 0;
+	};
+
+
+	class Observer : public Listener, public AbstractLOAdapter {
+	public:
+		enum {
+			MSG_OBJECT_ADDED		= 'nloa',
+			MSG_OBJECT_REMOVED		= 'nlor'
+		};
+	
+		Observer(BHandler* handler)
+			: Listener()
+			, AbstractLOAdapter(handler)
+		{
+		}
+	
+		virtual ~Observer()
+		{
+		}
+	
+		virtual void ObjectAdded(const NotifyingList* list, ObjectType* object,
+			int32 index)
+		{
+			BMessage message(MSG_OBJECT_ADDED);
+			message.AddPointer("list", list);
+			message.AddPointer("object", object);
+			message.AddInt32("index", index);
+			DeliverMessage(message);
+		}
+	
+		virtual	void ObjectRemoved(const NotifyingList* list,
+			ObjectType* object, int32 index)
+		{
+			BMessage message(MSG_OBJECT_REMOVED);
+			message.AddPointer("list", list);
+			message.AddPointer("object", object);
+			message.AddInt32("index", index);
+			DeliverMessage(message);
+		}
 	};
 
 
@@ -71,8 +112,9 @@ public:
 
 	bool RemoveObject(ObjectType* object)
 	{
-		if (fObjects.RemoveItem((void*)object)) {
-			_NotifyObjectRemoved(object);
+		int32 index = fObjects.IndexOf(object);
+		if (fObjects.RemoveItem(index)) {
+			_NotifyObjectRemoved(object, index);
 			object->RemoveReference();
 			return true;
 		}
@@ -85,7 +127,7 @@ public:
 		ObjectType* object = reinterpret_cast<ObjectType*>(
 			fObjects.RemoveItem(index));
 		if (object) {
-			_NotifyObjectRemoved(object);
+			_NotifyObjectRemoved(object, index);
 			object->RemoveReference();
 		}
 
@@ -124,7 +166,7 @@ public:
 
 	bool AddListener(Listener* listener)
 	{
-		if (listener && !fListeners.HasItem((void*)listener))
+		if (listener && !fListeners.HasItem(listener))
 			return fListeners.AddItem(listener);
 		return false;
 	}
@@ -139,7 +181,7 @@ private:
 	{
 		for (int32 i = CountObjects() - 1; i >= 0; i--) {
 			ObjectType* object = ObjectAtFast(i);
-			_NotifyObjectRemoved(object);
+			_NotifyObjectRemoved(object, i);
 			object->RemoveReference();
 		}
 		fObjects.MakeEmpty();
@@ -152,18 +194,18 @@ private:
 		for (int32 i = 0; i < count; i++) {
 			Listener* listener = reinterpret_cast<Listener*>(
 				listeners.ItemAtFast(i));
-			listener->ObjectAdded(object, index);
+			listener->ObjectAdded(this, object, index);
 		}
 	}
 
-	void _NotifyObjectRemoved(ObjectType* object) const
+	void _NotifyObjectRemoved(ObjectType* object, int32 index) const
 	{
 		BList listeners(fListeners);
 		int32 count = listeners.CountItems();
 		for (int32 i = 0; i < count; i++) {
 			Listener* listener = reinterpret_cast<Listener*>(
 				listeners.ItemAtFast(i));
-			listener->ObjectRemoved(object);
+			listener->ObjectRemoved(this, object, index);
 		}
 	}
 
