@@ -8,7 +8,6 @@
 
 #include <Window.h>
 
-#include "LayerObserver.h"
 #include "ListenerAdapter.h"
 #include "Selection.h"
 
@@ -22,6 +21,7 @@ class Layer;
 class ObjectColumnTreeItem;
 class ObjectTreeView;
 class RenderManager;
+class ResourceTreeView;
 class Tool;
 
 class Window : public BWindow {
@@ -46,7 +46,6 @@ private:
 
 			CanvasView*			fView;
 			Document*			fDocument;
-			LayerObserver		fLayerObserver;
 			RenderManager*		fRenderManager;
 			ListenerAdapter		fCommandStackListener;
 			Selection			fSelection;
@@ -54,6 +53,7 @@ private:
 			BMenu*				fFileMenu;
 			BMenu*				fEditMenu;
 			BMenu*				fObjectMenu;
+			BMenu*				fResourceMenu;
 			BMenu*				fPropertyMenu;
 
 			BMenuItem*			fUndoMI;
@@ -62,6 +62,7 @@ private:
 			IconOptionsControl*	fToolIconControl;
 			ObjectTreeView*		fLayerTreeView;
 //			ColumnTreeModel*	fLayerTreeModel;
+			ResourceTreeView*	fResourceTreeView;
 			InspectorView*		fInspectorView;
 
 			BList				fTools;

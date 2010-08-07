@@ -1,7 +1,8 @@
 /*
- * Copyright 2009, Stephan Aßmus <superstippi@gmx.de>.
+ * Copyright 2009-2010, Stephan Aßmus <superstippi@gmx.de>.
  * All rights reserved.
  */
+
 #include "ObjectTreeView.h"
 
 #include <new>
@@ -66,6 +67,7 @@ ObjectTreeView::ObjectTreeView(BRect frame, Document* document,
 	fLayerObserver(this),
 	fIgnoreSelectionChanged(false)
 {
+	_Init();
 }
 
 #ifdef __HAIKU__
@@ -79,6 +81,7 @@ ObjectTreeView::ObjectTreeView(Document* document, Selection* selection)
 	fLayerObserver(this),
 	fIgnoreSelectionChanged(false)
 {
+	_Init();
 }
 
 #endif // __HAIKU__
@@ -98,7 +101,10 @@ ObjectTreeView::AttachedToWindow()
 
 	fSelection->AddListener(this);
 
-	_RecursiveAddItems(fDocument->RootLayer(), NULL);
+	if (fDocument->WriteLock()) {
+		_RecursiveAddItems(fDocument->RootLayer(), NULL);
+		fDocument->WriteUnlock();
+	}
 }
 
 // DetachedFromWindow
@@ -492,6 +498,17 @@ printf("ObjectTreeView::SelectItem(%p)\n", object);
 }
 
 // #pragma mark -
+
+// _Init
+void
+ObjectTreeView::_Init()
+{
+	AddColumn(new Column("Name", "name", 177,
+		COLUMN_MOVABLE | COLUMN_VISIBLE));
+
+	AddColumn(new Column("", "icon", 18,
+		COLUMN_MOVABLE | COLUMN_VISIBLE));
+}
 
 // _HandleRenameSelectedItem
 void

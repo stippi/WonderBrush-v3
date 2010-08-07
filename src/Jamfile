@@ -90,6 +90,7 @@ Application WonderBrush :
 	CanvasView.cpp
 	InspectorView.cpp
 	ObjectTreeView.cpp
+	ResourceTreeView.cpp
 	ToolConfigView.cpp
 	Window.cpp
 

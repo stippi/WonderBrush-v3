@@ -1,3 +1,7 @@
+/*
+ * Copyright 2009-2010, Stephan Aßmus <superstippi@gmx.de>.
+ * All rights reserved.
+ */
 #ifndef OBJECT_TREE_VIEW_H
 #define OBJECT_TREE_VIEW_H
 
@@ -14,7 +18,7 @@ class Object;
 
 class ObjectColumnTreeItem : public EasyColumnTreeItem {
 public:
-	Object*	object;
+			Object*				object;
 
 								ObjectColumnTreeItem(float height,
 									Object* object);
@@ -66,6 +70,8 @@ public:
 			void				SelectItem(Object* object);
 
 private:
+			void				_Init();
+
 			void				_HandleRenameSelectedItem();
 			void				_HandleRenameItem(int32 index);
 			void				_HandleRenameObject(BMessage* message);

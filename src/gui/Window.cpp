@@ -17,9 +17,9 @@
 #include <ScrollBar.h>
 #include <SeparatorView.h>
 #include <String.h>
+#include <TabView.h>
 
 #include "CanvasView.h"
-#include "Column.h"
 #include "CommandStack.h"
 #include "DefaultColumnTreeModel.h"
 #include "Document.h"
@@ -31,6 +31,7 @@
 #include "PickTool.h"
 #include "TransformTool.h"
 #include "RenderManager.h"
+#include "ResourceTreeView.h"
 #include "ScrollView.h"
 #include "WonderBrush.h"
 
@@ -44,14 +45,12 @@ enum {
 // constructor
 Window::Window(BRect frame, const char* title, Document* document,
 			Layer* layer)
-	:
-	BWindow(frame, title, B_DOCUMENT_WINDOW_LOOK, B_NORMAL_WINDOW_FEEL,
-		B_ASYNCHRONOUS_CONTROLS | B_AUTO_UPDATE_SIZE_LIMITS),
-	fDocument(document),
-	fRenderManager(NULL),
-	fCommandStackListener(this),
-//	fLayerTreeModel(new LayerTreeModel(fDocument)),
-	fLayerObserver(this)
+	: BWindow(frame, title, B_DOCUMENT_WINDOW_LOOK, B_NORMAL_WINDOW_FEEL,
+		B_ASYNCHRONOUS_CONTROLS | B_AUTO_UPDATE_SIZE_LIMITS)
+	, fDocument(document)
+	, fRenderManager(NULL)
+	, fCommandStackListener(this)
+//	, fLayerTreeModel(new LayerTreeModel(fDocument))
 {
 	// TODO: fix for when document == NULL
 
@@ -77,23 +76,26 @@ Window::Window(BRect frame, const char* title, Document* document,
 	fObjectMenu = new BMenu("Object");
 	objectMenuBar->AddItem(fObjectMenu);
 
+	BMenuBar* resourceMenuBar = new BMenuBar("resource menu");
+	fResourceMenu = new BMenu("Resource");
+	resourceMenuBar->AddItem(fResourceMenu);
+
 	BMenuBar* propertyMenuBar = new BMenuBar("property menu");
 	fPropertyMenu = new BMenu("Property");
 	propertyMenuBar->AddItem(fPropertyMenu);
 
 	fLayerTreeView = new ObjectTreeView(fDocument, &fSelection);
-
-	Column* nameColumn = new Column("Name", "name", 177,
-		COLUMN_MOVABLE | COLUMN_VISIBLE);
-	fLayerTreeView->AddColumn(nameColumn);
-
-	Column* iconColumn = new Column("", "icon", 18,
-		COLUMN_MOVABLE | COLUMN_VISIBLE);
-	fLayerTreeView->AddColumn(iconColumn);
-
 //	fLayerTreeView->SetModel(fLayerTreeModel);
 	fLayerTreeView->SetModel(new DefaultColumnTreeModel);
 	ScrollView* objectTreeScrollView = new ScrollView(fLayerTreeView,
+		SCROLL_HORIZONTAL | SCROLL_VERTICAL/* | SCROLL_HORIZONTAL_MAGIC
+		| SCROLL_VERTICAL_MAGIC*/ | SCROLL_VISIBLE_RECT_IS_CHILD_BOUNDS,
+		"layer tree", B_WILL_DRAW | B_FRAME_EVENTS, B_PLAIN_BORDER,
+		BORDER_BOTTOM);
+
+	fResourceTreeView = new ResourceTreeView(fDocument, &fSelection);
+	fResourceTreeView->SetModel(new DefaultColumnTreeModel);
+	ScrollView* resourceTreeScrollView = new ScrollView(fResourceTreeView,
 		SCROLL_HORIZONTAL | SCROLL_VERTICAL/* | SCROLL_HORIZONTAL_MAGIC
 		| SCROLL_VERTICAL_MAGIC*/ | SCROLL_VISIBLE_RECT_IS_CHILD_BOUNDS,
 		"layer tree", B_WILL_DRAW | B_FRAME_EVENTS, B_PLAIN_BORDER,
@@ -119,6 +121,20 @@ Window::Window(BRect frame, const char* title, Document* document,
 		SCROLL_VERTICAL/* | SCROLL_VERTICAL_MAGIC*/,
 		"inspector", B_WILL_DRAW | B_FRAME_EVENTS, B_PLAIN_BORDER, 0);
 
+	BTabView* objectResourceTabView = new BTabView("object resource tabview",
+		B_WIDTH_FROM_LABEL);
+	objectResourceTabView->AddTab(BLayoutBuilder::Group<>(B_VERTICAL)
+		.Add(objectMenuBar)
+		.Add(objectTreeScrollView)
+	);
+	objectResourceTabView->AddTab(BLayoutBuilder::Group<>(B_VERTICAL)
+		.Add(resourceMenuBar)
+		.Add(resourceTreeScrollView)
+	);
+	objectResourceTabView->SetBorder(B_NO_BORDER);
+	objectResourceTabView->TabAt(0)->SetLabel("Objects");
+	objectResourceTabView->TabAt(1)->SetLabel("Resources");
+//	objectResourceTabView->SetFont(be_bold_font);
 
 	BLayoutBuilder::Group<>(this, B_VERTICAL)
 		.Add(menuBar)
@@ -128,12 +144,8 @@ Window::Window(BRect frame, const char* title, Document* document,
 					.AddStrut(5)
 					.Add(fToolIconControl)
 					.AddStrut(5)
-					.Add(new BSeparatorView(B_HORIZONTAL))
 					.AddSplit(B_VERTICAL, 0.0f, 0.15f)
-						.AddGroup(B_VERTICAL)
-							.Add(objectMenuBar)
-							.Add(objectTreeScrollView)
-						.End()
+						.Add(objectResourceTabView)
 						.AddGroup(B_VERTICAL, 0.0f, 0.35f)
 							.Add(new BSeparatorView(B_HORIZONTAL))
 							.Add(propertyMenuBar)
@@ -150,8 +162,8 @@ Window::Window(BRect frame, const char* title, Document* document,
 		.End()
 	;
 
-	objectTreeScrollView->SetExplicitMinSize(BSize(150, B_SIZE_UNSET));
-	objectTreeScrollView->SetExplicitMaxSize(BSize(250, B_SIZE_UNSET));
+	objectResourceTabView->SetExplicitMinSize(BSize(150, B_SIZE_UNSET));
+	objectResourceTabView->SetExplicitMaxSize(BSize(250, B_SIZE_UNSET));
 	inspectorScrollView->SetExplicitMinSize(BSize(150, B_SIZE_UNSET));
 	inspectorScrollView->SetExplicitMaxSize(BSize(250, B_SIZE_UNSET));
 
@@ -185,13 +197,11 @@ Window::Window(BRect frame, const char* title, Document* document,
 
 	fDocument->CommandStack()->AddListener(&fCommandStackListener);
 	_ObjectChanged(fDocument->CommandStack());
-//	Layer::AddListenerRecursive(fDocument->RootLayer(), &fLayerObserver);
 }
 
 // destructor
 Window::~Window()
 {
-//	Layer::RemoveListenerRecursive(fDocument->RootLayer(), &fLayerObserver);
 	fDocument->CommandStack()->RemoveListener(&fCommandStackListener);
 	delete fRenderManager;
 //	delete fLayerTreeModel;
