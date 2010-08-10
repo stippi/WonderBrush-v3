@@ -34,7 +34,7 @@ public:
 	inline	float				MaxRadius() const
 									{ return fMaxRadius; }
 
-			void				SetHardness(float minHardness, float maxHardness)
+			void				SetHardness(float minHardness, float maxHardness);
 	inline	float				MinHardness() const
 									{ return fMinHardness; }
 
@@ -50,8 +50,6 @@ private:
 			float				fMaxRadius;
 			float				fMinHardness;
 			float				fMaxHardness;
-
-	static	const uint8			sGaussTable[256];
 };
 
 #endif // BRUSH_H

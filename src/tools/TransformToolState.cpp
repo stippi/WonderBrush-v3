@@ -1170,8 +1170,14 @@ TransformToolState::SetObject(Object* object, bool modifySelection)
 {
 	BRect box;
 	BoundedObject* boundedObject = dynamic_cast<BoundedObject*>(object);
+	Rect* rect = dynamic_cast<Rect*>(object);
+	Shape* shape = dynamic_cast<Shape*>(object);
 
-	if (boundedObject != NULL)
+	if (rect != NULL)
+		box = rect->Area();
+	else if (shape != NULL)
+		box = shape->Area();
+	else if (boundedObject != NULL)
 		box = boundedObject->Bounds();
 
 	if (object != NULL) {
