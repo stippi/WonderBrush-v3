@@ -33,6 +33,15 @@ static uint8 sGaussTable[256];
 static bool dummy = init_gauss_table(sGaussTable);
 
 // constructor
+Brush::Brush()
+	: fMinRadius(0.0f)
+	, fMaxRadius(1.0f)
+	, fMinHardness(1.0f)
+	, fMaxHardness(1.0f)
+{
+}
+
+// constructor
 Brush::Brush(float minRadius, float maxRadius, float minHardness,
 		float maxHardness)
 	: fMinRadius(minRadius)
@@ -47,6 +56,59 @@ Brush::~Brush()
 {
 }
 
+// Unarchive
+status_t
+Brush::Unarchive(const BMessage* archive)
+{
+	status_t ret = BaseObject::Unarchive(archive);
+
+	// TODO: ...
+
+	return ret;
+}
+
+// Archive
+status_t
+Brush::Archive(BMessage* into, bool deep) const
+{
+	status_t ret = BaseObject::Archive(into, deep);
+
+	// TODO: ...
+
+	return ret;
+}
+
+// AddProperties
+void
+Brush::AddProperties(PropertyObject* object, uint32 flags) const
+{
+	BaseObject::AddProperties(object, flags);
+
+	// TODO: ...
+}
+
+// SetToPropertyObject
+bool
+Brush::SetToPropertyObject(const PropertyObject* object, uint32 flags)
+{
+	AutoNotificationSuspender _(this);
+
+	BaseObject::SetToPropertyObject(object, flags);
+
+	// TODO: ...
+
+	return HasPendingNotifications();
+}
+
+// DefaultName
+const char*
+Brush::DefaultName() const
+{
+	return "Brush";
+}
+
+// #pragma mark -
+
 // SetRadius
 void
 Brush::SetRadius(float minRadius, float maxRadius)
@@ -57,6 +119,16 @@ Brush::SetRadius(float minRadius, float maxRadius)
 	fMinRadius = minRadius;
 	fMaxRadius = maxRadius;
 	Notify();
+}
+
+// Radius
+float
+Brush::Radius(float pressure) const
+{
+//	if (flags & FLAG_PRESSURE_CONTROLS_RADIUS)
+		return fMinRadius + (fMaxRadius - fMinRadius) * pressure;
+//	else
+//		return fMaxRadius;
 }
 
 // SetHardness

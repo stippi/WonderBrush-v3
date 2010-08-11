@@ -23,9 +23,21 @@ public:
 	};
 
 public:
+								Brush();
 								Brush(float minRadius, float maxRadius,
 									float minHardness, float maxHardness);
 	virtual						~Brush();
+
+	// BaseObject interface
+	virtual	status_t			Unarchive(const BMessage* archive);
+	virtual	status_t			Archive(BMessage* into,
+									bool deep = true) const;
+	virtual	void				AddProperties(PropertyObject* object,
+									uint32 flags = 0) const;
+	virtual	bool				SetToPropertyObject(
+									const PropertyObject* object,
+									uint32 flags = 0);
+	virtual	const char*			DefaultName() const;
 
 	// Brush
 			void				SetRadius(float minRadius, float maxRadius);
@@ -33,6 +45,7 @@ public:
 									{ return fMinRadius; }
 	inline	float				MaxRadius() const
 									{ return fMaxRadius; }
+			float				Radius(float pressure) const;
 
 			void				SetHardness(float minHardness, float maxHardness);
 	inline	float				MinHardness() const
