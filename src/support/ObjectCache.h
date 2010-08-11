@@ -11,6 +11,7 @@
 
 template <typename ObjectType, bool PlainOldData, uint32 BlockSize = 8>
 class ObjectCache {
+	typedef ObjectCache<ObjectType, PlainOldData, BlockSize> SelfType;
 public:
 	ObjectCache()
 		:
@@ -20,9 +21,74 @@ public:
 	{
 	}
 
+	ObjectCache(const SelfType& other)
+		:
+		fItems(NULL),
+		fCount(0),
+		fAllocatedCount(0)
+	{
+		*this = other;
+	}
+
 	virtual ~ObjectCache()
 	{
+		if (!PlainOldData) {
+			// Make sure to call destructors of old objects.
+			_Resize(0);
+		}
 		free(fItems);
+	}
+
+	SelfType& operator=(const SelfType& other)
+	{
+		if (this == &other)
+			return *this;
+
+		if (PlainOldData) {
+			if (_Resize(other.fCount))
+				memcpy(fItems, other.fItems, fCount * sizeof(ObjectType));
+		} else {
+			// Make sure to call destructors of old objects.
+			// NOTE: Another option would be to use
+			// ObjectType::operator=(const ObjectType& other), but then
+			// we would need to be carefull which objects are already
+			// initialized. Also the ObjectType requires to implement the
+			// operator, while doing it this way requires only a copy
+			// constructor.
+			_Resize(0);
+			for (uint32 i = 0; i < other.fCount; i++) {
+				if (AppendObject(*other.ObjectAtFast(i)) == NULL)
+					break;
+			}
+		}
+		return *this;
+	}
+
+	bool operator==(const SelfType& other) const
+	{
+		if (this == &other)
+			return true;
+
+		if (fCount != other.fCount)
+			return false;
+		if (fCount == 0)
+			return true;
+
+		if (PlainOldData) {
+			return memcmp(fItems, other.fItems,
+				fCount * sizeof(ObjectType)) == 0;
+		} else {
+			for (uint32 i = 0; i < other.fCount; i++) {
+				if (*ObjectAtFast(i) != *other.ObjectAtFast(i))
+					return false;
+			}
+		}
+		return true;
+	}
+
+	bool operator!=(const SelfType& other) const
+	{
+		return !(*this == other);
 	}
 
 	inline void Clear()
@@ -43,6 +109,20 @@ public:
 				// Initialize the new object
 				new (object) ObjectType;
 			}
+			return object;
+		}
+		return NULL;
+	}
+
+	inline ObjectType* AppendObject(const ObjectType& copyFrom)
+	{
+		if (_Resize(fCount + 1)) {
+			ObjectType* object = LastObject();
+			// Initialize the new object from the original.
+			if (!PlainOldData)
+				new (object) ObjectType(copyFrom);
+			else
+				*object = copyFrom;
 			return object;
 		}
 		return NULL;
