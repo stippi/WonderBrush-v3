@@ -38,7 +38,7 @@ Filter::~Filter()
 const char*
 Filter::DefaultName() const
 {
-	return "Gaussian Blur";
+	return "Gaussian blur";
 }
 
 // AddProperties
