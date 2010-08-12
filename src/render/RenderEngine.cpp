@@ -26,6 +26,9 @@ RenderEngine::RenderEngine()
 
 	, fRenderingBuffer()
 
+	, fAlphaBufferMemory(NULL)
+	, fAlphaBuffer()
+
 	, fPixelFormat(fRenderingBuffer)
 	, fBaseRenderer(fPixelFormat)
 
@@ -45,6 +48,9 @@ RenderEngine::RenderEngine(const Transformable& transformation)
 
 	, fRenderingBuffer()
 
+	, fAlphaBufferMemory(NULL)
+	, fAlphaBuffer()
+
 	, fPixelFormat(fRenderingBuffer)
 	, fBaseRenderer(fPixelFormat)
 
@@ -62,6 +68,7 @@ RenderEngine::RenderEngine(const Transformable& transformation)
 // destructor
 RenderEngine::~RenderEngine()
 {
+	free(fAlphaBufferMemory);
 }
 
 // SetState
@@ -95,6 +102,8 @@ RenderEngine::AttachTo(RenderBuffer* bitmap)
 	fBaseRenderer.clip_box(0, 0, bitmap->Width() - 1, bitmap->Height() - 1);
 	fCompOpBaseRenderer.clip_box(0, 0, bitmap->Width() - 1,
 		bitmap->Height() - 1);
+
+	_ResizeAlphaBuffer();
 }
 
 // SetClipping
@@ -324,6 +333,42 @@ RenderEngine::RenderScanlines(const ScanlineContainer& scanlines,
 	_RenderScanlines(fillPaint, &scanlines);
 }
 
+// ClearAlphaBufferScanlines
+void
+RenderEngine::ClearAlphaBufferScanlines()
+{
+	int xMin = fBaseRenderer.xmin();
+	int bytes = fBaseRenderer.xmax() - xMin + 1;
+	int yMin = fBaseRenderer.ymin();
+	int yMax = fBaseRenderer.ymax();
+	uint8* buf = fAlphaBuffer.row_ptr(yMin);
+	buf += xMin;
+	uint32 bpr = fAlphaBuffer.stride();
+	for (int y = yMin; y <= yMax; y++) {
+		memset(buf, 0, bytes);
+		buf += bpr;
+	}
+}
+
+// RenderAlphaBufferScanlines
+void
+RenderEngine::RenderAlphaBufferScanlines()
+{
+	// TODO: For real
+	int xMin = fBaseRenderer.xmin();
+	int len = fBaseRenderer.xmax() - xMin + 1;
+	int yMin = fBaseRenderer.ymin();
+	int yMax = fBaseRenderer.ymax();
+	uint8* buf = fAlphaBuffer.row_ptr(yMin);
+	buf += xMin;
+	uint32 bpr = fAlphaBuffer.stride();
+	agg::rgba16 color(0, 0, 255, 65535);
+	for (int y = yMin; y <= yMax; y++) {
+		fPixelFormat.blend_solid_hspan(xMin, y, len, color, buf);
+		buf += bpr;
+	}
+}
+
 // #pragma mark - sRGB <-> linear RGB
 
 static const double kGamma = 2.2;
@@ -494,3 +539,18 @@ RenderEngine::_HitTest(const BPoint& point)
 	return fRasterizer.hit_test(point.x, point.y);
 }
 
+// _ResizeAlphaBuffer
+void
+RenderEngine::_ResizeAlphaBuffer()
+{
+	// Pixels are uint8 values
+	size_t size = fRenderingBuffer.width() * fRenderingBuffer.height();
+	void* newAlphaBuffer = realloc(fAlphaBufferMemory, size);
+	if (newAlphaBuffer != NULL) {
+		fAlphaBufferMemory = newAlphaBuffer;
+		fAlphaBuffer.attach(static_cast<unsigned char*>(fAlphaBufferMemory),
+			fRenderingBuffer.width(),
+			fRenderingBuffer.height(),
+			fRenderingBuffer.width());
+	}
+}

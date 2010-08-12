@@ -81,6 +81,9 @@ public:
 			void				AttachTo(RenderBuffer* bitmap);
 			void				SetClipping(const BRect& area);
 
+			const RenderingBuffer& AlphaBuffer() const
+									{ return fAlphaBuffer; }
+
 			void				SetTransformation(
 									const Transformable& transformation);
 			const Transformable& Transformation() const;
@@ -99,6 +102,9 @@ public:
 									const ScanlineContainer& scanlines,
 									bool fillPaint);
 
+			void				ClearAlphaBufferScanlines();
+			void				RenderAlphaBufferScanlines();
+
 	static	bool				InitGammaTables();
 	static	uint16				GammaToLinear(uint8 value);
 	static	uint8				LinearToGamma(uint16 value);
@@ -112,9 +118,14 @@ private:
 									const ScanlineContainer* scanlines = NULL);
 			bool				_HitTest(const BPoint& point);
 
+			void				_ResizeAlphaBuffer();
+
 			LayoutState			fState;
 
 			RenderingBuffer		fRenderingBuffer;
+
+			void*				fAlphaBufferMemory;
+			RenderingBuffer		fAlphaBuffer;
 
 			PixelFormat			fPixelFormat;
 			BaseRenderer		fBaseRenderer;

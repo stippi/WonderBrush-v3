@@ -4,6 +4,7 @@
 #include <String.h>
 #include <TranslationUtils.h>
 
+#include "BrushStroke.h"
 #include "Document.h"
 #include "Filter.h"
 #include "Image.h"
@@ -99,6 +100,20 @@ WonderBrush::WonderBrush(BRect bounds)
 	rectWidthGlobalStyle->SetArea(BRect(150, 330, 240, 420));
 	rectWidthGlobalStyle->SetStyle(style);
 	subLayer->AddObject(rectWidthGlobalStyle);
+
+	BrushStroke* brushStroke = new BrushStroke();
+	Brush* brush = new Brush(10.0f, 20.0f, 0.0f, 1.0f);
+	brushStroke->SetBrush(brush);
+	brush->RemoveReference();
+	brushStroke->Stroke().AppendObject(
+		StrokePoint(BPoint(150, 50), 0.2f, 1.0f, 1.0f));
+	brushStroke->Stroke().AppendObject(
+		StrokePoint(BPoint(200, 20), 1.0f, 1.0f, 1.0f));
+	brushStroke->Stroke().AppendObject(
+		StrokePoint(BPoint(250, 80), 0.8f, 1.0f, 1.0f));
+	brushStroke->Stroke().AppendObject(
+		StrokePoint(BPoint(300, 50), 0.1f, 1.0f, 1.0f));
+	subLayer->AddObject(brushStroke);
 
 	fEditLayer = fDocument->RootLayer();
 }

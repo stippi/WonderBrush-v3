@@ -171,10 +171,10 @@ Brush::Draw(BPoint where, float pressure, float tiltX, float tiltY,
 	float minAlpha, float maxAlpha, uint32 flags, uint8* bits, uint32 bpr,
 	const Transformable& transform, const BRect& constrainRect) const
 {
-//printf("Brush::Draw()\n");
-//bigtime_t startTime = system_time();
+printf("Brush::Draw()\n");
+bigtime_t startTime = system_time();
 	if (!constrainRect.IsValid()) {
-//printf("invalid constrain rect\n");
+printf("  invalid constrain rect\n");
 		return;
 	}
 
@@ -190,10 +190,10 @@ Brush::Draw(BPoint where, float pressure, float tiltX, float tiltY,
 		where.x + radius, where.y + radius);
 	clipTest = transform.TransformBounds(clipTest);
 	if (!constrainRect.Intersects(clipTest)) {
-//printf("brush shape outside clipping\n");
+printf("  brush shape outside clipping\n");
 		return;
 	}
-//printf("drawing brush (%f, %f)\n", where.x, where.y);
+printf("  drawing brush (%f, %f)\n", where.x, where.y);
 
 	// hardness
 	double hardness;
@@ -247,7 +247,7 @@ Brush::Draw(BPoint where, float pressure, float tiltX, float tiltY,
 	buffer.attach(bits, width, height, bpr);
 
 	// Rasterize the ellipse
-//bigtime_t renderTime = system_time();
+bigtime_t renderTime = system_time();
 
 	agg::rasterizer_scanline_aa<> rasterizer;
 	rasterizer.clip_box(0, 0, width, height);
@@ -284,8 +284,8 @@ Brush::Draw(BPoint where, float pressure, float tiltX, float tiltY,
 		agg::render_scanlines(rasterizer, scanlineU, gradientRenderer);
 	}
 
-//bigtime_t finishTime = system_time();
-//printf("init time: %lld, render time: %lld, total: %lld  (radius: %f, hardness: %f)\n",
-//	   renderTime - startTime, finishTime - renderTime, finishTime - startTime, radius, hardness);
+bigtime_t finishTime = system_time();
+printf("  init time: %lld, render time: %lld, total: %lld  (radius: %f, hardness: %f)\n",
+	   renderTime - startTime, finishTime - renderTime, finishTime - startTime, radius, hardness);
 }
 

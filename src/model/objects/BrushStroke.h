@@ -12,7 +12,7 @@
 class StrokePoint {
 public:
 								StrokePoint();
-								StrokePoint(const BPoint& where,
+								StrokePoint(const BPoint& point,
 									float pressure, float tiltX, float tiltY);
 								StrokePoint(const StrokePoint& other);
 
@@ -20,7 +20,7 @@ public:
 			bool				operator==(const StrokePoint& other) const;
 			bool				operator!=(const StrokePoint& other) const;
 
-			BPoint				where;
+			BPoint				point;
 			float				pressure;
 			float				tiltX;
 			float				tiltY;

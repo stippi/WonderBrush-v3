@@ -11,7 +11,7 @@
 
 // constructor
 StrokePoint::StrokePoint()
-	: where(0.0f, 0.0f)
+	: point(0.0f, 0.0f)
 	, pressure(1.0f)
 	, tiltX(0.0f)
 	, tiltY(0.0f)
@@ -19,9 +19,9 @@ StrokePoint::StrokePoint()
 }
 
 // constructor
-StrokePoint::StrokePoint(const BPoint& where, float pressure,
+StrokePoint::StrokePoint(const BPoint& point, float pressure,
 		float tiltX, float tiltY)
-	: where(where)
+	: point(point)
 	, pressure(pressure)
 	, tiltX(tiltX)
 	, tiltY(tiltY)
@@ -38,7 +38,7 @@ StrokePoint::StrokePoint(const StrokePoint& other)
 StrokePoint&
 StrokePoint::operator=(const StrokePoint& other)
 {
-	where = other.where;
+	point = other.point;
 	pressure = other.pressure;
 	tiltX = other.tiltX;
 	tiltY = other.tiltY;
@@ -50,7 +50,7 @@ StrokePoint::operator=(const StrokePoint& other)
 bool
 StrokePoint::operator==(const StrokePoint& other) const
 {
-	return where == other.where
+	return point == other.point
 		&& pressure == other.pressure
 		&& tiltX == other.tiltX
 		&& tiltY == other.tiltY;
@@ -115,10 +115,10 @@ BrushStroke::Bounds()
 
 		float radius = fBrush->Radius(point->pressure);
 		BRect brushBounds(
-			point->where.x - radius,
-			point->where.y - radius,
-			point->where.x + radius,
-			point->where.y + radius);
+			point->point.x - radius,
+			point->point.y - radius,
+			point->point.x + radius,
+			point->point.y + radius);
 
 		bounds = bounds | brushBounds;
 	}

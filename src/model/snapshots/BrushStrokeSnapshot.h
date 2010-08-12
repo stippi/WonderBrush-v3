@@ -21,11 +21,23 @@ public:
 
 private:
 			void				_Sync();
+			float				_StepDist(float scale) const;
+			bool				_StrokeLine(const StrokePoint* a,
+									const StrokePoint* b, uint8* dest,
+									uint32 bpr, const BRect& constrainRect,
+									float& stepDistLeftOver) const;
 
 private:
 			const BrushStroke*	fOriginal;
 			Brush				fBrush;
 			::Stroke			fStroke;
+
+			// TODO: Move these into Brush
+			float				fMinAlpha;
+			float				fMaxAlpha;
+			float				fMaxSpacing;
+			uint32				fFlags;
+//			float				fStepDistLeftOver;
 };
 
 #endif // BRUSH_STROKE_SNAPSHOT_H
