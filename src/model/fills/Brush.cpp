@@ -8,6 +8,7 @@
 #include <stdio.h>
 
 #include <agg_pixfmt_brush.h>
+#include <agg_pixfmt_gray.h>
 #include <agg_conv_transform.h>
 #include <agg_ellipse.h>
 #include <agg_rasterizer_scanline_aa.h>
@@ -171,13 +172,12 @@ Brush::Draw(BPoint where, float pressure, float tiltX, float tiltY,
 	float minAlpha, float maxAlpha, uint32 flags, uint8* bits, uint32 bpr,
 	const Transformable& transform, const BRect& constrainRect) const
 {
-printf("Brush::Draw()\n");
-bigtime_t startTime = system_time();
+//printf("Brush::Draw()\n");
+//bigtime_t startTime = system_time();
 	if (!constrainRect.IsValid()) {
-printf("  invalid constrain rect\n");
+//printf("  invalid constrain rect\n");
 		return;
 	}
-constrainRect.PrintToStream();
 	// radius
 	double radius;
 	if (flags & FLAG_PRESSURE_CONTROLS_RADIUS)
@@ -188,14 +188,12 @@ constrainRect.PrintToStream();
 	// check clipping here
 	BRect clipTest(where.x - radius, where.y - radius,
 		where.x + radius, where.y + radius);
-clipTest.PrintToStream();
 	clipTest = transform.TransformBounds(clipTest);
-clipTest.PrintToStream();
 	if (!constrainRect.Intersects(clipTest)) {
-printf("  brush shape outside clipping\n");
+//printf("  brush shape outside clipping\n");
 		return;
 	}
-printf("  drawing brush (%f, %f)\n", where.x, where.y);
+//printf("  drawing brush (%f, %f)\n", where.x, where.y);
 
 	// hardness
 	double hardness;
@@ -249,7 +247,7 @@ printf("  drawing brush (%f, %f)\n", where.x, where.y);
 	buffer.attach(bits, width, height, bpr);
 
 	// Rasterize the ellipse
-bigtime_t renderTime = system_time();
+//bigtime_t renderTime = system_time();
 
 	agg::rasterizer_scanline_aa<> rasterizer;
 	rasterizer.clip_box(0, 0, width, height);
@@ -286,8 +284,8 @@ bigtime_t renderTime = system_time();
 		agg::render_scanlines(rasterizer, scanlineU, gradientRenderer);
 	}
 
-bigtime_t finishTime = system_time();
-printf("  init time: %lld, render time: %lld, total: %lld  (radius: %f, hardness: %f)\n",
-	   renderTime - startTime, finishTime - renderTime, finishTime - startTime, radius, hardness);
+//bigtime_t finishTime = system_time();
+//printf("  init time: %lld, render time: %lld, total: %lld  (radius: %f, hardness: %f)\n",
+//	   renderTime - startTime, finishTime - renderTime, finishTime - startTime, radius, hardness);
 }
 

@@ -21,6 +21,7 @@ BrushStrokeSnapshot::BrushStrokeSnapshot(const BrushStroke* stroke)
 	, fMaxSpacing(0.1f)
 	, fFlags(Brush::FLAG_PRESSURE_CONTROLS_APHLA
 		| Brush::FLAG_PRESSURE_CONTROLS_RADIUS
+		| Brush::FLAG_PRESSURE_CONTROLS_HARDNESS
 		| Brush::FLAG_TILT_CONTROLS_SHAPE)
 {
 	_Sync();
@@ -56,7 +57,6 @@ void
 BrushStrokeSnapshot::Render(RenderEngine& engine, RenderBuffer* bitmap,
 	BRect area) const
 {
-printf("BrushStrokeSnapshot::Render()\n");
 	if (!Transformable::IsValid())
 		return;
 	engine.SetTransformation(LayoutedState().Matrix);
@@ -67,7 +67,6 @@ printf("BrushStrokeSnapshot::Render()\n");
 	if (dest == NULL)
 		return;
 
-printf("  clear alpha scanlines\n");
 	engine.ClearAlphaBufferScanlines();
 
 	// traverse lines
@@ -87,7 +86,6 @@ printf("  clear alpha scanlines\n");
 			area, stepDistLeftOver);
 	}
 	if (drawnAnything) {
-printf("drawn\n");
 		// Blend alpha map with current fill
 		engine.RenderAlphaBufferScanlines();
 	}
