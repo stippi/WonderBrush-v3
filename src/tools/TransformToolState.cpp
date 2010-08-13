@@ -16,7 +16,6 @@
 #include "CommandStack.h"
 #include "cursors.h"
 #include "Document.h"
-#include "Image.h"
 #include "Layer.h"
 #include "Rect.h"
 #include "Shape.h"
@@ -1238,14 +1237,14 @@ TransformToolState::SetModifiedBox(const BRect& box, bool apply)
 
 		Shape* shape = dynamic_cast<Shape*>(fObject);
 		Rect* rect = dynamic_cast<Rect*>(fObject);
-		Image* image = dynamic_cast<Image*>(fObject);
+		BoundedObject* boundedObject = dynamic_cast<BoundedObject*>(fObject);
 		if (shape != NULL) {
 			Command* command = new ChangeAreaCommand<Shape>(shape, area);
 			fDocument->CommandStack()->Perform(command);
 		} else if (rect != NULL) {
 			Command* command = new ChangeAreaCommand<Rect>(rect, area);
 			fDocument->CommandStack()->Perform(command);
-		} else if (image != NULL) {
+		} else if (boundedObject != NULL) {
 			// TODO: This can't be right...
 			Transformable newTransformation;
 			newTransformation.TranslateBy(
@@ -1253,7 +1252,7 @@ TransformToolState::SetModifiedBox(const BRect& box, bool apply)
 			newTransformation.ScaleBy(fModifiedBox.LeftTop(), LocalXScale(),
 				LocalYScale());
 			newTransformation.Multiply(fOriginalTransformation);
-			image->SetTransformable(newTransformation);
+			boundedObject->SetTransformable(newTransformation);
 		}
 
 		fDocument->WriteUnlock();

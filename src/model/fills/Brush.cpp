@@ -177,7 +177,7 @@ bigtime_t startTime = system_time();
 printf("  invalid constrain rect\n");
 		return;
 	}
-
+constrainRect.PrintToStream();
 	// radius
 	double radius;
 	if (flags & FLAG_PRESSURE_CONTROLS_RADIUS)
@@ -188,7 +188,9 @@ printf("  invalid constrain rect\n");
 	// check clipping here
 	BRect clipTest(where.x - radius, where.y - radius,
 		where.x + radius, where.y + radius);
+clipTest.PrintToStream();
 	clipTest = transform.TransformBounds(clipTest);
+clipTest.PrintToStream();
 	if (!constrainRect.Intersects(clipTest)) {
 printf("  brush shape outside clipping\n");
 		return;
@@ -213,7 +215,7 @@ printf("  drawing brush (%f, %f)\n", where.x, where.y);
 	Transformable ellipseTransform;
 
 	// Calculate tilt deformation and rotation
-	if (flags & FLAG_TILT_CONTROLS_SHAPE) {
+	if ((flags & FLAG_TILT_CONTROLS_SHAPE) != 0) {
 		float invTiltX = 1.0 - fabs(tiltX);
 		float invTiltY = 1.0 - fabs(tiltY);
 		double xScale = (sqrtf(invTiltX * invTiltX + invTiltY * invTiltY)
@@ -257,14 +259,14 @@ bigtime_t renderTime = system_time();
 
 	BrushPixelFormat pixelFormat(buffer);
 	pixelFormat.cover_scale(alpha);
-	pixelFormat.solid(flags & FLAG_SOLID);
+	pixelFormat.solid((flags & FLAG_SOLID) != 0);
 
 	BrushBaseRenderer rendererBase(pixelFormat);
 
 	// special case for hardness = 1.0
 	if (hardness == 1.0) {
 		BrushRenderer renderer(rendererBase);
-		renderer.color(agg::gray8(alpha));
+		renderer.color(Color(alpha));
 		agg::render_scanlines(rasterizer, scanlineU, renderer);
 	} else {
 		// Brush gradient transformation

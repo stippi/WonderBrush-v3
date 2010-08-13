@@ -362,7 +362,7 @@ RenderEngine::RenderAlphaBufferScanlines()
 	uint8* buf = fAlphaBuffer.row_ptr(yMin);
 	buf += xMin;
 	uint32 bpr = fAlphaBuffer.stride();
-	agg::rgba16 color(0, 0, 255, 65535);
+	agg::rgba16 color(0, 0, 65535, 65535);
 	for (int y = yMin; y <= yMax; y++) {
 		fPixelFormat.blend_solid_hspan(xMin, y, len, color, buf);
 		buf += bpr;

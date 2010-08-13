@@ -156,12 +156,14 @@ printf("copy_from()\n");
 				do
 				{
 					int alpha = color_type::int_mult_cover(c.v, *covers++);
+//printf("c.v: %d, *covers: %d -> alpha: %d\n", c.v, *covers, alpha);
 					alpha = color_type::int_mult_cover(alpha, m_cover_scale);
+//printf("alpha: %d\n", alpha);
 
-					if (alpha > *p)
-						*p = alpha;
-//					if (*p < m_cover_scale)
-//						*p += (alpha * (m_cover_scale - *p)) / m_cover_scale;
+//					if (alpha > *p)
+//						*p = alpha;
+					if (*p < m_cover_scale)
+						*p += (alpha * (m_cover_scale - *p)) / m_cover_scale;
 
 					p++;
 				} while(--len);
@@ -189,7 +191,7 @@ printf("blend_solid_vspan()\n");
 				{
 					do
 					{
-						int alpha = color_type::int_mult_cover(colors->v, *covers++);
+						int alpha = color_type::int_mult_cover(colors->v, *covers);
 						alpha = color_type::int_mult_cover(alpha, m_cover_scale);
 
 						if (alpha > m_cover_scale_half)
@@ -197,22 +199,26 @@ printf("blend_solid_vspan()\n");
 	
 						++p;
 						++colors;
+						++covers;
 					} while(--len);
 				}
 				else
 				{
 					do
 					{
-						int alpha = color_type::int_mult_cover(colors->v, *covers++);
+						int alpha = color_type::int_mult_cover(colors->v, *covers);
+//printf("colors->v: %d, *covers: %d -> alpha: %d\n", colors->v, *covers, alpha);
 						alpha = color_type::int_mult_cover(alpha, m_cover_scale);
+//printf("alpha: %d\n", alpha);
 	
-						if (alpha > *p)
-							*p = alpha;
-//						if (*p < m_cover_scale)
-//							*p += (alpha * (m_cover_scale - *p)) / m_cover_scale;
+//						if (alpha > *p)
+//							*p = alpha;
+						if (*p < m_cover_scale)
+							*p += (alpha * (m_cover_scale - *p)) / m_cover_scale;
 	
 						++p;
 						++colors;
+						++covers;
 					} while(--len);
 				}
 			}

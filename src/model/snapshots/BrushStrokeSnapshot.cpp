@@ -17,8 +17,8 @@ BrushStrokeSnapshot::BrushStrokeSnapshot(const BrushStroke* stroke)
 
 	// TODO: Move those into Brush
 	, fMinAlpha(0.0f)
-	, fMaxAlpha(0.0f)
-	, fMaxSpacing(1.0f)
+	, fMaxAlpha(1.0f)
+	, fMaxSpacing(0.1f)
 	, fFlags(Brush::FLAG_PRESSURE_CONTROLS_APHLA
 		| Brush::FLAG_PRESSURE_CONTROLS_RADIUS
 		| Brush::FLAG_TILT_CONTROLS_SHAPE)
@@ -56,6 +56,7 @@ void
 BrushStrokeSnapshot::Render(RenderEngine& engine, RenderBuffer* bitmap,
 	BRect area) const
 {
+printf("BrushStrokeSnapshot::Render()\n");
 	if (!Transformable::IsValid())
 		return;
 	engine.SetTransformation(LayoutedState().Matrix);
@@ -66,6 +67,7 @@ BrushStrokeSnapshot::Render(RenderEngine& engine, RenderBuffer* bitmap,
 	if (dest == NULL)
 		return;
 
+printf("  clear alpha scanlines\n");
 	engine.ClearAlphaBufferScanlines();
 
 	// traverse lines
@@ -135,8 +137,8 @@ BrushStrokeSnapshot::_StrokeLine(const StrokePoint* a,
 		return true;
 	}
 
-printf("_StrokeLine(): (%.1f, %.1f) -> (%.1f, %.1f)\n",
-	a->point.x, a->point.y, b->point.x, b->point.y);
+//printf("_StrokeLine(): (%.1f, %.1f) -> (%.1f, %.1f)\n",
+//	a->point.x, a->point.y, b->point.x, b->point.y);
 
 	bool drawnAnything = false;
 
@@ -172,7 +174,7 @@ printf("_StrokeLine(): (%.1f, %.1f) -> (%.1f, %.1f)\n",
 				pA.y + vector.y * iterationScale);
 			fBrush.Draw(center, currentPressure, currentTiltX,
 				currentTiltY, fMinAlpha, fMaxAlpha, fFlags,
-				dest, bpr, *this, constrainRect);
+				dest, bpr, LayoutedState().Matrix, constrainRect);
 		}
 		stepDistLeftOver = dist - (p - currentStepDist);
 		drawnAnything = true;

@@ -106,14 +106,15 @@ WonderBrush::WonderBrush(BRect bounds)
 	brushStroke->SetBrush(brush);
 	brush->RemoveReference();
 	brushStroke->Stroke().AppendObject(
-		StrokePoint(BPoint(150, 50), 0.2f, 1.0f, 1.0f));
-	brushStroke->Stroke().AppendObject(
-		StrokePoint(BPoint(200, 20), 1.0f, 1.0f, 1.0f));
-	brushStroke->Stroke().AppendObject(
-		StrokePoint(BPoint(250, 80), 0.8f, 1.0f, 1.0f));
-	brushStroke->Stroke().AppendObject(
-		StrokePoint(BPoint(300, 50), 0.1f, 1.0f, 1.0f));
-	subLayer->AddObject(brushStroke);
+		StrokePoint(BPoint(150, 50), 0.8f, 0.0f, 0.0f));
+//	brushStroke->Stroke().AppendObject(
+//		StrokePoint(BPoint(200, 20), 1.0f, 0.0f, 0.0f));
+//	brushStroke->Stroke().AppendObject(
+//		StrokePoint(BPoint(250, 80), 0.8f, 0.0f, 0.0f));
+//	brushStroke->Stroke().AppendObject(
+//		StrokePoint(BPoint(300, 50), 0.1f, 0.0f, 0.0f));
+//	subLayer->AddObject(brushStroke);
+fDocument->RootLayer()->AddObject(brushStroke);
 
 	fEditLayer = fDocument->RootLayer();
 }
