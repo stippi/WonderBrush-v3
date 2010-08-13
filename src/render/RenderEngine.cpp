@@ -354,19 +354,7 @@ RenderEngine::ClearAlphaBufferScanlines()
 void
 RenderEngine::RenderAlphaBufferScanlines()
 {
-	// TODO: For real
-	int xMin = fBaseRenderer.xmin();
-	int len = fBaseRenderer.xmax() - xMin + 1;
-	int yMin = fBaseRenderer.ymin();
-	int yMax = fBaseRenderer.ymax();
-	uint8* buf = fAlphaBuffer.row_ptr(yMin);
-	buf += xMin;
-	uint32 bpr = fAlphaBuffer.stride();
-	agg::rgba16 color(0, 0, 65535, 65535);
-	for (int y = yMin; y <= yMax; y++) {
-		fPixelFormat.blend_solid_hspan(xMin, y, len, color, buf);
-		buf += bpr;
-	}
+	_RenderAlphaScanlines(true);
 }
 
 // #pragma mark - sRGB <-> linear RGB
@@ -466,50 +454,78 @@ void
 RenderEngine::_RenderScanlines(bool fillPaint,
 	const ScanlineContainer* scanlineContainer)
 {
-#if PRINT_TIMING
-bigtime_t now = system_time();
-#endif
-
-	agg::rgba16 color(0, 0, 0, 65535);
-
 	const Paint* paint = fillPaint ? fState.FillPaint() : fState.StrokePaint();
-	if (paint != NULL) {
-		switch (paint->Type()) {
-			case Paint::COLOR:
-			{
-				rgb_color c = paint->Color();
-				color = agg::rgba16(
-					GammaToLinear(c.red),
-					GammaToLinear(c.green),
-					GammaToLinear(c.blue),
-					c.alpha * 256 + c.alpha);
-				break;
-			}
-			case Paint::GRADIENT:
-				// TODO: ...
-				break;
-			case Paint::PATTERN:
-				// TODO: ...
-				break;
-
-			case Paint::NONE:
-			default:
-				return;
-		}
+	if (paint == NULL) {
+		printf("RenderEngine::_RenderScanlines() - invalid paint\n");
+		return;
 	}
 
-	// TODO: Move into Paint::COLOR case above...
-	color.premultiply();
+	switch (paint->Type()) {
+		case Paint::COLOR:
+		{
+			rgb_color c = paint->Color();
+			agg::rgba16 color(
+				GammaToLinear(c.red),
+				GammaToLinear(c.green),
+				GammaToLinear(c.blue),
+				(c.alpha << 8) | c.alpha);
+			color.premultiply();
+			_RenderScanlines(color, scanlineContainer);
+			break;
+		}
+		case Paint::GRADIENT:
+		{
+			// TODO: ...
+			break;
+		}
+		case Paint::PATTERN:
+		{
+			// TODO: ...
+			break;
+		}
+
+		case Paint::NONE:
+		default:
+			return;
+	}
+}
+
+// _RenderScanlines
+void
+RenderEngine::_RenderScanlines(agg::rgba16 color,
+	const ScanlineContainer* scanlineContainer)
+{
 	if (scanlineContainer == NULL) {
+		// Render current contents of fRasterizer
 		agg::render_scanlines_aa_solid(fRasterizer, fScanline, fBaseRenderer,
 			color);
 	} else {
-		Renderer renderer(fBaseRenderer);
-		renderer.color(color);
-		renderer.prepare();
-#if PRINT_TIMING
-int32 rendered = 0;
-#endif
+		// Render cached scanlines from the container
+		int32 top = fBaseRenderer.ymin();
+		int32 bottom = fBaseRenderer.ymax();
+
+		uint32 count = scanlineContainer->CountObjects();
+		for (uint32 i = 0; i < count; i++) {
+			const Scanline* scanline = scanlineContainer->ObjectAtFast(i);
+			int y = scanline->y();
+			if (y >= top && y <= bottom)
+				agg::render_scanline_aa_solid(*scanline, fBaseRenderer, color);
+		}
+	}
+}
+
+// _RenderScanlines
+template<class SpanAllocator, class SpanGenerator>
+void
+RenderEngine::_RenderScanlines(SpanAllocator& spanAllocator,
+	SpanGenerator& spanGenerator, const ScanlineContainer* scanlineContainer)
+{
+	if (scanlineContainer == NULL) {
+		// Render current contents of fRasterizer
+		agg::render_scanlines_aa(fRasterizer, fScanline, fBaseRenderer,
+			spanAllocator, spanGenerator);
+	} else {
+		// Render cached scanlines from the container
 		int32 top = fBaseRenderer.ymin();
 		int32 bottom = fBaseRenderer.ymax();
 
@@ -518,17 +534,89 @@ int32 rendered = 0;
 			const Scanline* scanline = scanlineContainer->ObjectAtFast(i);
 			int y = scanline->y();
 			if (y >= top && y <= bottom) {
-				renderer.render(*scanline);
-#if PRINT_TIMING
-rendered++;
-#endif
+				agg::render_scanline_aa(*scanline, fBaseRenderer,
+					spanAllocator, spanGenerator);
 			}
 		}
+	}
+}
 
-#if PRINT_TIMING
-printf("RenderEngine::_RenderScanlines(): %lld, %ld scanlines\n",
-	system_time() - now, rendered);
-#endif
+// _RenderAlphaScanlines
+void
+RenderEngine::_RenderAlphaScanlines(bool fillPaint)
+{
+	const Paint* paint = fillPaint ? fState.FillPaint() : fState.StrokePaint();
+	if (paint == NULL) {
+		printf("RenderEngine::_RenderScanlines() - invalid paint\n");
+		return;
+	}
+
+	switch (paint->Type()) {
+		case Paint::COLOR:
+		{
+			rgb_color c = paint->Color();
+			agg::rgba16 color(
+				GammaToLinear(c.red),
+				GammaToLinear(c.green),
+				GammaToLinear(c.blue),
+				(c.alpha << 8) | c.alpha);
+			color.premultiply();
+			_RenderAlphaScanlines(color);
+			break;
+		}
+		case Paint::GRADIENT:
+		{
+			// TODO: ...
+			break;
+		}
+		case Paint::PATTERN:
+		{
+			// TODO: ...
+			break;
+		}
+
+		case Paint::NONE:
+		default:
+			return;
+	}
+}
+
+// _RenderAlphaScanlines
+void
+RenderEngine::_RenderAlphaScanlines(agg::rgba16 color)
+{
+	int x = fBaseRenderer.xmin();
+	int length = fBaseRenderer.xmax() - x + 1;
+	int yMin = fBaseRenderer.ymin();
+	int yMax = fBaseRenderer.ymax();
+	uint8* buf = fAlphaBuffer.row_ptr(yMin);
+	buf += x;
+	uint32 bpr = fAlphaBuffer.stride();
+	for (int y = yMin; y <= yMax; y++) {
+		fPixelFormat.blend_solid_hspan(x, y, length, color, buf);
+		buf += bpr;
+	}
+}
+
+// _RenderAlphaScanlines
+template<class SpanAllocator, class SpanGenerator>
+void
+RenderEngine::_RenderAlphaScanlines(SpanAllocator& spanAllocator,
+	SpanGenerator& spanGenerator)
+{
+	int x = fBaseRenderer.xmin();
+	int length = fBaseRenderer.xmax() - x + 1;
+	int yMin = fBaseRenderer.ymin();
+	int yMax = fBaseRenderer.ymax();
+	uint8* buf = fAlphaBuffer.row_ptr(yMin);
+	buf += x;
+	uint32 bpr = fAlphaBuffer.stride();
+	for (int y = yMin; y <= yMax; y++) {
+		typename BaseRenderer::color_type* colors
+			= spanAllocator.allocate(length);
+		spanGenerator.generate(colors, x, y, length);
+		fBaseRenderer.blend_color_hspan(x, y, length, colors, buf, *buf);
+		buf += bpr;
 	}
 }
 
@@ -548,6 +636,7 @@ RenderEngine::_ResizeAlphaBuffer()
 	void* newAlphaBuffer = realloc(fAlphaBufferMemory, size);
 	if (newAlphaBuffer != NULL) {
 		fAlphaBufferMemory = newAlphaBuffer;
+		memset(fAlphaBufferMemory, 0, size);
 		fAlphaBuffer.attach(static_cast<unsigned char*>(fAlphaBufferMemory),
 			fRenderingBuffer.width(),
 			fRenderingBuffer.height(),

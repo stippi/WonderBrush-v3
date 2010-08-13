@@ -39,8 +39,6 @@ typedef agg::pixfmt_custom_blend_rgba<CompOpBlender, RenderingBuffer>
 typedef agg::renderer_base<PixelFormat>		BaseRenderer;
 typedef agg::renderer_base<CompOpPixelFormat>
 											CompOpBaseRenderer;
-typedef agg::renderer_scanline_aa_solid<BaseRenderer>
-											Renderer;
 
 typedef agg::scanline_p8					ScanlinePacked;
 typedef agg::scanline_bin					ScanlineBinary;
@@ -114,12 +112,29 @@ public:
 			bool				HitTest(PathStorage& path,
 									const BPoint& point);
 private:
+			// Rendering rasterizer contents or cached scanlines
 			void				_RenderScanlines(bool fillPaint,
 									const ScanlineContainer* scanlines = NULL);
+			void				_RenderScanlines(agg::rgba16 color,
+									const ScanlineContainer* scanlines = NULL);
+			template<class SpanAllocator, class SpanGenerator>
+			void				_RenderScanlines(SpanAllocator& spanAllocator,
+									SpanGenerator& spanGenerator,
+									const ScanlineContainer* scanlines = NULL);
+
+			// Rendering contents of alpha map
+			void				_RenderAlphaScanlines(bool fillPaint);
+			void				_RenderAlphaScanlines(agg::rgba16 color);
+			template<class SpanAllocator, class SpanGenerator>
+			void				_RenderAlphaScanlines(
+									SpanAllocator& spanAllocator,
+									SpanGenerator& spanGenerator);
+
 			bool				_HitTest(const BPoint& point);
 
 			void				_ResizeAlphaBuffer();
 
+private:
 			LayoutState			fState;
 
 			RenderingBuffer		fRenderingBuffer;
