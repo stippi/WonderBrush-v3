@@ -6,6 +6,7 @@ local sourceDirs =
 	commands
 	gui
 	gui/misc
+	gui/tools
 	model
 	model/document
 	model/fills
@@ -85,6 +86,9 @@ Application WonderBrush :
 	StringTextView.cpp
 	SwatchView.cpp
 	TextViewPopup.cpp
+
+	# gui/tools
+	TransformToolConfigView.cpp
 
 	# gui (WonderBrush specific)
 	CanvasView.cpp
@@ -194,6 +198,8 @@ Application WonderBrush :
 		$(SUPC++LIB)
 		translation
 		be
+	:
+		WonderBrush.rdef
 	;
 # </pe-src>
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2009, Stephan Aßmus <superstippi@gmx.de>
+ * Copyright 2009-2010, Stephan Aßmus <superstippi@gmx.de>
  * All rights reserved.
  */
 
@@ -9,6 +9,7 @@
 
 #include "IconButton.h"
 #include "MoveIcon.h"
+#include "TransformToolConfigView.h"
 #include "TransformToolState.h"
 
 // constructor
@@ -63,7 +64,7 @@ TransformTool::MakeViewState(StateView* view, Document* document,
 ToolConfigView*
 TransformTool::MakeConfigView()
 {
-	return NULL;
+	return new(std::nothrow) TransformToolConfigView(this);
 }
 
 // MakeIcon
