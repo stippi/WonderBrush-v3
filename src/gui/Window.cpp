@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2009 Stephan Aßmus <superstippi@gmx.de>
+ * Copyright 2007-2010 Stephan Aßmus <superstippi@gmx.de>
  * All rights reserved.
  */
 
@@ -8,6 +8,7 @@
 #include <Application.h>
 #include <Bitmap.h>
 #include <Box.h>
+#include <CardLayout.h>
 #include <LayoutBuilder.h>
 #include <LayoutUtils.h>
 #include <Menu.h>
@@ -29,6 +30,7 @@
 //#include "LayerTreeModel.h"
 #include "ObjectTreeView.h"
 #include "PickTool.h"
+#include "ToolConfigView.h"
 #include "TransformTool.h"
 #include "RenderManager.h"
 #include "ResourceTreeView.h"
@@ -112,6 +114,11 @@ Window::Window(BRect frame, const char* title, Document* document,
 
 	fToolIconControl = new IconOptionsControl();
 
+	BView* toolConfigView = new BView("tool config", B_WILL_DRAW);
+	toolConfigView->SetViewColor(ui_color(B_PANEL_BACKGROUND_COLOR));
+	fToolConfigLayout = new BCardLayout();
+	toolConfigView->SetLayout(fToolConfigLayout);
+
 	fInspectorView = new InspectorView();
 	fInspectorView->SetMenu(fPropertyMenu);
 	fInspectorView->SetCommandStack(fDocument->CommandStack());
@@ -121,26 +128,31 @@ Window::Window(BRect frame, const char* title, Document* document,
 		SCROLL_VERTICAL/* | SCROLL_VERTICAL_MAGIC*/,
 		"inspector", B_WILL_DRAW | B_FRAME_EVENTS, B_PLAIN_BORDER, 0);
 
-	BTabView* objectResourceTabView = new BTabView("object resource tabview",
-		B_WIDTH_FROM_LABEL);
-	objectResourceTabView->AddTab(BLayoutBuilder::Group<>(B_VERTICAL)
+	BGroupView* objectGroup = new BGroupView(B_VERTICAL, 0.0f);
+	BLayoutBuilder::Group<>(objectGroup->GroupLayout())
 		.Add(objectMenuBar)
 		.Add(objectTreeScrollView)
-	);
-	objectResourceTabView->AddTab(BLayoutBuilder::Group<>(B_VERTICAL)
+	;
+	BGroupView* resourceGroup = new BGroupView(B_VERTICAL, 0.0f);
+	BLayoutBuilder::Group<>(resourceGroup->GroupLayout())
 		.Add(resourceMenuBar)
 		.Add(resourceTreeScrollView)
-	);
+	;
+
+	BTabView* objectResourceTabView = new BTabView("object resource tabview",
+		B_WIDTH_FROM_LABEL);
+	objectResourceTabView->AddTab(objectGroup);
+	objectResourceTabView->AddTab(resourceGroup);
 	objectResourceTabView->SetBorder(B_NO_BORDER);
 	objectResourceTabView->TabAt(0)->SetLabel("Objects");
 	objectResourceTabView->TabAt(1)->SetLabel("Resources");
 //	objectResourceTabView->SetFont(be_bold_font);
 
-	BLayoutBuilder::Group<>(this, B_VERTICAL)
-		.Add(menuBar)
+	BLayoutBuilder::Group<>(this, B_VERTICAL, 0.0f)
 		.AddSplit(B_HORIZONTAL, 0.0f, 0.15f)
-			.AddGroup(B_HORIZONTAL)
-				.AddGroup(B_VERTICAL)
+			.AddGroup(B_HORIZONTAL, 0.0f)
+				.AddGroup(B_VERTICAL, 0.0f)
+					.Add(menuBar)
 					.AddStrut(5)
 					.Add(fToolIconControl)
 					.AddStrut(5)
@@ -155,9 +167,13 @@ Window::Window(BRect frame, const char* title, Document* document,
 				.End()
 				.Add(new BSeparatorView(B_VERTICAL))
 			.End()
-			.AddGroup(B_HORIZONTAL)
-				.Add(new BSeparatorView(B_VERTICAL))
-				.Add(canvasScrollView)
+			.AddGroup(B_VERTICAL, 0.0f)
+				.Add(toolConfigView)
+				.Add(new BSeparatorView(B_HORIZONTAL))
+				.AddGroup(B_HORIZONTAL, 0.0f)
+					.Add(new BSeparatorView(B_VERTICAL))
+					.Add(canvasScrollView)
+				.End()
 			.End()
 		.End()
 	;
@@ -197,6 +213,9 @@ Window::Window(BRect frame, const char* title, Document* document,
 
 	fDocument->CommandStack()->AddListener(&fCommandStackListener);
 	_ObjectChanged(fDocument->CommandStack());
+
+	AddShortcut('Z', B_COMMAND_KEY, new BMessage(MSG_UNDO));
+	AddShortcut('Z', B_COMMAND_KEY | B_SHIFT_KEY, new BMessage(MSG_REDO));
 }
 
 // destructor
@@ -236,6 +255,7 @@ Window::MessageReceived(BMessage* message)
 				if (Tool* tool = (Tool*)fTools.ItemAt(index)) {
 					fView->SetState(tool->ToolViewState(fView, fDocument,
 						&fSelection));
+					fToolConfigLayout->SetVisibleItem(index);
 				}
 			}
 			break;
@@ -250,7 +270,9 @@ Window::MessageReceived(BMessage* message)
 bool
 Window::QuitRequested()
 {
-	be_app->PostMessage(MSG_WINDOW_QUIT);
+	BMessage quitMessage(MSG_WINDOW_QUIT);
+	quitMessage.AddRect("window frame", Frame());
+	be_app->PostMessage(&quitMessage);
 	return true;
 }
 
@@ -286,9 +308,18 @@ Window::AddTool(Tool* tool)
 	icon->SetMessage(message);
 	fToolIconControl->AddOption(icon);
 
+	// add tool configuration interface
+	BView* configView = tool->ConfigView();
+	if (configView == NULL) {
+		configView = new BView("dummy", 0);
+		configView->SetViewColor(ui_color(B_PANEL_BACKGROUND_COLOR));
+	}
+	fToolConfigLayout->AddView(configView);
+
 	if (count == 0) {
 		// this was the first tool
 		fView->SetState(tool->ToolViewState(fView, fDocument, &fSelection));
+		fToolConfigLayout->SetVisibleItem(0L);
 	}
 }
 
@@ -299,7 +330,7 @@ void
 Window::_InitTools()
 {
 	// create canvas tools
-	AddTool(new(std::nothrow) PickTool());
+//	AddTool(new(std::nothrow) PickTool());
 	AddTool(new(std::nothrow) TransformTool());
 }
 

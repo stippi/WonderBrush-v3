@@ -11,6 +11,7 @@
 #include "ListenerAdapter.h"
 #include "Selection.h"
 
+class BCardLayout;
 class BMenu;
 class CanvasView;
 class ColumnTreeModel;
@@ -60,6 +61,7 @@ private:
 			BMenuItem*			fRedoMI;
 
 			IconOptionsControl*	fToolIconControl;
+			BCardLayout*		fToolConfigLayout;
 			ObjectTreeView*		fLayerTreeView;
 //			ColumnTreeModel*	fLayerTreeModel;
 			ResourceTreeView*	fResourceTreeView;
