@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2009, Stephan Aßmus <superstippi@gmx.de>
+ * Copyright 2006-2010, Stephan Aßmus <superstippi@gmx.de>
  * All rights reserved.
  */
 
@@ -11,12 +11,16 @@
 
 // constructor
 ToolConfigView::ToolConfigView(::Tool* tool)
-	: BView(BRect(0, 0, 40, 20), NULL, B_FOLLOW_ALL, 0),
+	: BView(NULL, B_WILL_DRAW),
 	  fTool(tool)
 {
+	SetViewColor(ui_color(B_PANEL_BACKGROUND_COLOR));
+
 	BString name(tool->Name());
 	name << " config view";
 	SetName(name.String());
+
+	SetExplicitMaxSize(BSize(B_SIZE_UNLIMITED, B_SIZE_UNSET));
 }
 
 // destructor
