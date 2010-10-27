@@ -395,7 +395,7 @@ IconOptionsControl::DoLayout()
 IconButton*
 IconOptionsControl::_FindIcon(int32 index) const
 {
-	if (BView* view = ChildAt(index))
+	if (BView* view = fIconGroup->ChildAt(index))
 		return dynamic_cast<IconButton*>(view);
 	return NULL;
 }
