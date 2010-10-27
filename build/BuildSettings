@@ -19,8 +19,8 @@ if $(OSPLAT) = X86 {
 	# check for Haiku...
 	local haveHaiku = [ GLOB /boot/develop/headers/posix/arpa : inet.h ] ;
 	if $(haveHaiku)	{
-		CCFLAGS += -DCLOCKWERK_FOR_BONE -DCLOCKWERK_FOR_HAIKU ;
-		C++FLAGS += -DCLOCKWERK_FOR_BONE -DCLOCKWERK_FOR_HAIKU ;
+		CCFLAGS += -DCOMPILE_FOR_BONE -DCOMPILE_FOR_HAIKU ;
+		C++FLAGS += -DCOMPILE_FOR_BONE -DCOMPILE_FOR_HAIKU ;
 		NETWORK_LIBS += network ;
 		PLATFORM = haiku ;
 		COMMON_FOLDER = /boot/common ;
@@ -28,8 +28,8 @@ if $(OSPLAT) = X86 {
 	# check for BONE...
 	local haveBone = [ GLOB /boot/develop/headers/be/bone/arpa : inet.h ] ;
 	if $(haveBone)	{
-		CCFLAGS += -DCLOCKWERK_FOR_BONE ;
-		C++FLAGS += -DCLOCKWERK_FOR_BONE ;
+		CCFLAGS += -DCOMPILE_FOR_BONE ;
+		C++FLAGS += -DCOMPILE_FOR_BONE ;
 		SYSHDRS += /boot/develop/headers/be/bone /boot/develop/headers/be/bone/sys ;
 		NETWORK_LIBS += socket bind ;
 		PLATFORM = bone ;
@@ -38,8 +38,8 @@ if $(OSPLAT) = X86 {
 	local haveZeta = [ GLOB /boot/beos/system/lib : libzeta.so ] ;
 	if $(haveZeta)	{
 		LINKLIBS += -lzeta ;
-		CCFLAGS += -DCLOCKWERK_FOR_ZETA -D_ZETA_USING_DEPRECATED_API_ ;
-		C++FLAGS += -DCLOCKWERK_FOR_ZETA -D_ZETA_USING_DEPRECATED_API_ ;
+		CCFLAGS += -DCOMPILE_FOR_ZETA -D_ZETA_USING_DEPRECATED_API_ ;
+		C++FLAGS += -DCOMPILE_FOR_ZETA -D_ZETA_USING_DEPRECATED_API_ ;
 		SYSHDRS += /boot/develop/headers/liblayout /boot/develop/headers/pcre ;
 		PLATFORM = zeta ;
 	}
