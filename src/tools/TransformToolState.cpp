@@ -790,6 +790,9 @@ TransformToolState::MouseUp()
 void
 TransformToolState::Draw(BView* view, BRect updateRect)
 {
+	if (!fOriginalBox.IsValid())
+		return;
+
 	double scaleX;
 	double scaleY;
 	if (!EffectiveTransformation().GetAffineParameters(NULL, NULL, NULL,
