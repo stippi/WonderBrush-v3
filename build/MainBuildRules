@@ -4,18 +4,21 @@
 
 rule Application
 {
-	# Application <name> : <sources> : <libraries> ;
+	# Application <name> : <sources> : <libraries> : <resources> ;
 	#
 	# Creates an application from sources.
 	#
 	# <name>: Name of the application. Grist is allowed.
 	# <sources>: List of source files. Grist will be set.
 	# <libraries>: List of libraries to link against.
+	# <resources>: List of resources to link into the application.
 	#
 	local app = $(1) ;
 	local sources = $(2) ;
 	local libs = $(3) ;
+	local resources = $(4) ;
 
+	AddResources $(app) : $(resources) ;
 	Main $(app) : $(sources) ;
 	MakeLocate $(app) : $(LOCATE_MAIN_TARGET) ;
 	LinkAgainst $(app) : $(libs) ;
@@ -132,17 +135,77 @@ rule LinkAgainst
 	}
 }
 
-rule XRes
+rule AddResources
 {
-	# XRes <target> : <resource files> ;
+	# AddResources <target> : <resource files> ;
 	#
 	# Adds resources to a file.
 	#
 	# <target>: The files to which resources shall be added.
 	# <resource files>: The resource files.
 	#
-	if $(2)
-	{
+
+	# add grist to the resource files which don't have any yet
+	local resfiles ;
+	local file ;
+	for file in $(2) {
+		if ! $(file:G) {
+			file = [ FGristFiles $(file) ] ;
+		}
+		resfiles += $(file) ;
+	}
+
+	SEARCH on $(resfiles) += $(SEARCH_SOURCE) ;
+
+	for file in $(resfiles) {
+		if $(file:S) = .rdef {
+			local rdef = $(file) ;
+			file = $(rdef:S=.rsrc) ;
+			ResComp $(file) : $(rdef) ;
+		}
+		RESFILES on $(1) += $(file) ;
+	}
+}
+
+rule ResComp
+{
+	# ResComp <resource file> : <rdef file> ;
+	#
+	# <resource file> and <rdef file> must be gristed.
+
+	# get defines
+	local defines ;
+	local localIncludesOption ;
+
+	on $(1) { # use on $(1) variable values
+		defines = $(DEFINES) ;
+		localIncludesOption = $(TARGET_LOCAL_INCLUDES_OPTION) ;
+	}
+
+	DEFINES on $(1) = $(defines) ;
+	CCDEFS on $(1) = [ FDefines $(defines) ] ;
+	HDRS on $(1) = [ FIncludes $(SEARCH_SOURCE) $(SUBDIRHDRS) $(HDRS)
+		: $(localIncludesOption) ] ;
+
+	# set up other vars
+	SEARCH on $(2) += $(SEARCH_SOURCE) ;
+	MakeLocate $(1) : $(LOCATE_TARGET) ;
+	Depends $(1) : $(2) ;
+	LocalClean clean : $(1) ;
+	ResComp1 $(1) : $(2) ;
+}
+
+# Note: We pipe the input files into the preprocessor, since *.rdef files are
+# considered linker scripts, and thus we can use preprocessor features.
+actions ResComp1
+{
+	cat "$(2)" | $(CC) -E $(CCDEFS) $(HDRS) - | egrep -v '^#' | rc -o "$(1)" - ;
+}
+
+rule XRes
+{
+	# XRes <target> : <resource files>
+	if $(2) {
 		Depends $(1) : $(2) ;
 		XRes1 $(1) : $(2) ;
 	}
@@ -193,9 +256,30 @@ actions BisonC++
 	$(BISON) -v -d -p $(2:B) -o $(1) $(2)
 }
 
-rule Rez
+rule PreProcess
 {
-	Depends $(<) : $(>) ;
+	# PreProcess <target> : <source> ;
+	#
+	local target = $(1) ;
+	local source = $(2) ;
+
+	Depends $(target) : $(source) ;
+
+	CPPHDRS on $(target) = [ on $(target) FIncludes $(HDRS) ] ;
+
+	MakeLocate $(target) : $(LOCATE_SOURCE) ;
+}
+
+if $(OSPLAT) = PPC {
+	actions PreProcess
+	{
+		mwcc -preprocess $(CPPHDRS) -o "$(1)" $(2)
+	}
+} else {
+	actions PreProcess
+	{
+		gcc -E -x c $(CPPHDRS) -o "$(1)" $(2)
+	}
 }
 
 rule PreCompile
