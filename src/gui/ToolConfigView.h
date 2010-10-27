@@ -1,10 +1,10 @@
 /*
- * Copyright 2006-2009, Stephan Aßmus <superstippi@gmx.de>
+ * Copyright 2006-2010, Stephan Aßmus <superstippi@gmx.de>
  * All rights reserved.
  */
 
-#ifndef CONFIG_VIEW_H
-#define CONFIG_VIEW_H
+#ifndef TOOL_CONFIG_VIEW_H
+#define TOOL_CONFIG_VIEW_H
 
 #include <View.h>
 
@@ -29,4 +29,4 @@ protected:
 			::Tool*				fTool;
 };
 
-#endif // CONFIG_VIEW_H
+#endif // TOOL_CONFIG_VIEW_H
