@@ -1,6 +1,10 @@
 #include "WonderBrush.h"
 
 #include <Bitmap.h>
+#include <Directory.h>
+#include <FindDirectory.h>
+#include <File.h>
+#include <Path.h>
 #include <String.h>
 #include <TranslationUtils.h>
 
@@ -127,6 +131,7 @@ WonderBrush::MessageReceived(BMessage* message)
 			_NewWindow();
 			break;
 		case MSG_WINDOW_QUIT:
+			message->FindRect("window frame", &fWindowFrame);
 			fWindowCount--;
 			if (fWindowCount == 0)
 				PostMessage(B_QUIT_REQUESTED, this);
@@ -141,7 +146,16 @@ WonderBrush::MessageReceived(BMessage* message)
 void
 WonderBrush::ReadyToRun()
 {
+	_RestoreSettings();
 	_NewWindow();
+}
+
+// QuitRequested
+bool
+WonderBrush::QuitRequested()
+{
+	_StoreSettings();
+	return BApplication::QuitRequested();
 }
 
 // _NewWindow
@@ -156,6 +170,79 @@ WonderBrush::_NewWindow()
 	Window* window = new Window(fWindowFrame, windowName.String(),
 		fDocument, fEditLayer);
 	window->Show();
+}
+
+// _OpenSettingsFile
+status_t
+WonderBrush::_OpenSettingsFile(BFile& file, bool forWriting)
+{
+	BPath path;
+	status_t ret = find_directory(B_USER_SETTINGS_DIRECTORY, &path);
+	if (ret != B_OK) {
+		fprintf(stderr, "Failed to find the user settings directory.\n");
+		return ret;
+	}
+	ret = path.Append("WonderBrush3");
+	if (ret != B_OK) {
+		fprintf(stderr, "Failed to initialize the settings path.\n");
+		return ret;
+	}
+
+	ret = create_directory(path.Path(), 0666);
+	if (ret != B_OK) {
+		fprintf(stderr, "Failed to create the settings path.\n");
+		return ret;
+	}
+
+	ret = path.Append("main_settings");
+	if (ret != B_OK) {
+		fprintf(stderr, "Failed to initialize the settings path.\n");
+		return ret;
+	}
+
+	if (forWriting) {
+		return file.SetTo(path.Path(), B_CREATE_FILE | B_ERASE_FILE
+			| B_WRITE_ONLY);
+	} else {
+		return file.SetTo(path.Path(), B_READ_ONLY);
+	}
+}
+
+// _StoreSettings
+void
+WonderBrush::_StoreSettings()
+{
+	BFile file;
+	if (_OpenSettingsFile(file, true) != B_OK) {
+		fprintf(stderr, "Failed to create application settings.\n");
+		return;
+	}
+
+	fSettings.AddRect("window frame", fWindowFrame);
+
+	if (fSettings.Flatten(&file) != B_OK) {
+		fprintf(stderr, "Failed to save application settings.\n");
+		return;
+	}
+}
+
+// _RestoreSettings
+void
+WonderBrush::_RestoreSettings()
+{
+	BFile file;
+	if (_OpenSettingsFile(file, false) != B_OK) {
+		fprintf(stderr, "Failed to open application settings.\n");
+		return;
+	}
+
+	if (fSettings.Unflatten(&file) != B_OK) {
+		fprintf(stderr, "Failed to read application settings.\n");
+		return;
+	}
+
+	if (fSettings.FindRect("window frame", &fWindowFrame) == B_OK)
+		fWindowFrame.OffsetBy(-30, -30);
 }
 
 // #pragma mark -

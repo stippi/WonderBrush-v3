@@ -1,9 +1,10 @@
-#ifndef APP_H
-#define APP_H
+#ifndef WONDER_BRUSH_H
+#define WONDER_BRUSH_H
 
 #include <Application.h>
 #include <Rect.h>
 
+class BFile;
 class Document;
 class Layer;
 
@@ -13,14 +14,23 @@ enum {
 };
 
 class WonderBrush : public BApplication {
- public:
+public:
 								WonderBrush(BRect bounds);
 
 	virtual	void				MessageReceived(BMessage* message);
 	virtual void				ReadyToRun();
+	virtual	bool				QuitRequested();
 
- private:
+private:
 			void				_NewWindow();
+
+			status_t			_OpenSettingsFile(BFile& file,
+									bool forWriting);
+			void				_StoreSettings();
+			void				_RestoreSettings();
+
+private:
+			BMessage			fSettings;
 
 			Document*			fDocument;
 			Layer*				fEditLayer;
@@ -29,4 +39,4 @@ class WonderBrush : public BApplication {
 			int32				fWindowCount;
 };
 
-#endif // APP_H
+#endif // WONDER_BRUSH_H
