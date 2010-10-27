@@ -9,7 +9,7 @@
 #include <Control.h>
 #include <Invoker.h>
 
-class BGroupLayout;
+class BGroupView;
 class IconButton;
 
 class IconOptionsControl : public BControl {
@@ -68,7 +68,7 @@ private:
 			enum orientation	fOrientation;
 
 			LayoutData*			fLayoutData;
-			BGroupLayout*		fLayout;
+			BGroupView*			fIconGroup;
 };
 
 #endif // ICON_OPTIONS_CONTROL_H

@@ -12,7 +12,7 @@
 
 #include <AbstractLayoutItem.h>
 #include <ControlLook.h>
-#include <GroupLayout.h>
+#include <GroupView.h>
 #include <LayoutUtils.h>
 #include <Window.h>
 
@@ -187,9 +187,10 @@ IconOptionsControl::IconOptionsControl(const char* name, const char* label,
 	fTargetCache(target),
 	fOrientation(orientation),
 	fLayoutData(new(std::nothrow) LayoutData),
-	fLayout(new(std::nothrow) BGroupLayout(orientation))
+	fIconGroup(new(std::nothrow) BGroupView(orientation, 0.0f))
 {
-	SetLayout(fLayout);
+	fIconGroup->SetLowColor(fIconGroup->ViewColor());
+	AddChild(fIconGroup);
 }
 
 // destructor
@@ -378,7 +379,7 @@ IconOptionsControl::AddOption(IconButton* icon)
 	// first icon added, mark it
 	icon->SetPressed(!_FindIcon(0));
 
-	fLayout->AddView(icon);
+	fIconGroup->GroupLayout()->AddView(icon);
 	icon->SetTarget(this);
 }
 
@@ -387,6 +388,7 @@ void
 IconOptionsControl::DoLayout()
 {
 	BControl::DoLayout();
+	_UpdateFrame();
 }
 
 // _FindIcon
@@ -420,7 +422,7 @@ IconOptionsControl::_ValidateLayoutData()
 	}
 
 	// get the minimal (== preferred) icon bar size
-	fLayoutData->icon_bar_min = fLayout->MinSize();
+	fLayoutData->icon_bar_min = fIconGroup->MinSize();
 
 	// compute our minimal (== preferred) size
 	BSize min(fLayoutData->icon_bar_min);
@@ -451,6 +453,7 @@ IconOptionsControl::_ValidateLayoutData()
 	fLayoutData->min = min;
 
 	fLayoutData->valid = true;
+	ResetLayoutInvalidation();
 }
 
 // _UpdateFrame
@@ -463,17 +466,16 @@ IconOptionsControl::_UpdateFrame()
 
 		BSize oldSize = Bounds().Size();
 
-		fLayout->SetInsets(iconFrame.left, 0, 0, 0);
-
 		// update our frame
 		MoveTo(labelFrame.left, min_c(labelFrame.top, iconFrame.top));
 		ResizeTo(labelFrame.Width() + iconFrame.Width(),
 			max_c(labelFrame.Height(), iconFrame.Height()));
 
-		// If the size changes, ResizeTo() will trigger a relayout, otherwise
-		// we need to do that explicitly.
-		if (Bounds().Size() != oldSize)
-			Relayout();
+		fIconGroup->MoveTo(iconFrame.LeftTop());
+		fIconGroup->ResizeTo(iconFrame.Width(), iconFrame.Height());
+	} else {
+		fIconGroup->MoveTo(0.0f, 0.0f);
+		fIconGroup->ResizeTo(Bounds().Width(), Bounds().Height());
 	}
 }
 
