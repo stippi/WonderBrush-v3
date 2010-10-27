@@ -1,9 +1,13 @@
-// Scrollable.cpp
-
-//#include <algobase.h>
-#include <stdio.h>
+/*
+ * Copyright 2001-2009, Ingo Weinhold <ingo_weinhold@gmx.de>
+ * All rights reserved. Distributed under the terms of the MIT license.
+ */
 
 #include "Scrollable.h"
+
+#include <algorithm>
+#include <stdio.h>
+
 #include "Scroller.h"
 
 // constructor

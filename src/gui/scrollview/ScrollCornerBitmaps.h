@@ -1,3 +1,8 @@
+/*
+ * Copyright 2001-2009, Stephan Aßmus <superstippi@gmx.de>
+ * All rights reserved. Distributed under the terms of the MIT license.
+ */
+
 const int32 sBitmapWidth = 14;
 const int32 sBitmapHeight = 14;
 const color_space sColorSpace = B_RGBA32;

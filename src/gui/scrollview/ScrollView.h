@@ -1,5 +1,8 @@
-// ScrollView.h
-
+/*
+ * Copyright 2001-2009, Stephan Aßmus <superstippi@gmx.de>
+ * Copyright 2001-2009, Ingo Weinhold <ingo_weinhold@gmx.de>
+ * All rights reserved. Distributed under the terms of the MIT license.
+ */
 #ifndef SCROLL_VIEW_H
 #define SCROLL_VIEW_H
 

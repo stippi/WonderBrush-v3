@@ -1,9 +1,7 @@
 /*
- * Copyright 2006, Haiku.
- * Distributed under the terms of the MIT License.
- *
- * Authors:
- *		Ingo Weinhold <bonefish@cs.tu-berlin.de>
+ * Copyright 2001-2009, Stephan Aßmus <superstippi@gmx.de>
+ * Copyright 2001-2009, Ingo Weinhold <ingo_weinhold@gmx.de>
+ * All rights reserved. Distributed under the terms of the MIT license.
  */
 
 #include "Scroller.h"

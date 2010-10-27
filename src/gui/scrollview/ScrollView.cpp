@@ -1,10 +1,7 @@
 /*
- * Copyright 2006-2007, Haiku Inc. All rights reserved.
- * Distributed under the terms of the MIT License.
- *
- * Authors:
- *		Ingo Weinhold <bonefish@cs.tu-berlin.de>
- *		Stephan Aßmus <superstippi@gmx.de>
+ * Copyright 2006-2009, Stephan Aßmus <superstippi@gmx.de>
+ * Copyright 2006-2007, Ingo Weinhold <ingo_weinhold@gmx.de>
+ * All rights reserved. Distributed under the terms of the MIT license.
  */
 
 #include "ScrollView.h"
