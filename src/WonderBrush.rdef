@@ -13,7 +13,7 @@ resource app_version {
 	long_info = "Vector and bitmap image editor with layers."
 };
 
-resource app_signature "application/x.vnd-YellowBites.WonderBrush";
+resource app_signature "application/x-vnd.YellowBites.WonderBrush2";
 
 resource file_types message {
 	"types" = "image",

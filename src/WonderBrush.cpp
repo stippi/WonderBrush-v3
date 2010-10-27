@@ -20,7 +20,7 @@
 
 // constructor
 WonderBrush::WonderBrush(BRect bounds)
-	: BApplication("application/x-vnd.yellowbites.WonderBrush2")
+	: BApplication("application/x-vnd.Yellowbites.WonderBrush2")
 	, fDocument(new Document(bounds))
 	, fWindowFrame(bounds.OffsetToCopy(50, 50))
 	, fWindowCount(0)
@@ -158,6 +158,8 @@ WonderBrush::QuitRequested()
 	return BApplication::QuitRequested();
 }
 
+// #pragma mark -
+
 // _NewWindow
 void
 WonderBrush::_NewWindow()
@@ -218,6 +220,7 @@ WonderBrush::_StoreSettings()
 		return;
 	}
 
+	fSettings.RemoveName("window frame");
 	fSettings.AddRect("window frame", fWindowFrame);
 
 	if (fSettings.Flatten(&file) != B_OK) {
