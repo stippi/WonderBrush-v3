@@ -172,8 +172,7 @@ rule ObjectHdrs
 # with grist set on the supplied directory name.
 rule MakeLocate
 {
-	if $(2[1])
-	{
+	if $(2[1]) {
 		local dir = $(2[1]) ;
 		if ! $(dir:G) {
 			dir = $(dir:G=dir) ;
