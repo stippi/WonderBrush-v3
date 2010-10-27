@@ -7,7 +7,7 @@ class BBitmap;
 class RenderBuffer;
 
 class StackBlurFilter {
- public:
+public:
 								StackBlurFilter();
 								~StackBlurFilter();
 
@@ -17,7 +17,7 @@ class StackBlurFilter {
 			void				FilterGray8(RenderBuffer* buffer, double radius);
 			void				Filter(BBitmap* bitmap, double radius);
 
- private:
+private:
 			void				_Filter64(uint16* buffer,
 										  unsigned width, unsigned height,
 										  int32 bpr,
