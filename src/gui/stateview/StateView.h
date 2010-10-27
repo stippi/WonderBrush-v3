@@ -10,16 +10,20 @@ class CommandStack;
 class RWLocker;
 class ViewState;
 
-struct mouse_info {
-	mouse_info();
+struct MouseInfo {
+								MouseInfo();
+								MouseInfo(const MouseInfo& other);
 
-	mouse_info&			operator=(const mouse_info& other);
+			MouseInfo&			operator=(const MouseInfo& other);
 
-	uint32				buttons;
-	BPoint				position;
-	uint32				transit;
-	uint32				modifiers;
-	BMessage			dragMessage;
+			uint32				buttons;
+			BPoint				position;
+			BPoint				tilt;
+			float				pressure;
+			uint32				transit;
+			uint32				clicks;
+			uint32				modifiers;
+			BMessage			dragMessage;
 };
 
 class StateView : public BView {
@@ -65,9 +69,9 @@ public:
 			bool				HandleKeyUp(const KeyEvent& event,
 									BHandler* originalTarget);
 
-			const mouse_info*	LastMouseInfo() const
+			const ::MouseInfo*	LastMouseInfo() const
 									{ return &fLastMouseInfo; }
-			const mouse_info*	MouseInfo() const
+			const ::MouseInfo*	MouseInfo() const
 									{ return &fMouseInfo; }
 
 	virtual	void				ConvertFromCanvas(BPoint* point) const;
@@ -116,8 +120,8 @@ protected:
 				// kind of "temporary" state that is
 				// used on top of the current state (it
 				// doesn't replace it)
-			mouse_info			fMouseInfo;
-			mouse_info			fLastMouseInfo;
+			::MouseInfo			fMouseInfo;
+			::MouseInfo			fLastMouseInfo;
 
 			::CommandStack*		fCommandStack;
 			RWLocker*			fLocker;

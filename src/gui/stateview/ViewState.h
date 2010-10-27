@@ -21,11 +21,8 @@ public:
 									Command** _command);
 
 	// mouse tracking
-	virtual	void				MouseDown(BPoint where, uint32 buttons,
-									uint32 clicks);
-
-	virtual	void				MouseMoved(BPoint where, uint32 transit,
-									const BMessage* dragMessage);
+	virtual	void				MouseDown(const MouseInfo& info);
+	virtual	void				MouseMoved(const MouseInfo& info);
 	virtual	Command*			MouseUp();
 
 	// modifiers
@@ -79,11 +76,11 @@ protected:
 			StateView*			fView;
 
 			// NOTE: the intention of using a pointer
-			// to a mouse_info struct is that all
+			// to a MouseInfo struct is that all
 			// ViewStates belonging to the same StateView
 			// should have the same pointer, so that
 			// they will all be up to date with the same info
-			const mouse_info*	fMouseInfo;
+			const MouseInfo*	fMouseInfo;
 
 			BRect				fBounds;
 };

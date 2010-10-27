@@ -34,10 +34,8 @@ public:
 	virtual						~DragStateViewState();
 
 	// ViewState interface
-	virtual void				MouseDown(BPoint where, uint32 buttons,
-									uint32 clicks);
-	virtual void				MouseMoved(BPoint where, uint32 transit,
-									const BMessage* dragMessage);
+	virtual void				MouseDown(const MouseInfo& info);
+	virtual void				MouseMoved(const MouseInfo& info);
 	virtual Command*			MouseUp();
 
 	virtual	bool				UpdateCursor();

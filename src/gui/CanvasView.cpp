@@ -55,6 +55,8 @@ CanvasView::CanvasView(BRect frame, Document* document, RenderManager* manager)
 	SetHighColor(kStripeLight);
 	SetLowColor(kStripeDark);
 		// used for drawing the stripes pattern
+
+	SetLocker(fDocument);
 }
 
 #ifdef __HAIKU__
@@ -81,6 +83,8 @@ CanvasView::CanvasView(Document* document, RenderManager* manager)
 	SetHighColor(kStripeLight);
 	SetLowColor(kStripeDark);
 		// used for drawing the stripes pattern
+
+	SetLocker(fDocument);
 }
 
 #endif // __HAIKU__

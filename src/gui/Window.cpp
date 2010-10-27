@@ -20,6 +20,7 @@
 #include <String.h>
 #include <TabView.h>
 
+#include "BrushTool.h"
 #include "CanvasView.h"
 #include "CommandStack.h"
 #include "DefaultColumnTreeModel.h"
@@ -332,6 +333,7 @@ Window::_InitTools()
 	// create canvas tools
 //	AddTool(new(std::nothrow) PickTool());
 	AddTool(new(std::nothrow) TransformTool());
+	AddTool(new(std::nothrow) BrushTool());
 }
 
 // _ObjectChanged

@@ -179,11 +179,12 @@ PickToolState::MessageReceived(BMessage* message, Command** _command)
 
 // MouseDown
 void
-PickToolState::MouseDown(BPoint where, uint32 buttons, uint32 clicks)
+PickToolState::MouseDown(const MouseInfo& info)
 {
 	if (!fDocument->ReadLock())
 		return;
 
+	BPoint where = info.position;
 	fView->ConvertToCanvas(&where);
 
 	fDragMode = DRAGGING_NONE;
@@ -232,11 +233,12 @@ PickToolState::MouseDown(BPoint where, uint32 buttons, uint32 clicks)
 
 // MouseMoved
 void
-PickToolState::MouseMoved(BPoint where, uint32 transit, const BMessage* dragMessage)
+PickToolState::MouseMoved(const MouseInfo& info)
 {
 	if (fDragMode == DRAGGING_NONE)
 		return;
 
+	BPoint where = info.position;
 	fView->ConvertToCanvas(&where);
 
 	if (fRect) {

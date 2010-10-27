@@ -747,45 +747,6 @@ TransformToolState::MessageReceived(BMessage* message, Command** _command)
 	return handled;
 }
 
-// MouseDown
-void
-TransformToolState::MouseDown(BPoint where, uint32 buttons, uint32 clicks)
-{
-	if (!fDocument->WriteLock())
-		return;
-
-	DragStateViewState::MouseDown(where, buttons, clicks);
-
-	fDocument->WriteUnlock();
-}
-
-// MouseMoved
-void
-TransformToolState::MouseMoved(BPoint where, uint32 transit,
-	const BMessage* dragMessage)
-{
-	if (!fDocument->WriteLock())
-		return;
-
-	DragStateViewState::MouseMoved(where, transit, dragMessage);
-
-	fDocument->WriteUnlock();
-}
-
-// MouseUp
-Command*
-TransformToolState::MouseUp()
-{
-	if (!fDocument->WriteLock())
-		return NULL;
-
-	Command* command = DragStateViewState::MouseUp();
-
-	fDocument->WriteUnlock();
-
-	return command;
-}
-
 // Draw
 void
 TransformToolState::Draw(BView* view, BRect updateRect)

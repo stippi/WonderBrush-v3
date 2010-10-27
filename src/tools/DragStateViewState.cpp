@@ -48,8 +48,9 @@ DragStateViewState::~DragStateViewState()
 
 // MouseDown
 void
-DragStateViewState::MouseDown(BPoint where, uint32 buttons, uint32 clicks)
+DragStateViewState::MouseDown(const MouseInfo& info)
 {
+	BPoint where = info.position;
 	TransformViewToCanvas(&where);
 
 	fDragging = true;
@@ -65,9 +66,9 @@ DragStateViewState::MouseDown(BPoint where, uint32 buttons, uint32 clicks)
 
 // MouseMoved
 void
-DragStateViewState::MouseMoved(BPoint where, uint32 transit,
-	const BMessage* dragMessage)
+DragStateViewState::MouseMoved(const MouseInfo& info)
 {
+	BPoint where = info.position;
 	TransformViewToCanvas(&where);
 
 	if (!fDragging) {

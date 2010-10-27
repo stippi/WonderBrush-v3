@@ -2,15 +2,6 @@
 
 #include "StateView.h"
 
-mouse_info::mouse_info()
-	:
-	buttons(0),
-	position(B_ORIGIN),
-	transit(B_OUTSIDE_VIEW),
-	modifiers(::modifiers())
-{
-}
-
 // constructor
 ViewState::ViewState(StateView* view)
 	:
@@ -69,13 +60,13 @@ ViewState::MessageReceived(BMessage* message, Command** _command)
 
 // MouseDown
 void
-ViewState::MouseDown(BPoint where, uint32 buttons, uint32 clicks)
+ViewState::MouseDown(const MouseInfo& info)
 {
 }
 
 // MouseMoved
 void
-ViewState::MouseMoved(BPoint where, uint32 transit, const BMessage* dragMessage)
+ViewState::MouseMoved(const MouseInfo& info)
 {
 }
 

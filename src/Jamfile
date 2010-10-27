@@ -15,6 +15,9 @@ local sourceDirs =
 	render
 	support
 	tools
+	tools/brush
+	tools/pick
+	tools/transform
 ;
 
 local sourceDir ;
@@ -59,6 +62,9 @@ SubDirHdrs [ FDirName $(TOP) src model snapshots ] ;
 SubDirHdrs [ FDirName $(TOP) src render ] ;
 SubDirHdrs [ FDirName $(TOP) src support ] ;
 SubDirHdrs [ FDirName $(TOP) src tools ] ;
+SubDirHdrs [ FDirName $(TOP) src tools brush ] ;
+SubDirHdrs [ FDirName $(TOP) src tools pick ] ;
+SubDirHdrs [ FDirName $(TOP) src tools transform ] ;
 SubDirSysHdrs [ FDirName $(TOP) agg/include ] ;
 # </pe-inc>
 
@@ -165,17 +171,25 @@ Application WonderBrush :
 	Transformable.cpp
 
 	# tools
-	ChannelTransform.cpp
 	DragStateViewState.cpp
+	Tool.cpp
+	TransformViewState.cpp
+
+	# tools/brush
+	BrushTool.cpp
+	BrushToolState.cpp
+
+	# tools/pick
 	PickTool.cpp
 	PickToolState.cpp
-	Tool.cpp
+
+	# tools/transform
+	ChannelTransform.cpp
 	TransformableGroup.cpp
-	#TransformBox.cpp
+	#TransformBox.cpp # <- alternative implementation
 	#TransformBoxStates.cpp
 	TransformTool.cpp
 	TransformToolState.cpp
-	TransformViewState.cpp
 
 	# .
 	WonderBrush.cpp

@@ -11,15 +11,33 @@
 #include "RWLocker.h"
 #include "ViewState.h"
 
-using std::nothrow;
 
+MouseInfo::MouseInfo()
+	:
+	buttons(0),
+	position(-10000, -10000),
+	tilt(B_ORIGIN),
+	pressure(1.0f),
+	transit(B_OUTSIDE_VIEW),
+	clicks(0),
+	modifiers(::modifiers())
+{
+}
 
-mouse_info&
-mouse_info::operator=(const mouse_info& other)
+MouseInfo::MouseInfo(const MouseInfo& other)
+{
+	*this = other;
+}
+
+MouseInfo&
+MouseInfo::operator=(const MouseInfo& other)
 {
 	buttons = other.buttons;
 	position = other.position;
+	tilt = other.tilt;
+	pressure = other.pressure;
 	transit = other.transit;
+	clicks = other.clicks;
 	modifiers = other.modifiers;
 	dragMessage = other.dragMessage;
 
@@ -28,7 +46,7 @@ mouse_info::operator=(const mouse_info& other)
 
 
 class EventFilter : public BMessageFilter {
- public:
+public:
 	EventFilter(StateView* target)
 		: BMessageFilter(B_ANY_DELIVERY, B_ANY_SOURCE),
 		  fTarget(target)
@@ -90,7 +108,7 @@ class EventFilter : public BMessageFilter {
 			}
 			return result;
 		}
- private:
+private:
  	StateView*		fTarget;
 };
 
@@ -212,9 +230,9 @@ StateView::MessageReceived(BMessage* message)
 			uint32 mods;
 			if (message->FindInt32("modifiers", (int32*)&mods) != B_OK)
 				mods = modifiers();
-			ViewState* state = fDropAnticipatingState ?
+			ViewState* state = fDropAnticipatingState != NULL ?
 				fDropAnticipatingState : fCurrentState;
-			if (state)
+			if (state != NULL)
 				state->ModifiersChanged(mods);
 
 			fMouseInfo.modifiers = mods;
@@ -222,11 +240,8 @@ StateView::MessageReceived(BMessage* message)
 			// call MouseMoved() of drop anticipation state
 			// in case something needs to change because of
 			// different modifiers
-			if (fDropAnticipatingState) {
-				fDropAnticipatingState->MouseMoved(
-					fMouseInfo.position, fMouseInfo.transit,
-					&fMouseInfo.dragMessage);
-			}
+			if (fDropAnticipatingState != NULL)
+				fDropAnticipatingState->MouseMoved(fMouseInfo);
 			break;
 		}
 		case B_MOUSE_WHEEL_CHANGED: {
@@ -250,47 +265,49 @@ StateView::MessageReceived(BMessage* message)
 void
 StateView::MouseDown(BPoint where)
 {
-	if (fLocker && !fLocker->WriteLock())
+	if (fLocker != NULL && !fLocker->WriteLock())
 		return;
 
-	// query more info from the windows current message if available
-	uint32 buttons;
-	uint32 clicks;
-	BMessage* message = Window() ? Window()->CurrentMessage() : NULL;
-	if (!message || message->FindInt32("buttons", (int32*)&buttons) != B_OK)
-		buttons = B_PRIMARY_MOUSE_BUTTON;
-	if (!message || message->FindInt32("clicks", (int32*)&clicks) != B_OK)
-		clicks = 1;
+	::MouseInfo info(fMouseInfo);
+	info.buttons = B_PRIMARY_MOUSE_BUTTON;
+	info.clicks = 1;
 
-	if (fCurrentState)
-		fCurrentState->MouseDown(where, buttons, clicks);
+	// query more info from the windows current message if available
+	BMessage* message = Window() ? Window()->CurrentMessage() : NULL;
+	if (message != NULL) {
+		message->FindInt32("buttons", (int32*)&info.buttons);
+		message->FindInt32("clicks", (int32*)&info.clicks);
+		// TODO: pressure, tilt
+	}
+
+	if (fCurrentState != NULL)
+		fCurrentState->MouseDown(info);
 
 	// update mouse info *after* having called the ViewState hook
-	fMouseInfo.buttons = buttons;
-	fMouseInfo.position = where;
+	fMouseInfo = info;
 
-	if (fLocker)
+	if (fLocker != NULL)
 		fLocker->WriteUnlock();
 }
 
 // MouseMoved
 void
 StateView::MouseMoved(BPoint where, uint32 transit,
-					  const BMessage* dragMessage)
+	const BMessage* dragMessage)
 {
-	if (fLocker && !fLocker->WriteLock())
+	if (fLocker != NULL && !fLocker->WriteLock())
 		return;
 
-	if (dragMessage && !fDropAnticipatingState) {
+	if (dragMessage != NULL && fDropAnticipatingState == NULL) {
 		// switch to a drop anticipating state if there is one available
 		fDropAnticipatingState = StateForDragMessage(dragMessage);
-		if (fDropAnticipatingState)
+		if (fDropAnticipatingState != NULL)
 			fDropAnticipatingState->Init();
 	}
 
 	// TODO: I don't like this too much
-	if ((!dragMessage || transit == B_EXITED_VIEW)
-		&& fDropAnticipatingState) {
+	if ((dragMessage == NULL || transit == B_EXITED_VIEW)
+		&& fDropAnticipatingState != NULL) {
 		fDropAnticipatingState->Cleanup();
 		fDropAnticipatingState = NULL;
 	}
@@ -300,25 +317,29 @@ StateView::MouseMoved(BPoint where, uint32 transit,
 	// update mouse info
 	fMouseInfo.position = where;
 	fMouseInfo.transit = transit;
+
+	// query more info from the windows current message if available
+	BMessage* message = Window() ? Window()->CurrentMessage() : NULL;
+	if (message != NULL) {
+		message->FindInt32("buttons", (int32*)&fMouseInfo.buttons);
+		// TODO: pressure, tilt
+	}
+
 	// cache drag message
-	if (dragMessage)
+	if (dragMessage != NULL)
 		fMouseInfo.dragMessage = *dragMessage;
 	else
 		fMouseInfo.dragMessage.what = 0;
 
-
-	if (fDropAnticipatingState)
-		fDropAnticipatingState->MouseMoved(where, transit, dragMessage);
-	else {
-		if (fCurrentState) {
-			fCurrentState->MouseMoved(where, transit, dragMessage);
-			if (fMouseInfo.buttons != 0)
-				TriggerUpdate();
-		}
+	if (fDropAnticipatingState != NULL)
+		fDropAnticipatingState->MouseMoved(fMouseInfo);
+	else if (fCurrentState != NULL) {
+		fCurrentState->MouseMoved(fMouseInfo);
+		if (fMouseInfo.buttons != 0)
+			TriggerUpdate();
 	}
 
-
-	if (fLocker)
+	if (fLocker != NULL)
 		fLocker->WriteUnlock();
 }
 
@@ -326,20 +347,18 @@ StateView::MouseMoved(BPoint where, uint32 transit,
 void
 StateView::MouseUp(BPoint where)
 {
-	if (fLocker && !fLocker->WriteLock())
+	if (fLocker != NULL && !fLocker->WriteLock())
 		return;
 
-	if (fDropAnticipatingState) {
+	if (fDropAnticipatingState != NULL) {
 		PerformCommand(fDropAnticipatingState->MouseUp());
 		fDropAnticipatingState->Cleanup();
 		fDropAnticipatingState = NULL;
 
-		if (fCurrentState) {
-			fCurrentState->MouseMoved(fMouseInfo.position, fMouseInfo.transit,
-									  NULL);
-		}
+		if (fCurrentState != NULL)
+			fCurrentState->MouseMoved(fMouseInfo);
 	} else {
-		if (fCurrentState) {
+		if (fCurrentState != NULL) {
 			PerformCommand(fCurrentState->MouseUp());
 			TriggerUpdate();
 		}
@@ -348,7 +367,7 @@ StateView::MouseUp(BPoint where)
 	// update mouse info *after* having called the ViewState hook
 	fMouseInfo.buttons = 0;
 
-	if (fLocker)
+	if (fLocker != NULL)
 		fLocker->WriteUnlock();
 }
 
@@ -442,12 +461,12 @@ StateView::SetState(ViewState* state)
 		return;
 
 	// switch states as appropriate
-	if (fCurrentState)
+	if (fCurrentState != NULL)
 		fCurrentState->Cleanup();
 
 	fCurrentState = state;
 
-	if (fCurrentState)
+	if (fCurrentState != NULL)
 		fCurrentState->Init();
 }
 
@@ -455,16 +474,15 @@ StateView::SetState(ViewState* state)
 void
 StateView::UpdateStateCursor()
 {
-	if (!fCurrentState || !fCurrentState->UpdateCursor()) {
+	if (fCurrentState == NULL || !fCurrentState->UpdateCursor())
 		SetViewCursor(B_CURSOR_SYSTEM_DEFAULT, true);
-	}
 }
 
 // ViewStateBounds
 BRect
 StateView::ViewStateBounds()
 {
-	if (fCurrentState)
+	if (fCurrentState != NULL)
 		return fCurrentState->Bounds();
 	return BRect(0, 0, -1, -1);
 }
@@ -479,17 +497,17 @@ StateView::ViewStateBoundsChanged()
 void
 StateView::Draw(BView* into, BRect updateRect)
 {
-	if (fLocker && !fLocker->ReadLock()) {
+	if (fLocker != NULL && !fLocker->ReadLock()) {
 		return;
 	}
 
-	if (fCurrentState)
+	if (fCurrentState != NULL)
 		fCurrentState->Draw(into, updateRect);
 
-	if (fDropAnticipatingState)
+	if (fDropAnticipatingState != NULL)
 		fDropAnticipatingState->Draw(into, updateRect);
 
-	if (fLocker)
+	if (fLocker != NULL)
 		fLocker->ReadUnlock();
 }
 
@@ -511,13 +529,13 @@ bool
 StateView::HandleKeyDown(const KeyEvent& event, BHandler* originalTarget)
 {
 	AutoWriteLocker locker(fLocker);
-	if (fLocker && !locker.IsLocked())
+	if (fLocker != NULL && !locker.IsLocked())
 		return false;
 
 	if (_HandleKeyDown(event, originalTarget))
 		return true;
 
-	if (fCurrentState) {
+	if (fCurrentState != NULL) {
 		Command* command = NULL;
 		if (fCurrentState->HandleKeyDown(event, &command)) {
 			PerformCommand(command);
@@ -532,13 +550,13 @@ bool
 StateView::HandleKeyUp(const KeyEvent& event, BHandler* originalTarget)
 {
 	AutoWriteLocker locker(fLocker);
-	if (fLocker && !locker.IsLocked())
+	if (fLocker != NULL && !locker.IsLocked())
 		return false;
 
 	if (_HandleKeyUp(event, originalTarget))
 		return true;
 
-	if (fCurrentState) {
+	if (fCurrentState != NULL) {
 		Command* command = NULL;
 		if (fCurrentState->HandleKeyUp(event, &command)) {
 			PerformCommand(command);
@@ -596,7 +614,7 @@ StateView::SetCatchAllEvents(bool catchAll)
 status_t
 StateView::PerformCommand(Command* command)
 {
-	if (fCommandStack)
+	if (fCommandStack != NULL)
 		return fCommandStack->Perform(command);
 
 	// if there is no command stack, then nobody
@@ -610,9 +628,8 @@ StateView::PerformCommand(Command* command)
 void
 StateView::TriggerUpdate()
 {
-	if (fUpdateTarget && fUpdateTarget->Looper()) {
+	if (fUpdateTarget != NULL && fUpdateTarget->Looper())
 		fUpdateTarget->Looper()->PostMessage(fUpdateCommand);
-	}
 }
 
 // #pragma mark -
@@ -638,10 +655,10 @@ StateView::_InstallEventFilter()
 	if (!fCatchAllEvents)
 		return;
 
-	if (!fEventFilter)
-		fEventFilter = new (nothrow) EventFilter(this);
+	if (fEventFilter == NULL)
+		fEventFilter = new(std::nothrow) EventFilter(this);
 
-	if (!fEventFilter || !Window())
+	if (fEventFilter == NULL || Window() == NULL)
 		return;
 
 	Window()->AddCommonFilter(fEventFilter);
@@ -651,7 +668,7 @@ StateView::_InstallEventFilter()
 void
 StateView::_RemoveEventFilter()
 {
-	if (!fEventFilter || !Window())
+	if (fEventFilter == NULL || Window() == NULL)
 		return;
 
 	Window()->RemoveCommonFilter(fEventFilter);

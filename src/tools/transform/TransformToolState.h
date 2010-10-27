@@ -53,11 +53,6 @@ public:
 	// ViewState interface
 	virtual	bool				MessageReceived(BMessage* message,
 									Command** _command);
-	virtual void				MouseDown(BPoint where, uint32 buttons,
-									uint32 clicks);
-	virtual void				MouseMoved(BPoint where, uint32 transit,
-									const BMessage* dragMessage);
-	virtual Command*			MouseUp();
 
 	virtual void				Draw(BView* view, BRect updateRect);
 
