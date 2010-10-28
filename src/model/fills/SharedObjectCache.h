@@ -172,9 +172,8 @@ public:
 
 	bool Put(SharedObjectType* object)
 	{
-		AutoLocker<BLocker> _(fLock);
-
 		if (object != NULL) {
+			AutoLocker<BLocker> _(fLock);
 			if (object->CountReferences() == 1)
 				_Remove(object);
 			object->RemoveReference();
