@@ -28,6 +28,9 @@ BrushToolState::BrushToolState(StateView* view, Document* document,
 	, fInsertionIndex(-1)
 	, fBrushStroke(NULL)
 {
+	// TODO: Find a way to change this later...
+	SetInsertionInfo(fDocument->RootLayer(),
+		fDocument->RootLayer()->CountObjects());
 }
 
 // destructor
@@ -54,37 +57,68 @@ BrushToolState::MessageReceived(BMessage* message, Command** _command)
 void
 BrushToolState::MouseDown(const MouseInfo& info)
 {
-	if (!fDocument->WriteLock())
+	if (fBrushStroke != NULL)
 		return;
+	if (fInsertionLayer == NULL) {
+		fprintf(stderr, "BrushToolState::MouseDown(): No insertion layer "
+			"specified\n");
+		return;
+	}
 
-	// TODO
+	Brush* brush = new(std::nothrow) Brush(fBrush);
+	if (brush == NULL) {
+		fprintf(stderr, "BrushToolState::MouseDown(): Failed to allocate "
+			"Brush. Out of memory\n");
+		return;
+	}
 
-	fDocument->WriteUnlock();
+	fBrushStroke = new(std::nothrow)BrushStroke();
+	if (fBrushStroke == NULL) {
+		delete brush;
+		fprintf(stderr, "BrushToolState::MouseDown(): Failed to allocate "
+			"BrushStroke. Out of memory\n");
+		return;
+	}
+
+	// transfer ownership of brush
+	fBrushStroke->SetBrush(brush);
+	brush->RemoveReference();
+
+	if (!fInsertionLayer->AddObject(fBrushStroke, fInsertionIndex)) {
+		delete fBrushStroke;
+		fBrushStroke = NULL;
+		fprintf(stderr, "BrushToolState::MouseDown(): Failed to add "
+			"BrushStroke to Layer. Out of memory\n");
+		return;
+	}
+
+	fInsertionIndex++;
+
+	// Make sure the BrushStroke object can't go away while we intend to
+	// still mess with it...
+	fBrushStroke->AddReference();
+
+	_AppendPoint(info);
 }
 
 // MouseMoved
 void
 BrushToolState::MouseMoved(const MouseInfo& info)
 {
-	if (!fDocument->WriteLock())
-		return;
-
-	// TODO
-
-	fDocument->WriteUnlock();
+	_AppendPoint(info);
 }
 
 // MouseUp
 Command*
 BrushToolState::MouseUp()
 {
-	if (!fDocument->WriteLock())
-		return NULL;
-
 	// TODO
 	Command* command = NULL;
 
-	fDocument->WriteUnlock();
+	if (fBrushStroke != NULL) {
+		fBrushStroke->RemoveReference();
+		fBrushStroke = NULL;
+	}
 
 	return command;
 }
@@ -138,5 +172,16 @@ BrushToolState::SetInsertionInfo(Layer* layer, int32 index)
 		fInsertionLayer = layer;
 	}
 	fInsertionIndex = index;
+}
+
+// _AppendPoint
+void
+BrushToolState::_AppendPoint(const MouseInfo& info)
+{
+	if (fBrushStroke == NULL)
+		return;
+
+	StrokePoint point(info.position, info.pressure, info.tilt.x, info.tilt.y);
+	fBrushStroke->AppendPoint(point);
 }
 

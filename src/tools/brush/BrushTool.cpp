@@ -69,8 +69,10 @@ IconButton*
 BrushTool::MakeIcon()
 {
 	IconButton* button = new IconButton("brush", 0);
-	button->SetIcon(kBrushIconBits, kBrushIconWidth, kBrushIconHeight,
-		kBrushIconFormat);
+//	button->SetIcon(kBrushIconBits, kBrushIconWidth, kBrushIconHeight,
+//		kBrushIconFormat);
+	button->SetIcon(501);
+	button->TrimIcon(BRect(0, 0, 21, 21));
 	return button;
 }
 

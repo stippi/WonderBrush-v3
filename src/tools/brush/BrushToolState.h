@@ -6,6 +6,7 @@
 #ifndef BRUSH_TOOL_STATE_H
 #define BRUSH_TOOL_STATE_H
 
+#include "Brush.h"
 #include "Selection.h"
 #include "TransformViewState.h"
 
@@ -35,12 +36,15 @@ public:
 			void				SetInsertionInfo(Layer* layer, int32 index);
 
 private:
+			void				_AppendPoint(const MouseInfo& info);
+
 			Document*			fDocument;
 			Selection*			fSelection;
 
 			Layer*				fInsertionLayer;
 			int32				fInsertionIndex;
 
+			Brush				fBrush;
 			BrushStroke*		fBrushStroke;
 };
 
