@@ -75,6 +75,7 @@ public:
 			// accordingly...)
 			void				Reset();
 			void				SetStyle(const Style& style);
+			void				SetFillPaint(Paint* paint);
 
 			void				AttachTo(RenderBuffer* bitmap);
 			void				SetClipping(const BRect& area);

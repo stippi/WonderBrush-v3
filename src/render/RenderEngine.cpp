@@ -84,6 +84,13 @@ RenderEngine::SetStyle(const Style& style)
 	// TODO: More stuff from style...
 }
 
+// SetFillPaint
+void
+RenderEngine::SetFillPaint(Paint* paint)
+{
+	fState.SetFillPaint(paint);
+}
+
 // AttachTo
 void
 RenderEngine::AttachTo(RenderBuffer* bitmap)
