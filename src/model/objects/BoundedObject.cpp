@@ -62,4 +62,12 @@ BoundedObject::UpdateBounds()
 	// TODO: Notification would be nice?
 }
 
+// NotifyAndUpdate
+void
+BoundedObject::NotifyAndUpdate()
+{
+	UpdateChangeCounter();
+	UpdateBounds();
+	Notify();
+}
 

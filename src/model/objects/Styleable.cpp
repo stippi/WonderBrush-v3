@@ -63,10 +63,8 @@ void
 Styleable::ObjectChanged(const Notifier* object)
 {
 	if (object == fStyle.Get()) {
-		UpdateChangeCounter();
-		UpdateBounds();
 		// Forward notification
-		Notify();
+		NotifyAndUpdate();
 	}
 }
 
@@ -79,7 +77,7 @@ Styleable::SetStyle(::Style* style)
 	if (style == fStyle.Get())
 		return;
 
-	if (fStyle.Get())
+	if (fStyle.Get() != NULL)
 		fStyle->RemoveListener(this);
 
 	if (fStyle.SetTo(style)) {

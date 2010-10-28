@@ -20,6 +20,8 @@ public:
 			void				InitBounds();
 			void				UpdateBounds();
 
+			void				NotifyAndUpdate();
+
 private:
 			BRect				fTransformedBounds;
 };
