@@ -30,6 +30,7 @@ private:
 private:
 			const BrushStroke*	fOriginal;
 			Brush				fBrush;
+			SharedPaint*		fPaint;
 			::Stroke			fStroke;
 
 			// TODO: Move these into Brush

@@ -14,6 +14,7 @@ BrushStrokeSnapshot::BrushStrokeSnapshot(const BrushStroke* stroke)
 	: ObjectSnapshot(stroke)
 	, fOriginal(stroke)
 	, fBrush()
+	, fPaint(NULL)
 
 	// TODO: Move those into Brush
 	, fMinAlpha(0.0f)
@@ -30,6 +31,7 @@ BrushStrokeSnapshot::BrushStrokeSnapshot(const BrushStroke* stroke)
 // destructor
 BrushStrokeSnapshot::~BrushStrokeSnapshot()
 {
+	Paint::PaintCache().Put(fPaint);
 }
 
 // #pragma mark -
@@ -86,7 +88,8 @@ BrushStrokeSnapshot::Render(RenderEngine& engine, RenderBuffer* bitmap,
 			area, stepDistLeftOver);
 	}
 	if (drawnAnything) {
-		// Blend alpha map with current fill
+		// Blend alpha map with our paint
+		engine.SetFillPaint(fPaint);
 		engine.RenderAlphaBufferScanlines();
 	}
 }
@@ -101,6 +104,15 @@ BrushStrokeSnapshot::_Sync()
 		fBrush = *fOriginal->Brush();
 	else
 		fBrush = Brush();
+
+	if (fOriginal->Paint() != NULL) {
+		// We can compare the SharedPaint pointers, since the cache should
+		// not hand out different pointers for the same visual paint.
+		fPaint = Paint::PaintCache().Get(*fOriginal->Paint());
+	} else {
+		Paint::PaintCache().Put(fPaint);
+		fPaint = NULL;
+	}
 
 	fStroke = fOriginal->Stroke();
 }

@@ -69,13 +69,17 @@ StrokePoint::operator!=(const StrokePoint& other) const
 BrushStroke::BrushStroke()
 	: BoundedObject()
 	, fBrush(new(std::nothrow) ::Brush(), true)
+	, fPaint(new(std::nothrow) ::Paint((rgb_color){ 0, 0, 0, 255 }), true)
 {
+	if (fPaint.Get() != NULL)
+		fPaint->AddListener(this);
 }
 
 // destructor
 BrushStroke::~BrushStroke()
 {
 	SetBrush(NULL);
+	SetPaint(NULL);
 }
 
 // #pragma mark -
@@ -93,6 +97,31 @@ BrushStroke::DefaultName() const
 {
 	return "Brush stroke";
 }
+
+// #pragma mark -
+
+// AddProperties
+void
+BrushStroke::AddProperties(PropertyObject* object, uint32 flags) const
+{
+	BoundedObject::AddProperties(object, flags);
+	fPaint->AddProperties(object, flags);
+}
+
+// SetToPropertyObject
+bool
+BrushStroke::SetToPropertyObject(const PropertyObject* object, uint32 flags)
+{
+	AutoNotificationSuspender _(this);
+
+	BoundedObject::SetToPropertyObject(object, flags);
+
+	fPaint->SetToPropertyObject(object, flags);
+
+	return HasPendingNotifications();
+}
+
+// #pragma mark -
 
 // HitTest
 bool
@@ -127,6 +156,17 @@ BrushStroke::Bounds()
 
 // #pragma mark -
 
+void
+BrushStroke::ObjectChanged(const Notifier* object)
+{
+	if (object == fPaint.Get()) {
+		// Forward notification
+		NotifyAndUpdate();
+	}
+}
+
+// #pragma mark -
+
 // SetBrush
 void
 BrushStroke::SetBrush(::Brush* brush)
@@ -134,10 +174,23 @@ BrushStroke::SetBrush(::Brush* brush)
 	if (fBrush.Get() == brush)
 		return;
 
-	if (fBrush.SetTo(brush)) {
-		UpdateBounds();
-		UpdateChangeCounter();
-		Notify();
+	if (fBrush.SetTo(brush))
+		NotifyAndUpdate();
+}
+
+// SetPaint
+void
+BrushStroke::SetPaint(::Paint* paint)
+{
+	if (fPaint.Get() == paint)
+		return;
+
+	if (fPaint.Get() != NULL)
+		fPaint->RemoveListener(this);
+
+	if (fPaint.SetTo(paint)) {
+		fPaint->AddListener(this);
+		ObjectChanged(paint);
 	}
 }
 

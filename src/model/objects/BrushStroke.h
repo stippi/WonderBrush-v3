@@ -7,7 +7,9 @@
 
 #include "BoundedObject.h"
 #include "Brush.h"
+#include "Listener.h"
 #include "ObjectCache.h"
+#include "Paint.h"
 
 class StrokePoint {
 public:
@@ -28,7 +30,7 @@ public:
 
 typedef ObjectCache<StrokePoint, false> Stroke;
 
-class BrushStroke : public BoundedObject {
+class BrushStroke : public BoundedObject, public Listener {
 public:
 								BrushStroke();
 	virtual						~BrushStroke();
@@ -38,15 +40,27 @@ public:
 
 	virtual	const char*			DefaultName() const;
 
+	virtual	void				AddProperties(PropertyObject* object,
+									uint32 flags = 0) const;
+	virtual	bool				SetToPropertyObject(
+									const PropertyObject* object,
+									uint32 flags = 0);
 	virtual	bool				HitTest(const BPoint& canvasPoint) const;
 
 	// BoundedObject interface
 	virtual	BRect				Bounds();
 
+	// Listener interface
+	virtual	void				ObjectChanged(const Notifier* object);
+
 	// BrushStroke
 			void				SetBrush(::Brush* brush);
 	inline	::Brush*			Brush() const
 									{ return fBrush.Get(); }
+
+			void				SetPaint(::Paint* paint);
+	inline	::Paint*			Paint() const
+									{ return fPaint.Get(); }
 
 	inline	const ::Stroke&		Stroke() const
 									{ return fStroke; }
@@ -57,6 +71,7 @@ public:
 
 private:
 			Reference< ::Brush>	fBrush;
+			Reference< ::Paint>	fPaint;
 			::Stroke			fStroke;
 };
 
