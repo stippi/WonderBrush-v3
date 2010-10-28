@@ -26,6 +26,7 @@ public:
 								Brush();
 								Brush(float minRadius, float maxRadius,
 									float minHardness, float maxHardness);
+								Brush(const Brush& other);
 	virtual						~Brush();
 
 	// BaseObject interface

@@ -35,7 +35,8 @@ static bool dummy = init_gauss_table(sGaussTable);
 
 // constructor
 Brush::Brush()
-	: fMinRadius(0.0f)
+	: BaseObject()
+	, fMinRadius(0.0f)
 	, fMaxRadius(1.0f)
 	, fMinHardness(1.0f)
 	, fMaxHardness(1.0f)
@@ -45,10 +46,21 @@ Brush::Brush()
 // constructor
 Brush::Brush(float minRadius, float maxRadius, float minHardness,
 		float maxHardness)
-	: fMinRadius(minRadius)
+	: BaseObject()
+	, fMinRadius(minRadius)
 	, fMaxRadius(maxRadius)
 	, fMinHardness(minHardness)
 	, fMaxHardness(maxHardness)
+{
+}
+
+// constructor
+Brush::Brush(const Brush& other)
+	: BaseObject(other)
+	, fMinRadius(other.fMinRadius)
+	, fMaxRadius(other.fMaxRadius)
+	, fMinHardness(other.fMinHardness)
+	, fMaxHardness(other.fMaxHardness)
 {
 }
 
