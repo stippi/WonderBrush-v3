@@ -9,11 +9,7 @@
 #include "BaseObject.h"
 #include "Paint.h"
 #include "SetProperty.h"
-#include "SharedObjectCache.h"
 #include "StrokeProperties.h"
-
-typedef SharedObject<Paint>					SharedPaint;
-typedef SharedObjectCache<Paint>			PaintCache;
 
 typedef SharedObject<StrokeProperties>		SharedStrokeProperties;
 typedef SharedObjectCache<StrokeProperties>	StrokePropertiesCache;
@@ -88,7 +84,6 @@ private:
 									uint32 flags);
 
 private:
-	static	PaintCache			sPaintCache;
 	static	StrokePropertiesCache sStrokePropertiesCache;
 	static	Style				sNullStyle;
 

@@ -463,9 +463,50 @@ Paint::SetGradient(const ::Gradient* gradient)
 Paint
 Paint::sEmptyPaint;
 
+PaintCache
+Paint::sPaintCache;
+
+//static int
+//test_paint_cache()
+//{
+//	Paint color1(kBlack);
+//	Paint color2(kBlack);
+//	Paint color3(kWhite);
+//
+//	SharedPaint* sharedColor1 = sPaintCache.Get(color1);
+//	SharedPaint* sharedColor2 = sPaintCache.Get(color2);
+//	SharedPaint* sharedColor3 = sPaintCache.Get(color3);
+//
+//	printf("sharedColor1 (%p) ref count: %ld\n", sharedColor1, sharedColor1->CountReferences());
+//	printf("sharedColor2 (%p) ref count: %ld\n", sharedColor2, sharedColor2->CountReferences());
+//	printf("sharedColor3 (%p) ref count: %ld\n", sharedColor3, sharedColor3->CountReferences());
+//
+//	SharedPaint* modified1
+//		= sPaintCache.PrepareForModifications(sharedColor1);
+//	printf("modified1 before: %p\n", modified1);
+//
+//	*modified1 = *sharedColor3;
+//
+//	modified1 = sPaintCache.CommitModifications(modified1);
+//	printf("modified1 after: %p\n", modified1);
+//
+//	printf("sharedColor1 (%p) ref count: %ld\n", sharedColor1, sharedColor1->CountReferences());
+//	printf("sharedColor2 (%p) ref count: %ld\n", sharedColor2, sharedColor2->CountReferences());
+//	printf("sharedColor3 (%p) ref count: %ld\n", sharedColor3, sharedColor3->CountReferences());
+//
+//	return 0;
+//}
+//
+//static int test = test_paint_cache();
+
 /*static*/ const Paint&
 Paint::EmptyPaint()
 {
 	return sEmptyPaint;
 }
 
+/*static*/ ::PaintCache&
+Paint::PaintCache()
+{
+	return sPaintCache;
+}

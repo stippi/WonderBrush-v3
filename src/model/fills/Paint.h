@@ -12,8 +12,13 @@
 
 #include "BaseObject.h"
 #include "Listener.h"
+#include "SharedObjectCache.h"
 
 class Gradient;
+class Paint;
+
+typedef SharedObject<Paint>					SharedPaint;
+typedef SharedObjectCache<Paint>			PaintCache;
 
 class Paint : public BaseObject, public Listener {
 public:
@@ -80,6 +85,7 @@ public:
 //									const GammaTable& table) const;
 
 	static	const Paint&		EmptyPaint();
+	static	::PaintCache&		PaintCache();
 
 private:
 			uint32				fType;
@@ -94,6 +100,7 @@ private:
 	mutable	bool				fGammaCorrectedColorsValid;
 
 	static	Paint				sEmptyPaint;
+	static	::PaintCache		sPaintCache;
 };
 
 #endif	// PAINT_H
