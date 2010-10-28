@@ -53,6 +53,8 @@ public:
 	inline	::Stroke&			Stroke()
 									{ return fStroke; }
 
+			bool				AppendPoint(const StrokePoint& point);
+
 private:
 			Reference< ::Brush>	fBrush;
 			::Stroke			fStroke;

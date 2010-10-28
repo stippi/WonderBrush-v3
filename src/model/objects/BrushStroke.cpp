@@ -140,3 +140,37 @@ BrushStroke::SetBrush(::Brush* brush)
 		Notify();
 	}
 }
+
+// AppendPoint
+bool
+BrushStroke::AppendPoint(const StrokePoint& point)
+{
+	BRect invalid(LONG_MAX, LONG_MAX, LONG_MIN, LONG_MIN);
+	if (StrokePoint* lastPoint = fStroke.LastObject()) {
+		invalid.Set(lastPoint->point.x, lastPoint->point.y,
+			lastPoint->point.x, lastPoint->point.y);
+		float radius = fBrush->Radius(lastPoint->pressure);
+		invalid.InsetBy(-radius, -radius);
+	}
+
+	if (!fStroke.AppendObject(point)) {
+		fprintf(stderr, "BrushStroke::AppendPoint(): Failed to add "
+			"tracking point to BrushStroke. Out of memory\n");
+		return false;
+	}
+
+	float radius = fBrush->Radius(point.pressure);
+	invalid = invalid
+		| (BRect(point.point.x, point.point.y, point.point.x, point.point.y)
+			.InsetBySelf(-radius, -radius));
+
+	// Reset transformed bounds without invalidation, invalidate only
+	// changed region.
+	InitBounds();
+	UpdateChangeCounter();
+	Notify();
+
+	InvalidateParent(invalid);
+
+	return true;
+}
