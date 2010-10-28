@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2009, Haiku.
+ * Copyright 2006-2010, Haiku.
  * Distributed under the terms of the MIT License.
  *
  * Authors:
@@ -24,9 +24,11 @@
 #include <Mime.h>
 #include <Path.h>
 #include <Region.h>
+#include <Resources.h>
 #include <Roster.h>
 #include <TranslationUtils.h>
 #include <Window.h>
+#include "IconUtils.h"
 
 using std::nothrow;
 
@@ -69,6 +71,16 @@ IconButton::MessageReceived(BMessage* message)
 void
 IconButton::AttachedToWindow()
 {
+	rgb_color background = B_TRANSPARENT_COLOR;
+	if (BView* parent = Parent()) {
+		background = parent->ViewColor();
+		if (background == B_TRANSPARENT_COLOR)
+			background = parent->LowColor();
+	}
+	if (background == B_TRANSPARENT_COLOR)
+		background = ui_color(B_PANEL_BACKGROUND_COLOR);
+	SetLowColor(background);
+
 	SetTarget(fTargetCache);
 	if (!Target())
 		SetTarget(Window());
@@ -79,8 +91,6 @@ void
 IconButton::Draw(BRect area)
 {
 	rgb_color background = LowColor();
-	if (BView* parent = Parent())
-		background = parent->LowColor();
 
 	BRect r(Bounds());
 
@@ -350,6 +360,37 @@ IconButton::IsPressed() const
 	return _HasFlags(STATE_FORCE_PRESSED);
 }
 
+status_t
+IconButton::SetIcon(int32 resourceID)
+{
+	app_info info;
+	status_t status = be_app->GetAppInfo(&info);
+	if (status != B_OK)
+		return status;
+
+	BResources resources(&info.ref);
+	status = resources.InitCheck();
+	if (status != B_OK)
+		return status;
+
+	size_t size;
+	const void* data = resources.LoadResource(B_VECTOR_ICON_TYPE, resourceID,
+		&size);
+	if (data != NULL) {
+		BBitmap bitmap(BRect(0, 0, 31, 31), B_BITMAP_NO_SERVER_LINK, B_RGBA32);
+		status = bitmap.InitCheck();
+		if (status != B_OK)
+			return status;
+		status = BIconUtils::GetVectorIcon(reinterpret_cast<const uint8*>(data),
+			size, &bitmap);
+		if (status != B_OK)
+			return status;
+		return SetIcon(&bitmap);
+	}
+//	const void* data = resources.LoadResource(B_BITMAP_TYPE, resourceID, &size);
+	return B_ERROR;
+}
+
 // SetIcon
 status_t
 IconButton::SetIcon(const char* pathToBitmap)
@@ -502,6 +543,77 @@ IconButton::ClearIcon()
 {
 	_DeleteBitmaps();
 	_Update();
+}
+
+// TrimIcon
+void
+IconButton::TrimIcon(bool keepAspect)
+{
+	if (fNormalBitmap == NULL)
+		return;
+
+	uint8* bits = (uint8*)fNormalBitmap->Bits();
+	uint32 bpr = fNormalBitmap->BytesPerRow();
+	uint32 width = fNormalBitmap->Bounds().IntegerWidth() + 1;
+	uint32 height = fNormalBitmap->Bounds().IntegerHeight() + 1;
+	BRect trimmed(LONG_MAX, LONG_MAX, LONG_MIN, LONG_MIN);
+	for (uint32 y = 0; y < height; y++) {
+		uint8* b = bits + 3;
+		bool rowHasAlpha = false;
+		for (uint32 x = 0; x < width; x++) {
+			if (*b) {
+				rowHasAlpha = true;
+				if (x < trimmed.left)
+					trimmed.left = x;
+				if (x > trimmed.right)
+					trimmed.right = x;
+			}
+			b += 4;
+		}
+		if (rowHasAlpha) {
+			if (y < trimmed.top)
+				trimmed.top = y;
+			if (y > trimmed.bottom)
+				trimmed.bottom = y;
+		}
+		bits += bpr;
+	}
+	if (!trimmed.IsValid())
+		return;
+	if (keepAspect) {
+		float minInset = trimmed.left;
+		minInset = min_c(minInset, trimmed.top);
+		minInset = min_c(minInset, fNormalBitmap->Bounds().right - trimmed.right);
+		minInset = min_c(minInset, fNormalBitmap->Bounds().bottom - trimmed.bottom);
+		trimmed = fNormalBitmap->Bounds().InsetByCopy(minInset, minInset);
+	}
+
+	TrimIcon(trimmed);
+}
+
+// TrimIcon
+void
+IconButton::TrimIcon(BRect trimmed)
+{
+	if (fNormalBitmap == NULL)
+		return;
+
+	trimmed = trimmed & fNormalBitmap->Bounds();
+	BBitmap trimmedBitmap(trimmed.OffsetToCopy(B_ORIGIN),
+		B_BITMAP_NO_SERVER_LINK, B_RGBA32);
+	uint8* bits = (uint8*)fNormalBitmap->Bits();
+	uint32 bpr = fNormalBitmap->BytesPerRow();
+	bits += 4 * (int32)trimmed.left + bpr * (int32)trimmed.top;
+	uint8* dst = (uint8*)trimmedBitmap.Bits();
+	uint32 trimmedWidth = trimmedBitmap.Bounds().IntegerWidth() + 1;
+	uint32 trimmedHeight = trimmedBitmap.Bounds().IntegerHeight() + 1;
+	uint32 trimmedBPR = trimmedBitmap.BytesPerRow();
+	for (uint32 y = 0; y < trimmedHeight; y++) {
+		memcpy(dst, bits, trimmedWidth * 4);
+		dst += trimmedBPR;
+		bits += bpr;
+	}
+	SetIcon(&trimmedBitmap);
 }
 
 // Bitmap
@@ -721,15 +833,22 @@ IconButton::_MakeBitmaps(const BBitmap* bitmap)
 						cBits[nOffset + 2] = (uint8)(nBits[nOffset + 2] * 0.8);
 						cBits[nOffset + 3] = fBits[fOffset + 3];
 						// disabled bits have less opacity
-						dBits[nOffset + 0] = fBits[fOffset + 0];
-						dBits[nOffset + 1] = fBits[fOffset + 1];
-						dBits[nOffset + 2] = fBits[fOffset + 2];
-						dBits[nOffset + 3] = (uint8)(fBits[fOffset + 3] * 0.5);
+
+						uint8 grey = ((uint16)nBits[nOffset + 0] * 10
+						    + nBits[nOffset + 1] * 60
+							+ nBits[nOffset + 2] * 30) / 100;
+						float dist = (nBits[nOffset + 0] - grey) * 0.3;
+						dBits[nOffset + 0] = (uint8)(grey + dist);
+						dist = (nBits[nOffset + 1] - grey) * 0.3;
+						dBits[nOffset + 1] = (uint8)(grey + dist);
+						dist = (nBits[nOffset + 2] - grey) * 0.3;
+						dBits[nOffset + 2] = (uint8)(grey + dist);
+						dBits[nOffset + 3] = (uint8)(fBits[fOffset + 3] * 0.3);
 						// disabled bits have less contrast (lame method...)
-						dcBits[nOffset + 0] = (uint8)(nBits[nOffset + 0] * 0.8);
-						dcBits[nOffset + 1] = (uint8)(nBits[nOffset + 1] * 0.8);
-						dcBits[nOffset + 2] = (uint8)(nBits[nOffset + 2] * 0.8);
-						dcBits[nOffset + 3] = (uint8)(fBits[fOffset + 3] * 0.5);
+						dcBits[nOffset + 0] = (uint8)(dBits[nOffset + 0] * 0.8);
+						dcBits[nOffset + 1] = (uint8)(dBits[nOffset + 1] * 0.8);
+						dcBits[nOffset + 2] = (uint8)(dBits[nOffset + 2] * 0.8);
+						dcBits[nOffset + 3] = (uint8)(fBits[fOffset + 3] * 0.3);
 					}
 					nBits += nbpr;
 					dBits += nbpr;

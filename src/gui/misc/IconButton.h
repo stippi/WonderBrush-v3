@@ -1,5 +1,5 @@
 /*
- * Copyright 2006, Haiku.
+ * Copyright 2006-2010, Haiku.
  * Distributed under the terms of the MIT License.
  *
  * Authors:
@@ -64,6 +64,7 @@ public:
 			uint32				ID() const
 									{ return fID; }
 
+			status_t			SetIcon(int32 resourceID);
 			status_t			SetIcon(const char* pathToBitmap);
 			status_t			SetIcon(const BBitmap* bitmap);
 			status_t			SetIcon(const BMimeType* fileType,
@@ -73,6 +74,8 @@ public:
 										color_space format,
 										bool convertToBW = false);
 			void				ClearIcon();
+			void				TrimIcon(bool keepAspect = true);
+			void				TrimIcon(BRect bounds);
 
 			BBitmap*			Bitmap() const;
 									// caller has to delete the returned bitmap
