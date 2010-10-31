@@ -7,6 +7,7 @@
 #ifndef RENDER_MANAGER_H
 #define RENDER_MANAGER_H
 
+#include <List.h>
 #include <Locker.h>
 #include <Rect.h>
 
@@ -35,7 +36,8 @@ class RenderBuffer;
 class RenderThread;
 
 enum {
-	MSG_BITMAP_CLEAN = 'bcln'
+	MSG_BITMAP_CLEAN	= 'bcln',
+	MSG_LAYOUT_CHANGED	= 'lych'
 };
 
 
@@ -69,8 +71,14 @@ public:
 			double				ZoomLevel() const;
 
 			bool				ScrollBy(const BPoint& offset);
+			void				SetCanvasLayout(const BRect& dataRect,
+									const BRect& visibleRect);
+			const BRect&		DataRect() const
+									{ return fDataRect; }
+			const BRect&		VisibleRect() const
+									{ return fVisibleRect; }
 
-			void				SetBitmapListener(BMessenger* listener);
+			bool				AddBitmapListener(BMessenger* listener);
 
 			bool				LockDisplay();
 			void				UnlockDisplay();
@@ -122,7 +130,8 @@ private:
 			BBitmap*			fDisplayBitmap;
 			RenderBuffer*		fRenderBuffer;
 			
-//			BRect				fDisplayRect;
+			BRect				fDataRect;
+			BRect				fVisibleRect;
 			double				fZoomLevel;
 			bool				fScrollingDelayed;
 
@@ -151,7 +160,7 @@ private:
 
 			BLocker				fRenderQueueLock;
 
-			BMessenger*			fBitmapListener;
+			BList				fBitmapListeners;
 
 			bigtime_t			fLastRenderStartTime;
 };

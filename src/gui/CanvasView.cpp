@@ -21,9 +21,6 @@
 #include "RenderManager.h"
 
 
-static const rgb_color kStripeLight = (rgb_color){ 112, 112, 112, 255 };
-static const rgb_color kStripeDark = (rgb_color){ 104, 104, 104, 255 };
-
 #define AUTO_SCROLL_DELAY		40000 // 40 ms
 #define USE_DELAYED_SCROLLING	0
 #define USE_NATIVE_SCROLLING	1
@@ -52,8 +49,8 @@ CanvasView::CanvasView(BRect frame, Document* document, RenderManager* manager)
 	, fAutoScroller(NULL)
 {
 	SetViewColor(B_TRANSPARENT_32_BIT);
-	SetHighColor(kStripeLight);
-	SetLowColor(kStripeDark);
+	SetHighColor(kStripesHigh);
+	SetLowColor(kStripesLow);
 		// used for drawing the stripes pattern
 
 	SetLocker(fDocument);
@@ -80,8 +77,8 @@ CanvasView::CanvasView(Document* document, RenderManager* manager)
 	, fAutoScroller(NULL)
 {
 	SetViewColor(B_TRANSPARENT_32_BIT);
-	SetHighColor(kStripeLight);
-	SetLowColor(kStripeDark);
+	SetHighColor(kStripesHigh);
+	SetLowColor(kStripesLow);
 		// used for drawing the stripes pattern
 
 	SetLocker(fDocument);
@@ -163,7 +160,12 @@ CanvasView::AttachedToWindow()
 {
 	StateView::AttachedToWindow();
 
-	fRenderManager->SetBitmapListener(new BMessenger(this));
+	BMessenger* bitmapListener = new(std::nothrow) BMessenger(this);
+	if (bitmapListener == NULL
+		|| !fRenderManager->AddBitmapListener(bitmapListener)) {
+		delete bitmapListener;
+		// TODO: Bail out, throw exception or something...
+	}
 
 	// init data rect for scrolling and center bitmap in the view
 	BRect dataRect = _LayoutCanvas();
@@ -454,6 +456,8 @@ CanvasView::ScrollOffsetChanged(BPoint oldOffset, BPoint newOffset)
 	Invalidate();
 #	endif
 #endif
+	// TODO: Move delayed scrolling stuff into this method:
+	fRenderManager->SetCanvasLayout(DataRect(), VisibleRect());
 }
 
 // VisibleSizeChanged
@@ -461,7 +465,10 @@ void
 CanvasView::VisibleSizeChanged(float oldWidth, float oldHeight,
 							   float newWidth, float newHeight)
 {
-	SetDataRect(_LayoutCanvas());
+	BRect dataRect(_LayoutCanvas());
+	SetDataRect(dataRect);
+
+	fRenderManager->SetCanvasLayout(dataRect, VisibleRect());
 }
 
 // #pragma mark -
@@ -608,8 +615,10 @@ CanvasView::SetAutoScrolling(bool scroll)
 void
 CanvasView::InvalidateCanvas(const BRect& bounds)
 {
+#if USE_DELAYED_SCROLLING
 	if (fDelayedScrolling)
 		return;
+#endif
 	Invalidate(bounds);
 }
 

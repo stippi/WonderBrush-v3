@@ -10,6 +10,7 @@
 #include <stdio.h>
 #include <string.h>
 
+#include <Autolock.h>
 #include <Bitmap.h>
 #include <Message.h>
 #include <Messenger.h>
@@ -169,7 +170,7 @@ RenderManager::RenderManager(Document* document)
 
 	, fRenderQueueLock("render queue lock")
 
-	, fBitmapListener(NULL)
+	, fBitmapListeners(2)
 
 	, fLastRenderStartTime(-1)
 {
@@ -248,7 +249,12 @@ RenderManager::~RenderManager()
 	_DestroyDisplayBitmaps();
 
 	delete fSnapshot;
-	delete fBitmapListener;
+
+	for (int32 i = fBitmapListeners.CountItems() - 1; i >= 0; i--) {
+		BMessenger* listener = static_cast<BMessenger*>(
+			fBitmapListeners.ItemAtFast(i));
+		delete listener;
+	}
 
 	Layer::RemoveListenerRecursive(fDocument->RootLayer(), this);
 
@@ -352,6 +358,27 @@ RenderManager::ScrollBy(const BPoint& offset)
 	return fScrollingDelayed;
 }
 
+// SetCanvasLayout
+void
+RenderManager::SetCanvasLayout(const BRect& dataRect, const BRect& visibleRect)
+{
+	// TODO: In the future, use this for implementing scrolling
+	// in the RenderManager and clipping the canvas to a slightly enlarged
+	// visible rect.
+	fDataRect = dataRect;
+	fVisibleRect = visibleRect;
+
+	int32 listenerCount = fBitmapListeners.CountItems();
+	if (listenerCount > 0) {
+		BMessage message(MSG_LAYOUT_CHANGED);
+		for (int32 i = 0; i < listenerCount; i++) {
+			BMessenger* listener = static_cast<BMessenger*>(
+				fBitmapListeners.ItemAtFast(i));
+			listener->SendMessage(&message);
+		}
+	}
+}
+
 // Bounds
 BRect
 RenderManager::Bounds() const
@@ -359,16 +386,15 @@ RenderManager::Bounds() const
 	return fDisplayBitmap->Bounds();
 }
 
-// SetBitmapListener
-void
-RenderManager::SetBitmapListener(BMessenger* listener)
+// AddBitmapListener
+bool
+RenderManager::AddBitmapListener(BMessenger* listener)
 {
-	if (!fRenderQueueLock.Lock())
-		return;
+	BAutolock locker(&fRenderQueueLock);
+	if (!locker.IsLocked())
+		return false;
 
-	fBitmapListener = listener;
-
-	fRenderQueueLock.Unlock();
+	return fBitmapListeners.AddItem(listener);
 }
 
 // LockDisplay
@@ -677,7 +703,8 @@ RenderManager::_BackToDisplay(BRect area)
 	// done while holding the queue lock
 	fRenderBuffer->CopyTo(fDisplayBitmap, area);
 
-	if (fBitmapListener) {
+	int32 listenerCount = fBitmapListeners.CountItems();
+	if (listenerCount > 0) {
 		BMessage message(MSG_BITMAP_CLEAN);
 		if (fZoomLevel > 0.0) {
 			// Convert clean area back to document space
@@ -691,7 +718,11 @@ RenderManager::_BackToDisplay(BRect area)
 			message.AddBool("scrolling delayed", true);
 			fScrollingDelayed = false;
 		}
-		fBitmapListener->SendMessage(&message);
+		for (int32 i = 0; i < listenerCount; i++) {
+			BMessenger* listener = static_cast<BMessenger*>(
+				fBitmapListeners.ItemAtFast(i));
+			listener->SendMessage(&message);
+		}
 	}
 }
 
