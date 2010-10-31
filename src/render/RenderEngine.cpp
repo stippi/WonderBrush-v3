@@ -279,7 +279,10 @@ RenderEngine::DrawImage(const RenderBuffer* buffer, BRect area)
 		agg::render_scanlines_aa(fRasterizer, fScanline, fBaseRenderer,
 			fSpanAllocator, spanGenerator);
 	} else {
-		if (fState.Matrix.Scale() >= 0.5) {
+		double xScale;
+		double yScale;
+		fState.Matrix.GetScale(&xScale, &yScale);
+		if (xScale >= 1.0 && yScale >= 1.0) {
 //printf("Bilinear\n");
 			typedef agg::span_interpolator_trans<Transformable> Interpolator;
 			Interpolator interpolator(imgMatrix);
