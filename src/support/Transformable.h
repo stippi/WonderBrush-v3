@@ -55,6 +55,7 @@ public:
 									double scaleY);
 
 			double				Scale() const;
+			void				GetScale(double* scaleX, double* scaleY) const;
 			bool				GetAffineParameters(double* translationX,
 									double* translationY, double* rotation,
 									double* scaleX, double* scaleY,

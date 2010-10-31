@@ -272,6 +272,13 @@ Transformable::Scale() const
 	return scale();
 }
 
+// GetScale
+void
+Transformable::GetScale(double* scaleX, double* scaleY) const
+{
+	scaling(scaleX, scaleY);
+}
+
 // GetAffineParameters
 bool
 Transformable::GetAffineParameters(double* _translationX,
