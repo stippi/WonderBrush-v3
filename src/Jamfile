@@ -87,6 +87,7 @@ Application WonderBrush :
 	IconButton.cpp
 	IconOptionsControl.cpp
 	InputTextView.cpp
+	NavigatorView.cpp
 	NummericalTextView.cpp
 	Panel.cpp
 	StringTextView.cpp
