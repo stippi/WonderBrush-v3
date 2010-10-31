@@ -130,7 +130,7 @@ Window::Window(BRect frame, const char* title, Document* document,
 	exportButton->SetIcon(203);
 	exportButton->TrimIcon(toolIconBounds);
 	IconButton* closeButton = new IconButton("close", 0);
-	closeButton->SetIcon(204);
+	closeButton->SetIcon(205);
 	closeButton->TrimIcon(toolIconBounds);
 	BGroupView* fileIconGroup = new BGroupView(B_HORIZONTAL, 0.0f);
 	BLayoutBuilder::Group<>(fileIconGroup->GroupLayout())
