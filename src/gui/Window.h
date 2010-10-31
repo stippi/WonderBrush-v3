@@ -16,6 +16,7 @@ class BMenu;
 class CanvasView;
 class ColumnTreeModel;
 class Document;
+class IconButton;
 class IconOptionsControl;
 class InspectorView;
 class Layer;
@@ -66,6 +67,11 @@ private:
 //			ColumnTreeModel*	fLayerTreeModel;
 			ResourceTreeView*	fResourceTreeView;
 			InspectorView*		fInspectorView;
+
+			IconButton*			fUndoIcon;
+			IconButton*			fRedoIcon;
+			IconButton*			fConfirmIcon;
+			IconButton*			fCancelIcon;
 
 			BList				fTools;
 };

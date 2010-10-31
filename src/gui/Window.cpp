@@ -29,6 +29,7 @@
 #include "IconOptionsControl.h"
 #include "InspectorView.h"
 //#include "LayerTreeModel.h"
+#include "NavigatorView.h"
 #include "ObjectTreeView.h"
 #include "PickTool.h"
 #include "ToolConfigView.h"
@@ -113,6 +114,66 @@ Window::Window(BRect frame, const char* title, Document* document,
 		| SCROLL_VISIBLE_RECT_IS_CHILD_BOUNDS, "canvas",
 		B_WILL_DRAW | B_FRAME_EVENTS, B_NO_BORDER);
 
+	BRect toolIconBounds(0, 0, 21, 21);
+
+	// File icon group
+	IconButton* newButton = new IconButton("new", 0);
+	newButton->SetIcon(201);
+	newButton->TrimIcon(toolIconBounds);
+	IconButton* openButton = new IconButton("open", 0);
+	openButton->SetIcon(202);
+	openButton->TrimIcon(toolIconBounds);
+	IconButton* saveButton = new IconButton("save", 0);
+	saveButton->SetIcon(204);
+	saveButton->TrimIcon(toolIconBounds);
+	IconButton* exportButton = new IconButton("export", 0);
+	exportButton->SetIcon(203);
+	exportButton->TrimIcon(toolIconBounds);
+	IconButton* closeButton = new IconButton("close", 0);
+	closeButton->SetIcon(204);
+	closeButton->TrimIcon(toolIconBounds);
+	BGroupView* fileIconGroup = new BGroupView(B_HORIZONTAL, 0.0f);
+	BLayoutBuilder::Group<>(fileIconGroup->GroupLayout())
+		.Add(newButton)
+		.Add(new BSeparatorView(B_VERTICAL))
+		.Add(openButton)
+		.Add(saveButton)
+		.Add(exportButton)
+		.Add(new BSeparatorView(B_VERTICAL))
+		.Add(closeButton)
+		.SetInsets(5, 5, 5, 5)
+	;
+	fileIconGroup->SetExplicitMaxSize(BSize(B_SIZE_UNLIMITED, B_SIZE_UNSET));
+
+	// Undo/Redo icon group
+	fUndoIcon = new IconButton("undo", 0, NULL, new BMessage(MSG_UNDO));
+	fUndoIcon->SetIcon(301);
+	fUndoIcon->TrimIcon(toolIconBounds);
+	fRedoIcon = new IconButton("redo", 0, NULL, new BMessage(MSG_REDO));
+	fRedoIcon->SetIcon(302);
+	fRedoIcon->TrimIcon(toolIconBounds);
+	fConfirmIcon = new IconButton("confirm", 0);
+	fConfirmIcon->SetIcon(303);
+	fConfirmIcon->TrimIcon(toolIconBounds);
+	fCancelIcon = new IconButton("cancel", 0);
+	fCancelIcon->SetIcon(304);
+	fCancelIcon->TrimIcon(toolIconBounds);
+
+	fUndoIcon->SetEnabled(false);
+	fRedoIcon->SetEnabled(false);
+	fConfirmIcon->SetEnabled(false);
+	fCancelIcon->SetEnabled(false);
+
+	BGroupView* undoIconGroup = new BGroupView(B_HORIZONTAL, 0.0f);
+	BLayoutBuilder::Group<>(undoIconGroup->GroupLayout())
+		.Add(fUndoIcon)
+		.Add(fRedoIcon)
+		.Add(new BSeparatorView(B_VERTICAL))
+		.Add(fConfirmIcon)
+		.Add(fCancelIcon)
+		.SetInsets(5, 5, 5, 5)
+	;
+
 	fToolIconControl = new IconOptionsControl();
 
 	BView* toolConfigView = new BView("tool config", B_WILL_DRAW);
@@ -154,10 +215,13 @@ Window::Window(BRect frame, const char* title, Document* document,
 			.AddGroup(B_HORIZONTAL, 0.0f)
 				.AddGroup(B_VERTICAL, 0.0f)
 					.Add(menuBar)
-					.AddStrut(5)
-					.Add(fToolIconControl)
-					.AddStrut(5)
-					.AddSplit(B_VERTICAL, 0.0f, 0.15f)
+					.Add(fileIconGroup)
+					.AddSplit(B_VERTICAL, 0.0f, 0.10f)
+						.AddGroup(B_VERTICAL, 0.0f, 0.20f)
+							.Add(new BSeparatorView(B_HORIZONTAL))
+							.Add(new NavigatorView(fDocument, fRenderManager))
+							.Add(new BSeparatorView(B_HORIZONTAL))
+						.End()
 						.Add(objectResourceTabView)
 						.AddGroup(B_VERTICAL, 0.0f, 0.35f)
 							.Add(new BSeparatorView(B_HORIZONTAL))
@@ -170,6 +234,11 @@ Window::Window(BRect frame, const char* title, Document* document,
 			.End()
 			.AddGroup(B_VERTICAL, 0.0f)
 				.Add(toolConfigView)
+				.AddGroup(B_HORIZONTAL, 0.0f)
+					.Add(fToolIconControl, 0.0f)
+					.AddGlue()
+					.Add(undoIconGroup, 0.0f)
+				.End()
 				.Add(new BSeparatorView(B_HORIZONTAL))
 				.AddGroup(B_HORIZONTAL, 0.0f)
 					.Add(new BSeparatorView(B_VERTICAL))
@@ -183,24 +252,6 @@ Window::Window(BRect frame, const char* title, Document* document,
 	objectResourceTabView->SetExplicitMaxSize(BSize(250, B_SIZE_UNSET));
 	inspectorScrollView->SetExplicitMinSize(BSize(150, B_SIZE_UNSET));
 	inspectorScrollView->SetExplicitMaxSize(BSize(250, B_SIZE_UNSET));
-
-//	SetLayout(new BGroupLayout(B_VERTICAL));
-//	AddChild(menuBar);
-//
-//	AddChild(BGroupLayoutBuilder(B_HORIZONTAL)
-//		.Add(BGroupLayoutBuilder(B_VERTICAL)
-//			.Add(fToolIconControl)
-//			.AddStrut(5)
-//			.Add(new SeparatorView(B_HORIZONTAL))
-//			.Add(objectMenuBar)
-//			.Add(objectTreeScrollView)
-//			.Add(propertyMenuBar)
-//			.Add(fInspectorView, 0.35)
-//			.SetInsets(0, 5, 0, 0), 0.2
-//		)
-//		.Add(new SeparatorView(B_VERTICAL))
-//		.Add(canvasScrollView)
-//	);
 
 	fView->MakeFocus(true);
 
@@ -347,6 +398,7 @@ Window::_ObjectChanged(const Notifier* object)
 		// relable Undo item and update enabled status
 		BString label("Undo");
 		fUndoMI->SetEnabled(fDocument->CommandStack()->GetUndoName(label));
+		fUndoIcon->SetEnabled(fUndoMI->IsEnabled());
 		if (fUndoMI->IsEnabled())
 			fUndoMI->SetLabel(label.String());
 		else
@@ -355,6 +407,7 @@ Window::_ObjectChanged(const Notifier* object)
 		// relable Redo item and update enabled status
 		label.SetTo("Redo");
 		fRedoMI->SetEnabled(fDocument->CommandStack()->GetRedoName(label));
+		fRedoIcon->SetEnabled(fRedoMI->IsEnabled());
 		if (fRedoMI->IsEnabled())
 			fRedoMI->SetLabel(label.String());
 		else
