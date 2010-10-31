@@ -101,8 +101,13 @@ IconButton::Draw(BRect area)
 			flags |= BControlLook::B_DISABLED;
 			bitmap = fDisabledBitmap;
 		}
-		if (_HasFlags(STATE_PRESSED) || _HasFlags(STATE_FORCE_PRESSED))
+		if (_HasFlags(STATE_PRESSED) || _HasFlags(STATE_FORCE_PRESSED)) {
 			flags |= BControlLook::B_ACTIVATED;
+			if (IsEnabled())
+				bitmap = fClickedBitmap;
+			else
+				bitmap = fDisabledClickedBitmap;
+		}
 
 		if (DrawBorder()) {
 			be_control_look->DrawButtonFrame(this, r, area, background,
@@ -120,8 +125,6 @@ IconButton::Draw(BRect area)
 			float y = r.top + floorf((r.Height()
 				- bitmap->Bounds().Height()) / 2.0 + 0.5);
 			BPoint point(x, y);
-			if (_HasFlags(STATE_PRESSED) || _HasFlags(STATE_FORCE_PRESSED))
-				point += BPoint(1.0, 1.0);
 			if (bitmap->ColorSpace() == B_RGBA32
 				|| bitmap->ColorSpace() == B_RGBA32_BIG) {
 				SetDrawingMode(B_OP_ALPHA);
