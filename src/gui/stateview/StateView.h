@@ -114,6 +114,10 @@ protected:
 			void				_InstallEventFilter();
 			void				_RemoveEventFilter();
 
+			void				_ExtractTabletInfo(const BMessage* message,
+									::MouseInfo& info);
+
+protected:
 			ViewState*			fCurrentState;
 			ViewState*			fDropAnticipatingState;
 				// the drop anticipation state is some

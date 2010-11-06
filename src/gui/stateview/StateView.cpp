@@ -4,6 +4,7 @@
 
 #include <Message.h>
 #include <MessageFilter.h>
+#include <Screen.h>
 #include <Window.h>
 
 #include "Command.h"
@@ -271,13 +272,14 @@ StateView::MouseDown(BPoint where)
 	::MouseInfo info(fMouseInfo);
 	info.buttons = B_PRIMARY_MOUSE_BUTTON;
 	info.clicks = 1;
+	info.position = where;
 
 	// query more info from the windows current message if available
 	BMessage* message = Window() ? Window()->CurrentMessage() : NULL;
 	if (message != NULL) {
 		message->FindInt32("buttons", (int32*)&info.buttons);
 		message->FindInt32("clicks", (int32*)&info.clicks);
-		// TODO: pressure, tilt
+		_ExtractTabletInfo(message, info);
 	}
 
 	if (fCurrentState != NULL)
@@ -322,7 +324,7 @@ StateView::MouseMoved(BPoint where, uint32 transit,
 	BMessage* message = Window() ? Window()->CurrentMessage() : NULL;
 	if (message != NULL) {
 		message->FindInt32("buttons", (int32*)&fMouseInfo.buttons);
-		// TODO: pressure, tilt
+		_ExtractTabletInfo(message, fMouseInfo);
 	}
 
 	// cache drag message
@@ -672,5 +674,25 @@ StateView::_RemoveEventFilter()
 		return;
 
 	Window()->RemoveCommonFilter(fEventFilter);
+}
+
+// _ExtractTabletInfo
+void
+StateView::_ExtractTabletInfo(const BMessage* message, ::MouseInfo& info)
+{
+	message->FindFloat("be:tablet_pressure", &info.pressure);
+	message->FindFloat("be:tablet_tilt_x", &info.tilt.x);
+	message->FindFloat("be:tablet_tilt_y", &info.tilt.y);
+	float x;
+	float y;
+	if (message->FindFloat("be:tablet_x", &x) == B_OK
+		&& message->FindFloat("be:tablet_y", &y) == B_OK) {
+		BScreen screen(Window());
+		if (screen.IsValid()) {
+			info.position.x = x * screen.Frame().Width();
+			info.position.y = y * screen.Frame().Height();
+			ConvertFromScreen(&info.position);
+		}
+	}
 }
 
