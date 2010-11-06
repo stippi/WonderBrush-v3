@@ -208,7 +208,7 @@ Window::Window(BRect frame, const char* title, Document* document,
 	objectResourceTabView->SetBorder(B_NO_BORDER);
 	objectResourceTabView->TabAt(0)->SetLabel("Objects");
 	objectResourceTabView->TabAt(1)->SetLabel("Resources");
-//	objectResourceTabView->SetFont(be_bold_font);
+	objectResourceTabView->SetFont(be_bold_font);
 
 	BLayoutBuilder::Group<>(this, B_VERTICAL, 0.0f)
 		.AddSplit(B_HORIZONTAL, 0.0f, 0.15f)
@@ -248,10 +248,8 @@ Window::Window(BRect frame, const char* title, Document* document,
 		.End()
 	;
 
-	objectResourceTabView->SetExplicitMinSize(BSize(150, B_SIZE_UNSET));
+	objectResourceTabView->SetExplicitMinSize(BSize(170, B_SIZE_UNSET));
 	objectResourceTabView->SetExplicitMaxSize(BSize(250, B_SIZE_UNSET));
-	inspectorScrollView->SetExplicitMinSize(BSize(150, B_SIZE_UNSET));
-	inspectorScrollView->SetExplicitMaxSize(BSize(250, B_SIZE_UNSET));
 
 	fView->MakeFocus(true);
 
