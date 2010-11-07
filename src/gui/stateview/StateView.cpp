@@ -680,7 +680,8 @@ StateView::_RemoveEventFilter()
 void
 StateView::_ExtractTabletInfo(const BMessage* message, ::MouseInfo& info)
 {
-	message->FindFloat("be:tablet_pressure", &info.pressure);
+	if (message->FindFloat("be:tablet_pressure", &info.pressure) != B_OK)
+		info.pressure = 1.0f;
 	message->FindFloat("be:tablet_tilt_x", &info.tilt.x);
 	message->FindFloat("be:tablet_tilt_y", &info.tilt.y);
 	float x;
