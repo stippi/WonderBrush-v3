@@ -58,3 +58,6 @@ PropertyObject Interface erweitern:
 	-> PropertyCategory unterstützt Hinzufügen von Properties.
 	-> So wird dann beispielsweise der Style eines Objects im selben
 	   PropertyListView anzeig- und editierbar.
+
+Alternative Ansicht für die Layer und Objekte: Die Ansicht zeigt nur die Objekte des aktuellen Layers. Bei Doppelklick auf ein Layer verschiebt sich die Ansicht nach links um ihre Breite (mit schnellem Scrolleffekt) und zeigt jetzt die Objekte des geklickten Layers. Man kann in der Hierarchie nach rechts (rein/tiefer) und links (raus/höher) über Pfeilknöpfe, zusätzlich könnte es ein "Breadcrumb" Control geben, so dass man im aktuellen Pfad springen kann. Dieser könnte von oben nach unten verlaufen. Der Pfad ändert sich durch expliziten Doppelklick auf ein Layer, bleibt aber ansonsten stabil, wenn der Nutzer nur kurz zwischen den Ebenen hin- und herspringt.
+
