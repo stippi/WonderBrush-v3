@@ -70,13 +70,13 @@ SetPropertiesCommand::GetName(BString& name)
 {
 	if (fOldProperties->CountProperties() > 1) {
 		if (fObjectCount > 1)
-			name << "Multi Paste Properties";
+			name << "Multi paste properties";
 		else
-			name << "Paste Properties";
+			name << "Paste properties";
 	} else {
 		BString property = fOldProperties->PropertyAt(0)->Name();
 		if (fObjectCount > 1)
-			name << "Multi Set " << property;
+			name << "Multi set " << property;
 		else
 			name << "Set " << property;
 	}
