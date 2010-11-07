@@ -16,6 +16,7 @@
 #include "CommandStack.h"
 #include "Document.h"
 #include "Layer.h"
+#include "ObjectAddedCommand.h"
 #include "support.h"
 
 // constructor
@@ -74,9 +75,9 @@ BrushToolState::MouseDown(const MouseInfo& info)
 
 	fBrushStroke = new(std::nothrow)BrushStroke();
 	if (fBrushStroke == NULL) {
-		delete brush;
 		fprintf(stderr, "BrushToolState::MouseDown(): Failed to allocate "
 			"BrushStroke. Out of memory\n");
+		delete brush;
 		return;
 	}
 
@@ -84,19 +85,23 @@ BrushToolState::MouseDown(const MouseInfo& info)
 	fBrushStroke->SetBrush(brush);
 	brush->RemoveReference();
 
+	if (fInsertionIndex < 0)
+		fInsertionIndex = 0;
+	if (fInsertionIndex > fInsertionLayer->CountObjects())
+		fInsertionIndex = fInsertionLayer->CountObjects();
+
 	if (!fInsertionLayer->AddObject(fBrushStroke, fInsertionIndex)) {
-		delete fBrushStroke;
-		fBrushStroke = NULL;
 		fprintf(stderr, "BrushToolState::MouseDown(): Failed to add "
 			"BrushStroke to Layer. Out of memory\n");
+		fBrushStroke->RemoveReference();
+		fBrushStroke = NULL;
 		return;
 	}
 
 	fInsertionIndex++;
 
-	// Make sure the BrushStroke object can't go away while we intend to
-	// still mess with it...
-	fBrushStroke->AddReference();
+	// We keep the initial reference to the BrushStroke while we will
+	// still mess with it.
 
 	_AppendPoint(info);
 }
@@ -112,13 +117,14 @@ BrushToolState::MouseMoved(const MouseInfo& info)
 Command*
 BrushToolState::MouseUp()
 {
-	// TODO
-	Command* command = NULL;
+	if (fBrushStroke == NULL)
+		return NULL;
 
-	if (fBrushStroke != NULL) {
-		fBrushStroke->RemoveReference();
-		fBrushStroke = NULL;
-	}
+	Command* command = new(std::nothrow) ObjectAddedCommand(fBrushStroke,
+		fSelection);
+
+	fBrushStroke->RemoveReference();
+	fBrushStroke = NULL;
 
 	return command;
 }
