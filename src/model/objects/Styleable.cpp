@@ -80,7 +80,9 @@ Styleable::SetStyle(::Style* style)
 	if (fStyle.Get() != NULL)
 		fStyle->RemoveListener(this);
 
-	if (fStyle.SetTo(style)) {
+	fStyle.SetTo(style);
+
+	if (fStyle.Get() != NULL) {
 		fStyle->AddListener(this);
 		ObjectChanged(style);
 	}

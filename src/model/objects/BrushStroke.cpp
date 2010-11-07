@@ -138,6 +138,10 @@ BRect
 BrushStroke::Bounds()
 {
 	BRect bounds(LONG_MAX, LONG_MAX, LONG_MIN, LONG_MIN);
+
+	if (fBrush.Get() == NULL)
+		return bounds;
+
 	uint32 count = fStroke.CountObjects();
 	for (uint32 i = 0; i < count; i++) {
 		StrokePoint* point = fStroke.ObjectAtFast(i);
@@ -188,7 +192,9 @@ BrushStroke::SetPaint(::Paint* paint)
 	if (fPaint.Get() != NULL)
 		fPaint->RemoveListener(this);
 
-	if (fPaint.SetTo(paint)) {
+	fPaint.SetTo(paint);
+
+	if (fPaint.Get() != NULL) {
 		fPaint->AddListener(this);
 		ObjectChanged(paint);
 	}
