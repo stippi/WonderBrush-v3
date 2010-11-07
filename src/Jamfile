@@ -80,7 +80,9 @@ Application WonderBrush :
 #	ALMTab.cpp
 
 	# commands
+	AddObjectsCommand.cpp
 	MoveObjectsCommand.cpp
+	ObjectAddedCommand.cpp
 	SetPropertiesCommand.cpp
 
 	# gui/misc
