@@ -53,12 +53,14 @@ BrushToolConfigView::BrushToolConfigView(::Tool* tool)
 	fHardness->SetMinEnabled(false);
 
 	fSpacing = new DualSlider("spacing", "Spacing",
-		new BMessage(MSG_SPACING_VALUE), NULL, this, 0.0f, 0.2f);
+		new BMessage(MSG_SPACING_VALUE), NULL, this, 0.0f, 0.1f);
 	fSpacing->SetMinEnabled(false);
+fSpacing->SetEnabled(false);
 
 	fSubpixels = new BCheckBox("subpixels", "Subpixels",
 		new BMessage(MSG_SUBPIXELS));
 	fSolid = new BCheckBox("solid", "Solid", new BMessage(MSG_SOLID));
+fSolid->SetEnabled(false);
 	fTilt = new BCheckBox("tilt", "Tilt", new BMessage(MSG_TILT));
 
 	fSubpixels->SetValue(B_CONTROL_ON);
@@ -177,9 +179,9 @@ BrushToolConfigView::SetEnabled(bool enable)
 	fOpacity->SetEnabled(enable);
 	fRadius->SetEnabled(enable);
 	fHardness->SetEnabled(enable);
-	fSpacing->SetEnabled(enable);
+//	fSpacing->SetEnabled(enable);
 	fSubpixels->SetEnabled(enable);
-	fSolid->SetEnabled(enable);
+//	fSolid->SetEnabled(enable);
 	fTilt->SetEnabled(enable);
 }
 
