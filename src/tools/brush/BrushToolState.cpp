@@ -21,12 +21,13 @@
 
 // constructor
 BrushToolState::BrushToolState(StateView* view, Document* document,
-		Selection* selection)
+		Selection* selection, Brush& brush)
 	: TransformViewState(view)
 	, fDocument(document)
 	, fSelection(selection)
 	, fInsertionLayer(NULL)
 	, fInsertionIndex(-1)
+	, fBrush(brush)
 	, fBrushStroke(NULL)
 {
 	// TODO: Find a way to change this later...
@@ -47,6 +48,7 @@ BrushToolState::MessageReceived(BMessage* message, Command** _command)
 	bool handled = true;
 
 	switch (message->what) {
+		
 		default:
 			handled = TransformViewState::MessageReceived(message, _command);
 	}

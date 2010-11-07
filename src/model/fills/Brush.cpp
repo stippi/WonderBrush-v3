@@ -36,31 +36,41 @@ static bool dummy = init_gauss_table(sGaussTable);
 // constructor
 Brush::Brush()
 	: BaseObject()
+	, fMinOpacity(0.0f)
+	, fMaxOpacity(1.0f)
 	, fMinRadius(0.0f)
 	, fMaxRadius(1.0f)
-	, fMinHardness(1.0f)
+	, fMinHardness(0.0f)
 	, fMaxHardness(1.0f)
+	, fFlags(FLAG_PRESSURE_CONTROLS_APHLA | FLAG_PRESSURE_CONTROLS_RADIUS
+		| FLAG_TILT_CONTROLS_SHAPE)
 {
 }
 
 // constructor
-Brush::Brush(float minRadius, float maxRadius, float minHardness,
-		float maxHardness)
+Brush::Brush(float minOpacity, float maxOpacity, float minRadius,
+		float maxRadius, float minHardness, float maxHardness, uint32 flags)
 	: BaseObject()
+	, fMinOpacity(minOpacity)
+	, fMaxOpacity(maxOpacity)
 	, fMinRadius(minRadius)
 	, fMaxRadius(maxRadius)
 	, fMinHardness(minHardness)
 	, fMaxHardness(maxHardness)
+	, fFlags(flags)
 {
 }
 
 // constructor
 Brush::Brush(const Brush& other)
 	: BaseObject(other)
+	, fMinOpacity(other.fMinOpacity)
+	, fMaxOpacity(other.fMaxOpacity)
 	, fMinRadius(other.fMinRadius)
 	, fMaxRadius(other.fMaxRadius)
 	, fMinHardness(other.fMinHardness)
 	, fMaxHardness(other.fMaxHardness)
+	, fFlags(other.fFlags)
 {
 }
 
@@ -122,6 +132,46 @@ Brush::DefaultName() const
 
 // #pragma mark -
 
+// SetMinOpacity
+void
+Brush::SetMinOpacity(float opacity)
+{
+	SetOpacity(opacity, fMaxOpacity);
+}
+
+// SetMaxOpacity
+void
+Brush::SetMaxOpacity(float opacity)
+{
+	SetOpacity(fMinOpacity, opacity);
+}
+
+// SetOpacity
+void
+Brush::SetOpacity(float minOpacity, float maxOpacity)
+{
+	if (minOpacity == fMinOpacity && maxOpacity == fMaxOpacity)
+		return;
+
+	fMinOpacity = minOpacity;
+	fMaxOpacity = maxOpacity;
+	Notify();
+}
+
+// SetMinRadius
+void
+Brush::SetMinRadius(float radius)
+{
+	SetRadius(radius, fMaxRadius);
+}
+
+// SetMaxRadius
+void
+Brush::SetMaxRadius(float radius)
+{
+	SetRadius(fMinRadius, radius);
+}
+
 // SetRadius
 void
 Brush::SetRadius(float minRadius, float maxRadius)
@@ -134,14 +184,18 @@ Brush::SetRadius(float minRadius, float maxRadius)
 	Notify();
 }
 
-// Radius
-float
-Brush::Radius(float pressure) const
+// SetMinHardness
+void
+Brush::SetMinHardness(float hardness)
 {
-//	if (flags & FLAG_PRESSURE_CONTROLS_RADIUS)
-		return fMinRadius + (fMaxRadius - fMinRadius) * pressure;
-//	else
-//		return fMaxRadius;
+	SetHardness(hardness, fMaxHardness);
+}
+
+// SetMaxHardness
+void
+Brush::SetMaxHardness(float hardness)
+{
+	SetHardness(fMinHardness, hardness);
 }
 
 // SetHardness
@@ -155,6 +209,65 @@ Brush::SetHardness(float minHardness, float maxHardness)
 	fMaxHardness = maxHardness;
 	Notify();
 }
+
+// SetFlags
+void
+Brush::SetFlags(uint32 flags, bool enable)
+{
+	if (enable)
+		SetFlags(fFlags | flags);
+	else
+		SetFlags(fFlags & ~flags);
+}
+
+// SetFlags
+void
+Brush::SetFlags(uint32 flags)
+{
+	if (fFlags == flags)
+		return;
+
+	fFlags = flags;
+	Notify();
+}
+
+// #pragma mark -
+
+static inline float
+value_in_range(float min, float max, float scale, bool scaled)
+{
+	if (scaled)
+		return min + (max - min) * scale;
+	else
+		return max;
+}
+
+
+// Opacity
+uint8
+Brush::Opacity(float pressure) const
+{
+	return uint8(255.0f * value_in_range(fMinOpacity, fMaxOpacity, pressure,
+		(fFlags & FLAG_PRESSURE_CONTROLS_APHLA) != 0));
+}
+
+// Radius
+float
+Brush::Radius(float pressure) const
+{
+	return value_in_range(fMinRadius, fMaxRadius, pressure,
+		(fFlags & FLAG_PRESSURE_CONTROLS_RADIUS) != 0);
+}
+
+// Hardness
+float
+Brush::Hardness(float pressure) const
+{
+	return value_in_range(fMinHardness, fMaxHardness, pressure,
+		(fFlags & FLAG_PRESSURE_CONTROLS_HARDNESS) != 0);
+}
+
+// #pragma mark -
 
 // pixel format -> renderer pipeline
 typedef agg::gray8										Color;
@@ -181,8 +294,8 @@ typedef agg::renderer_scanline_aa<BrushBaseRenderer,
 // Draw
 void
 Brush::Draw(BPoint where, float pressure, float tiltX, float tiltY,
-	float minAlpha, float maxAlpha, uint32 flags, uint8* bits, uint32 bpr,
-	const Transformable& transform, const BRect& constrainRect) const
+	uint8* bits, uint32 bpr, const Transformable& transform,
+	const BRect& constrainRect) const
 {
 //printf("Brush::Draw()\n");
 //bigtime_t startTime = system_time();
@@ -190,12 +303,8 @@ Brush::Draw(BPoint where, float pressure, float tiltX, float tiltY,
 //printf("  invalid constrain rect\n");
 		return;
 	}
-	// radius
-	double radius;
-	if (flags & FLAG_PRESSURE_CONTROLS_RADIUS)
-		radius = fMinRadius + (fMaxRadius - fMinRadius) * pressure;
-	else
-		radius = fMaxRadius;
+
+	double radius = Radius(pressure);
 
 	// check clipping here
 	BRect clipTest(where.x - radius, where.y - radius,
@@ -207,25 +316,14 @@ Brush::Draw(BPoint where, float pressure, float tiltX, float tiltY,
 	}
 //printf("  drawing brush (%f, %f)\n", where.x, where.y);
 
-	// hardness
-	double hardness;
-	if (flags & FLAG_PRESSURE_CONTROLS_HARDNESS)
-		hardness = fMinHardness + (fMaxHardness - fMinHardness) * pressure;
-	else
-		hardness = fMaxHardness;
-
-	// alpha
-	uint8 alpha;
-	if (flags & FLAG_PRESSURE_CONTROLS_APHLA)
-		alpha = uint8(255 * (minAlpha + (maxAlpha - minAlpha) * pressure));
-	else
-		alpha = uint8(255 * maxAlpha);
+	double hardness = Hardness(pressure);
+	uint8 opacity = Opacity(pressure);
 
 	// Ellipse transformation
 	Transformable ellipseTransform;
 
 	// Calculate tilt deformation and rotation
-	if ((flags & FLAG_TILT_CONTROLS_SHAPE) != 0) {
+	if ((fFlags & FLAG_TILT_CONTROLS_SHAPE) != 0) {
 		float invTiltX = 1.0 - fabs(tiltX);
 		float invTiltY = 1.0 - fabs(tiltY);
 		double xScale = (sqrtf(invTiltX * invTiltX + invTiltY * invTiltY)
@@ -268,15 +366,15 @@ Brush::Draw(BPoint where, float pressure, float tiltX, float tiltY,
 	agg::scanline_u8 scanlineU;
 
 	BrushPixelFormat pixelFormat(buffer);
-	pixelFormat.cover_scale(alpha);
-	pixelFormat.solid((flags & FLAG_SOLID) != 0);
+	pixelFormat.cover_scale(opacity);
+	pixelFormat.solid((fFlags & FLAG_SOLID) != 0);
 
 	BrushBaseRenderer rendererBase(pixelFormat);
 
 	// special case for hardness = 1.0
 	if (hardness == 1.0) {
 		BrushRenderer renderer(rendererBase);
-		renderer.color(Color(alpha));
+		renderer.color(Color(opacity));
 		agg::render_scanlines(rasterizer, scanlineU, renderer);
 	} else {
 		// Brush gradient transformation

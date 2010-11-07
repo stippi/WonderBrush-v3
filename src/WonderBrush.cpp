@@ -106,7 +106,11 @@ WonderBrush::WonderBrush(BRect bounds)
 	subLayer->AddObject(rectWidthGlobalStyle);
 
 	BrushStroke* brushStroke = new BrushStroke();
-	Brush* brush = new Brush(10.0f, 20.0f, 0.0f, 0.7f);
+	Brush* brush = new Brush(0.0f, 1.0f, 10.0f, 20.0f, 0.0f, 0.7f,
+		Brush::FLAG_PRESSURE_CONTROLS_APHLA
+			| Brush::FLAG_PRESSURE_CONTROLS_RADIUS
+			| Brush::FLAG_PRESSURE_CONTROLS_HARDNESS
+			| Brush::FLAG_TILT_CONTROLS_SHAPE);
 	brushStroke->SetBrush(brush);
 	brush->RemoveReference();
 	brushStroke->Stroke().AppendObject(

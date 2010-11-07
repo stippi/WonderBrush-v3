@@ -33,6 +33,8 @@ public:
 	// GUI
 			ViewState*			ToolViewState(StateView* view,
 									Document* document, Selection* selection);
+	inline	ViewState*			ToolViewState() const
+									{ return fViewState; }
 			ToolConfigView*		ConfigView();
 			IconButton*			Icon();
 
@@ -42,6 +44,11 @@ public:
 	// more complex editing
 	virtual	status_t			Confirm();
 	virtual	status_t			Cancel();
+
+	virtual	void				SetOption(uint32 option, bool value);
+	virtual	void				SetOption(uint32 option, float value);
+	virtual	void				SetOption(uint32 option, int32 value);
+	// TODO: More overloaded versions.
 
 protected:
 	virtual	ViewState*			MakeViewState(StateView* view,

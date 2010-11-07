@@ -18,7 +18,8 @@ class BrushToolState : public TransformViewState,
 	public Selection::Controller {
 public:
 								BrushToolState(StateView* view,
-									Document* document, Selection* selection);
+									Document* document, Selection* selection,
+									Brush& brush);
 	virtual						~BrushToolState();
 
 	// ViewState interface
@@ -44,7 +45,7 @@ private:
 			Layer*				fInsertionLayer;
 			int32				fInsertionIndex;
 
-			Brush				fBrush;
+			Brush&				fBrush;
 			BrushStroke*		fBrushStroke;
 };
 

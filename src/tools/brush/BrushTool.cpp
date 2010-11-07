@@ -8,6 +8,7 @@
 #include <stdio.h>
 
 #include "BrushIcon.h"
+#include "BrushToolConfigView.h"
 #include "BrushToolState.h"
 #include "IconButton.h"
 
@@ -54,14 +55,14 @@ ViewState*
 BrushTool::MakeViewState(StateView* view, Document* document,
 	Selection* selection)
 {
-	return new(std::nothrow) BrushToolState(view, document, selection);
+	return new(std::nothrow) BrushToolState(view, document, selection, fBrush);
 }
 
 // MakeConfigView
 ToolConfigView*
 BrushTool::MakeConfigView()
 {
-	return NULL;
+	return new(std::nothrow) BrushToolConfigView(this);
 }
 
 // MakeIcon
@@ -75,4 +76,65 @@ BrushTool::MakeIcon()
 	button->TrimIcon(BRect(0, 0, 21, 21));
 	return button;
 }
+
+// #pragma mark -
+
+// SetOption
+void
+BrushTool::SetOption(uint32 option, bool value)
+{
+	switch (option) {
+		case OPACITY_CONTROLLED:
+			fBrush.SetFlags(Brush::FLAG_PRESSURE_CONTROLS_APHLA, value);
+			break;
+		case RADIUS_CONTROLLED:
+			fBrush.SetFlags(Brush::FLAG_PRESSURE_CONTROLS_RADIUS, value);
+			break;
+		case HARDNESS_CONTROLLED:
+			fBrush.SetFlags(Brush::FLAG_PRESSURE_CONTROLS_HARDNESS, value);
+			break;
+		case SOLID:
+			fBrush.SetFlags(Brush::FLAG_SOLID, value);
+			break;
+		case TILT_CONTROLLED:
+			fBrush.SetFlags(Brush::FLAG_TILT_CONTROLS_SHAPE, value);
+			break;
+	}
+}
+
+// SetOption
+void
+BrushTool::SetOption(uint32 option, float value)
+{
+	switch (option) {
+		case OPACITY_MIN:
+			fBrush.SetMinOpacity(value);
+			break;
+		case OPACITY_MAX:
+			fBrush.SetMaxOpacity(value);
+			break;
+
+		case RADIUS_MIN:
+			fBrush.SetMinRadius(value * 100.0f);
+			break;
+		case RADIUS_MAX:
+			fBrush.SetMaxRadius(value * 100.0f);
+			break;
+
+		case HARDNESS_MIN:
+			fBrush.SetMinHardness(value);
+			break;
+		case HARDNESS_MAX:
+			fBrush.SetMaxHardness(value);
+			break;
+	}
+		
+}
+
+// SetOption
+void
+BrushTool::SetOption(uint32 option, int32 value)
+{
+}
+
 

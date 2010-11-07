@@ -33,11 +33,8 @@ private:
 			SharedPaint*		fPaint;
 			::Stroke			fStroke;
 
-			// TODO: Move these into Brush
-			float				fMinAlpha;
-			float				fMaxAlpha;
+			// TODO: Move this into Brush?
 			float				fMaxSpacing;
-			uint32				fFlags;
 //			float				fStepDistLeftOver;
 };
 

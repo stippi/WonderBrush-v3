@@ -99,4 +99,24 @@ Tool::Cancel()
 	return B_OK;
 }
 
+// #pragma mark -
+
+// SetOption
+void
+Tool::SetOption(uint32 option, bool value)
+{
+}
+
+// SetOption
+void
+Tool::SetOption(uint32 option, float value)
+{
+}
+
+// SetOption
+void
+Tool::SetOption(uint32 option, int32 value)
+{
+}
+
 

@@ -16,14 +16,8 @@ BrushStrokeSnapshot::BrushStrokeSnapshot(const BrushStroke* stroke)
 	, fBrush()
 	, fPaint(NULL)
 
-	// TODO: Move those into Brush
-	, fMinAlpha(0.0f)
-	, fMaxAlpha(1.0f)
+	// TODO: Move this into Brush?
 	, fMaxSpacing(0.1f)
-	, fFlags(Brush::FLAG_PRESSURE_CONTROLS_APHLA
-		| Brush::FLAG_PRESSURE_CONTROLS_RADIUS
-		| Brush::FLAG_PRESSURE_CONTROLS_HARDNESS
-		| Brush::FLAG_TILT_CONTROLS_SHAPE)
 {
 	_Sync();
 }
@@ -142,8 +136,8 @@ BrushStrokeSnapshot::_StrokeLine(const StrokePoint* a,
 {
 	if (a == b) {
 		BPoint p = a->point;
-		fBrush.Draw(p, a->pressure, a->tiltX, a->tiltY,
-			fMinAlpha, fMaxAlpha, fFlags, dest, bpr, *this, constrainRect);
+		fBrush.Draw(p, a->pressure, a->tiltX, a->tiltY, dest, bpr, *this,
+			constrainRect);
 		return true;
 	}
 
@@ -162,7 +156,7 @@ BrushStrokeSnapshot::_StrokeLine(const StrokePoint* a,
 	float stepDist = _StepDist(scale);
 	float currentStepDist = stepDist;
 	float minStepDist = scale != 0.0 ? 1.0 / scale : 1.0;
-	if ((fFlags & Brush::FLAG_PRESSURE_CONTROLS_RADIUS) != 0)
+	if ((fBrush.Flags() & Brush::FLAG_PRESSURE_CONTROLS_RADIUS) != 0)
 		currentStepDist = max_c(minStepDist, stepDist * a->pressure);
 	float p = stepDistLeftOver != 0.0
 		? currentStepDist - stepDistLeftOver : 0.0;
@@ -175,15 +169,14 @@ BrushStrokeSnapshot::_StrokeLine(const StrokePoint* a,
 				* iterationScale;
 			float currentTiltY = a->tiltY + tiltYDiff
 				* iterationScale;
-			if ((fFlags & Brush::FLAG_PRESSURE_CONTROLS_RADIUS) != 0) {
+			if ((fBrush.Flags() & Brush::FLAG_PRESSURE_CONTROLS_RADIUS) != 0) {
 				currentStepDist = max_c(minStepDist,
 					stepDist * currentPressure);
 			}
 			BPoint center(
 				pA.x + vector.x * iterationScale,
 				pA.y + vector.y * iterationScale);
-			fBrush.Draw(center, currentPressure, currentTiltX,
-				currentTiltY, fMinAlpha, fMaxAlpha, fFlags,
+			fBrush.Draw(center, currentPressure, currentTiltX, currentTiltY,
 				dest, bpr, LayoutedState().Matrix, constrainRect);
 		}
 		stepDistLeftOver = dist - (p - currentStepDist);

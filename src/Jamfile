@@ -86,6 +86,7 @@ Application WonderBrush :
 	SetPropertiesCommand.cpp
 
 	# gui/misc
+	DualSlider.cpp
 	IconButton.cpp
 	IconOptionsControl.cpp
 	InputTextView.cpp
@@ -97,6 +98,7 @@ Application WonderBrush :
 	TextViewPopup.cpp
 
 	# gui/tools
+	BrushToolConfigView.cpp
 	TransformToolConfigView.cpp
 
 	# gui (WonderBrush specific)
