@@ -29,6 +29,9 @@ MoveObjectsCommand::MoveObjectsCommand(Object** objects,
 //printf("MoveObjectsCommand::MoveObjectsCommand(%ld, %p, %ld)\n",
 //	objectCount, insertionLayer, insertionIndex);
 
+	if (fInsertionLayer != NULL)
+		fInsertionLayer->AddReference();
+
 	if (fObjects == NULL || fObjectCount <= 0 || fOldPositions == NULL)
 		return;
 
@@ -78,7 +81,11 @@ MoveObjectsCommand::~MoveObjectsCommand()
 			fObjects[i]->RemoveReference();
 		delete[] fObjects;
 	}
+
 	delete[] fOldPositions;
+
+	if (fInsertionLayer != NULL)
+		fInsertionLayer->RemoveReference();
 }
 
 // InitCheck
@@ -128,7 +135,8 @@ MoveObjectsCommand::Perform()
 {
 	fInsertionLayer->SuspendUpdates(true);
 
-	fSelection->DeselectAll(this);
+	if (fSelection != NULL)
+		fSelection->DeselectAll(this);
 
 	for (int32 i = 0; i < fObjectCount; i++) {
 		if (fObjects[i] == NULL)
@@ -140,9 +148,13 @@ MoveObjectsCommand::Perform()
 	for (int32 i = 0; i < fObjectCount; i++) {
 		if (fObjects[i] == NULL)
 			continue;
-		fInsertionLayer->AddObject(fObjects[i], index);
+		if (!fInsertionLayer->AddObject(fObjects[i], index)) {
+			fInsertionLayer->SuspendUpdates(false);
+			return B_NO_MEMORY;
+		}
 		index++;
-		fSelection->Select(Selectable(fObjects[i]), this, true);
+		if (fSelection != NULL)
+			fSelection->Select(Selectable(fObjects[i]), this, true);
 	}
 
 	fInsertionLayer->SuspendUpdates(false);
@@ -156,7 +168,8 @@ MoveObjectsCommand::Undo()
 {
 	fInsertionLayer->SuspendUpdates(true);
 
-	fSelection->DeselectAll(this);
+	if (fSelection != NULL)
+		fSelection->DeselectAll(this);
 
 	for (int32 i = 0; i < fObjectCount; i++) {
 		if (fObjects[i] == NULL)
@@ -170,7 +183,8 @@ MoveObjectsCommand::Undo()
 			fOldPositions[i].parent->AddObject(fObjects[i],
 				fOldPositions[i].index);
 		}
-		fSelection->Select(Selectable(fObjects[i]), this, true);
+		if (fSelection != NULL)
+			fSelection->Select(Selectable(fObjects[i]), this, true);
 	}
 
 	fInsertionLayer->SuspendUpdates(false);
@@ -183,9 +197,9 @@ void
 MoveObjectsCommand::GetName(BString& name)
 {
 	if (fObjectCount > 1)
-		name << "Move Objects";
+		name << "Move objects";
 	else
-		name << "Move Object";
+		name << "Move object";
 }
 
 // #pragma mark -
