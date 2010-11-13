@@ -12,6 +12,7 @@ enum {
 	STROKE_JOIN_MODE							= 1 << 2,
 	STROKE_CAP_MODE								= 1 << 3,
 	STROKE_MITER_LIMIT							= 1 << 4,
+	STROKE_POSITION								= 1 << 5,
 
 	FILL_PAINT									= 1 << 10,
 	FILL_MODE									= 1 << 11,

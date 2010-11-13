@@ -25,6 +25,12 @@ enum JoinMode {
 	MiterJoinRound				= agg::miter_join_round
 };
 
+enum StrokePosition {
+	CenterStroke				= 0,
+	OutsideStroke				= 1,
+	InsideStroke				= 2,
+};
+
 class StrokeProperties : public BaseObject {
 public:
 								StrokeProperties();
@@ -77,6 +83,11 @@ public:
 	inline	::JoinMode			JoinMode() const
 									{ return (::JoinMode)fJoinMode; }
 
+			void				SetStrokePosition(::StrokePosition position);
+	inline	::StrokePosition	StrokePosition() const
+									{ return
+										(::StrokePosition)fStrokePosition; }
+
 	inline	uint32				SetProperties() const
 									{ return fSetProperties; }
 
@@ -91,6 +102,7 @@ private:
 			uint32				fSetProperties : 10;
 			uint32				fCapMode : 2;
 			uint32				fJoinMode : 3;
+			uint32				fStrokePosition : 2;
 };
 
 // SetupAggConverter

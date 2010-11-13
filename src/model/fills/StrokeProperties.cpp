@@ -17,6 +17,7 @@ StrokeProperties::StrokeProperties()
 	, fSetProperties(0)
 	, fCapMode(ButtCap)
 	, fJoinMode(MiterJoin)
+	, fStrokePosition(CenterStroke)
 {
 }
 
@@ -25,9 +26,10 @@ StrokeProperties::StrokeProperties(float width)
 	: BaseObject()
 	, fWidth(width)
 	, fMiterLimit(4.0f)
-	, fSetProperties(STROKE_WIDTH)
+	, fSetProperties(STROKE_POSITION | STROKE_WIDTH)
 	, fCapMode(ButtCap)
 	, fJoinMode(MiterJoin)
+	, fStrokePosition(CenterStroke)
 {
 }
 
@@ -39,6 +41,7 @@ StrokeProperties::StrokeProperties(float width, ::CapMode capMode)
 	, fSetProperties(STROKE_WIDTH | STROKE_CAP_MODE)
 	, fCapMode(capMode)
 	, fJoinMode(MiterJoin)
+	, fStrokePosition(CenterStroke)
 {
 }
 
@@ -50,6 +53,7 @@ StrokeProperties::StrokeProperties(float width, ::JoinMode joinMode)
 	, fSetProperties(STROKE_WIDTH | STROKE_JOIN_MODE)
 	, fCapMode(ButtCap)
 	, fJoinMode(joinMode)
+	, fStrokePosition(CenterStroke)
 {
 }
 
@@ -62,6 +66,7 @@ StrokeProperties::StrokeProperties(float width, ::CapMode capMode,
 	, fSetProperties(STROKE_WIDTH | STROKE_CAP_MODE | STROKE_JOIN_MODE)
 	, fCapMode(capMode)
 	, fJoinMode(joinMode)
+	, fStrokePosition(CenterStroke)
 {
 }
 
@@ -75,6 +80,7 @@ StrokeProperties::StrokeProperties(float width, ::CapMode capMode,
 		| STROKE_MITER_LIMIT)
 	, fCapMode(capMode)
 	, fJoinMode(joinMode)
+	, fStrokePosition(CenterStroke)
 {
 }
 
@@ -170,6 +176,22 @@ StrokeProperties::AddProperties(PropertyObject* object, uint32 flags) const
 		joinMode->SetCurrentOptionID(JoinMode());
 	else
 		joinMode->SetCurrentOptionID(-1);
+
+	// stroke position
+	OptionProperty* strokePosition = new(std::nothrow) OptionProperty(
+		PROPERTY_STROKE_POSITION);
+	if (strokePosition == NULL || !object->AddProperty(strokePosition)) {
+		delete strokePosition;
+		return;
+	}
+	strokePosition->AddOption(-1, "Inherited");
+	strokePosition->AddOption(CenterStroke, "Center");
+	strokePosition->AddOption(OutsideStroke, "Outside");
+	strokePosition->AddOption(InsideStroke, "Inside");
+	if ((fSetProperties & STROKE_POSITION) != 0)
+		strokePosition->SetCurrentOptionID(StrokePosition());
+	else
+		strokePosition->SetCurrentOptionID(-1);
 }
 
 // SetToPropertyObject
@@ -208,6 +230,18 @@ StrokeProperties::SetToPropertyObject(const PropertyObject* object,
 			SetJoinMode(static_cast< ::JoinMode>(joinMode->CurrentOptionID()));
 	}
 
+	OptionProperty* strokePosition = dynamic_cast<OptionProperty*>(
+		object->FindProperty(PROPERTY_STROKE_POSITION));
+	if (strokePosition != NULL) {
+		if (strokePosition->CurrentOptionID() == -1) {
+			fSetProperties &= ~STROKE_POSITION;
+			Notify();
+		} else {
+			SetStrokePosition(static_cast< ::StrokePosition>(
+				strokePosition->CurrentOptionID()));
+		}
+	}
+
 	return HasPendingNotifications();
 }
 
@@ -234,6 +268,8 @@ StrokeProperties::operator=(const StrokeProperties& other)
 		SetCapMode(other.CapMode());
 	if ((other.fSetProperties & STROKE_JOIN_MODE) != 0)
 		SetJoinMode(other.JoinMode());
+	if ((other.fSetProperties & STROKE_POSITION) != 0)
+		SetStrokePosition(other.StrokePosition());
 
 	if (fSetProperties != other.fSetProperties) {
 		fSetProperties = other.fSetProperties;
@@ -249,7 +285,8 @@ StrokeProperties::operator==(const StrokeProperties& other) const
 {
 	return fWidth == other.fWidth && fMiterLimit == other.fMiterLimit
 		&& fSetProperties == other.fSetProperties
-		&& fCapMode == other.fCapMode && fJoinMode == other.fJoinMode;
+		&& fCapMode == other.fCapMode && fJoinMode == other.fJoinMode
+		&& fStrokePosition == other.fStrokePosition;
 }
 
 // operator!=
@@ -320,6 +357,19 @@ StrokeProperties::SetJoinMode(::JoinMode joinMode)
 	}
 	fJoinMode = joinMode;
 	fSetProperties |= STROKE_JOIN_MODE;
+	Notify();
+}
+
+// SetStrokePosition
+void
+StrokeProperties::SetStrokePosition(::StrokePosition position)
+{
+	if ((fSetProperties & STROKE_POSITION) != 0
+		&& StrokePosition() == position) {
+		return;
+	}
+	fStrokePosition = position;
+	fSetProperties |= STROKE_POSITION;
 	Notify();
 }
 

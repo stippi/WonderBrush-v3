@@ -7,6 +7,8 @@
 
 #include <stdio.h>
 
+#include <agg_conv_contour.h>
+
 #include "AutoLocker.h"
 #include "Shape.h"
 
@@ -146,13 +148,34 @@ ShapeSnapshot::_RasterizeShape(Rasterizer& rasterizer, BRect bounds)
 	if (fStyle.StrokePaint() != NULL
 		&& fStyle.StrokePaint()->Type() != Paint::NONE
 		&& fStyle.StrokeProperties() != NULL) {
-		agg::conv_stroke<PathStorage> strokedPath(path);
-		fStyle.StrokeProperties()->SetupAggConverter(strokedPath);
+		if (fStyle.StrokeProperties()->StrokePosition() == CenterStroke) {
+			agg::conv_stroke<PathStorage> strokedPath(path);
+			fStyle.StrokeProperties()->SetupAggConverter(strokedPath);
+	
+			agg::conv_transform<agg::conv_stroke<PathStorage>, Transformation>
+				transformedPath(strokedPath, LayoutedState().Matrix);
+	
+			rasterizer.add_path(transformedPath);
+		} else {
+			agg::conv_contour<PathStorage> offsetPath(path);
+			if (fStyle.StrokeProperties()->StrokePosition() == InsideStroke)
+				offsetPath.width(-fStyle.StrokeProperties()->Width());
+			else
+				offsetPath.width(fStyle.StrokeProperties()->Width());
+			offsetPath.auto_detect_orientation(true);
 
-		agg::conv_transform<agg::conv_stroke<PathStorage>, Transformation>
-			transformedPath(strokedPath, LayoutedState().Matrix);
-
-		rasterizer.add_path(transformedPath);
+			agg::conv_stroke<agg::conv_contour<PathStorage> >
+				strokedPath(offsetPath);
+			fStyle.StrokeProperties()->SetupAggConverter(strokedPath);
+//			strokedPath.inner_join(agg::inner_miter);
+	
+			agg::conv_transform<
+				agg::conv_stroke<agg::conv_contour<PathStorage> >,
+				Transformation>
+				transformedPath(strokedPath, LayoutedState().Matrix);
+	
+			rasterizer.add_path(transformedPath);
+		}
 		_StoreScanlines(rasterizer, fStrokeScanlines);
 		rasterizer.reset();
 	}

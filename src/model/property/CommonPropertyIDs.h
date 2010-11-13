@@ -25,6 +25,7 @@ enum {
 	PROPERTY_JOIN_MODE					= 'jnmd',
 	PROPERTY_MITER_LIMIT				= 'mtlm',
 	PROPERTY_STROKE_SHORTEN				= 'srtn',
+	PROPERTY_STROKE_POSITION			= 'stps',
 
 	PROPERTY_CLOSED						= 'clsd',
 	PROPERTY_PATH						= 'path',

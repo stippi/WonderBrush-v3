@@ -51,6 +51,9 @@ name_for_id(int32 id)
 		case PROPERTY_STROKE_SHORTEN:
 			name = "Shorten";
 			break;
+		case PROPERTY_STROKE_POSITION:
+			name = "Position";
+			break;
 
 		case PROPERTY_CLOSED:
 			name = "Closed";

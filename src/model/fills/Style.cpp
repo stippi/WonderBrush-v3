@@ -204,6 +204,8 @@ Style::ExtendBounds(BRect& bounds) const
 		return;
 
 	float maxStrokeWidth = fStrokeProperties->Width();
+	if (fStrokeProperties->StrokePosition() == OutsideStroke)
+		maxStrokeWidth *= 2.0f;
 
 	if (fStrokeProperties->JoinMode() == MiterJoin
 		|| fStrokeProperties->JoinMode() == MiterJoinRevert
