@@ -176,6 +176,32 @@ ColumnTreeView::AttachedToWindow()
 	SetTarget(Window());
 }
 
+// MessageReceived
+void
+ColumnTreeView::MessageReceived(BMessage* message)
+{
+	switch (message->what) {
+		case B_MOUSE_WHEEL_CHANGED:
+		{
+			BPoint delta;
+			if (message->FindFloat("be:wheel_delta_x", &delta.x) != B_OK)
+				delta.x = 0.0f;
+			if (message->FindFloat("be:wheel_delta_y", &delta.y) != B_OK)
+				delta.y = 0.0f;
+			delta.x *= 10.0f;
+			if (ColumnTreeItem* item = ItemAt(0))
+				delta.y *= item->Height() + 1;
+			else
+				delta.y *= 10.0f;
+			SetScrollOffset(ScrollOffset() + delta);
+			break;
+		}
+		default:
+			BView::MessageReceived(message);
+			break;
+	}
+}
+
 // Draw
 void
 ColumnTreeView::Draw(BRect updateRect)

@@ -38,6 +38,7 @@ public:
 	virtual						~ColumnTreeView();
 
 	virtual	void				AttachedToWindow();
+	virtual	void				MessageReceived(BMessage* message);
 	virtual	void				Draw(BRect updateRect);
 	virtual	void				Draw(BView* view, BRect updateRect);
 	virtual	void				FrameResized(float width, float height);
@@ -45,7 +46,7 @@ public:
 	virtual	void				MakeFocus(bool focusState = true);
 	virtual	void				MouseDown(BPoint point);
 	virtual	void				MouseMoved(BPoint point, uint32 transit,
-										   const BMessage* message);
+									const BMessage* message);
 	virtual	void				MouseUp(BPoint point);
 
 	virtual	void				GetPreferredSize(float* _width,
