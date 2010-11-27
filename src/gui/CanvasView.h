@@ -10,6 +10,14 @@ class BMessageRunner;
 class Document;
 class RenderManager;
 
+enum {
+	MSG_ZOOM_SET		= 'zmst',
+	MSG_ZOOM_IN			= 'zmin',
+	MSG_ZOOM_OUT		= 'zmot',
+	MSG_ZOOM_ORIGINAL	= 'zmor',
+	MSG_ZOOM_TO_FIT		= 'zmft'
+};
+
 class CanvasView : public StateView, public Scrollable {
 public:
 								CanvasView(BRect frame,

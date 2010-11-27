@@ -148,6 +148,29 @@ CanvasView::MessageReceived(BMessage* message)
 			}
 			break;
 		}
+
+		case MSG_ZOOM_SET:
+		{
+			double zoom;
+			if (message->FindDouble("zoom", &zoom) == B_OK)
+				SetZoomLevel(zoom);
+			break;
+		}
+		case MSG_ZOOM_IN:
+			SetZoomLevel(NextZoomInLevel(fZoomLevel), false);
+			break;
+		case MSG_ZOOM_OUT:
+			SetZoomLevel(NextZoomOutLevel(fZoomLevel), false);
+			break;
+		case MSG_ZOOM_ORIGINAL:
+			SetZoomLevel(1.0, false);
+			break;
+		case MSG_ZOOM_TO_FIT:
+		{
+			printf("MSG_ZOOM_TO_FIT\n");
+			break;
+		}
+
 		default:
 			StateView::MessageReceived(message);
 			break;

@@ -115,21 +115,27 @@ Window::Window(BRect frame, const char* title, Document* document,
 		B_WILL_DRAW | B_FRAME_EVENTS, B_NO_BORDER);
 
 	BRect toolIconBounds(0, 0, 21, 21);
+	float iconGroupInset = 3.0f;
 
 	// File icon group
-	IconButton* newButton = new IconButton("new", 0);
+	IconButton* newButton = new IconButton("new", 0, NULL,
+		new BMessage(MSG_NEW_WINDOW), be_app);
 	newButton->SetIcon(201);
 	newButton->TrimIcon(toolIconBounds);
 	IconButton* openButton = new IconButton("open", 0);
 	openButton->SetIcon(202);
 	openButton->TrimIcon(toolIconBounds);
+openButton->SetEnabled(false);
 	IconButton* saveButton = new IconButton("save", 0);
 	saveButton->SetIcon(204);
 	saveButton->TrimIcon(toolIconBounds);
+saveButton->SetEnabled(false);
 	IconButton* exportButton = new IconButton("export", 0);
 	exportButton->SetIcon(203);
 	exportButton->TrimIcon(toolIconBounds);
-	IconButton* closeButton = new IconButton("close", 0);
+exportButton->SetEnabled(false);
+	IconButton* closeButton = new IconButton("close", 0, NULL,
+		new BMessage(B_QUIT_REQUESTED), this);
 	closeButton->SetIcon(205);
 	closeButton->TrimIcon(toolIconBounds);
 	BGroupView* fileIconGroup = new BGroupView(B_HORIZONTAL, 0.0f);
@@ -141,9 +147,38 @@ Window::Window(BRect frame, const char* title, Document* document,
 		.Add(exportButton)
 		.Add(new BSeparatorView(B_VERTICAL))
 		.Add(closeButton)
-		.SetInsets(5, 5, 5, 5)
+		.SetInsets(iconGroupInset, iconGroupInset, iconGroupInset,
+			iconGroupInset)
 	;
 	fileIconGroup->SetExplicitMaxSize(BSize(B_SIZE_UNLIMITED, B_SIZE_UNSET));
+
+	// Zoom icon group
+	IconButton* zoomInButton = new IconButton("zoom in", 0, NULL,
+		new BMessage(MSG_ZOOM_IN), fView);
+	zoomInButton->SetIcon(401);
+	zoomInButton->TrimIcon(toolIconBounds);
+	IconButton* zoomOutButton = new IconButton("zoom out", 0, NULL,
+		new BMessage(MSG_ZOOM_OUT), fView);
+	zoomOutButton->SetIcon(402);
+	zoomOutButton->TrimIcon(toolIconBounds);
+	IconButton* zoomOriginalButton = new IconButton("zoom original", 0, NULL,
+		new BMessage(MSG_ZOOM_ORIGINAL), fView);
+	zoomOriginalButton->SetIcon(403);
+	zoomOriginalButton->TrimIcon(toolIconBounds);
+	IconButton* zoomToFit = new IconButton("zoom to fit", 0, NULL,
+		new BMessage(MSG_ZOOM_TO_FIT), fView);
+	zoomToFit->SetIcon(404);
+	zoomToFit->TrimIcon(toolIconBounds);
+	BGroupView* zoomIconGroup = new BGroupView(B_HORIZONTAL, 0.0f);
+	BLayoutBuilder::Group<>(zoomIconGroup->GroupLayout())
+		.AddGlue()
+		.Add(zoomInButton)
+		.Add(zoomOutButton)
+		.Add(zoomOriginalButton)
+		.Add(zoomToFit)
+		.SetInsets(iconGroupInset, iconGroupInset, iconGroupInset,
+			iconGroupInset)
+	;
 
 	// Undo/Redo icon group
 	fUndoIcon = new IconButton("undo", 0, NULL, new BMessage(MSG_UNDO));
@@ -171,7 +206,8 @@ Window::Window(BRect frame, const char* title, Document* document,
 		.Add(new BSeparatorView(B_VERTICAL))
 		.Add(fConfirmIcon)
 		.Add(fCancelIcon)
-		.SetInsets(5, 5, 5, 5)
+		.SetInsets(iconGroupInset, iconGroupInset, iconGroupInset,
+			iconGroupInset)
 	;
 
 	fToolIconControl = new IconOptionsControl();
@@ -217,10 +253,11 @@ Window::Window(BRect frame, const char* title, Document* document,
 					.Add(menuBar)
 					.Add(fileIconGroup)
 					.AddSplit(B_VERTICAL, 0.0f, 0.10f)
-						.AddGroup(B_VERTICAL, 0.0f, 0.20f)
+						.AddGroup(B_VERTICAL, 0.0f, 0.30f)
 							.Add(new BSeparatorView(B_HORIZONTAL))
 							.Add(new NavigatorView(fDocument, fRenderManager))
 							.Add(new BSeparatorView(B_HORIZONTAL))
+							.Add(zoomIconGroup)
 						.End()
 						.Add(objectResourceTabView)
 						.AddGroup(B_VERTICAL, 0.0f, 0.35f)
@@ -256,6 +293,10 @@ Window::Window(BRect frame, const char* title, Document* document,
 	fFileMenu->SetTargetForItems(this);
 	fEditMenu->SetTargetForItems(this);
 	newWindowMI->SetTarget(be_app);
+	zoomInButton->SetTarget(fView);
+	zoomOutButton->SetTarget(fView);
+	zoomOriginalButton->SetTarget(fView);
+	zoomToFit->SetTarget(fView);
 
 	_InitTools();
 
