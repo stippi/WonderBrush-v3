@@ -56,7 +56,10 @@ ObjectAddedCommand::InitCheck()
 status_t
 ObjectAddedCommand::Perform()
 {
-	// Object already added.
+	// Object already added, but make sure it's selected as well.
+	if (fSelection != NULL)
+		fSelection->Select(Selectable(fObject), this, true);
+
 	return B_OK;
 }
 
