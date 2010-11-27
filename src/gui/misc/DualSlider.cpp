@@ -10,9 +10,11 @@
 #include <Bitmap.h>
 #include <ControlLook.h>
 #include <LayoutUtils.h>
+#include <GradientLinear.h>
 #include <Looper.h>
 #include <Message.h>
 #include <Region.h>
+#include <Shape.h>
 #include <Window.h>
 
 #include "support.h"
@@ -186,71 +188,17 @@ DualSlider::Draw(BRect updateRect)
 	barFrame.top++;
 
 	// arrows
-	BRect a(minPos - 5.0, barFrame.top - 5.0, minPos + 5.0, barFrame.top);
-	BPoint arrow[3];
-	// min (little) arrow
+	BRect arrowRect;
 	if (IsMinEnabled()) {
-		BeginLineArray(7);
-			AddLine(BPoint(a.left, a.top - 1.0),
-					BPoint(a.right, a.top - 1.0), darkShadow);
-			AddLine(BPoint(a.left + 1.0, a.top),
-					BPoint(a.right - 2.0, a.top), softLight);
-			AddLine(BPoint(a.right, a.top),
-					BPoint(minPos, a.bottom), black);
-			AddLine(BPoint(minPos - 1.0, a.bottom - 1.0),
-					BPoint(a.left, a.top), black);
-			AddLine(BPoint(a.left + 3.0, a.top + 1.0),
-					BPoint(a.right - 3.0, a.top + 1.0), lightShadow);
-			AddLine(BPoint(a.right - 1.0, a.top),
-					BPoint(minPos, a.bottom - 1.0), shadow);
-			AddLine(BPoint(minPos - 1.0, a.bottom - 2.0),
-					BPoint(a.left + 2.0, a.top + 1.0), background);
-		EndLineArray();
-		// filling
-		SetHighColor(lightShadow);
-		arrow[0].x = a.left + 4.0;
-		arrow[0].y = a.top + 2.0;
-		arrow[1].x = a.right - 4.0;
-		arrow[1].y = a.top + 2.0;
-		arrow[2].x = minPos;
-		arrow[2].y = a.bottom - 2.0;
-		FillPolygon(arrow, 3);
+		arrowRect.Set(minPos - 5.0, barFrame.top - 6.0, minPos + 6.0,
+			barFrame.top + 1);
+		_DrawSliderTriangleDownward(this, arrowRect, updateRect, background,
+			background, flags);
 	}
-	// max (big) arrow
-#if 0
-	a.Set(maxPos - 6.0, barFrame.bottom - 1.0,
-		  maxPos + 6.0, barFrame.bottom + 5.0);
-	BeginLineArray(7);
-		AddLine(BPoint(a.left + 1.0, a.bottom),
-				BPoint(a.right - 1.0, a.bottom), shadow);
-		AddLine(BPoint(a.right, a.bottom),
-				BPoint(maxPos, a.top), black);
-		AddLine(BPoint(maxPos - 1.0, a.top + 1.0),
-				BPoint(a.left, a.bottom), darkShadow);
-		AddLine(BPoint(a.left + 3.0, a.bottom - 1.0),
-				BPoint(a.right - 3.0, a.bottom - 1.0), background);
-		AddLine(BPoint(a.right - 2.0, a.bottom - 1.0),
-				BPoint(maxPos, a.top + 1.0), lightShadow);
-		AddLine(BPoint(maxPos - 1.0, a.top + 2.0),
-				BPoint(a.left + 2.0, a.bottom - 1.0), light);
-		AddLine(BPoint(a.left, a.bottom + 1.0),
-				BPoint(a.right, a.bottom + 1.0), black);
-	EndLineArray();
-	// filling
-	SetHighColor(background);
-	arrow[0].x = a.left + 4.0;
-	arrow[0].y = a.bottom - 2.0;
-	arrow[1].x = a.right - 4.0;
-	arrow[1].y = a.bottom - 2.0;
-	arrow[2].x = maxPos;
-	arrow[2].y = a.top + 2.0;
-	FillPolygon(arrow, 3);
-#else
-	a.Set(maxPos - 6.0, barFrame.bottom - 1.0,
-		  maxPos + 7.0, barFrame.bottom + 7.0);
-	be_control_look->DrawSliderTriangle(this, a, updateRect, background, flags,
-		B_HORIZONTAL);
-#endif
+	arrowRect.Set(maxPos - 6.0, barFrame.bottom - 1.0, maxPos + 7.0,
+		barFrame.bottom + 7.0);
+	be_control_look->DrawSliderTriangle(this, arrowRect, updateRect,
+		background, flags, B_HORIZONTAL);
 }
 
 // MouseDown
@@ -544,21 +492,139 @@ DualSlider::_InvalidateSlider()
 	Invalidate(_SliderFrame());
 }
 
-// _StrokeRect
 void
-DualSlider::_StrokeRect(BRect r, rgb_color leftTop,
-					   rgb_color rightBottom)
+DualSlider::_DrawSliderTriangleDownward(BView* view, BRect& rect,
+	const BRect& updateRect, const rgb_color& base, const rgb_color& fill,
+	uint32 flags) const
 {
-	BeginLineArray(4);
-		AddLine(BPoint(r.left, r.bottom),
-				BPoint(r.left, r.top), leftTop);
-		AddLine(BPoint(r.left + 1.0, r.top),
-				BPoint(r.right, r.top), leftTop);
-		AddLine(BPoint(r.right, r.top + 1.0),
-				BPoint(r.right, r.bottom), rightBottom);
-		AddLine(BPoint(r.right - 1.0, r.bottom),
-				BPoint(r.left + 1.0, r.bottom), rightBottom);
-	EndLineArray();
+	if (!rect.IsValid() || !rect.Intersects(updateRect))
+		return;
+
+	// figure out frame color
+	rgb_color frameLightColor;
+	rgb_color frameShadowColor;
+	rgb_color shadowColor = (rgb_color){ 0, 0, 0, 60 };
+
+	float topTint = 0.49;
+	float middleTint1 = 0.62;
+	float middleTint2 = 0.76;
+	float bottomTint = 0.90;
+
+	if (flags & BControlLook::B_DISABLED) {
+		topTint = (topTint + B_NO_TINT) / 2;
+		middleTint1 = (middleTint1 + B_NO_TINT) / 2;
+		middleTint2 = (middleTint2 + B_NO_TINT) / 2;
+		bottomTint = (bottomTint + B_NO_TINT) / 2;
+	} else if (flags & BControlLook::B_HOVER) {
+		static const float kHoverTintFactor = 0.85;
+		topTint *= kHoverTintFactor;
+		middleTint1 *= kHoverTintFactor;
+		middleTint2 *= kHoverTintFactor;
+		bottomTint *= kHoverTintFactor;
+	}
+
+	if (flags & BControlLook::B_FOCUSED) {
+		// focused
+		frameLightColor = ui_color(B_KEYBOARD_NAVIGATION_COLOR);
+		frameShadowColor = frameLightColor;
+	} else {
+		// figure out the tints to be used
+		float frameLightTint;
+		float frameShadowTint;
+
+		if (flags & BControlLook::B_DISABLED) {
+			frameLightTint = 1.30;
+			frameShadowTint = 1.35;
+			shadowColor.alpha = 30;
+		} else {
+			frameLightTint = 1.6;
+			frameShadowTint = 1.65;
+		}
+
+		frameLightColor = tint_color(base, frameLightTint);
+		frameShadowColor = tint_color(base, frameShadowTint);
+	}
+
+	// make room for the shadow
+	rect.right--;
+	rect.bottom--;
+
+	uint32 viewFlags = view->Flags();
+	view->SetFlags(viewFlags | B_SUBPIXEL_PRECISE);
+	view->SetLineMode(B_ROUND_CAP, B_ROUND_JOIN);
+
+	float center = (rect.left + rect.right) / 2;
+
+	BShape shape;
+	shape.MoveTo(BPoint(rect.left + 0.5, rect.top + 0.5));
+	shape.LineTo(BPoint(rect.right + 0.5, rect.top + 0.5));
+	shape.LineTo(BPoint(rect.right + 0.5, rect.top + 1 + 0.5));
+	shape.LineTo(BPoint(center + 0.5, rect.bottom + 0.5));
+	shape.LineTo(BPoint(rect.left + 0.5, rect.top + 1 + 0.5));
+	shape.Close();
+
+	view->MovePenTo(BPoint(0.5, 0.5));
+
+	view->SetDrawingMode(B_OP_ALPHA);
+	view->SetHighColor(shadowColor);
+	view->StrokeShape(&shape);
+
+	view->MovePenTo(B_ORIGIN);
+
+	view->SetDrawingMode(B_OP_OVER);
+	view->SetHighColor(frameLightColor);
+	view->StrokeShape(&shape);
+
+	rect.InsetBy(1, 1);
+	shape.Clear();
+	shape.MoveTo(BPoint(rect.left, rect.top));
+	shape.LineTo(BPoint(rect.right + 1, rect.top));
+	shape.LineTo(BPoint(center + 0.5, rect.bottom + 1));
+	shape.Close();
+
+	BGradientLinear gradient;
+	if (flags & BControlLook::B_DISABLED) {
+		_MakeGradient(gradient, rect, fill, topTint, bottomTint);
+	} else {
+		_MakeGlossyGradient(gradient, rect, fill, topTint, middleTint1,
+			middleTint2, bottomTint);
+	}
+
+	view->FillShape(&shape, gradient);
+
+	view->SetFlags(viewFlags);
+}
+
+void
+DualSlider::_MakeGradient(BGradientLinear& gradient, const BRect& rect,
+	const rgb_color& base, float topTint, float bottomTint,
+	enum orientation orientation) const
+{
+	gradient.AddColor(tint_color(base, topTint), 0);
+	gradient.AddColor(tint_color(base, bottomTint), 255);
+	gradient.SetStart(rect.LeftTop());
+	if (orientation == B_HORIZONTAL)
+		gradient.SetEnd(rect.LeftBottom());
+	else
+		gradient.SetEnd(rect.RightTop());
+}
+
+
+void
+DualSlider::_MakeGlossyGradient(BGradientLinear& gradient, const BRect& rect,
+	const rgb_color& base, float topTint, float middle1Tint,
+	float middle2Tint, float bottomTint,
+	enum orientation orientation) const
+{
+	gradient.AddColor(tint_color(base, topTint), 0);
+	gradient.AddColor(tint_color(base, middle1Tint), 132);
+	gradient.AddColor(tint_color(base, middle2Tint), 136);
+	gradient.AddColor(tint_color(base, bottomTint), 255);
+	gradient.SetStart(rect.LeftTop());
+	if (orientation == B_HORIZONTAL)
+		gradient.SetEnd(rect.LeftBottom());
+	else
+		gradient.SetEnd(rect.RightTop());
 }
 
 // _ValueFor

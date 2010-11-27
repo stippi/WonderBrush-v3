@@ -9,6 +9,8 @@
 #include <View.h>
 #include <String.h>
 
+class BGradientLinear;
+
 class DualSlider : public BView {
 public:
 								DualSlider(const char* name,
@@ -60,8 +62,24 @@ public:
 private:
 			void				_Invoke(BMessage* message);
 			void				_InvalidateSlider();
-			void				_StrokeRect(BRect frame, rgb_color leftTop,
-									rgb_color rightBottom);
+
+			// TODO: Remove once BControlLook supports downward slider
+			// triangles...
+			void				_DrawSliderTriangleDownward(BView* view,
+									BRect& rect, const BRect& updateRect,
+									const rgb_color& base,
+									const rgb_color& fill, uint32 flags) const;
+			void				_MakeGradient(BGradientLinear& gradient,
+									const BRect& rect, const rgb_color& base,
+									float topTint, float bottomTint,
+									enum orientation orientation
+										= B_HORIZONTAL) const;
+			void				_MakeGlossyGradient(BGradientLinear& gradient,
+									const BRect& rect, const rgb_color& base,
+									float topTint, float middle1Tint,
+									float middle2Tint, float bottomTint,
+									enum orientation orientation
+										= B_HORIZONTAL) const;
 
 			float				_ValueFor(BPoint where) const;
 			BRect				_BarFrame() const;
