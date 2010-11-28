@@ -89,6 +89,17 @@ Transformable::PreMultiply(const Transformable& other)
 	return *this;
 }
 
+// MultiplyInverse
+Transformable&
+Transformable::MultiplyInverse(const Transformable& other)
+{
+	if (!other.IsIdentity()) {
+		multiply_inv(other);
+		TransformationChanged();
+	}
+	return *this;
+}
+
 // Reset
 void
 Transformable::Reset()

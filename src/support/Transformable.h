@@ -25,6 +25,7 @@ public:
 			Transformable&		operator=(const Transformable& other);
 			Transformable&		Multiply(const Transformable& other);
 			Transformable&		PreMultiply(const Transformable& other);
+			Transformable&		MultiplyInverse(const Transformable& other);
 			void				Reset();
 
 			void				Invert();
