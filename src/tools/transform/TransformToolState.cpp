@@ -980,22 +980,22 @@ TransformToolState::SetObject(Object* object, bool modifySelection)
 		box = BRect(0, 0, 100, 100);
 	}
 
+	fParentGlobalTransformation.Reset();
+
 	if (object != NULL) {
 		if (modifySelection)
 			fSelection->Select(Selectable(boundedObject), this);
 		SetObjectToCanvasTransformation(object->Transformation());
+		if (Object* parent = object->Parent())
+			fParentGlobalTransformation = parent->Transformation();
 	} else {
+		box = BRect();
 		if (modifySelection)
 			fSelection->DeselectAll(this);
 		SetObjectToCanvasTransformation(Transformable());
 	}
 
 	SetTransformable(object);
-
-	if (Object* parent = object->Parent())
-		fParentGlobalTransformation = parent->Transformation();
-	else
-		fParentGlobalTransformation.Reset();
 
 	fTransformation.Reset();
 	SetAdditionalTransformation(fTransformation);
