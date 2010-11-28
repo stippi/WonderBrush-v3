@@ -14,7 +14,6 @@
 
 #include "ChangeAreaCommand.h"
 #include "CommandStack.h"
-#include "cursors.h"
 #include "Document.h"
 #include "Layer.h"
 #include "Rect.h"
@@ -125,11 +124,7 @@ public:
 
 	virtual BCursor ViewCursor(BPoint current) const
 	{
-#ifdef __HAIKU__
 		return BCursor(B_CURSOR_ID_MOVE);
-#else
-		return BCursor(kMoveCursor);
-#endif
 	}
 
 	virtual const char* CommandName() const
@@ -213,7 +208,7 @@ public:
 			180.0);
 		bool flipX = fParent->LocalXScale() < 0.0;
 		bool flipY = fParent->LocalYScale() < 0.0;
-#ifdef __HAIKU__
+
 		BCursorID cursorID = B_CURSOR_ID_MOVE;
 		if (rotation < 45.0) {
 			switch (fCorner) {
@@ -325,99 +320,6 @@ public:
 			}
 		}
 		return BCursor(cursorID);
-#else // (!__HAIKU__)
-		const uint8* cursorData = kMoveCursor;
-		if (rotation < 45.0) {
-			switch (fCorner) {
-				case LEFT_TOP:
-				case RIGHT_BOTTOM:
-					if (flipX) {
-						cursorData = flipY
-							? kLeftTopRightBottomCursor
-							: kLeftBottomRightTopCursor;
-					} else {
-						cursorData = flipY
-							? kLeftBottomRightTopCursor
-							: kLeftTopRightBottomCursor;
-					}
-					break;
-				case RIGHT_TOP:
-				case LEFT_BOTTOM:
-					if (flipX) {
-						cursorData = flipY
-							? kLeftBottomRightTopCursor
-							: kLeftTopRightBottomCursor;
-					} else {
-						cursorData = flipY
-							? kLeftTopRightBottomCursor
-							: kLeftBottomRightTopCursor;
-					}
-					break;
-			}
-		} else if (rotation < 90.0) {
-			switch (fCorner) {
-				case LEFT_TOP:
-				case RIGHT_BOTTOM:
-					if (flipX)
-						cursorData = flipY ? kLeftRightCursor : kUpDownCursor;
-					else
-						cursorData = flipY ? kUpDownCursor : kLeftRightCursor;
-					break;
-				case RIGHT_TOP:
-				case LEFT_BOTTOM:
-					if (flipX)
-						cursorData = flipY ? kUpDownCursor : kLeftRightCursor;
-					else
-						cursorData = flipY ? kLeftRightCursor : kUpDownCursor;
-					break;
-			}
-		} else if (rotation < 135.0) {
-			switch (fCorner) {
-				case LEFT_TOP:
-				case RIGHT_BOTTOM:
-					if (flipX) {
-						cursorData = flipY
-							? kLeftBottomRightTopCursor
-							: kLeftTopRightBottomCursor;
-					} else {
-						cursorData = flipY
-							? kLeftTopRightBottomCursor
-							: kLeftBottomRightTopCursor;
-					}
-					break;
-				case RIGHT_TOP:
-				case LEFT_BOTTOM:
-					if (flipX) {
-						cursorData = flipY
-							? kLeftTopRightBottomCursor
-							: kLeftBottomRightTopCursor;
-					} else {
-						cursorData = flipY
-							? kLeftBottomRightTopCursor
-							: kLeftTopRightBottomCursor;
-					}
-					break;
-			}
-		} else {
-			switch (fCorner) {
-				case LEFT_TOP:
-				case RIGHT_BOTTOM:
-					if (flipX)
-						cursorData = flipY ? kUpDownCursor : kLeftRightCursor;
-					else
-						cursorData = flipY ? kLeftRightCursor : kUpDownCursor;
-					break;
-				case RIGHT_TOP:
-				case LEFT_BOTTOM:
-					if (flipX)
-						cursorData = flipY ? kLeftRightCursor : kUpDownCursor;
-					else
-						cursorData = flipY ? kUpDownCursor : kLeftRightCursor;
-					break;
-			}
-		}
-		return BCursor(cursorData);
-#endif // (!__HAIKU__)
 	}
 
 	virtual const char* CommandName() const
@@ -494,7 +396,7 @@ public:
 	{
 		float rotation = fmod(360.0 - fParent->ViewspaceRotation() + 22.5,
 			180.0);
-#ifdef __HAIKU__
+
 		BCursorID cursorID = B_CURSOR_ID_MOVE;
 		if (rotation < 45.0) {
 			switch (fSide) {
@@ -542,55 +444,6 @@ public:
 			}
 		}
 		return BCursor(cursorID);
-#else // (!__HAIKU__)
-		const uint8* cursorData = kMoveCursor;
-		if (rotation < 45.0) {
-			switch (fSide) {
-				case LEFT:
-				case RIGHT:
-					cursorData = kLeftRightCursor;
-					break;
-				case TOP:
-				case BOTTOM:
-					cursorData = kUpDownCursor;
-					break;
-			}
-		} else if (rotation < 90.0) {
-			switch (fSide) {
-				case LEFT:
-				case RIGHT:
-					cursorData = kLeftBottomRightTopCursor;
-					break;
-				case TOP:
-				case BOTTOM:
-					cursorData = kLeftTopRightBottomCursor;
-					break;
-			}
-		} else if (rotation < 135.0) {
-			switch (fSide) {
-				case LEFT:
-				case RIGHT:
-					cursorData = kUpDownCursor;
-					break;
-				case TOP:
-				case BOTTOM:
-					cursorData = kLeftRightCursor;
-					break;
-			}
-		} else {
-			switch (fSide) {
-				case LEFT:
-				case RIGHT:
-					cursorData = kLeftTopRightBottomCursor;
-					break;
-				case TOP:
-				case BOTTOM:
-					cursorData = kLeftBottomRightTopCursor;
-					break;
-			}
-		}
-		return BCursor(cursorData);
-#endif // (!__HAIKU__)
 	}
 
 	virtual const char* CommandName() const
@@ -634,10 +487,8 @@ public:
 
 	virtual BCursor ViewCursor(BPoint current) const
 	{
-#ifdef __HAIKU__
 		if (fObject != NULL)
 			return BCursor(B_CURSOR_ID_FOLLOW_LINK);
-#endif
 		return BCursor(B_CURSOR_SYSTEM_DEFAULT);
 	}
 
