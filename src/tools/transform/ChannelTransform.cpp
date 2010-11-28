@@ -1,9 +1,6 @@
 /*
- * Copyright 2006, Haiku.
- * Distributed under the terms of the MIT License.
- *
- * Authors:
- *		Stephan Aßmus <superstippi@gmx.de>
+ * Copyright 2006-2010, Stephan Aßmus <superstippi@gmx.de>.
+ * All rights reserved. Distributed under the terms of the MIT License.
  */
 
 #include "ChannelTransform.h"
@@ -13,23 +10,23 @@
 
 // constructor
 ChannelTransform::ChannelTransform()
-	: Transformable(),
-	  fPivot(0.0, 0.0),
-	  fTranslation(0.0, 0.0),
-	  fRotation(0.0),
-	  fXScale(1.0),
-	  fYScale(1.0)
+	: Transformable()
+	, fPivot(0.0, 0.0)
+	, fTranslation(0.0, 0.0)
+	, fRotation(0.0)
+	, fXScale(1.0)
+	, fYScale(1.0)
 {
 }
 
 // copy constructor
 ChannelTransform::ChannelTransform(const ChannelTransform& other)
-	: Transformable(other),
-	  fPivot(other.fPivot),
-	  fTranslation(other.fTranslation),
-	  fRotation(other.fRotation),
-	  fXScale(other.fXScale),
-	  fYScale(other.fYScale)
+	: Transformable(other)
+	, fPivot(other.fPivot)
+	, fTranslation(other.fTranslation)
+	, fRotation(other.fRotation)
+	, fXScale(other.fXScale)
+	, fYScale(other.fYScale)
 {
 }
 
@@ -65,11 +62,8 @@ ChannelTransform::SetTransformation(const Transformable& other)
 
 // SetTransformation
 void
-ChannelTransform::SetTransformation(BPoint pivot,
-									BPoint translation,
-									double rotation,
-									double xScale,
-									double yScale)
+ChannelTransform::SetTransformation(BPoint pivot, BPoint translation,
+	double rotation, double xScale, double yScale)
 {
 //printf("SetTransformation(BPoint(%.1f, %.1f), BPoint(%.1f, %.1f), "
 //"%.2f, %.2f, %.2f)\n", pivot.x, pivot.y, translation.x, translation.y,
@@ -100,7 +94,7 @@ ChannelTransform::SetPivot(BPoint pivot)
 
 	fPivot = pivot;
 
-	_UpdateMatrix();
+	_UpdateMatrix(false);
 }
 
 // TranslateBy
@@ -142,41 +136,30 @@ ChannelTransform::RotateBy(BPoint origin, double degrees)
 	_UpdateMatrix();
 }
 
-
-// RotateBy
+// ScaleBy
+//
+// converts a scalation in world coordinates into
+// a combined local scalation and a translation
 void
-ChannelTransform::RotateBy(double degrees)
+ChannelTransform::ScaleBy(BPoint origin, double xScale, double yScale)
 {
-	if (degrees == 0.0)
+	// TODO: Untested? What about the pivot?
+	if (xScale == 1.0 && yScale == 1.0)
 		return;
 
-	fRotation += degrees;
+	fXScale *= xScale;
+	fYScale *= yScale;
+
+	// scale fTranslation
+	double xOffset = fTranslation.x - origin.x;
+	double yOffset = fTranslation.y - origin.y;
+
+	fTranslation.x = origin.x + (xOffset * xScale);
+	fTranslation.y = origin.y + (yOffset * yScale);
 
 	_UpdateMatrix();
 }
 
-//// ScaleBy
-////
-//// converts a scalation in world coordinates into
-//// a combined local scalation and a translation
-//void
-//ChannelTransform::ScaleBy(BPoint origin, double xScale, double yScale)
-//{
-//	if (xScale == 1.0 && yScale == 1.0)
-//		return;
-//
-//	fXScale *= xScale;
-//	fYScale *= yScale;
-//
-//	// scale fTranslation
-//	double xOffset = fTranslation.x - origin.x;
-//	double yOffset = fTranslation.y - origin.y;
-//
-//	fTranslation.x = origin.x + (xOffset * xScale);
-//	fTranslation.y = origin.y + (yOffset * yScale);
-//
-//	_UpdateMatrix();
-//}
 
 // ScaleBy
 void
@@ -191,10 +174,22 @@ ChannelTransform::ScaleBy(double xScale, double yScale)
 	_UpdateMatrix();
 }
 
+// RotateBy
+void
+ChannelTransform::RotateBy(double degrees)
+{
+	if (degrees == 0.0)
+		return;
+
+	fRotation += degrees;
+
+	_UpdateMatrix();
+}
+
 // SetTranslationAndScale
 void
-ChannelTransform::SetTranslationAndScale(BPoint offset,
-										  double xScale, double yScale)
+ChannelTransform::SetTranslationAndScale(BPoint offset, double xScale,
+	double yScale)
 {
 	if (fTranslation == offset && fXScale == xScale && fYScale == yScale)
 		return;
@@ -214,23 +209,19 @@ ChannelTransform::Reset()
 	SetTransformation(B_ORIGIN, B_ORIGIN, 0.0, 1.0, 1.0);
 }
 
-// =
+// operator=
 ChannelTransform&
 ChannelTransform::operator=(const ChannelTransform& other)
 {
-	fTranslation = other.fTranslation;
-	fRotation = other.fRotation;
-	fXScale = other.fXScale;
-	fYScale = other.fYScale;
-
-	Transformable::operator=(other);
+	SetTransformation(other.fPivot, other.fTranslation, other.fRotation,
+		other.fXScale, other.fYScale);
 
 	return *this;
 }
 
 // _UpdateMatrix
 void
-ChannelTransform::_UpdateMatrix()
+ChannelTransform::_UpdateMatrix(bool deep)
 {
 	// fix up scales in case any is zero
 	double xScale = fXScale;
@@ -249,9 +240,9 @@ ChannelTransform::_UpdateMatrix()
 	multiply(agg::trans_affine_rotation(fRotation * M_PI / 180.0));
 
 	multiply(agg::trans_affine_translation(fPivot.x + fTranslation.x,
-										   fPivot.y + fTranslation.y));
+		fPivot.y + fTranslation.y));
 
 	// call hook function
-	Update();
+	Update(deep);
 }
 
