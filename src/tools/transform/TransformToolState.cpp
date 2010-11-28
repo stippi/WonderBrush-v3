@@ -108,18 +108,17 @@ public:
 
 	virtual void SetOrigin(BPoint origin)
 	{
-		fParent->TransformCanvasToObject(&origin);
 		DragState::SetOrigin(origin);
 	}
 
 	virtual void DragTo(BPoint current, uint32 modifiers)
 	{
-		fParent->TransformCanvasToObject(&current);
 		BPoint offset = current - fOrigin;
 		fOrigin = current;
-		BRect box = fParent->ModifiedBox();
-		box.OffsetBy(offset);
-		fParent->SetModifiedBox(box);
+
+		ChannelTransform t = fParent->Transformation();
+		t.TranslateBy(offset);
+		fParent->SetTransformation(t);
 	}
 
 	virtual BCursor ViewCursor(BPoint current) const
@@ -157,20 +156,20 @@ public:
 	virtual void SetOrigin(BPoint origin)
 	{
 		BPoint clickTarget;
-		switch (fCorner) {
-			case LEFT_TOP:
-				clickTarget = fParent->ModifiedBox().LeftTop();
-				break;
-			case RIGHT_TOP:
-				clickTarget = fParent->ModifiedBox().RightTop();
-				break;
-			case RIGHT_BOTTOM:
-				clickTarget = fParent->ModifiedBox().RightBottom();
-				break;
-			case LEFT_BOTTOM:
-				clickTarget = fParent->ModifiedBox().LeftBottom();
-				break;
-		}
+//		switch (fCorner) {
+//			case LEFT_TOP:
+//				clickTarget = fParent->ModifiedBox().LeftTop();
+//				break;
+//			case RIGHT_TOP:
+//				clickTarget = fParent->ModifiedBox().RightTop();
+//				break;
+//			case RIGHT_BOTTOM:
+//				clickTarget = fParent->ModifiedBox().RightBottom();
+//				break;
+//			case LEFT_BOTTOM:
+//				clickTarget = fParent->ModifiedBox().LeftBottom();
+//				break;
+//		}
 		fParent->TransformCanvasToObject(&origin);
 		fClickOffset = origin - clickTarget;
 		DragState::SetOrigin(origin);
@@ -180,34 +179,34 @@ public:
 	{
 		fParent->TransformCanvasToObject(&current);
 		current -= fClickOffset;
-		BRect box = fParent->ModifiedBox();
-		switch (fCorner) {
-			case LEFT_TOP:
-				box.left = current.x;
-				box.top = current.y;
-				break;
-			case RIGHT_TOP:
-				box.right = current.x;
-				box.top = current.y;
-				break;
-			case RIGHT_BOTTOM:
-				box.right = current.x;
-				box.bottom = current.y;
-				break;
-			case LEFT_BOTTOM:
-				box.left = current.x;
-				box.bottom = current.y;
-				break;
-		}
-		fParent->SetModifiedBox(box);
+//		BRect box = fParent->ModifiedBox();
+//		switch (fCorner) {
+//			case LEFT_TOP:
+//				box.left = current.x;
+//				box.top = current.y;
+//				break;
+//			case RIGHT_TOP:
+//				box.right = current.x;
+//				box.top = current.y;
+//				break;
+//			case RIGHT_BOTTOM:
+//				box.right = current.x;
+//				box.bottom = current.y;
+//				break;
+//			case LEFT_BOTTOM:
+//				box.left = current.x;
+//				box.bottom = current.y;
+//				break;
+//		}
+//		fParent->SetModifiedBox(box);
 	}
 
 	virtual BCursor ViewCursor(BPoint current) const
 	{
 		float rotation = fmod(360.0 - fParent->ViewspaceRotation() + 22.5,
 			180.0);
-		bool flipX = fParent->LocalXScale() < 0.0;
-		bool flipY = fParent->LocalYScale() < 0.0;
+		bool flipX = fParent->Transformation().LocalXScale() < 0.0;
+		bool flipY = fParent->Transformation().LocalYScale() < 0.0;
 
 		BCursorID cursorID = B_CURSOR_ID_MOVE;
 		if (rotation < 45.0) {
@@ -354,42 +353,42 @@ public:
 	virtual void SetOrigin(BPoint origin)
 	{
 		fParent->TransformCanvasToObject(&origin);
-		switch (fSide) {
-			case LEFT:
-				fClickOffset = origin.x - fParent->ModifiedBox().left;
-				break;
-			case TOP:
-				fClickOffset = origin.y - fParent->ModifiedBox().top;
-				break;
-			case RIGHT:
-				fClickOffset = origin.x - fParent->ModifiedBox().right;
-				break;
-			case BOTTOM:
-				fClickOffset = origin.y - fParent->ModifiedBox().bottom;
-				break;
-		}
+//		switch (fSide) {
+//			case LEFT:
+//				fClickOffset = origin.x - fParent->ModifiedBox().left;
+//				break;
+//			case TOP:
+//				fClickOffset = origin.y - fParent->ModifiedBox().top;
+//				break;
+//			case RIGHT:
+//				fClickOffset = origin.x - fParent->ModifiedBox().right;
+//				break;
+//			case BOTTOM:
+//				fClickOffset = origin.y - fParent->ModifiedBox().bottom;
+//				break;
+//		}
 		DragState::SetOrigin(origin);
 	}
 
 	virtual void DragTo(BPoint current, uint32 modifiers)
 	{
 		fParent->TransformCanvasToObject(&current);
-		BRect box = fParent->ModifiedBox();
-		switch (fSide) {
-			case LEFT:
-				box.left = current.x - fClickOffset;
-				break;
-			case TOP:
-				box.top = current.y - fClickOffset;
-				break;
-			case RIGHT:
-				box.right = current.x - fClickOffset;
-				break;
-			case BOTTOM:
-				box.bottom = current.y - fClickOffset;
-				break;
-		}
-		fParent->SetModifiedBox(box);
+//		BRect box = fParent->ModifiedBox();
+//		switch (fSide) {
+//			case LEFT:
+//				box.left = current.x - fClickOffset;
+//				break;
+//			case TOP:
+//				box.top = current.y - fClickOffset;
+//				break;
+//			case RIGHT:
+//				box.right = current.x - fClickOffset;
+//				break;
+//			case BOTTOM:
+//				box.bottom = current.y - fClickOffset;
+//				break;
+//		}
+//		fParent->SetModifiedBox(box);
 	}
 
 	virtual BCursor ViewCursor(BPoint current) const
@@ -516,7 +515,7 @@ TransformToolState::TransformToolState(StateView* view, const BRect& box,
 		Document* document, Selection* selection)
 	: DragStateViewState(view)
 	, fOriginalBox(box)
-	, fModifiedBox(box)
+	, fTransformation()
 
 	, fPickObjectState(new PickObjectState(this))
 
@@ -574,15 +573,15 @@ TransformToolState::MessageReceived(BMessage* message, Command** _command)
 	bool handled = true;
 
 	switch (message->what) {
-		case MSG_OBJECT_AREA_CHANGED: {
-			Object* object;
-			BRect area;
-			if (message->FindPointer("object", (void**)&object) == B_OK
-				&& message->FindRect("area", &area) == B_OK)
-				if (object == fObject && !IsDragging())
-					SetModifiedBox(area, false);
-			break;
-		}
+//		case MSG_OBJECT_AREA_CHANGED: {
+//			Object* object;
+//			BRect area;
+//			if (message->FindPointer("object", (void**)&object) == B_OK
+//				&& message->FindRect("area", &area) == B_OK)
+//				if (object == fObject && !IsDragging())
+//					SetBox(area);
+//			break;
+//		}
 		case MSG_OBJECT_DELETED: {
 			Object* object;
 			if (message->FindPointer("object", (void**)&object) == B_OK)
@@ -622,18 +621,10 @@ TransformToolState::Draw(BView* view, BRect updateRect)
 	float insetFill2X = 0.8 / scaleX;
 	float insetFill2Y = 0.8 / scaleY;
 
-	BPoint lt(
-		min_c(fModifiedBox.left, fModifiedBox.right),
-		min_c(fModifiedBox.top, fModifiedBox.bottom));
-	BPoint rt(
-		max_c(fModifiedBox.left, fModifiedBox.right),
-		min_c(fModifiedBox.top, fModifiedBox.bottom));
-	BPoint rb(
-		max_c(fModifiedBox.left, fModifiedBox.right),
-		max_c(fModifiedBox.top, fModifiedBox.bottom));
-	BPoint lb(
-		min_c(fModifiedBox.left, fModifiedBox.right),
-		max_c(fModifiedBox.top, fModifiedBox.bottom));
+	BPoint lt(fOriginalBox.LeftTop());
+	BPoint rt(fOriginalBox.RightTop());
+	BPoint rb(fOriginalBox.RightBottom());
+	BPoint lb(fOriginalBox.LeftBottom());
 
 	BPoint lt1(lt.x - insetX, lt.y);
 	BPoint lt2(lt.x - insetX, lt.y - insetY);
@@ -828,11 +819,7 @@ TransformToolState::Draw(BView* view, BRect updateRect)
 BRect
 TransformToolState::Bounds() const
 {
-	BRect bounds(
-		min_c(fModifiedBox.left, fModifiedBox.right),
-		min_c(fModifiedBox.top, fModifiedBox.bottom),
-		max_c(fModifiedBox.left, fModifiedBox.right),
-		max_c(fModifiedBox.top, fModifiedBox.bottom));
+	BRect bounds(fOriginalBox);
 	TransformObjectToView(&bounds);
 	bounds.InsetBy(-10, -10);
 	return bounds;
@@ -878,7 +865,7 @@ TransformToolState::DragStateFor(BPoint canvasWhere, float zoomLevel) const
 	BPoint where = canvasWhere;
 	TransformCanvasToObject(&where);
 
-	BRect iR(fModifiedBox);
+	BRect iR(fOriginalBox);
 	float hInset = min_c(inset, max_c(0, (iR.Width() - inset) / 2.0));
 	float vInset = min_c(inset, max_c(0, (iR.Height() - inset) / 2.0));
 
@@ -888,10 +875,10 @@ TransformToolState::DragStateFor(BPoint canvasWhere, float zoomLevel) const
 
 	// Next priority have the corners.
 
-	BPoint lt(fModifiedBox.LeftTop());
-	BPoint rt(fModifiedBox.RightTop());
-	BPoint rb(fModifiedBox.RightBottom());
-	BPoint lb(fModifiedBox.LeftBottom());
+	BPoint lt(fOriginalBox.LeftTop());
+	BPoint rt(fOriginalBox.RightTop());
+	BPoint rb(fOriginalBox.RightBottom());
+	BPoint lb(fOriginalBox.LeftBottom());
 
 	TransformObjectToCanvas(&lt);
 	TransformObjectToCanvas(&rt);
@@ -934,7 +921,7 @@ TransformToolState::DragStateFor(BPoint canvasWhere, float zoomLevel) const
 	}
 
 	// Last, check inside of the box again.
-	if (fModifiedBox.Contains(where))
+	if (fOriginalBox.Contains(where))
 		return fDragBoxState;
 
 	// If there is still no state, switch to the PickObjectsState
@@ -984,15 +971,14 @@ TransformToolState::SetObject(Object* object, bool modifySelection)
 {
 	BRect box;
 	BoundedObject* boundedObject = dynamic_cast<BoundedObject*>(object);
-	Rect* rect = dynamic_cast<Rect*>(object);
-	Shape* shape = dynamic_cast<Shape*>(object);
-
-	if (rect != NULL)
-		box = rect->Area();
-	else if (shape != NULL)
-		box = shape->Area();
-	else if (boundedObject != NULL)
+	if (boundedObject != NULL)
 		box = boundedObject->Bounds();
+	else {
+		// TODO: If the transformed object is not a BoundedObject, we
+		// could also display ourselfs differently, for example with
+		// arrows like in Maya.
+		box = BRect(0, 0, 100, 100);
+	}
 
 	if (object != NULL) {
 		if (modifySelection)
@@ -1005,6 +991,15 @@ TransformToolState::SetObject(Object* object, bool modifySelection)
 	}
 
 	SetTransformable(object);
+
+	if (Object* parent = object->Parent())
+		fParentGlobalTransformation = parent->Transformation();
+	else
+		fParentGlobalTransformation.Reset();
+
+	fTransformation.Reset();
+	SetAdditionalTransformation(fTransformation);
+
 	SetBox(box);
 }
 
@@ -1029,67 +1024,30 @@ void
 TransformToolState::SetBox(const BRect& box)
 {
 	fOriginalBox = box;
-	fModifiedBox = box;
 	UpdateBounds();
 }
 
-// SetModifiedBox
+// SetTransformation
 void
-TransformToolState::SetModifiedBox(const BRect& box, bool apply)
+TransformToolState::SetTransformation(const ChannelTransform& transform)
 {
-	if (fModifiedBox == box)
+	if (fTransformation == transform)
 		return;
 
-	fModifiedBox = box;
+	fTransformation = transform;
+	SetAdditionalTransformation(fTransformation);
 	UpdateBounds();
 
-	if (apply && fObject != NULL && fDocument->WriteLock()) {
-		BRect area;
-		area.left = min_c(fModifiedBox.left, fModifiedBox.right);
-		area.top = min_c(fModifiedBox.top, fModifiedBox.bottom);
-		area.right = max_c(fModifiedBox.left, fModifiedBox.right);
-		area.bottom = max_c(fModifiedBox.top, fModifiedBox.bottom);
-
-		Shape* shape = dynamic_cast<Shape*>(fObject);
-		Rect* rect = dynamic_cast<Rect*>(fObject);
-		BoundedObject* boundedObject = dynamic_cast<BoundedObject*>(fObject);
-		if (shape != NULL) {
-			Command* command = new ChangeAreaCommand<Shape>(shape, area);
-			fDocument->CommandStack()->Perform(command);
-		} else if (rect != NULL) {
-			Command* command = new ChangeAreaCommand<Rect>(rect, area);
-			fDocument->CommandStack()->Perform(command);
-		} else if (boundedObject != NULL) {
-			// TODO: This can't be right...
-			Transformable newTransformation;
-			newTransformation.TranslateBy(
-				fModifiedBox.LeftTop() - fOriginalBox.LeftTop());
-			newTransformation.ScaleBy(fModifiedBox.LeftTop(), LocalXScale(),
-				LocalYScale());
-			newTransformation.Multiply(fOriginalTransformation);
-			boundedObject->SetTransformable(newTransformation);
-		}
+	if (fObject != NULL && fDocument->WriteLock()) {
+		// TODO: Use Command!
+		Transformable newTransformation(fOriginalTransformation);
+		newTransformation.Multiply(fParentGlobalTransformation);
+		newTransformation.Multiply(fTransformation);
+		newTransformation.MultiplyInverse(fParentGlobalTransformation);
+		fObject->SetTransformable(newTransformation);
 
 		fDocument->WriteUnlock();
 	}
-}
-
-// LocalXScale
-float
-TransformToolState::LocalXScale() const
-{
-	if (fOriginalBox.Width() == 0.0)
-		return 1.0;
-	return fModifiedBox.Width() / fOriginalBox.Width();
-}
-
-// LocalYScale
-float
-TransformToolState::LocalYScale() const
-{
-	if (fOriginalBox.Height() == 0.0)
-		return 1.0;
-	return fModifiedBox.Height() / fOriginalBox.Height();
 }
 
 // #pragma mark -

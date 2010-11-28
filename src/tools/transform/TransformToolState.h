@@ -7,6 +7,7 @@
 #define TRANSFORM_TOOL_STATE_H
 
 #include "AbstractLOAdapter.h"
+#include "ChannelTransform.h"
 #include "DragStateViewState.h"
 #include "Rect.h"
 #include "Selection.h"
@@ -79,11 +80,10 @@ public:
 									bool apply = true);
 	inline	const BRect&		Box() const
 									{ return fOriginalBox; }
-	inline	const BRect&		ModifiedBox() const
-									{ return fModifiedBox; }
 
-			float				LocalXScale() const;
-			float				LocalYScale() const;
+	inline	const ChannelTransform& Transformation() const
+									{ return fTransformation; }
+	inline	void				SetTransformation(const ChannelTransform&);
 
 private:
 			void				_RegisterObject(Transformable* object);
@@ -91,7 +91,7 @@ private:
 
 private:
 			BRect				fOriginalBox;
-			BRect				fModifiedBox;
+			ChannelTransform	fTransformation;
 
 private:
 			class PickObjectState;
@@ -120,6 +120,7 @@ private:
 
 			Transformable*		fObject;
 			Transformable		fOriginalTransformation;
+			Transformable		fParentGlobalTransformation;
 
 			RectLOAdapater		fRectLOAdapter;
 			ShapeLOAdapater		fShapeLOAdapter;
