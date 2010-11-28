@@ -13,7 +13,8 @@
 #include <StringView.h>
 #include <TextControl.h>
 
-#include "Tool.h"
+#include "TransformTool.h"
+#include "TransformToolState.h"
 
 enum {
 	MSG_TRANSLATE_X			= 'trnx',
@@ -109,23 +110,50 @@ TransformToolConfigView::MessageReceived(BMessage* message)
 {
 	switch (message->what) {
 		case MSG_TRANSLATE_X:
-			// TODO
+			fTool->SetOption(TransformTool::TRANSLATION_X,
+				_Value(fTranslationX));
 			break;
 		case MSG_TRANSLATE_Y:
-			// TODO
+			fTool->SetOption(TransformTool::TRANSLATION_Y,
+				_Value(fTranslationY));
 			break;
 		case MSG_ROTATE:
-			// TODO
+			fTool->SetOption(TransformTool::ROTATION, _Value(fRotate));
 			break;
 		case MSG_SCALE_X:
-			// TODO
+			fTool->SetOption(TransformTool::SCALE_X, _Value(fScaleX));
 			break;
 		case MSG_SCALE_Y:
-			// TODO
+			fTool->SetOption(TransformTool::SCALE_Y, _Value(fScaleY));
 			break;
 		case MSG_SUBPIXELS:
-			// TODO
+			fTool->SetOption(TransformTool::SUBPIXELS,
+				fSubpixels->Value() == B_CONTROL_ON);
 			break;
+
+		case MSG_TRANSFORMATION_CHANGED:
+		{
+			BPoint pivot;
+			BPoint translation;
+			double rotation;
+			double scaleX;
+			double scaleY;
+
+			message->FindFloat("pivot x", &pivot.x);
+			message->FindFloat("pivot y", &pivot.y);
+			message->FindFloat("translation x", &translation.x);
+			message->FindFloat("translation y", &translation.y);
+			message->FindDouble("rotation", &rotation);
+			message->FindDouble("scale x", &scaleX);
+			message->FindDouble("scale y", &scaleY);
+
+			_SetValue(fTranslationX, translation.x);
+			_SetValue(fTranslationY, translation.y);
+			_SetValue(fRotate, rotation);
+			_SetValue(fScaleX, scaleX);
+			_SetValue(fScaleY, scaleY);
+			break;
+		}
 
 		default:
 			ToolConfigView::MessageReceived(message);
@@ -156,3 +184,26 @@ TransformToolConfigView::SetEnabled(bool enable)
 	fScaleX->SetEnabled(enable);
 	fScaleY->SetEnabled(enable);
 }
+
+// #pragma mark - private
+
+// _SetText
+void
+TransformToolConfigView::_SetValue(BTextControl* control, float value) const
+{
+	char text[64];
+	snprintf(text, sizeof(text), "%.2f", value);
+	int32 selectionStart;
+	int32 selectionEnd;
+	control->TextView()->GetSelection(&selectionStart, &selectionEnd);
+	control->SetText(text);
+	control->TextView()->Select(selectionStart, selectionEnd);
+}
+
+// _Value
+float
+TransformToolConfigView::_Value(BTextControl* control) const
+{
+	return atof(control->Text());
+}
+

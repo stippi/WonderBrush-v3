@@ -27,6 +27,11 @@ public:
 	virtual	void				MessageReceived(BMessage* message);
 
 private:
+			void				_SetValue(BTextControl* control,
+									float value) const;
+			float				_Value(BTextControl* control) const;
+
+private:
 			BStringView*		fTranslateLabel;
 			BStringView*		fRotateLabel;
 			BStringView*		fScaleLabel;

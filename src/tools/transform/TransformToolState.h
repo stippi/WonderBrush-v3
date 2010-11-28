@@ -6,6 +6,8 @@
 #ifndef TRANSFORM_TOOL_STATE_H
 #define TRANSFORM_TOOL_STATE_H
 
+#include <Messenger.h>
+
 #include "AbstractLOAdapter.h"
 #include "ChannelTransform.h"
 #include "DragStateViewState.h"
@@ -16,6 +18,10 @@
 class Document;
 class Layer;
 class Object;
+
+enum {
+	MSG_TRANSFORMATION_CHANGED	= 'trch',
+};
 
 class TransformToolState : public DragStateViewState,
 	public Selection::Controller, public Selection::Listener {
@@ -48,7 +54,8 @@ private:
 public:
 								TransformToolState(StateView* view,
 									const BRect& box, Document* document,
-									Selection* selection);
+									Selection* selection,
+									const BMessenger& configView);
 	virtual						~TransformToolState();
 
 	// ViewState interface
@@ -83,7 +90,7 @@ public:
 
 	inline	const ChannelTransform& Transformation() const
 									{ return fTransformation; }
-	inline	void				SetTransformation(const ChannelTransform&);
+			void				SetTransformation(const ChannelTransform&);
 
 private:
 			void				_RegisterObject(Transformable* object);
@@ -92,6 +99,8 @@ private:
 private:
 			BRect				fOriginalBox;
 			ChannelTransform	fTransformation;
+
+			BMessenger			fConfigViewMessenger;
 
 private:
 			class PickObjectState;

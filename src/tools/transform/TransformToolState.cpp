@@ -512,10 +512,11 @@ private:
 
 // constructor
 TransformToolState::TransformToolState(StateView* view, const BRect& box,
-		Document* document, Selection* selection)
+		Document* document, Selection* selection, const BMessenger& configView)
 	: DragStateViewState(view)
 	, fOriginalBox(box)
 	, fTransformation()
+	, fConfigViewMessenger(configView)
 
 	, fPickObjectState(new PickObjectState(this))
 
@@ -1047,6 +1048,18 @@ TransformToolState::SetTransformation(const ChannelTransform& transform)
 		fObject->SetTransformable(newTransformation);
 
 		fDocument->WriteUnlock();
+	}
+
+	if (fConfigViewMessenger.IsValid()) {
+		BMessage message(MSG_TRANSFORMATION_CHANGED);
+		message.AddFloat("pivot x", fTransformation.Pivot().x);
+		message.AddFloat("pivot y", fTransformation.Pivot().y);
+		message.AddFloat("translation x", fTransformation.Translation().x);
+		message.AddFloat("translation y", fTransformation.Translation().y);
+		message.AddDouble("rotation", fTransformation.LocalRotation());
+		message.AddDouble("scale x", fTransformation.LocalXScale());
+		message.AddDouble("scale y", fTransformation.LocalYScale());
+		fConfigViewMessenger.SendMessage(&message);
 	}
 }
 

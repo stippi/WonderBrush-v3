@@ -19,6 +19,20 @@ public:
 
 	virtual	const char*			ShortHelpMessage();
 
+			enum {
+				TRANSLATION_X = 0,
+				TRANSLATION_Y,
+				ROTATION,
+				SCALE_X,
+				SCALE_Y,
+		
+				SUBPIXELS,
+			};
+
+	virtual	void				SetOption(uint32 option, bool value);
+	virtual	void				SetOption(uint32 option, float value);
+	virtual	void				SetOption(uint32 option, int32 value);
+
 protected:
 	virtual	ViewState*			MakeViewState(StateView* view,
 									Document* document, Selection* selection);
