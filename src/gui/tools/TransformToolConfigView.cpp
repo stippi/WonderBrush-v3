@@ -196,7 +196,13 @@ TransformToolConfigView::_SetValue(BTextControl* control, float value) const
 	int32 selectionStart;
 	int32 selectionEnd;
 	control->TextView()->GetSelection(&selectionStart, &selectionEnd);
+	bool selectionEndIsTextEnd
+		= selectionEnd == control->TextView()->TextLength();
+
 	control->SetText(text);
+
+	if (selectionEndIsTextEnd)
+		selectionEnd = control->TextView()->TextLength();
 	control->TextView()->Select(selectionStart, selectionEnd);
 }
 
