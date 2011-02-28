@@ -18,6 +18,7 @@ public:
 	virtual	void				RefsReceived(BMessage* message);
 
 private:
+			void				_PrintUsage(const char* appPath);
 			status_t			_ResizeImage(const RenderBuffer& buffer,
 									RenderEngine& engine, double scale,
 									BPath path, const char* originalPath) const;
