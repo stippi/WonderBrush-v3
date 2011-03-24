@@ -137,10 +137,11 @@ Resizer::_ResizeImage(const RenderBuffer& buffer, RenderEngine& engine,
 
 	BBitmap* bitmap = new BBitmap(resized.Bounds(), B_BITMAP_NO_SERVER_LINK,
 		B_RGBA32);
-	if (bitmap->InitCheck() != B_OK) {
-		fprintf(stderr, "Failed to create bitmap: %s\n",
-			strerror(bitmap->InitCheck()));
-		return bitmap->InitCheck();
+	status_t ret = bitmap->InitCheck();
+	if (ret != B_OK) {
+		fprintf(stderr, "Failed to create bitmap: %s\n", strerror(ret));
+		delete bitmap;
+		return ret;
 	}
 
 	resized.CopyTo(bitmap, resized.Bounds());
@@ -158,8 +159,7 @@ Resizer::_ResizeImage(const RenderBuffer& buffer, RenderEngine& engine,
 	}
 
 	BTranslatorRoster* roster = BTranslatorRoster::Default();
-	status_t ret = roster->Translate(&bitmapStream, NULL, NULL, &file,
-		B_JPEG_FORMAT);
+	ret = roster->Translate(&bitmapStream, NULL, NULL, &file, B_JPEG_FORMAT);
 	if (ret != B_OK) {
 		fprintf(stderr, "Failed to translate file '%s': %s\n",
 			path.Path(), strerror(ret));
