@@ -248,6 +248,20 @@ Application Resizer :
 		be
 	;
 
+Application Cropper :
+
+	# .
+	Cropper.cpp
+
+	:
+
+		tracker
+		$(STDC++LIB)
+		$(SUPC++LIB)
+		translation
+		be
+	;
+
 SubInclude TOP src agg ;
 SubInclude TOP src gui ;
 SubInclude TOP src model property ;
