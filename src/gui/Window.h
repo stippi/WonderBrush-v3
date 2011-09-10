@@ -13,6 +13,7 @@
 
 class BCardLayout;
 class BMenu;
+class BSplitView;
 class CanvasView;
 class ColumnTreeModel;
 class Document;
@@ -41,11 +42,15 @@ public:
 
 			void				AddTool(Tool* tool);
 
+			status_t			StoreSettings(BMessage& settings) const;
+			void				RestoreSettings(const BMessage& settings);
+
 private:
 			void				_InitTools();
 
 			void				_ObjectChanged(const Notifier* object);
 
+private:
 			CanvasView*			fView;
 			Document*			fDocument;
 			RenderManager*		fRenderManager;
@@ -67,6 +72,9 @@ private:
 //			ColumnTreeModel*	fLayerTreeModel;
 			ResourceTreeView*	fResourceTreeView;
 			InspectorView*		fInspectorView;
+
+			BSplitView*			fHorizontalSplit;
+			BSplitView*			fVerticalSplit;
 
 			IconButton*			fUndoIcon;
 			IconButton*			fRedoIcon;

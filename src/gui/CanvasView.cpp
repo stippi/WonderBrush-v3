@@ -464,9 +464,10 @@ CanvasView::ScrollOffsetChanged(BPoint oldOffset, BPoint newOffset)
 {
 	BPoint offset = newOffset - oldOffset;
 
-	if (offset == B_ORIGIN)
+	if (offset == B_ORIGIN) {
 		// prevent circular code (MouseMoved might call ScrollBy...)
 		return;
+	}
 
 #if USE_DELAYED_SCROLLING
 	fDelayedScrolling = fRenderManager->ScrollBy(offset);

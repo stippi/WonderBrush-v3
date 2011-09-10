@@ -135,11 +135,20 @@ WonderBrush::MessageReceived(BMessage* message)
 			_NewWindow();
 			break;
 		case MSG_WINDOW_QUIT:
+		{
+			BMessage windowSettings;
+			if (message->FindMessage("window settings",
+					&windowSettings) == B_OK) {
+				fSettings.RemoveName("window settings");
+				fSettings.AddMessage("window settings", &windowSettings);
+			}
 			message->FindRect("window frame", &fWindowFrame);
+			
 			fWindowCount--;
 			if (fWindowCount == 0)
 				PostMessage(B_QUIT_REQUESTED, this);
 			break;
+		}
 		default:
 			BApplication::MessageReceived(message);
 			break;
@@ -175,6 +184,11 @@ WonderBrush::_NewWindow()
 
 	Window* window = new Window(fWindowFrame, windowName.String(),
 		fDocument, fEditLayer);
+
+	BMessage windowSettings;
+	if (fSettings.FindMessage("window settings", &windowSettings) == B_OK)
+		window->RestoreSettings(windowSettings);
+
 	window->Show();
 }
 
@@ -194,7 +208,7 @@ WonderBrush::_OpenSettingsFile(BFile& file, bool forWriting)
 		return ret;
 	}
 
-	ret = create_directory(path.Path(), 0666);
+	ret = create_directory(path.Path(), 0777);
 	if (ret != B_OK) {
 		fprintf(stderr, "Failed to create the settings path.\n");
 		return ret;
@@ -238,8 +252,10 @@ void
 WonderBrush::_RestoreSettings()
 {
 	BFile file;
-	if (_OpenSettingsFile(file, false) != B_OK) {
-		fprintf(stderr, "Failed to open application settings.\n");
+	status_t status = _OpenSettingsFile(file, false);
+	if (status != B_OK) {
+		if (status != B_ENTRY_NOT_FOUND)
+			fprintf(stderr, "Failed to open application settings.\n");
 		return;
 	}
 

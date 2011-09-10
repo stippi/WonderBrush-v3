@@ -246,13 +246,16 @@ exportButton->SetEnabled(false);
 	objectResourceTabView->TabAt(1)->SetLabel("Resources");
 	objectResourceTabView->SetFont(be_bold_font);
 
+	fHorizontalSplit = new BSplitView(B_HORIZONTAL, 0.0f);
+	fVerticalSplit = new BSplitView(B_VERTICAL, 0.0f);
+
 	BLayoutBuilder::Group<>(this, B_VERTICAL, 0.0f)
-		.AddSplit(B_HORIZONTAL, 0.0f, 0.15f)
+		.AddSplit(fHorizontalSplit, 0.15f)
 			.AddGroup(B_HORIZONTAL, 0.0f)
 				.AddGroup(B_VERTICAL, 0.0f)
 					.Add(menuBar)
 					.Add(fileIconGroup)
-					.AddSplit(B_VERTICAL, 0.0f, 0.10f)
+					.AddSplit(fVerticalSplit, 0.10f)
 						.AddGroup(B_VERTICAL, 0.0f, 0.30f)
 							.Add(new BSeparatorView(B_HORIZONTAL))
 							.Add(new NavigatorView(fDocument, fRenderManager))
@@ -363,6 +366,11 @@ Window::QuitRequested()
 {
 	BMessage quitMessage(MSG_WINDOW_QUIT);
 	quitMessage.AddRect("window frame", Frame());
+
+	BMessage settings;
+	StoreSettings(settings);
+	quitMessage.AddMessage("window settings", &settings);
+
 	be_app->PostMessage(&quitMessage);
 	return true;
 }
@@ -412,6 +420,54 @@ Window::AddTool(Tool* tool)
 		fView->SetState(tool->ToolViewState(fView, fDocument, &fSelection));
 		fToolConfigLayout->SetVisibleItem(0L);
 	}
+}
+
+// store_split_weights
+status_t
+store_split_weights(BMessage& message, const char* name, BSplitView* view)
+{
+	int32 count = view->CountChildren();
+	for (int32 i = 0; i < count; i++) {
+		status_t ret = message.AddFloat(name, view->ItemWeight(i));
+		if (ret != B_OK)
+			return ret;
+	}
+	return B_OK;
+}
+
+// restore_split_weights
+void
+restore_split_weights(const BMessage& message, const char* name,
+	BSplitView* view)
+{
+	float weight;
+	for (int32 i = 0; message.FindFloat(name, i, &weight) == B_OK; i++)
+		view->SetItemWeight(i, weight, false);
+	view->InvalidateLayout(true);
+}
+
+// StoreSettings
+status_t
+Window::StoreSettings(BMessage& settings) const
+{
+	status_t ret = B_OK;
+	if (ret == B_OK) {
+		ret = store_split_weights(settings, "horizontal split",
+			fHorizontalSplit);
+	}
+	if (ret == B_OK) {
+		ret = store_split_weights(settings, "vertical split",
+			fVerticalSplit);
+	}
+	return ret;
+}
+
+// RestoreSettings
+void
+Window::RestoreSettings(const BMessage& settings)
+{
+	restore_split_weights(settings, "horizontal split", fHorizontalSplit);
+	restore_split_weights(settings, "vertical split", fVerticalSplit);
 }
 
 // #pragma mark -
