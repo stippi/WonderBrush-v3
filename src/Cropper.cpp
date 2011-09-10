@@ -124,7 +124,8 @@ Cropper::ArgvReceived(int32 argc, char** argv)
 	create_directory(fTargetFolder.Path(), 0777);
 
 	for (; i < argc; i++) {
-		BBitmap* original = BTranslationUtils::GetBitmap(argv[i]);
+		BPath path(argv[i]);
+		BBitmap* original = BTranslationUtils::GetBitmap(path.Path());
 		if (original == NULL) {
 			fprintf(stderr, "Failed to load '%s'\n", argv[i]);
 			continue;
