@@ -199,33 +199,47 @@ WonderBrush::_OpenSettingsFile(BFile& file, bool forWriting)
 	BPath path;
 	status_t ret = find_directory(B_USER_SETTINGS_DIRECTORY, &path);
 	if (ret != B_OK) {
-		fprintf(stderr, "Failed to find the user settings directory.\n");
+		fprintf(stderr, "Failed to find the user settings directory: %s\n",
+			strerror(ret));
 		return ret;
 	}
 	ret = path.Append("WonderBrush3");
 	if (ret != B_OK) {
-		fprintf(stderr, "Failed to initialize the settings path.\n");
+		fprintf(stderr, "Failed to initialize the settings path: %s\n",
+			strerror(ret));
 		return ret;
 	}
 
 	ret = create_directory(path.Path(), 0777);
 	if (ret != B_OK) {
-		fprintf(stderr, "Failed to create the settings path.\n");
+		fprintf(stderr, "Failed to create the settings path: %s\n",
+			strerror(ret));
 		return ret;
 	}
 
 	ret = path.Append("main_settings");
 	if (ret != B_OK) {
-		fprintf(stderr, "Failed to initialize the settings path.\n");
+		fprintf(stderr, "Failed to initialize the settings path: %s\n",
+			strerror(ret));
 		return ret;
 	}
 
 	if (forWriting) {
-		return file.SetTo(path.Path(), B_CREATE_FILE | B_ERASE_FILE
+		ret = file.SetTo(path.Path(), B_CREATE_FILE | B_ERASE_FILE
 			| B_WRITE_ONLY);
 	} else {
-		return file.SetTo(path.Path(), B_READ_ONLY);
+		ret = file.SetTo(path.Path(), B_READ_ONLY);
 	}
+
+	if (ret != B_OK) {
+		if (ret != B_ENTRY_NOT_FOUND) {
+			fprintf(stderr, "Failed to initialize the settings file (%s): "
+				"%s\n", path.Path(), strerror(ret));
+		}
+		return ret;
+	}
+	
+	return B_OK;
 }
 
 // _StoreSettings
@@ -233,16 +247,20 @@ void
 WonderBrush::_StoreSettings()
 {
 	BFile file;
-	if (_OpenSettingsFile(file, true) != B_OK) {
-		fprintf(stderr, "Failed to create application settings.\n");
+	status_t status = _OpenSettingsFile(file, true);
+	if (status != B_OK) {
+		fprintf(stderr, "Failed to create application settings: %s\n",
+			strerror(status));
 		return;
 	}
 
 	fSettings.RemoveName("window frame");
 	fSettings.AddRect("window frame", fWindowFrame);
 
-	if (fSettings.Flatten(&file) != B_OK) {
-		fprintf(stderr, "Failed to save application settings.\n");
+	status = fSettings.Flatten(&file);
+	if (status != B_OK) {
+		fprintf(stderr, "Failed to save application settings: %s\n",
+			strerror(status));
 		return;
 	}
 }

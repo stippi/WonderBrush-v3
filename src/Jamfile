@@ -13,6 +13,7 @@ local sourceDirs =
 	model/objects
 	model/snapshots
 	render
+	render/text
 	support
 	tools
 	tools/brush
@@ -156,6 +157,12 @@ Application WonderBrush :
 	RenderThread.cpp
 	StackBlurFilter.cpp
 	VertexSource.cpp
+
+	# render/text
+#	Font.cpp
+#	FontCache.cpp
+#	FontCacheEntry.cpp
+#	FontManager.cpp
 
 	# support
 	AbstractLOAdapter.cpp
