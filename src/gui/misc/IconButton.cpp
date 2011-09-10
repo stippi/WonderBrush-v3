@@ -297,8 +297,8 @@ IconButton::GetPreferredSize(float* width, float* height)
 	if (minHeight < MIN_SPACE)
 		minHeight = MIN_SPACE;
 
-	float hPadding = max_c(6.0, ceilf(minHeight / 4.0));
-	float vPadding = max_c(6.0, ceilf(minWidth / 4.0));
+	float hPadding = max_c(10.0, ceilf(minHeight / 4.0));
+	float vPadding = max_c(10.0, ceilf(minWidth / 4.0));
 
 	if (fLabel.CountChars() > 0) {
 		font_height fh;
@@ -364,7 +364,7 @@ IconButton::IsPressed() const
 }
 
 status_t
-IconButton::SetIcon(int32 resourceID)
+IconButton::SetIcon(int32 resourceID, int32 size)
 {
 	app_info info;
 	status_t status = be_app->GetAppInfo(&info);
@@ -376,16 +376,17 @@ IconButton::SetIcon(int32 resourceID)
 	if (status != B_OK)
 		return status;
 
-	size_t size;
+	size_t dataSize;
 	const void* data = resources.LoadResource(B_VECTOR_ICON_TYPE, resourceID,
-		&size);
+		&dataSize);
 	if (data != NULL) {
-		BBitmap bitmap(BRect(0, 0, 31, 31), B_BITMAP_NO_SERVER_LINK, B_RGBA32);
+		BBitmap bitmap(BRect(0, 0, size - 1, size - 1),
+			B_BITMAP_NO_SERVER_LINK, B_RGBA32);
 		status = bitmap.InitCheck();
 		if (status != B_OK)
 			return status;
 		status = BIconUtils::GetVectorIcon(reinterpret_cast<const uint8*>(data),
-			size, &bitmap);
+			dataSize, &bitmap);
 		if (status != B_OK)
 			return status;
 		return SetIcon(&bitmap);

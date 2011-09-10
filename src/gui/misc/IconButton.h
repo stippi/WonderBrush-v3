@@ -64,7 +64,7 @@ public:
 			uint32				ID() const
 									{ return fID; }
 
-			status_t			SetIcon(int32 resourceID);
+			status_t			SetIcon(int32 resourceID, int32 size);
 			status_t			SetIcon(const char* pathToBitmap);
 			status_t			SetIcon(const BBitmap* bitmap);
 			status_t			SetIcon(const BMimeType* fileType,

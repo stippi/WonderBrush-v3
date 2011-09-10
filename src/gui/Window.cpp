@@ -114,29 +114,30 @@ Window::Window(BRect frame, const char* title, Document* document,
 		| SCROLL_VISIBLE_RECT_IS_CHILD_BOUNDS, "canvas",
 		B_WILL_DRAW | B_FRAME_EVENTS, B_NO_BORDER);
 
-	BRect toolIconBounds(0, 0, 21, 21);
+	const int iconSize = 16;
+	const BRect toolIconBounds(0, 0, 15, 15);
 	float iconGroupInset = 3.0f;
 
 	// File icon group
 	IconButton* newButton = new IconButton("new", 0, NULL,
 		new BMessage(MSG_NEW_WINDOW), be_app);
-	newButton->SetIcon(201);
+	newButton->SetIcon(201, iconSize);
 	newButton->TrimIcon(toolIconBounds);
 	IconButton* openButton = new IconButton("open", 0);
-	openButton->SetIcon(202);
+	openButton->SetIcon(202, iconSize);
 	openButton->TrimIcon(toolIconBounds);
 openButton->SetEnabled(false);
 	IconButton* saveButton = new IconButton("save", 0);
-	saveButton->SetIcon(204);
+	saveButton->SetIcon(204, iconSize);
 	saveButton->TrimIcon(toolIconBounds);
 saveButton->SetEnabled(false);
 	IconButton* exportButton = new IconButton("export", 0);
-	exportButton->SetIcon(203);
+	exportButton->SetIcon(203, iconSize);
 	exportButton->TrimIcon(toolIconBounds);
 exportButton->SetEnabled(false);
 	IconButton* closeButton = new IconButton("close", 0, NULL,
 		new BMessage(B_QUIT_REQUESTED), this);
-	closeButton->SetIcon(205);
+	closeButton->SetIcon(205, iconSize);
 	closeButton->TrimIcon(toolIconBounds);
 	BGroupView* fileIconGroup = new BGroupView(B_HORIZONTAL, 0.0f);
 	BLayoutBuilder::Group<>(fileIconGroup->GroupLayout())
@@ -147,27 +148,27 @@ exportButton->SetEnabled(false);
 		.Add(exportButton)
 		.Add(new BSeparatorView(B_VERTICAL))
 		.Add(closeButton)
+		.AddGlue()
 		.SetInsets(iconGroupInset, iconGroupInset, iconGroupInset,
 			iconGroupInset)
 	;
-	fileIconGroup->SetExplicitMaxSize(BSize(B_SIZE_UNLIMITED, B_SIZE_UNSET));
 
 	// Zoom icon group
 	IconButton* zoomInButton = new IconButton("zoom in", 0, NULL,
 		new BMessage(MSG_ZOOM_IN), fView);
-	zoomInButton->SetIcon(401);
+	zoomInButton->SetIcon(401, iconSize);
 	zoomInButton->TrimIcon(toolIconBounds);
 	IconButton* zoomOutButton = new IconButton("zoom out", 0, NULL,
 		new BMessage(MSG_ZOOM_OUT), fView);
-	zoomOutButton->SetIcon(402);
+	zoomOutButton->SetIcon(402, iconSize);
 	zoomOutButton->TrimIcon(toolIconBounds);
 	IconButton* zoomOriginalButton = new IconButton("zoom original", 0, NULL,
 		new BMessage(MSG_ZOOM_ORIGINAL), fView);
-	zoomOriginalButton->SetIcon(403);
+	zoomOriginalButton->SetIcon(403, iconSize);
 	zoomOriginalButton->TrimIcon(toolIconBounds);
 	IconButton* zoomToFit = new IconButton("zoom to fit", 0, NULL,
 		new BMessage(MSG_ZOOM_TO_FIT), fView);
-	zoomToFit->SetIcon(404);
+	zoomToFit->SetIcon(404, iconSize);
 	zoomToFit->TrimIcon(toolIconBounds);
 	BGroupView* zoomIconGroup = new BGroupView(B_HORIZONTAL, 0.0f);
 	BLayoutBuilder::Group<>(zoomIconGroup->GroupLayout())
@@ -182,16 +183,16 @@ exportButton->SetEnabled(false);
 
 	// Undo/Redo icon group
 	fUndoIcon = new IconButton("undo", 0, NULL, new BMessage(MSG_UNDO));
-	fUndoIcon->SetIcon(301);
+	fUndoIcon->SetIcon(301, iconSize);
 	fUndoIcon->TrimIcon(toolIconBounds);
 	fRedoIcon = new IconButton("redo", 0, NULL, new BMessage(MSG_REDO));
-	fRedoIcon->SetIcon(302);
+	fRedoIcon->SetIcon(302, iconSize);
 	fRedoIcon->TrimIcon(toolIconBounds);
 	fConfirmIcon = new IconButton("confirm", 0);
-	fConfirmIcon->SetIcon(303);
+	fConfirmIcon->SetIcon(303, iconSize);
 	fConfirmIcon->TrimIcon(toolIconBounds);
 	fCancelIcon = new IconButton("cancel", 0);
-	fCancelIcon->SetIcon(304);
+	fCancelIcon->SetIcon(304, iconSize);
 	fCancelIcon->TrimIcon(toolIconBounds);
 
 	fUndoIcon->SetEnabled(false);

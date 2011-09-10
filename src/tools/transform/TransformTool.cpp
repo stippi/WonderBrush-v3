@@ -74,7 +74,7 @@ TransformTool::MakeIcon()
 	IconButton* button = new IconButton("transform", 0);
 //	button->SetIcon(kMoveIconBits, kMoveIconWidth, kMoveIconHeight,
 //		kMoveIconFormat);
-	button->SetIcon(501);
+	button->SetIcon(501, 32);
 	button->TrimIcon(BRect(0, 0, 21, 21));
 	return button;
 }
