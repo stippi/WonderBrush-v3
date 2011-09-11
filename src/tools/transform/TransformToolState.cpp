@@ -98,6 +98,47 @@ TransformToolState::ShapeLOAdapater::Deleted(Shape* shape)
 
 // #pragma mark -
 
+class TransformToolState::DragPivotState
+	: public DragStateViewState::DragState {
+public:
+	DragPivotState(TransformToolState* parent)
+		: DragState(parent)
+		, fParent(parent)
+	{
+	}
+
+	virtual void SetOrigin(BPoint origin)
+	{
+		fParent->TransformCanvasToObject(&origin);
+		DragState::SetOrigin(origin);
+	}
+
+	virtual void DragTo(BPoint current, uint32 modifiers)
+	{
+		fParent->TransformCanvasToObject(&current);
+		BPoint offset = current - fOrigin;
+		fOrigin = current;
+
+		ChannelTransform t = fParent->Transformation();
+		t.SetPivot(t.Pivot() + offset);
+		fParent->SetTransformation(t);
+	}
+
+	virtual BCursor ViewCursor(BPoint current) const
+	{
+		return BCursor(B_CURSOR_ID_FOLLOW_LINK);
+	}
+
+	virtual const char* CommandName() const
+	{
+		return "Drag Pivot";
+	}
+
+private:
+	TransformToolState*	fParent;
+};
+
+
 class TransformToolState::DragBoxState : public DragStateViewState::DragState {
 public:
 	DragBoxState(TransformToolState* parent)
@@ -353,42 +394,80 @@ public:
 	virtual void SetOrigin(BPoint origin)
 	{
 		fParent->TransformCanvasToObject(&origin);
-//		switch (fSide) {
-//			case LEFT:
-//				fClickOffset = origin.x - fParent->ModifiedBox().left;
-//				break;
-//			case TOP:
-//				fClickOffset = origin.y - fParent->ModifiedBox().top;
-//				break;
-//			case RIGHT:
-//				fClickOffset = origin.x - fParent->ModifiedBox().right;
-//				break;
-//			case BOTTOM:
-//				fClickOffset = origin.y - fParent->ModifiedBox().bottom;
-//				break;
-//		}
+
+		fOldXTranslation = fParent->Transformation().Translation().x;
+		fOldYTranslation = fParent->Transformation().Translation().y;
+		fOldXScale = fParent->Transformation().LocalXScale();
+		fOldYScale = fParent->Transformation().LocalYScale();
+
+		// copy the matrix at the start of the drag procedure
+		fMatrix.reset();
+		fMatrix.multiply(agg::trans_affine_scaling(fOldXScale, fOldYScale));
+		fMatrix.multiply(agg::trans_affine_rotation(
+			fParent->Transformation().LocalRotation() * M_PI / 180.0));
+		fMatrix.multiply(agg::trans_affine_translation(fOldXTranslation,
+			fOldYTranslation));
+
+		const BRect& box = fParent->Box();
+		switch (fSide) {
+			case LEFT:
+				fClickOffset = origin.x - box.left;
+				fOldSideDist = box.left - box.right;
+				origin.x = box.right;
+				break;
+			case TOP:
+				fClickOffset = origin.y - box.top;
+				fOldSideDist = box.top - box.bottom;
+				origin.y = box.bottom;
+				break;
+			case RIGHT:
+				fClickOffset = origin.x - box.right;
+				fOldSideDist = box.right - box.left;
+				origin.x = box.left;
+				break;
+			case BOTTOM:
+				fClickOffset = origin.y - box.bottom;
+				fOldSideDist = box.bottom - box.top;
+				origin.y = box.top;
+				break;
+		}
 		DragState::SetOrigin(origin);
 	}
 
 	virtual void DragTo(BPoint current, uint32 modifiers)
 	{
-		fParent->TransformCanvasToObject(&current);
-//		BRect box = fParent->ModifiedBox();
-//		switch (fSide) {
-//			case LEFT:
-//				box.left = current.x - fClickOffset;
-//				break;
-//			case TOP:
-//				box.top = current.y - fClickOffset;
-//				break;
-//			case RIGHT:
-//				box.right = current.x - fClickOffset;
-//				break;
-//			case BOTTOM:
-//				box.bottom = current.y - fClickOffset;
-//				break;
-//		}
-//		fParent->SetModifiedBox(box);
+//		fParent->TransformCanvasToObject(&current);
+		double x = current.x;
+		double y = current.y;
+		fMatrix.inverse_transform(&x, &y);
+
+		double xScale = 1.0;
+		double yScale = 1.0;
+		double xTranslation = 0.0;
+		double yTranslation = 0.0;
+
+		switch (fSide) {
+			case LEFT:
+			case RIGHT:
+				x -= fOrigin.x;
+				if (fOldSideDist != 0.0)
+					xScale = (x - fClickOffset) / fOldSideDist;
+				xTranslation = fOrigin.x - fOrigin.x * xScale;
+				break;
+			case TOP:
+			case BOTTOM:
+				y -= fOrigin.y;
+				if (fOldSideDist != 0.0)
+					yScale = (y - fClickOffset) / fOldSideDist;
+				yTranslation = fOrigin.y - fOrigin.y * yScale;
+				break;
+		}
+		fMatrix.transform(&xTranslation, &yTranslation);
+
+		ChannelTransform t = fParent->Transformation();
+		t.SetTranslationAndScale(BPoint(xTranslation, yTranslation),
+			xScale * fOldXScale, yScale * fOldYScale);
+		fParent->SetTransformation(t);
 	}
 
 	virtual BCursor ViewCursor(BPoint current) const
@@ -454,6 +533,12 @@ private:
 	TransformToolState*	fParent;
 	float				fClickOffset;
 	Side				fSide;
+	double				fOldXTranslation;
+	double				fOldYTranslation;
+	double				fOldXScale;
+	double				fOldYScale;
+	double				fOldSideDist;
+	Transformable		fMatrix;
 };
 
 
@@ -520,6 +605,8 @@ TransformToolState::TransformToolState(StateView* view, const BRect& box,
 
 	, fPickObjectState(new PickObjectState(this))
 
+	, fDragPivotState(new (std::nothrow) DragPivotState(this))
+
 	, fDragBoxState(new (std::nothrow) DragBoxState(this))
 
 	, fDragLTState(new (std::nothrow) DragCornerState(this,
@@ -556,6 +643,7 @@ TransformToolState::~TransformToolState()
 	fSelection->RemoveListener(this);
 
 	delete fPickObjectState;
+	delete fDragPivotState;
 	delete fDragBoxState;
 	delete fDragLTState;
 	delete fDragRTState;
@@ -663,6 +751,8 @@ TransformToolState::Draw(BView* view, BRect updateRect)
 	BPoint lbF2(lb.x - insetFill1X, lb.y + insetFill1Y);
 	BPoint lbF3(lb.x - insetFill1X, lb.y + insetFill2Y);
 
+	BPoint pivot = fTransformation.Pivot();
+
 	uint32 flags = view->Flags();
 	bool round = true;
 	if (ViewspaceRotation() != 0.0) {
@@ -711,6 +801,8 @@ TransformToolState::Draw(BView* view, BRect updateRect)
 	TransformObjectToView(&lbF1, round);
 	TransformObjectToView(&lbF2, round);
 	TransformObjectToView(&lbF3, round);
+
+	TransformObjectToView(&pivot, true);
 
 	view->PushState();
 
@@ -812,6 +904,15 @@ TransformToolState::Draw(BView* view, BRect updateRect)
 //	view->SetDrawingMode(B_OP_ALPHA);
 	view->StrokeShape(&shape);
 
+	// pivot
+	const float pivotSize = 3;
+	view->SetHighColor(255, 255, 255, 200);
+	view->FillEllipse(BRect(pivot.x - pivotSize, pivot.y - pivotSize,
+		pivot.x + pivotSize, pivot.y + pivotSize));
+	view->SetHighColor(0, 0, 0, 200);
+	view->StrokeEllipse(BRect(pivot.x - pivotSize, pivot.y - pivotSize,
+		pivot.x + pivotSize + 1, pivot.y + pivotSize + 1));
+
 	view->PopState();
 	view->SetFlags(flags);
 }
@@ -822,6 +923,16 @@ TransformToolState::Bounds() const
 {
 	BRect bounds(fOriginalBox);
 	TransformObjectToView(&bounds);
+	BPoint pivot = fTransformation.Pivot();
+	TransformObjectToView(&pivot, true);
+	if (bounds.left > pivot.x)
+		bounds.left = pivot.x;
+	if (bounds.right < pivot.x)
+		bounds.right = pivot.x;
+	if (bounds.top > pivot.y)
+		bounds.top = pivot.y;
+	if (bounds.bottom < pivot.y)
+		bounds.bottom = pivot.y;
 	bounds.InsetBy(-10, -10);
 	return bounds;
 }
@@ -859,12 +970,19 @@ TransformToolState::DragStateFor(BPoint canvasWhere, float zoomLevel) const
 {
 	float inset = 7.0 / zoomLevel;
 
-	// First priority has the inside of the box, checked with some inset so
-	// that the user can drag the whole box when the box is very small and
-	// the click is otherwise near enough to a corner.
-
 	BPoint where = canvasWhere;
 	TransformCanvasToObject(&where);
+
+	// First priority has the pivot
+	BRect pR(fTransformation.Pivot(), fTransformation.Pivot());
+
+	pR.InsetBy(-inset, -inset);
+	if (pR.Contains(where))
+		return fDragPivotState;
+	
+	// Second priority has the inside of the box, checked with some inset so
+	// that the user can drag the whole box when the box is very small and
+	// the click is otherwise near enough to a corner.
 
 	BRect iR(fOriginalBox);
 	float hInset = min_c(inset, max_c(0, (iR.Width() - inset) / 2.0));
@@ -1025,6 +1143,8 @@ void
 TransformToolState::SetBox(const BRect& box)
 {
 	fOriginalBox = box;
+	fTransformation.SetPivot(BPoint((box.left + box.right) / 2,
+		(box.top + box.bottom) / 2));
 	UpdateBounds();
 }
 

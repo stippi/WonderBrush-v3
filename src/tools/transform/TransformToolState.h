@@ -104,6 +104,7 @@ private:
 
 private:
 			class PickObjectState;
+			class DragPivotState;
 			class DragBoxState;
 			class DragCornerState;
 			class DragSideState;
@@ -111,6 +112,8 @@ private:
 			friend class PickObjectState;
 
 			PickObjectState*	fPickObjectState;
+
+			DragPivotState*		fDragPivotState;
 
 			DragBoxState*		fDragBoxState;
 
