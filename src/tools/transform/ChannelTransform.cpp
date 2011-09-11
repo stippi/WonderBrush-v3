@@ -65,8 +65,8 @@ void
 ChannelTransform::SetTransformation(BPoint pivot, BPoint translation,
 	double rotation, double xScale, double yScale)
 {
-//printf("SetTransformation(BPoint(%.1f, %.1f), BPoint(%.1f, %.1f), "
-//"%.2f, %.2f, %.2f)\n", pivot.x, pivot.y, translation.x, translation.y,
+//printf("%p->SetTransformation(BPoint(%.1f, %.1f), BPoint(%.1f, %.1f), "
+//"%.2f, %.2f, %.2f)\n", this, pivot.x, pivot.y, translation.x, translation.y,
 //rotation, xScale, yScale);
 
 	if (fTranslation != translation ||
@@ -87,7 +87,7 @@ ChannelTransform::SetTransformation(BPoint pivot, BPoint translation,
 
 // SetPivot
 void
-ChannelTransform::SetPivot(BPoint pivot)
+ChannelTransform::SetPivot(const BPoint& pivot)
 {
 	if (pivot == fPivot)
 		return;
@@ -207,6 +207,18 @@ void
 ChannelTransform::Reset()
 {
 	SetTransformation(B_ORIGIN, B_ORIGIN, 0.0, 1.0, 1.0);
+}
+
+// operator==
+bool
+ChannelTransform::operator==(const ChannelTransform& other) const
+{
+	if (fPivot != other.fPivot || fTranslation != other.fTranslation
+		|| fRotation != other.fRotation
+		|| fXScale != other.fXScale || fYScale != other.fYScale) {
+		return false;
+	}
+	return Transformable::operator==(other);
 }
 
 // operator=
