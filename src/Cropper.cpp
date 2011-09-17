@@ -14,6 +14,7 @@
 // constructor
 Cropper::Cropper()
 	: BApplication("application/x-vnd.yellowbites.Cropper")
+	, fPrintUsage(true)
 	, fTargetWidth(-1)
 	, fTargetHeight(-1)
 	, fTargetFolder("/boot/home/Desktop")
@@ -36,7 +37,8 @@ Cropper::MessageReceived(BMessage* message)
 void
 Cropper::ReadyToRun()
 {
-//	_PrintUsage("Cropper");
+	if (fPrintUsage)
+		_PrintUsage("Cropper");
 	PostMessage(B_QUIT_REQUESTED);
 }
 
@@ -44,6 +46,7 @@ Cropper::ReadyToRun()
 void
 Cropper::ArgvReceived(int32 argc, char** argv)
 {
+	fPrintUsage = false;
 	int32 i = 1;
 	for (; i < argc; i++) {
 		if (strcmp(argv[i], "-o") == 0) {

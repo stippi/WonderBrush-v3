@@ -23,6 +23,7 @@ private:
 									RenderEngine& engine, double scale,
 									BPath path, const char* originalPath) const;
 
+			bool				fPrintUsage;
 			int32				fTargetSize;
 			int32				fTargetThumbSize;
 			double				fTargetScale;

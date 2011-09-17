@@ -20,6 +20,7 @@ private:
 									int width, int height,
 									BPath path, const char* originalPath) const;
 
+			bool				fPrintUsage;
 			int32				fTargetWidth;
 			int32				fTargetHeight;
 			BPath				fTargetFolder;

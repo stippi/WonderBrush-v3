@@ -14,6 +14,7 @@
 // constructor
 Resizer::Resizer()
 	: BApplication("application/x-vnd.yellowbites.Resizer")
+	, fPrintUsage(true)
 	, fTargetSize(1536)
 	, fTargetThumbSize(308)
 	, fTargetScale(1.0)
@@ -39,7 +40,8 @@ Resizer::MessageReceived(BMessage* message)
 void
 Resizer::ReadyToRun()
 {
-	_PrintUsage("Resizer");
+	if (fPrintUsage)
+		_PrintUsage("Resizer");
 	PostMessage(B_QUIT_REQUESTED);
 }
 
@@ -47,7 +49,7 @@ Resizer::ReadyToRun()
 void
 Resizer::ArgvReceived(int32 argc, char** argv)
 {
-	printf("Resizer::ArgvReceived()\n");
+	fPrintUsage = false;
 	int32 i = 1;
 	for (; i < argc; i++) {
 		if (strcmp(argv[i], "-o") == 0) {
