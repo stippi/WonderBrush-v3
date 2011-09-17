@@ -459,8 +459,10 @@ void
 PressedState::Released(BPoint point, uint32 buttons, uint32 modifiers)
 {
 	if (fSelectOnRelease) {
+		bool selectedTwice
+			= fWasSelected && fListView->CountSelectedItems() == 1;
 		fListView->Select(fItemIndex, false);
-		if (fWasSelected)
+		if (selectedTwice)
 			fListView->ItemSelectedTwice(fItemIndex);
 	}
 	// check if double clicked
