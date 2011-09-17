@@ -458,8 +458,11 @@ PressedState::Moved(BPoint point, uint32 transit, const BMessage* message)
 void
 PressedState::Released(BPoint point, uint32 buttons, uint32 modifiers)
 {
-	if (fSelectOnRelease)
+	if (fSelectOnRelease) {
 		fListView->Select(fItemIndex, false);
+		if (fWasSelected)
+			fListView->ItemSelectedTwice(fItemIndex);
+	}
 	// check if double clicked
 	if (fClicks == 2 && IsClick(fClickTime, When())) {
 		// invoke

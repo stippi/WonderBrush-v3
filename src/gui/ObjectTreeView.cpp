@@ -432,6 +432,13 @@ ObjectTreeView::SelectionChanged()
 	}
 }
 
+// ItemSelectedTwice
+void
+ObjectTreeView::ItemSelectedTwice(int32 index)
+{
+	_HandleRenameItem(index);
+}
+
 // #pragma mark -
 
 // ObjectSelected

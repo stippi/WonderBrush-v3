@@ -59,6 +59,7 @@ public:
 									int32 itemIndex);
 
 	virtual	void				SelectionChanged();
+	virtual void				ItemSelectedTwice(int32 index);
 
 	// Selection::Listener interface
 	virtual	void				ObjectSelected(const Selectable& object,

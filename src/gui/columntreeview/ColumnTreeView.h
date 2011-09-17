@@ -142,6 +142,7 @@ public:
 									ColumnTreeItem* super, int32 subItemIndex,
 									int32 itemIndex);
 	virtual	void				ItemDoubleClicked(int32 index);
+	virtual void				ItemSelectedTwice(int32 index);
 
 	// item visibility
 			bool				ExpandItem(ColumnTreeItem* item);

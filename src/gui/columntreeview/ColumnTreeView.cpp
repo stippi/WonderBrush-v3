@@ -1085,6 +1085,12 @@ ColumnTreeView::ItemDoubleClicked(int32 index)
 {
 }
 
+// ItemSelectedTwice
+void
+ColumnTreeView::ItemSelectedTwice(int32 index)
+{
+}
+
 // ExpandItem
 bool
 ColumnTreeView::ExpandItem(ColumnTreeItem* item)
