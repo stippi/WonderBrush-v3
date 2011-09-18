@@ -189,7 +189,10 @@ BrushToolState::_AppendPoint(const MouseInfo& info)
 	if (fBrushStroke == NULL)
 		return;
 
-	StrokePoint point(info.position, info.pressure, info.tilt.x, info.tilt.y);
+	BPoint position = info.position;
+	TransformViewToObject(&position);
+
+	StrokePoint point(position, info.pressure, info.tilt.x, info.tilt.y);
 	fBrushStroke->AppendPoint(point);
 }
 
