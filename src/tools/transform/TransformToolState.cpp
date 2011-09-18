@@ -14,6 +14,7 @@
 
 #include "ChangeAreaCommand.h"
 #include "CommandStack.h"
+#include "cursors.h"
 #include "Document.h"
 #include "Layer.h"
 #include "Rect.h"
@@ -496,12 +497,76 @@ private:
 	TransformToolState*	fParent;
 	float				fClickOffset;
 	Side				fSide;
-	double				fOldXTranslation;
-	double				fOldYTranslation;
-	double				fOldXScale;
-	double				fOldYScale;
-	double				fOldSideDist;
-	ChannelTransform	fMatrix;
+};
+
+
+class TransformToolState::DragRotationState
+	: public DragStateViewState::DragState {
+public:
+	DragRotationState(TransformToolState* parent)
+		: DragState(parent)
+		, fParent(parent)
+	{
+	}
+
+	virtual void SetOrigin(BPoint origin)
+	{
+		DragState::SetOrigin(origin);
+		fOldAngle = fParent->LocalRotation();
+	}
+
+	virtual void DragTo(BPoint current, uint32 modifiers)
+	{
+		BPoint pivot(fParent->Pivot());
+		fParent->TransformObjectToCanvas(&pivot);
+		double angle = calc_angle(pivot, fOrigin, current);
+	
+		if (modifiers & B_SHIFT_KEY) {
+			if (angle < 0.0)
+				angle -= 22.5;
+			else
+				angle += 22.5;
+			angle = 45.0 * ((int32)angle / 45);
+		}
+	
+		fParent->SetLocalRotation(fOldAngle + angle);
+	}
+
+	virtual BCursor ViewCursor(BPoint current) const
+	{
+		BPoint pivot(fParent->Pivot());
+		fParent->TransformObjectToCanvas(&pivot);
+		BPoint from = pivot + BPoint(sin(22.5 * 180.0 / M_PI) * 50.0,
+			-cos(22.5 * 180.0 / M_PI) * 50.0);
+	
+		double rotation = calc_angle(pivot, from, current) + 180.0;
+
+		if (rotation < 45.0)
+			return BCursor(kRotateLCursor);
+		else if (rotation < 90.0)
+			return BCursor(kRotateLTCursor);
+		else if (rotation < 135.0)
+			return BCursor(kRotateTCursor);
+		else if (rotation < 180.0)
+			return BCursor(kRotateRTCursor);
+		else if (rotation < 225.0)
+			return BCursor(kRotateRCursor);
+		else if (rotation < 270.0)
+			return BCursor(kRotateRBCursor);
+		else if (rotation < 315.0)
+			return BCursor(kRotateBCursor);
+		else
+			return BCursor(kRotateLBCursor);
+	}
+
+	virtual const char* CommandName() const
+	{
+		return "Rotate";
+	}
+
+private:
+	TransformToolState*	fParent;
+	double				fOldAngle;
 };
 
 
@@ -570,8 +635,8 @@ TransformToolState::TransformToolState(StateView* view, const BRect& box,
 	, fPickObjectState(new PickObjectState(this))
 
 	, fDragPivotState(new (std::nothrow) DragPivotState(this))
-
 	, fDragBoxState(new (std::nothrow) DragBoxState(this))
+	, fDragRotationState(new (std::nothrow) DragRotationState(this))
 
 	, fDragLTState(new (std::nothrow) DragCornerState(this,
 		DragCornerState::LEFT_TOP))
@@ -609,6 +674,7 @@ TransformToolState::~TransformToolState()
 	delete fPickObjectState;
 	delete fDragPivotState;
 	delete fDragBoxState;
+	delete fDragRotationState;
 	delete fDragLTState;
 	delete fDragRTState;
 	delete fDragRBState;
@@ -1015,9 +1081,15 @@ TransformToolState::DragStateFor(BPoint canvasWhere, float zoomLevel) const
 			return fDragBState;
 	}
 
-	// Last, check inside of the box again.
+	// Check inside of the box again.
 	if (fModifiedBox.Contains(where))
 		return fDragBoxState;
+
+	// Check outside perimeter for rotation.
+	BRect rotationRect(fModifiedBox);
+	rotationRect.InsetBy(-inset * 3, -inset * 3);
+	if (rotationRect.Contains(where))
+		return fDragRotationState;
 
 	// If there is still no state, switch to the PickObjectsState
 	// and try to find an object. If nothing is picked, unset on mouse down.
@@ -1157,6 +1229,13 @@ TransformToolState::TranslationY() const
 	return fModifiedBox.top - fOriginalBox.top;
 }
 
+// Translation
+BPoint
+TransformToolState::Translation() const
+{
+	return BPoint(TranslationX(), TranslationY());
+}
+
 // SetLocalRotation
 void
 TransformToolState::SetLocalRotation(double rotation)
@@ -1189,17 +1268,21 @@ TransformToolState::LocalYScale() const
 Transformable
 TransformToolState::UpdateAdditionalTransformation()
 {
-	Transformable transform;
+	Transformable additionalTransform;
 	// Only local rotation is treated as additional transformation.
-	transform.RotateBy(Pivot(), LocalRotation());
+	BPoint pivot(Pivot());
+	TransformObjectToCanvas(&pivot);
+	additionalTransform.RotateBy(pivot, LocalRotation());
 
-	SetAdditionalTransformation(transform);
+	SetAdditionalTransformation(additionalTransform);
 	UpdateBounds();
 
 	// Translation and scale are only applied to the object.
+	Transformable transform;
+	transform.RotateBy(Pivot(), LocalRotation());
 	transform.ScaleBy(BPoint(fOriginalBox.left, fOriginalBox.top),
 		LocalXScale(), LocalYScale());
-	transform.TranslateBy(BPoint(TranslationX(), TranslationY()));
+	transform.TranslateBy(Translation());
 
 	if (fObject != NULL && fDocument->WriteLock()) {
 		// TODO: Use Command!

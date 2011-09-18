@@ -95,6 +95,7 @@ public:
 
 	inline	float				TranslationX() const;
 	inline	float				TranslationY() const;
+	inline	BPoint				Translation() const;
 			void				SetLocalRotation(double rotation);
 	inline	double				LocalRotation() const
 									{ return fRotation; }
@@ -126,14 +127,15 @@ private:
 			class DragBoxState;
 			class DragCornerState;
 			class DragSideState;
+			class DragRotationState;
 
 			friend class PickObjectState;
 
 			PickObjectState*	fPickObjectState;
 
 			DragPivotState*		fDragPivotState;
-
 			DragBoxState*		fDragBoxState;
+			DragRotationState*	fDragRotationState;
 
 			DragCornerState*	fDragLTState;
 			DragCornerState*	fDragRTState;
