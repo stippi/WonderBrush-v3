@@ -83,14 +83,29 @@ public:
 									bool modifySelection = false);
 			void				SetTransformable(Transformable* object);
 			void				SetBox(const BRect& box);
-			void				SetModifiedBox(const BRect& box,
-									bool apply = true);
+			void				SetModifiedBox(const BRect& box);
 	inline	const BRect&		Box() const
 									{ return fOriginalBox; }
+	inline	const BRect&		ModifiedBox() const
+									{ return fModifiedBox; }
 
-	inline	const ChannelTransform& Transformation() const
-									{ return fTransformation; }
-			void				SetTransformation(const ChannelTransform&);
+			void				SetPivot(const BPoint& pivot);
+	inline	const BPoint&		Pivot() const
+									{ return fPivot; }
+
+	inline	float				TranslationX() const;
+	inline	float				TranslationY() const;
+			void				SetLocalRotation(double rotation);
+	inline	double				LocalRotation() const
+									{ return fRotation; }
+	inline	double				LocalXScale() const;
+	inline	double				LocalYScale() const;
+
+	inline	Transformable		UpdateAdditionalTransformation();
+
+//	inline	const ChannelTransform& Transformation() const
+//									{ return fTransformation; }
+//			void				SetTransformation(const ChannelTransform&);
 
 private:
 			void				_RegisterObject(Transformable* object);
@@ -98,7 +113,10 @@ private:
 
 private:
 			BRect				fOriginalBox;
-			ChannelTransform	fTransformation;
+			BRect				fModifiedBox;
+			BPoint				fPivot;
+			double				fRotation;
+//			ChannelTransform	fTransformation;
 
 			BMessenger			fConfigViewMessenger;
 

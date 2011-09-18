@@ -98,36 +98,32 @@ TransformTool::SetOption(uint32 option, float value)
 {
 	TransformToolState* state = static_cast<TransformToolState*>(fViewState);
 
-	ChannelTransform transform = state->Transformation();
-
-	BPoint pivot = transform.Pivot();
-	BPoint translation = transform.Translation();
-	double rotation = transform.LocalRotation();
-	double scaleX = transform.LocalXScale();
-	double scaleY = transform.LocalYScale();
+	const BRect& box = state->Box();
+	BRect modifiedBox = state->ModifiedBox();
 
 	switch (option) {
 		case TRANSLATION_X:
-			translation.x = value;
+			modifiedBox.OffsetTo(box.left + value, modifiedBox.top);
+			state->SetModifiedBox(modifiedBox);
 			break;
 		case TRANSLATION_Y:
-			translation.y = value;
+			modifiedBox.OffsetTo(modifiedBox.left, box.top + value);
+			state->SetModifiedBox(modifiedBox);
 			break;
 
 		case ROTATION:
-			rotation = value;
+			state->SetLocalRotation(value);
 			break;
 
 		case SCALE_X:
-			scaleX = value;
+			modifiedBox.right = modifiedBox.left + box.Width() * value;
+			state->SetModifiedBox(modifiedBox);
 			break;
 		case SCALE_Y:
-			scaleY = value;
+			modifiedBox.bottom = modifiedBox.top + box.Height() * value;
+			state->SetModifiedBox(modifiedBox);
 			break;
 	}
-
-	transform.SetTransformation(pivot, translation, rotation, scaleX, scaleY);
-	state->SetTransformation(transform);
 }
 
 // SetOption
