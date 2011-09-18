@@ -1197,7 +1197,7 @@ TransformToolState::UpdateAdditionalTransformation()
 	UpdateBounds();
 
 	// Translation and scale are only applied to the object.
-	transform.ScaleBy(BPoint(fModifiedBox.left, fModifiedBox.top),
+	transform.ScaleBy(BPoint(fOriginalBox.left, fOriginalBox.top),
 		LocalXScale(), LocalYScale());
 	transform.TranslateBy(BPoint(TranslationX(), TranslationY()));
 
@@ -1220,8 +1220,6 @@ TransformToolState::UpdateAdditionalTransformation()
 
 		Transformable newTransformation(transform);
 		newTransformation.Multiply(fOriginalTransformation);
-//		Transformable newTransformation(fOriginalTransformation);
-//		newTransformation.Multiply(transform);
 		fObject->SetTransformable(newTransformation);
 
 		fDocument->WriteUnlock();
