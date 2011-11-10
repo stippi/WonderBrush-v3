@@ -21,6 +21,9 @@ if $(OSPLAT) = X86 {
 	if $(haveHaiku)	{
 		CCFLAGS += -DCOMPILE_FOR_BONE -DCOMPILE_FOR_HAIKU ;
 		C++FLAGS += -DCOMPILE_FOR_BONE -DCOMPILE_FOR_HAIKU ;
+		# avoid resolving the wrong AGG symbols (in libbe.so) on GCC4
+		CFLAGS += -fvisibility=hidden ;
+		C++FLAGS += -fvisibility=hidden ;
 		NETWORK_LIBS += network ;
 		PLATFORM = haiku ;
 		COMMON_FOLDER = /boot/common ;
