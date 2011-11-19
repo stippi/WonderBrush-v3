@@ -29,6 +29,7 @@ for sourceDir in $(sourceDirs) {
 # system include directories
 local sysIncludeDirs =
 	agg/include
+	cimg
 ;
 
 local sysIncludeDir ;
@@ -67,6 +68,7 @@ SubDirHdrs [ FDirName $(TOP) src tools brush ] ;
 SubDirHdrs [ FDirName $(TOP) src tools pick ] ;
 SubDirHdrs [ FDirName $(TOP) src tools transform ] ;
 SubDirSysHdrs [ FDirName $(TOP) agg/include ] ;
+SubDirSysHdrs [ FDirName $(TOP) cimg ] ;
 # </pe-inc>
 
 
@@ -261,6 +263,32 @@ Application Cropper :
 	Cropper.cpp
 
 	:
+
+		tracker
+		$(STDC++LIB)
+		$(SUPC++LIB)
+		translation
+		be
+	;
+
+Application Denoiser :
+
+	# render
+	LayoutState.cpp
+	RenderBuffer.cpp
+	RenderEngine.cpp
+
+	# support
+	Debug.cpp
+	support.cpp
+	Referenceable.cpp
+	Transformable.cpp
+
+	# .
+	Denoiser.cpp
+
+	:
+		libagg.a
 
 		tracker
 		$(STDC++LIB)

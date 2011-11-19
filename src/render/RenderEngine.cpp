@@ -15,6 +15,8 @@
 #include <agg_span_interpolator_persp.h>
 #include <agg_span_subdiv_adaptor.h>
 
+#include <CImg.h>
+
 #include "RenderBuffer.h"
 #include "SetProperty.h"
 
@@ -453,6 +455,69 @@ RenderEngine::HitTest(PathStorage& path, const BPoint& point)
 
 	fRasterizer.add_path(transformedPath);
 	return _HitTest(point);
+}
+
+// #pragma mark - Filters
+
+status_t
+RenderEngine::Denoise(const RenderBuffer* buffer,
+	const float amplitude, const float sharpness, const float anisotropy,
+	const float alpha, const float sigma, const float dl, const float da,
+	const float gaussPrecision, const unsigned int interpolationType,
+	const bool fastApproximation)
+{
+	try {
+		uint32 width = buffer->Width();
+		uint32 height = buffer->Height();
+
+		cimg_library::CImg<uint16> image(width, height, 1, 3);
+
+		uint8* src = (uint8*)buffer->Bits();
+		uint16* dst = (uint16*)image._data;
+		uint32 srcBPR = buffer->BytesPerRow();
+
+		// copy dest contents into image
+		for (uint32 y = 0; y < height; y++) {
+			uint16* s = (uint16*)src;
+			uint16* d1 = dst;
+			uint16* d2 = dst + width * height;
+			uint16* d3 = dst + 2 * width * height;
+			for (uint32 x = 0; x < width; x++) {
+				*d1++ = s[0];
+				*d2++ = s[1];
+				*d3++ = s[2];
+				s += 4;
+			}
+			src += srcBPR;
+			dst += width;
+		}
+	
+		image.blur_anisotropic(amplitude, sharpness, anisotropy,
+			alpha, sigma, dl, da, gaussPrecision, interpolationType,
+			fastApproximation);
+
+		// copy result back into dest
+		src = (uint8*)buffer->Bits();
+		dst = (uint16*)image._data;
+		for (uint32 y = 0; y < height; y++) {
+			uint16* s = (uint16*)src;
+			uint16* d1 = dst;
+			uint16* d2 = dst + width * height;
+			uint16* d3 = dst + 2 * width * height;
+			for (uint32 x = 0; x < width; x++) {
+				s[0] = *d1++;
+				s[1] = *d2++;
+				s[2] = *d3++;
+				s += 4;
+			}
+			src += srcBPR;
+			dst += width;
+		}
+	} catch (...) {
+		printf("CImgDeNoise::ProcessBitmap() - caught exception!\n");
+		return B_ERROR;
+	}
+	return B_OK;
 }
 
 // #pragma mark -

@@ -112,6 +112,16 @@ public:
 									const BPoint& point);
 			bool				HitTest(PathStorage& path,
 									const BPoint& point);
+
+			status_t			Denoise(const RenderBuffer* buffer,
+									const float amplitude,
+									const float sharpness,
+									const float anisotropy, const float alpha,
+									const float sigma, const float dl,
+									const float da, const float gaussPrecision,
+									const unsigned int interpolationType,
+									const bool fastApproximation);
+
 private:
 			// Rendering rasterizer contents or cached scanlines
 			void				_RenderScanlines(bool fillPaint,
