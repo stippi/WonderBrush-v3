@@ -135,6 +135,12 @@ namespace agg
     }
 
     //------------------------------------------------------------------------
+    static inline double int16p16_to_dbl(int p)
+    {
+        return double(p) / 65536.0;
+    }
+
+    //------------------------------------------------------------------------
     static inline int dbl_to_int26p6(double p)
     {
         return int(p * 64.0 + 0.5);
@@ -504,7 +510,6 @@ namespace agg
         }
         delete [] m_face_names;
         delete [] m_faces;
-        delete [] m_signature;
         if(m_library_initialized) FT_Done_FreeType(m_library);
     }
 
@@ -516,10 +521,8 @@ namespace agg
         m_change_stamp(0),
         m_last_error(0),
         m_name(0),
-        m_name_len(256-16-1),
         m_face_index(0),
         m_char_map(FT_ENCODING_NONE),
-        m_signature(new char [256+256-16]),
         m_height(0),
         m_width(0),
         m_hinting(true),
@@ -531,7 +534,8 @@ namespace agg
         m_num_faces(0),
         m_max_faces(max_faces),
         m_cur_face(0),
-        m_resolution(0),
+        m_resolution_x(0),
+        m_resolution_y(0),
         m_glyph_rendering(glyph_ren_native_gray8),
         m_glyph_index(0),
         m_data_size(0),
@@ -550,6 +554,7 @@ namespace agg
         m_scanlines_bin(),
         m_rasterizer()
     {
+    	m_signature[0] = 0;
         m_curves16.approximation_scale(4.0);
         m_curves32.approximation_scale(4.0);
         m_last_error = FT_Init_FreeType(&m_library);
@@ -559,9 +564,10 @@ namespace agg
 
 
     //------------------------------------------------------------------------
-    void font_engine_freetype_base::resolution(unsigned dpi) 
+    void font_engine_freetype_base::resolution(unsigned dpi_x, unsigned dpi_y)
     { 
-        m_resolution = dpi;
+        m_resolution_x = dpi_x;
+        m_resolution_y = dpi_y;
         update_char_size();
     }
 
@@ -603,6 +609,20 @@ namespace agg
     bool font_engine_freetype_base::load_font(const char* font_name, 
                                               unsigned face_index,
                                               glyph_rendering ren_type,
+                                              double width, double height,
+                                              const char* font_mem,
+                                              const long font_mem_size)
+    {
+        m_width = int(width * 64.0);
+        m_height = int(width * 64.0);
+        return load_font(font_name, face_index, ren_type, font_mem,
+       		font_mem_size);
+    }
+
+    //------------------------------------------------------------------------
+    bool font_engine_freetype_base::load_font(const char* font_name,
+                                              unsigned face_index,
+                                              glyph_rendering ren_type,
                                               const char* font_mem, 
                                               const long font_mem_size)
     {
@@ -622,7 +642,9 @@ namespace agg
             {
                 if(m_num_faces >= m_max_faces)
                 {
-                    delete [] m_face_names[0];
+printf("deleting first face name\n");
+fflush(stdout);
+					free(m_face_names[0]);
                     FT_Done_Face(m_faces[0]);
                     memcpy(m_faces, 
                            m_faces + 1, 
@@ -759,6 +781,8 @@ namespace agg
     //------------------------------------------------------------------------
     bool font_engine_freetype_base::height(double h)
     {
+    	if (m_height == int(h * 64.0))
+    		return false;
         m_height = int(h * 64.0);
         if(m_cur_face)
         {
@@ -771,6 +795,8 @@ namespace agg
     //------------------------------------------------------------------------
     bool font_engine_freetype_base::width(double w)
     {
+    	if (m_width == int(w * 64.0))
+    		return false;
         m_width = int(w * 64.0);
         if(m_cur_face)
         {
@@ -783,7 +809,9 @@ namespace agg
     //------------------------------------------------------------------------
     void font_engine_freetype_base::hinting(bool h)
     { 
-        m_hinting = h; 
+    	if (m_hinting == h)
+    		return;
+        m_hinting = h;
         if(m_cur_face)
         {
             update_signature();
@@ -793,6 +821,8 @@ namespace agg
     //------------------------------------------------------------------------
     void font_engine_freetype_base::flip_y(bool f)
     { 
+    	if (m_flip_y == f)
+    		return;
         m_flip_y = f; 
         if(m_cur_face)
         {
@@ -815,17 +845,9 @@ namespace agg
     {
         if(m_cur_face && m_name)
         {
-            unsigned name_len = strlen(m_name);
-            if(name_len > m_name_len)
-            {
-                delete [] m_signature;
-                m_signature = new char [name_len + 32 + 256];
-                m_name_len = name_len + 32 - 1;
-            }
-
             unsigned gamma_hash = 0;
             if(m_glyph_rendering == glyph_ren_native_gray8 ||
-               m_glyph_rendering == glyph_ren_agg_mono || 
+               m_glyph_rendering == glyph_ren_agg_mono ||
                m_glyph_rendering == glyph_ren_agg_gray8)
             {
                 unsigned char gamma_table[rasterizer_scanline_aa<>::aa_scale];
@@ -837,34 +859,35 @@ namespace agg
                 gamma_hash = calc_crc32(gamma_table, sizeof(gamma_table));
             }
 
-            sprintf(m_signature, 
-                    "%s,%u,%d,%d,%d:%dx%d,%d,%d,%08X", 
+            snprintf(m_signature, sizeof(m_signature),
+                    "%s,%u,%d,%d,%d,%d:%dx%d,%d,%d,%08X",
                     m_name,
                     m_char_map,
                     m_face_index,
                     int(m_glyph_rendering),
-                    m_resolution,
+                    m_resolution_x,
+                    m_resolution_y,
                     m_height,
                     m_width,
                     int(m_hinting),
                     int(m_flip_y),
                     gamma_hash);
-            if(m_glyph_rendering == glyph_ren_outline ||
-               m_glyph_rendering == glyph_ren_agg_mono ||
-               m_glyph_rendering == glyph_ren_agg_gray8)
-            {
-                double mtx[6];
-                char buf[100];
-                m_affine.store_to(mtx);
-                sprintf(buf, ",%08X%08X%08X%08X%08X%08X", 
-                    dbl_to_plain_fx(mtx[0]), 
-                    dbl_to_plain_fx(mtx[1]), 
-                    dbl_to_plain_fx(mtx[2]), 
-                    dbl_to_plain_fx(mtx[3]), 
-                    dbl_to_plain_fx(mtx[4]), 
-                    dbl_to_plain_fx(mtx[5]));
-                strcat(m_signature, buf);
-            }
+//            if(m_glyph_rendering == glyph_ren_outline ||
+//               m_glyph_rendering == glyph_ren_agg_mono ||
+//               m_glyph_rendering == glyph_ren_agg_gray8)
+//            {
+//                double mtx[6];
+//                char buf[100];
+//                m_affine.store_to(mtx);
+//                sprintf(buf, ",%08X%08X%08X%08X%08X%08X",
+//                    dbl_to_plain_fx(mtx[0]),
+//                    dbl_to_plain_fx(mtx[1]),
+//                    dbl_to_plain_fx(mtx[2]),
+//                    dbl_to_plain_fx(mtx[3]),
+//                    dbl_to_plain_fx(mtx[4]),
+//                    dbl_to_plain_fx(mtx[5]));
+//                strcat(m_signature, buf);
+//            }
             ++m_change_stamp;
         }
     }
@@ -875,13 +898,13 @@ namespace agg
     {
         if(m_cur_face)
         {
-            if(m_resolution)
+            if(m_resolution_x != 0)
             {
                 FT_Set_Char_Size(m_cur_face, 
-                                 m_width,       // char_width in 1/64th of points
-                                 m_height,      // char_height in 1/64th of points
-                                 m_resolution,  // horizontal device resolution 
-                                 m_resolution); // vertical device resolution 
+                                 m_width,         // char_width in 1/64th of points
+                                 m_height,        // char_height in 1/64th of points
+                                 m_resolution_x,  // horizontal device resolution
+                                 m_resolution_y); // vertical device resolution
             }
             else
             {
@@ -903,8 +926,8 @@ namespace agg
         m_glyph_index = FT_Get_Char_Index(m_cur_face, glyph_code);
         m_last_error = FT_Load_Glyph(m_cur_face, 
                                      m_glyph_index, 
-                                     m_hinting ? FT_LOAD_DEFAULT : FT_LOAD_NO_HINTING);
-//                                     m_hinting ? FT_LOAD_FORCE_AUTOHINT : FT_LOAD_NO_HINTING);
+//                                     m_hinting ? FT_LOAD_DEFAULT : FT_LOAD_NO_HINTING);
+                                     m_hinting ? FT_LOAD_FORCE_AUTOHINT : FT_LOAD_NO_HINTING);
         if(m_last_error == 0)
         {
             switch(m_glyph_rendering)
@@ -926,8 +949,8 @@ namespace agg
                     m_bounds.y2 = m_scanlines_bin.max_y() + 1;
                     m_data_size = m_scanlines_bin.byte_size(); 
                     m_data_type = glyph_data_mono;
-                    m_advance_x = int26p6_to_dbl(m_cur_face->glyph->advance.x);
-                    m_advance_y = int26p6_to_dbl(m_cur_face->glyph->advance.y);
+                    m_advance_x = int16p16_to_dbl(m_cur_face->glyph->linearHoriAdvance);
+                    m_advance_y = 0;//int16p16_to_dbl(m_cur_face->glyph->linearVertAdvance);
                     return true;
                 }
                 break;
@@ -951,8 +974,8 @@ namespace agg
                     m_bounds.y2 = m_scanlines_aa.max_y() + 1;
                     m_data_size = m_scanlines_aa.byte_size(); 
                     m_data_type = glyph_data_gray8;
-                    m_advance_x = int26p6_to_dbl(m_cur_face->glyph->advance.x);
-                    m_advance_y = int26p6_to_dbl(m_cur_face->glyph->advance.y);
+                    m_advance_x = int16p16_to_dbl(m_cur_face->glyph->linearHoriAdvance);
+                    m_advance_y = 0;//int16p16_to_dbl(m_cur_face->glyph->linearVertAdvance);
                     return true;
                 }
                 break;
@@ -976,8 +999,8 @@ namespace agg
                             m_bounds.y1 = int(floor(bnd.y1));
                             m_bounds.x2 = int(ceil(bnd.x2));
                             m_bounds.y2 = int(ceil(bnd.y2));
-                            m_advance_x = int26p6_to_dbl(m_cur_face->glyph->advance.x);
-                            m_advance_y = int26p6_to_dbl(m_cur_face->glyph->advance.y);
+                            m_advance_x = int16p16_to_dbl(m_cur_face->glyph->linearHoriAdvance);
+                            m_advance_y = 0;//int16p16_to_dbl(m_cur_face->glyph->linearVertAdvance);
                             m_affine.transform(&m_advance_x, &m_advance_y);
                             return true;
                         }
@@ -997,8 +1020,8 @@ namespace agg
                             m_bounds.y1 = int(floor(bnd.y1));
                             m_bounds.x2 = int(ceil(bnd.x2));
                             m_bounds.y2 = int(ceil(bnd.y2));
-                            m_advance_x = int26p6_to_dbl(m_cur_face->glyph->advance.x);
-                            m_advance_y = int26p6_to_dbl(m_cur_face->glyph->advance.y);
+                            m_advance_x = int16p16_to_dbl(m_cur_face->glyph->linearHoriAdvance);
+                            m_advance_y = 0;//int16p16_to_dbl(m_cur_face->glyph->linearVertAdvance);
                             m_affine.transform(&m_advance_x, &m_advance_y);
                             return true;
                         }
@@ -1036,8 +1059,8 @@ namespace agg
                     m_bounds.y2 = m_scanlines_bin.max_y() + 1;
                     m_data_size = m_scanlines_bin.byte_size(); 
                     m_data_type = glyph_data_mono;
-                    m_advance_x = int26p6_to_dbl(m_cur_face->glyph->advance.x);
-                    m_advance_y = int26p6_to_dbl(m_cur_face->glyph->advance.y);
+                    m_advance_x = int16p16_to_dbl(m_cur_face->glyph->linearHoriAdvance);
+                    m_advance_y = 0;//int16p16_to_dbl(m_cur_face->glyph->linearVertAdvance);
                     m_affine.transform(&m_advance_x, &m_advance_y);
                     return true;
                 }
@@ -1074,8 +1097,8 @@ namespace agg
                     m_bounds.y2 = m_scanlines_aa.max_y() + 1;
                     m_data_size = m_scanlines_aa.byte_size(); 
                     m_data_type = glyph_data_gray8;
-                    m_advance_x = int26p6_to_dbl(m_cur_face->glyph->advance.x);
-                    m_advance_y = int26p6_to_dbl(m_cur_face->glyph->advance.y);
+                    m_advance_x = int16p16_to_dbl(m_cur_face->glyph->linearHoriAdvance);
+                    m_advance_y = 0;//int16p16_to_dbl(m_cur_face->glyph->linearVertAdvance);
                     m_affine.transform(&m_advance_x, &m_advance_y);
                     return true;
                 }
@@ -1117,13 +1140,15 @@ namespace agg
 
     //------------------------------------------------------------------------
     bool font_engine_freetype_base::add_kerning(unsigned first, unsigned second,
-                                           double* x, double* y)
+                                                double* x, double* y)
     {
         if(m_cur_face && first && second && FT_HAS_KERNING(m_cur_face))
         {
             FT_Vector delta;
+
             FT_Get_Kerning(m_cur_face, first, second,
                            FT_KERNING_DEFAULT, &delta);
+
             double dx = int26p6_to_dbl(delta.x);
             double dy = int26p6_to_dbl(delta.y);
             if(m_glyph_rendering == glyph_ren_outline ||

@@ -6,6 +6,9 @@
 #define _AUTO_LOCKER_H
 
 
+#include <SupportDefs.h>
+
+
 namespace BPrivate {
 
 // AutoLockerStandardLocking
