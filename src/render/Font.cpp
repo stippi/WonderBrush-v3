@@ -1,10 +1,7 @@
 /*
- * Font.cpp
- *
- *  Created on: 22.08.2012
- *      Author: stippi
+ * Copyright 2012 Stephan Aßmus <superstippi@gmx.de>
+ * All rights reserved.
  */
-
 #include "Font.h"
 
 #include <stdio.h>

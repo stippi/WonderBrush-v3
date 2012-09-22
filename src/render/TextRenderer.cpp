@@ -1,24 +1,21 @@
 /*
- * AggContext.cpp
- *
- *  Created on: 23.08.2012
- *      Author: stippi
+ * Copyright 2012 Stephan Aßmus <superstippi@gmx.de>
+ * All rights reserved.
  */
-
-#include "AggContext.h"
+#include "TextRenderer.h"
 
 #include "TextLayout.h"
 #include "UTF8Utils.h"
 
 
 bool
-AggContext::sTextEngineInitialized = false;
+TextRenderer::sTextEngineInitialized = false;
 
 FontEngine
-AggContext::sFontEngine;
+TextRenderer::sFontEngine;
 
 FontManager
-AggContext::sFontManager(AggContext::sFontEngine, 128);
+TextRenderer::sFontManager(TextRenderer::sFontEngine, 128);
 
 
 static inline bool
@@ -28,7 +25,7 @@ operator!=(const Color& a, const Color& b)
 }
 
 
-AggContext::AggContext(int dpiX, int dpiY)
+TextRenderer::TextRenderer(int dpiX, int dpiY)
 	:
 	fBuffer(),
 
@@ -73,7 +70,7 @@ AggContext::AggContext(int dpiX, int dpiY)
 
 
 void
-AggContext::attachToBuffer(unsigned char* data, int width, int height,
+TextRenderer::attachToBuffer(unsigned char* data, int width, int height,
 	int stride)
 {
 	fBuffer.attach(data, width, height, stride);
@@ -83,7 +80,7 @@ AggContext::attachToBuffer(unsigned char* data, int width, int height,
 
 
 void
-AggContext::setClipping(int x, int y, int width, int height)
+TextRenderer::setClipping(int x, int y, int width, int height)
 {
 	fRenderer.clip_box(x, y, x + width, y + height);
 	fRendererLCD.clip_box(x * 3, y, (x + width) * 3, y + height);
@@ -91,7 +88,7 @@ AggContext::setClipping(int x, int y, int width, int height)
 
 
 void
-AggContext::unsetClipping()
+TextRenderer::unsetClipping()
 {
 	fRenderer.reset_clipping(true);
 	fRendererLCD.reset_clipping(true);
@@ -99,13 +96,13 @@ AggContext::unsetClipping()
 
 
 void
-AggContext::clear()
+TextRenderer::clear()
 {
 	fRenderer.clear(fBackground);
 }
 
 void
-AggContext::render()
+TextRenderer::render()
 {
 	agg::render_scanlines(fRasterizer, fScanline, fRendererSolid);
 	fRasterizer.reset();
@@ -113,7 +110,7 @@ AggContext::render()
 
 
 void
-AggContext::setForeground(int red, int green, int blue, int alpha)
+TextRenderer::setForeground(int red, int green, int blue, int alpha)
 {
 	fForeground.r = red;
 	fForeground.g = green;
@@ -123,7 +120,7 @@ AggContext::setForeground(int red, int green, int blue, int alpha)
 
 
 void
-AggContext::setBackground(int red, int green, int blue, int alpha)
+TextRenderer::setBackground(int red, int green, int blue, int alpha)
 {
 	fBackground.r = red;
 	fBackground.g = green;
@@ -133,7 +130,7 @@ AggContext::setBackground(int red, int green, int blue, int alpha)
 
 
 bool
-AggContext::loadFont(const char* fontFilePath, double height)
+TextRenderer::loadFont(const char* fontFilePath, double height)
 {
 	return sFontEngine.load_font(fontFilePath, 0, agg::glyph_ren_outline,
     	height, height);
@@ -141,7 +138,7 @@ AggContext::loadFont(const char* fontFilePath, double height)
 
 
 double
-AggContext::drawString(const char* text, double x, double y)
+TextRenderer::drawString(const char* text, double x, double y)
 {
 	if (fGrayScale) {
 		return drawString(fRendererSolid, text, x, y, 1);
@@ -152,7 +149,7 @@ AggContext::drawString(const char* text, double x, double y)
 
 
 double
-AggContext::drawText(TextLayout* layout, double x, double y,
+TextRenderer::drawText(TextLayout* layout, double x, double y,
 	int selectionStart, int selectionEnd, const Color& fg, const Color& bg,
 	unsigned flags)
 {
@@ -168,7 +165,7 @@ AggContext::drawText(TextLayout* layout, double x, double y,
 
 template<class RendererType>
 double
-AggContext::drawString(RendererType& renderer,
+TextRenderer::drawString(RendererType& renderer,
 	const char* text, double x, double y, unsigned subpixelScale)
 {
     double scaleX = AUTO_HINT_SCALE;
@@ -252,7 +249,7 @@ AggContext::drawString(RendererType& renderer,
 
 template<class RendererType>
 double
-AggContext::drawText(RendererType& renderer,
+TextRenderer::drawText(RendererType& renderer,
 	TextLayout* layout, double xOffset, double yOffset,
 	int selectionStart, int selectionEnd,
 	const Color& selectionFG, const Color& selectionBG, unsigned flags,
@@ -460,7 +457,7 @@ AggContext::drawText(RendererType& renderer,
 
 
 void
-AggContext::drawStrikeOut(int index, double xOffset, double lastX, double x,
+TextRenderer::drawStrikeOut(int index, double xOffset, double lastX, double x,
 	double lastAdvanceX, double scale, double lastY, double ty, double height,
 	int selectionStart, int selectionEnd,
 	const Color& selectionFG, const Color& strikeColor)
@@ -489,7 +486,7 @@ AggContext::drawStrikeOut(int index, double xOffset, double lastX, double x,
 
 
 void
-AggContext::drawUnderline(int index, double xOffset, double lastX, double x,
+TextRenderer::drawUnderline(int index, double xOffset, double lastX, double x,
 	double lastAdvanceX, double scale, double lastY, double ty, double height,
 	int selectionStart, int selectionEnd,
 	const Color& selectionFG, const Color& underlineColor)

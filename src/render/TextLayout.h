@@ -1,16 +1,11 @@
 /*
- * TextLayout.h
- *
- *  Created on: 23.08.2012
- *      Author: stippi
+ * Copyright 2012 Stephan Aßmus <superstippi@gmx.de>
+ * All rights reserved.
  */
+#ifndef TEXT_LAYOUT_H
+#define TEXT_LAYOUT_H
 
-#ifndef TEXTLAYOUT_H_
-#define TEXTLAYOUT_H_
-
-#include <jni.h>
-
-#include "AggContext.h"
+#include "TextRenderer.h"
 #include "Font.h"
 
 
@@ -49,6 +44,11 @@ struct StyleRun {
 struct GlyphInfo {
 	unsigned					charCode;
 
+	// TODO: This should be referenceable. Then the layout process can
+	// happen in the UI thread while the rendering can happen asynchronously.
+	// The UI thread may decide to throw away font cache entries, but the
+	// refernces of any actually used glyphs would remain valid in each
+	// TextLayout.
 	const agg::glyph_cache*		glyph;
 
 	double						x;
@@ -89,7 +89,7 @@ static const unsigned SELECTION_LAST_LINE		= 1 << 20;
 
 class TextLayout {
 public:
-	TextLayout(const AggContext* context);
+	TextLayout(const TextRenderer* renderer);
 	virtual ~TextLayout();
 
 	void setText(const char* text);
@@ -100,7 +100,7 @@ public:
 	void setJustify(bool justify);
 	void setGlyphSpacing(double spacing);
 	void setLineSpacing(double spacing);
-	void setTabs(jdouble* tabs, unsigned count);
+	void setTabs(double* tabs, unsigned count);
 
 	void clearStyleRuns();
 	bool addStyleRun(int start, const char* fontPath,
@@ -222,7 +222,7 @@ public:
 	void getLineBounds(int lineIndex, double* x1, double* y1,
 		double* x2, double* y2);
 
-	int getLineOffsets(jint offsets[], unsigned count);
+	int getLineOffsets(int offsets[], unsigned count);
 
 	unsigned getOffset(double x, double y, bool& rightOfCenter);
 
@@ -249,7 +249,7 @@ private:
 		double maxAscent, double maxDescent);
 
 private:
-	const AggContext*	fContext;
+	const TextRenderer*	fTextRenderer;
 
 	double				fFirstLineInset;
 	double				fLineInset;
@@ -280,4 +280,4 @@ private:
 	bool				fLayoutPerformed;
 };
 
-#endif /* TEXTLAYOUT_H_ */
+#endif // TEXT_LAYOUT_H

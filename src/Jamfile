@@ -28,6 +28,7 @@ for sourceDir in $(sourceDirs) {
 
 # system include directories
 local sysIncludeDirs =
+	agg/font_freetype
 	agg/include
 	cimg
 ;
@@ -68,6 +69,7 @@ SubDirHdrs [ FDirName $(TOP) src tools brush ] ;
 SubDirHdrs [ FDirName $(TOP) src tools pick ] ;
 SubDirHdrs [ FDirName $(TOP) src tools transform ] ;
 SubDirSysHdrs [ FDirName $(TOP) agg/include ] ;
+SubDirSysHdrs [ FDirName $(TOP) agg/font_freetype ] ;
 SubDirSysHdrs [ FDirName $(TOP) cimg ] ;
 # </pe-inc>
 
@@ -149,6 +151,7 @@ Application WonderBrush :
 	StyleableSnapshot.cpp
 
 	# render
+	Font.cpp
 	GaussFilter.cpp
 	LayoutContext.cpp
 	LayoutState.cpp
@@ -158,6 +161,8 @@ Application WonderBrush :
 	RenderManager.cpp
 	RenderThread.cpp
 	StackBlurFilter.cpp
+	TextLayout.cpp
+	TextRenderer.cpp
 	VertexSource.cpp
 
 	# render/text
@@ -216,10 +221,12 @@ Application WonderBrush :
 		libcolorpicker.a
 		libproperty.a
 
-		libagg.a
-
 #		linprog
 #		lpsolve55
+
+		freetype
+
+		libagg.a
 
 		tracker
 		$(STDC++LIB)

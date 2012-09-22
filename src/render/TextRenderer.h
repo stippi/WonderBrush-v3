@@ -1,12 +1,9 @@
 /*
- * AggContext.h
- *
- *  Created on: 23.08.2012
- *      Author: stippi
+ * Copyright 2012 Stephan Aßmus <superstippi@gmx.de>
+ * All rights reserved.
  */
-
-#ifndef AGGCONTEXT_H_
-#define AGGCONTEXT_H_
+#ifndef TEXT_RENDERER_H
+#define TEXT_RENDERER_H
 
 #include "agg_conv_contour.h"
 #include "agg_conv_curve.h"
@@ -67,9 +64,9 @@ typedef FauxWeight<TransformedGlyph>					FauxWeightGlyph;
 class TextLayout;
 
 
-class AggContext {
+class TextRenderer {
 public:
-	AggContext(int dpiX, int dpiY);
+	TextRenderer(int dpiX, int dpiY);
 
 	void attachToBuffer(unsigned char* data, int width, int height, int stride);
 
@@ -221,4 +218,4 @@ private:
 };
 
 
-#endif /* AGGCONTEXT_H_ */
+#endif // TEXT_RENDERER_H

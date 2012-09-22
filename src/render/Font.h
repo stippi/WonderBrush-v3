@@ -1,12 +1,9 @@
 /*
- * Font.h
- *
- *  Created on: 22.08.2012
- *      Author: stippi
+ * Copyright 2012 Stephan Aßmus <superstippi@gmx.de>
+ * All rights reserved.
  */
-
-#ifndef FONT_H_
-#define FONT_H_
+#ifndef FONT_H
+#define FONT_H
 
 class Font {
 public:
@@ -57,4 +54,4 @@ private:
 	ScriptLevel		fScriptLevel;
 };
 
-#endif /* FONT_H_ */
+#endif // FONT_H

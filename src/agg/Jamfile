@@ -22,6 +22,7 @@ StaticLibrary libagg.a :
 	agg_color_rgba.cpp
 	agg_curves.cpp
 	agg_embedded_raster_fonts.cpp
+	agg_font_freetype.cpp
 	agg_gsv_text.cpp
 	agg_image_filters.cpp
 	agg_line_aa_basics.cpp

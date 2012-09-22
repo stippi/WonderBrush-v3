@@ -1,15 +1,12 @@
 /*
- * TextLayout.cpp
- *
- *  Created on: 23.08.2012
- *      Author: stippi
+ * Copyright 2012 Stephan Aßmus <superstippi@gmx.de>
+ * All rights reserved.
  *
  * Parts of the code:
  *
  * Copyright 2001-2009, Haiku Inc. All rights reserved.
  * Distributed under the terms of the MIT License.
  */
-
 #include "TextLayout.h"
 
 #include <algorithm>
@@ -154,9 +151,9 @@ canEndLine(GlyphInfo* buffer, int offset, int count)
 }
 
 
-TextLayout::TextLayout(const AggContext* context)
+TextLayout::TextLayout(const TextRenderer* textRenderer)
 	:
-	fContext(context),
+	fTextRenderer(textRenderer),
 
 	fFirstLineInset(0.0),
 	fLineInset(0.0),
@@ -201,9 +198,9 @@ TextLayout::~TextLayout()
 void
 TextLayout::setText(const char* text)
 {
-	unsigned subpixelScale = fContext->getGrayScale() ? 1 : 3;
-	init(text, fContext->getFontEngine(), fContext->getFontManager(),
-		fContext->getHinting(), AggContext::AUTO_HINT_SCALE, subpixelScale);
+	unsigned subpixelScale = fTextRenderer->getGrayScale() ? 1 : 3;
+	init(text, fTextRenderer->getFontEngine(), fTextRenderer->getFontManager(),
+		fTextRenderer->getHinting(), TextRenderer::AUTO_HINT_SCALE, subpixelScale);
 
 	invalidateLayout();
 }
@@ -282,7 +279,7 @@ TextLayout::setLineSpacing(double spacing)
 
 
 void
-TextLayout::setTabs(jdouble* tabs, unsigned count)
+TextLayout::setTabs(double* tabs, unsigned count)
 {
 	if (fTabCount == 0 && count == 0)
 		return;
@@ -380,9 +377,9 @@ TextLayout::layout()
 	if (fGlyphInfoCount == 0)
 		return;
 
-	unsigned subpixelScale = fContext->getGrayScale() ? 1 : 3;
-	layout(fContext->getFontEngine(), fContext->getFontManager(),
-		fContext->getKerning(), AggContext::AUTO_HINT_SCALE, subpixelScale);
+	unsigned subpixelScale = fTextRenderer->getGrayScale() ? 1 : 3;
+	layout(fTextRenderer->getFontEngine(), fTextRenderer->getFontManager(),
+		fTextRenderer->getKerning(), TextRenderer::AUTO_HINT_SCALE, subpixelScale);
 }
 
 
@@ -393,8 +390,8 @@ TextLayout::getActualWidth()
 
 	double maxWidth = 0.0;
 
-	double scale = fContext->getGrayScale() ? 1.0 : 3.0;
-	scale *= AggContext::AUTO_HINT_SCALE;
+	double scale = fTextRenderer->getGrayScale() ? 1.0 : 3.0;
+	scale *= TextRenderer::AUTO_HINT_SCALE;
 
 	for (unsigned i = 0; i < fGlyphInfoCount; i++) {
 		double width = fGlyphInfoBuffer[i].x;
@@ -430,8 +427,8 @@ TextLayout::getHeight()
 double
 TextLayout::getScaleX() const
 {
-	unsigned subpixelScale = fContext->getGrayScale() ? 1 : 3;
-	return AggContext::AUTO_HINT_SCALE * subpixelScale;
+	unsigned subpixelScale = fTextRenderer->getGrayScale() ? 1 : 3;
+	return TextRenderer::AUTO_HINT_SCALE * subpixelScale;
 }
 
 
@@ -480,8 +477,8 @@ TextLayout::getLineWidth(int lineIndex)
 			width += fGlyphInfoBuffer[i].glyph->bounds.x2;
 	}
 
-	double scale = fContext->getGrayScale() ? 1.0 : 3.0;
-	scale *= AggContext::AUTO_HINT_SCALE;
+	double scale = fTextRenderer->getGrayScale() ? 1.0 : 3.0;
+	scale *= TextRenderer::AUTO_HINT_SCALE;
 	width /= scale;
 
 	return width;
@@ -520,8 +517,8 @@ TextLayout::getLineBounds(int lineIndex, double* x1, double* y1,
 			*x2 += fGlyphInfoBuffer[i].glyph->bounds.x2;
 	}
 
-	double scale = fContext->getGrayScale() ? 1.0 : 3.0;
-	scale *= AggContext::AUTO_HINT_SCALE;
+	double scale = fTextRenderer->getGrayScale() ? 1.0 : 3.0;
+	scale *= TextRenderer::AUTO_HINT_SCALE;
 
 	*x1 /= scale;
 	*x2 /= scale;
@@ -533,7 +530,7 @@ TextLayout::getLineBounds(int lineIndex, double* x1, double* y1,
 
 
 int
-TextLayout::getLineOffsets(jint offsets[], unsigned count)
+TextLayout::getLineOffsets(int offsets[], unsigned count)
 {
 	validateLayout();
 
@@ -555,8 +552,8 @@ TextLayout::getOffset(double x, double y, bool& rightOfCenter)
 {
 	validateLayout();
 
-	double scale = fContext->getGrayScale() ? 1.0 : 3.0;
-	scale *= AggContext::AUTO_HINT_SCALE;
+	double scale = fTextRenderer->getGrayScale() ? 1.0 : 3.0;
+	scale *= TextRenderer::AUTO_HINT_SCALE;
 	x *= scale;
 
 	rightOfCenter = false;
@@ -671,8 +668,8 @@ TextLayout::getLineMetrics(int lineIndex, double buffer[])
 	buffer[1] = fLineInfoBuffer[lineIndex].maxDescent;
 
 	// Figure out average char width
-	double scale = fContext->getGrayScale() ? 1.0 : 3.0;
-	scale *= AggContext::AUTO_HINT_SCALE;
+	double scale = fTextRenderer->getGrayScale() ? 1.0 : 3.0;
+	scale *= TextRenderer::AUTO_HINT_SCALE;
 
 	double charWidthSum = 0.0;
 	unsigned charCount = 0;

@@ -16,6 +16,7 @@
 #ifndef AGG_FONT_CACHE_MANAGER_INCLUDED
 #define AGG_FONT_CACHE_MANAGER_INCLUDED
 
+#include <new>
 #include <string.h>
 #include "agg_array.h"
 
@@ -42,6 +43,7 @@ namespace agg
         rect_i          bounds;
         double          advance_x;
         double          advance_y;
+        double			height;
     };
 
 
@@ -52,16 +54,32 @@ namespace agg
         enum block_size_e { block_size = 16384-16 };
 
         //--------------------------------------------------------------------
-        font_cache() : 
-            m_allocator(block_size),
-            m_font_signature(0)
-        {}
+        font_cache()
+        {
+            m_font_signature[0] = 0;
+        }
+
+        //--------------------------------------------------------------------
+        ~font_cache()
+        {
+        	for (int i = 0; i < 256; i++) {
+        		if (m_glyphs[i] != 0) {
+        			glyph_cache** glyph = m_glyphs[i];
+        			for (int j = 0; j < 256; j++) {
+        				if (glyph[j] != 0) {
+        					free(glyph[j]->data);
+        					free(glyph[j]);
+        				}
+        			}
+        			free(m_glyphs[i]);
+        		}
+        	}
+        }
 
         //--------------------------------------------------------------------
         void signature(const char* font_signature)
         {
-            m_font_signature = (char*)m_allocator.allocate(strlen(font_signature) + 1);
-            strcpy(m_font_signature, font_signature);
+        	snprintf(m_font_signature, sizeof(m_font_signature), "%s", font_signature);
             memset(m_glyphs, 0, sizeof(m_glyphs));
         }
 
@@ -89,38 +107,45 @@ namespace agg
                                  glyph_data_type data_type,
                                  const rect_i&   bounds,
                                  double          advance_x,
-                                 double          advance_y)
+                                 double          advance_y,
+                                 double          height)
         {
             unsigned msb = (glyph_code >> 8) & 0xFF;
             if(m_glyphs[msb] == 0)
             {
-                m_glyphs[msb] = 
-                    (glyph_cache**)m_allocator.allocate(sizeof(glyph_cache*) * 256, 
-                                                        sizeof(glyph_cache*));
+            	m_glyphs[msb] = (glyph_cache**) malloc(
+            		256 * sizeof(glyph_cache*));
+            	if (m_glyphs[msb] == 0)
+            		return 0;
                 memset(m_glyphs[msb], 0, sizeof(glyph_cache*) * 256);
             }
 
             unsigned lsb = glyph_code & 0xFF;
             if(m_glyphs[msb][lsb]) return 0; // Already exists, do not overwrite
 
-            glyph_cache* glyph = 
-                (glyph_cache*)m_allocator.allocate(sizeof(glyph_cache),
-                                                   sizeof(double));
+            glyph_cache* glyph = (glyph_cache*) malloc(sizeof(glyph_cache));
+            if (glyph == 0)
+            	return 0;
 
             glyph->glyph_index        = glyph_index;
-            glyph->data               = m_allocator.allocate(data_size);
+            glyph->data               = (int8u*) malloc(data_size);
+            if (glyph->data == 0) {
+            	delete glyph;
+            	return 0;
+            }
+
             glyph->data_size          = data_size;
             glyph->data_type          = data_type;
             glyph->bounds             = bounds;
             glyph->advance_x          = advance_x;
             glyph->advance_y          = advance_y;
+            glyph->height             = height;
             return m_glyphs[msb][lsb] = glyph;
         }
 
     private:
-        block_allocator m_allocator;
         glyph_cache**   m_glyphs[256];
-        char*           m_font_signature;
+        char           m_font_signature[1024];
     };
 
 
@@ -171,7 +196,7 @@ namespace agg
             {
                 if(m_num_fonts >= m_max_fonts)
                 {
-                    obj_allocator<font_cache>::deallocate(m_fonts[0]);
+                	obj_allocator<font_cache>::deallocate(m_fonts[0]);
                     memcpy(m_fonts, 
                            m_fonts + 1, 
                            (m_max_fonts - 1) * sizeof(font_cache*));
@@ -204,7 +229,8 @@ namespace agg
                                  glyph_data_type data_type,
                                  const rect_i&   bounds,
                                  double          advance_x,
-                                 double          advance_y)
+                                 double          advance_y,
+                                 double          height)
         {
             if(m_cur_font) 
             {
@@ -214,7 +240,8 @@ namespace agg
                                                data_type,
                                                bounds,
                                                advance_x,
-                                               advance_y);
+                                               advance_y,
+                                               height);
             }
             return 0;
         }
@@ -302,7 +329,8 @@ namespace agg
                                                        m_engine.data_type(),
                                                        m_engine.bounds(),
                                                        m_engine.advance_x(),
-                                                       m_engine.advance_y());
+                                                       m_engine.advance_y(),
+                                                       m_engine.height());
                     m_engine.write_glyph_to(m_last_glyph->data);
                     return m_last_glyph;
                 }
