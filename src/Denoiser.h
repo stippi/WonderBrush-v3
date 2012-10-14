@@ -5,9 +5,6 @@
 #include <Path.h>
 #include <String.h>
 
-class RenderBuffer;
-class RenderEngine;
-
 class Denoiser : public BApplication {
 public:
 								Denoiser();
@@ -19,8 +16,8 @@ public:
 
 private:
 			void				_PrintUsage(const char* appPath);
-			status_t			_DenoiseImage(const RenderBuffer& buffer,
-									RenderEngine& engine, BPath path,
+			status_t			_DenoiseImage(BBitmap* bitmap,
+									BPath path,
 									const char* originalPath) const;
 
 private:

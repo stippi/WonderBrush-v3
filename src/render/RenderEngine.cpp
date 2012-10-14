@@ -473,7 +473,7 @@ RenderEngine::Denoise(const RenderBuffer* buffer,
 		cimg_library::CImg<uint16> image(width, height, 1, 3);
 
 		uint8* src = (uint8*)buffer->Bits();
-		uint16* dst = (uint16*)image._data;
+		uint16* dst = (uint16*)image.data;
 		uint32 srcBPR = buffer->BytesPerRow();
 
 		// copy dest contents into image
@@ -498,7 +498,7 @@ RenderEngine::Denoise(const RenderBuffer* buffer,
 
 		// copy result back into dest
 		src = (uint8*)buffer->Bits();
-		dst = (uint16*)image._data;
+		dst = (uint16*)image.data;
 		for (uint32 y = 0; y < height; y++) {
 			uint16* s = (uint16*)src;
 			uint16* d1 = dst;

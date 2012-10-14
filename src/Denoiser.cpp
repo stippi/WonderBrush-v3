@@ -8,8 +8,7 @@
 #include <TranslationUtils.h>
 #include <TranslatorRoster.h>
 
-#include "RenderBuffer.h"
-#include "RenderEngine.h"
+#include <CImg.h>
 
 // constructor
 Denoiser::Denoiser()
@@ -128,8 +127,6 @@ Denoiser::ArgvReceived(int32 argc, char** argv)
 	}
 	create_directory(fTargetFolder.Path(), 0777);
 
-	RenderEngine engine;
-
 	for (; i < argc; i++) {
 		BPath path(argv[i]);
 		BBitmap* original = BTranslationUtils::GetBitmap(path.Path());
@@ -137,9 +134,7 @@ Denoiser::ArgvReceived(int32 argc, char** argv)
 			fprintf(stderr, "Failed to load '%s'\n", argv[i]);
 			continue;
 		}
-		RenderBuffer buffer(original);
-
-		_DenoiseImage(buffer, engine, fTargetFolder, argv[i]);
+		_DenoiseImage(original, fTargetFolder, argv[i]);
 
 		delete original;
 	}
@@ -167,32 +162,72 @@ Denoiser::_PrintUsage(const char* appPath)
 
 // _DenoiseImage
 status_t
-Denoiser::_DenoiseImage(const RenderBuffer& buffer, RenderEngine& engine,
-	BPath path, const char* originalPath) const
+Denoiser::_DenoiseImage(BBitmap* bitmap, BPath path,
+	const char* originalPath) const
 {
-	engine.Denoise(&buffer, fAmplitude, fSharpness, fAnisotropy, fAlpha,
-		fSigma, fDL, fDA, fGaussPrecision, fInterpolationType,
-		fFastAproximation);
+	try {
+		uint32 width = bitmap->Bounds().IntegerWidth() + 1;
+		uint32 height = bitmap->Bounds().IntegerHeight() + 1;
 
-	BBitmap* bitmap = new BBitmap(buffer.Bounds(), B_BITMAP_NO_SERVER_LINK,
-		B_RGBA32);
-	status_t ret = bitmap->InitCheck();
-	if (ret != B_OK) {
-		fprintf(stderr, "Failed to create bitmap: %s\n", strerror(ret));
-		delete bitmap;
-		return ret;
+		cimg_library::CImg<uint8> image(width, height, 1, 3);
+
+		uint8* src = (uint8*)bitmap->Bits();
+		uint8* dst = (uint8*)image.data;
+		uint32 srcBPR = bitmap->BytesPerRow();
+
+		// copy dest contents into image
+		for (uint32 y = 0; y < height; y++) {
+			uint8* s = src;
+			uint8* d1 = dst;
+			uint8* d2 = dst + width * height;
+			uint8* d3 = dst + 2 * width * height;
+			for (uint32 x = 0; x < width; x++) {
+				*d1++ = s[0];
+				*d2++ = s[1];
+				*d3++ = s[2];
+				s += 4;
+			}
+			src += srcBPR;
+			dst += width;
+		}
+	
+		image.blur_anisotropic(fAmplitude, fSharpness, fAnisotropy, fAlpha,
+			fSigma, fDL, fDA, fGaussPrecision, fInterpolationType,
+			fFastAproximation);
+
+		// copy result back into dest
+		src = (uint8*)bitmap->Bits();
+		dst = (uint8*)image.data;
+		for (uint32 y = 0; y < height; y++) {
+			uint8* s = src;
+			uint8* d1 = dst;
+			uint8* d2 = dst + width * height;
+			uint8* d3 = dst + 2 * width * height;
+			for (uint32 x = 0; x < width; x++) {
+				s[0] = *d1++;
+				s[1] = *d2++;
+				s[2] = *d3++;
+				s += 4;
+			}
+			src += srcBPR;
+			dst += width;
+		}
+	} catch (...) {
+		printf("CImgDeNoise::ProcessBitmap() - caught exception!\n");
+		return B_ERROR;
 	}
 
-	buffer.CopyTo(bitmap, buffer.Bounds());
 	BBitmapStream bitmapStream(bitmap);
 
 	BString name(originalPath);
 	name.Remove(0, name.FindLast('/') + 1);
 	path.Append(name);
 	BFile file(path.Path(), B_CREATE_FILE | B_ERASE_FILE | B_READ_WRITE);
-	if (file.InitCheck() != B_OK) {
+	status_t ret = file.InitCheck();
+	if (ret != B_OK) {
 		fprintf(stderr, "Failed to create file '%s': %s\n",
-			path.Path(), strerror(file.InitCheck()));
+			path.Path(), strerror(ret));
+		bitmapStream.DetachBitmap(&bitmap);
 		return file.InitCheck();
 	}
 
@@ -201,9 +236,11 @@ Denoiser::_DenoiseImage(const RenderBuffer& buffer, RenderEngine& engine,
 	if (ret != B_OK) {
 		fprintf(stderr, "Failed to translate file '%s': %s\n",
 			path.Path(), strerror(ret));
+		bitmapStream.DetachBitmap(&bitmap);
 		return ret;
 	}
 
+	bitmapStream.DetachBitmap(&bitmap);
 	return B_OK;
 }
 
