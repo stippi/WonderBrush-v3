@@ -161,7 +161,7 @@ public:
 		BRect box = fParent->ModifiedBox();
 		box.OffsetBy(offset);
 		fParent->SetModifiedBox(box);
-		fParent->SetPivot(fParent->Pivot() + offset);
+//		fParent->SetPivot(fStartPivot + offset);
 	}
 
 	virtual BCursor ViewCursor(BPoint current) const
@@ -513,13 +513,13 @@ public:
 	{
 		DragState::SetOrigin(origin);
 		fOldAngle = fParent->LocalRotation();
+		fPivot = fParent->Pivot();
+		fParent->TransformObjectToCanvas(&fPivot);
 	}
 
 	virtual void DragTo(BPoint current, uint32 modifiers)
 	{
-		BPoint pivot(fParent->Pivot());
-		fParent->TransformObjectToCanvas(&pivot);
-		double angle = calc_angle(pivot, fOrigin, current);
+		double angle = calc_angle(fPivot, fOrigin, current);
 	
 		if (modifiers & B_SHIFT_KEY) {
 			if (angle < 0.0)
@@ -567,6 +567,7 @@ public:
 private:
 	TransformToolState*	fParent;
 	double				fOldAngle;
+	BPoint				fPivot;
 };
 
 
@@ -1269,6 +1270,8 @@ Transformable
 TransformToolState::UpdateAdditionalTransformation()
 {
 	Transformable additionalTransform;
+	SetAdditionalTransformation(additionalTransform);
+
 	// Only local rotation is treated as additional transformation.
 	BPoint pivot(Pivot());
 	TransformObjectToCanvas(&pivot);
@@ -1278,11 +1281,6 @@ TransformToolState::UpdateAdditionalTransformation()
 	UpdateBounds();
 
 	// Translation and scale are only applied to the object.
-	Transformable transform;
-	transform.RotateBy(Pivot(), LocalRotation());
-	transform.ScaleBy(BPoint(fOriginalBox.left, fOriginalBox.top),
-		LocalXScale(), LocalYScale());
-	transform.TranslateBy(Translation());
 // NOTE [bonefish]: Here's the math:
 // L: original local object transformation
 // P: original parent to canvas transformation
@@ -1296,10 +1294,10 @@ TransformToolState::UpdateAdditionalTransformation()
 // L': the modified local object transformation, such that G' = PL'
 // Hence we get PL' = RPLB => L' = (P^-1)RPLB
 // The correct B is:
-//	Transformable transform;
-//	transform.ScaleBy(BPoint(fOriginalBox.left, fOriginalBox.top),
-//		LocalXScale(), LocalYScale());
-//	transform.TranslateBy(Translation());
+	Transformable transform;
+	transform.ScaleBy(BPoint(fOriginalBox.left, fOriginalBox.top),
+		LocalXScale(), LocalYScale());
+	transform.TranslateBy(Translation());
 
 	if (fObject != NULL && fDocument->WriteLock()) {
 		// TODO: Use Command!
@@ -1329,9 +1327,9 @@ TransformToolState::UpdateAdditionalTransformation()
 // bounding box transformation (i.e. consisting of rotation, scale, and
 // translation) applied in the object's coordinate system (i.e. G' = PLB'').
 // Hence it doesn't match the way it currently works either.
-		Transformable newTransformation(transform);
-		newTransformation.Multiply(fOriginalTransformation);
-		fObject->SetTransformable(newTransformation);
+//		Transformable newTransformation(transform);
+//		newTransformation.Multiply(fOriginalTransformation);
+//		fObject->SetTransformable(newTransformation);
 
 // NOTE [bonefish]: This matches the way it currently works (L' = (P^-1)RPLB).
 // It requires "transform" to be computed as written above.
@@ -1349,12 +1347,12 @@ TransformToolState::UpdateAdditionalTransformation()
 // controls should display/modify B' anyway -- e.g. I find it rather confusing
 // how moving a rotated object affects the X/Y translation, since the object to
 // canvas transformation for that object might not be obvious.
-//		Transformable newTransformation(transform);
-//		newTransformation.Multiply(fOriginalTransformation);
-//		newTransformation.Multiply(fParentGlobalTransformation);
-//		newTransformation.Multiply(additionalTransform);
-//		newTransformation.MultiplyInverse(fParentGlobalTransformation);
-//		fObject->SetTransformable(newTransformation);
+		Transformable newTransformation(transform);
+		newTransformation.Multiply(fOriginalTransformation);
+		newTransformation.Multiply(fParentGlobalTransformation);
+		newTransformation.Multiply(additionalTransform);
+		newTransformation.MultiplyInverse(fParentGlobalTransformation);
+		fObject->SetTransformable(newTransformation);
 
 		fDocument->WriteUnlock();
 	}
