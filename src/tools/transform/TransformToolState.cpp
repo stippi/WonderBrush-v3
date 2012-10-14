@@ -1283,6 +1283,23 @@ TransformToolState::UpdateAdditionalTransformation()
 	transform.ScaleBy(BPoint(fOriginalBox.left, fOriginalBox.top),
 		LocalXScale(), LocalYScale());
 	transform.TranslateBy(Translation());
+// NOTE [bonefish]: Here's the math:
+// L: original local object transformation
+// P: original parent to canvas transformation
+// G = PL: original object to canvas transformation
+// B: bounding box transformation in the object's coordinate system, i.e. the
+//    transformation that transforms fOriginalBox to fModifiedBox (consisting
+//    of a scale and a translation)
+// R: the rotation on the canvas (i.e. around the pivot transformed to the
+//    canvas) -- correctly computed above as additionalTransform
+// G' = RPLB: the modified object to canvas transformation
+// L': the modified local object transformation, such that G' = PL'
+// Hence we get PL' = RPLB => L' = (P^-1)RPLB
+// The correct B is:
+//	Transformable transform;
+//	transform.ScaleBy(BPoint(fOriginalBox.left, fOriginalBox.top),
+//		LocalXScale(), LocalYScale());
+//	transform.TranslateBy(Translation());
 
 	if (fObject != NULL && fDocument->WriteLock()) {
 		// TODO: Use Command!
@@ -1295,15 +1312,49 @@ TransformToolState::UpdateAdditionalTransformation()
 		// object (or multiple objects with the same rotation perhaps) and then
 		// we operate in some kind of local transformation mode. Then the code
 		// which is now effective can be used.
+// NOTE [bonefish]: The first case in the TODO is correct in principle and so is
+// the following code. However, it assumes that the complete bounding box
+// transformation is applied at the very end (i.e. as "additional
+// transformation") or IOW, G' = B'PL with B' being a complete bounding box
+// transformation (i.e. consisting of rotation, scale, and translation) applied
+// in the canvas coordinate system. Hence it doesn't match the way it currently
+// works.
 //		Transformable newTransformation(fOriginalTransformation);
 //		newTransformation.Multiply(fParentGlobalTransformation);
 //		newTransformation.Multiply(transform);
 //		newTransformation.MultiplyInverse(fParentGlobalTransformation);
 //		fObject->SetTransformable(newTransformation);
 
+// NOTE [bonefish]: This code computes L' = LB'' with B'' being a complete
+// bounding box transformation (i.e. consisting of rotation, scale, and
+// translation) applied in the object's coordinate system (i.e. G' = PLB'').
+// Hence it doesn't match the way it currently works either.
 		Transformable newTransformation(transform);
 		newTransformation.Multiply(fOriginalTransformation);
 		fObject->SetTransformable(newTransformation);
+
+// NOTE [bonefish]: This matches the way it currently works (L' = (P^-1)RPLB).
+// It requires "transform" to be computed as written above.
+// The effect is that the rendering of bounding box and object match, but
+// apparently the drag states don't set the parameters correctly, since
+// moving the box after rotating it makes it jump weirdly. I haven't tried to
+// analyze it, but I suppose the previous transformation isn't taken into
+// account correctly when computing the new modified box and pivot.
+// If I understand the above TODO correctly, it shall eventually be possible to
+// transform multiple objects. I don't really understand why the TODO suggests
+// alternative cases. IMO the only thing that makes sense with multiple objects
+// is the G' = B'PL approach, since P and/or L may be different for each object,
+// so that with any approach using data (transformation or box) in the object's
+// coordinate system that data would have to be tracked for each object. IMO the
+// controls should display/modify B' anyway -- e.g. I find it rather confusing
+// how moving a rotated object affects the X/Y translation, since the object to
+// canvas transformation for that object might not be obvious.
+//		Transformable newTransformation(transform);
+//		newTransformation.Multiply(fOriginalTransformation);
+//		newTransformation.Multiply(fParentGlobalTransformation);
+//		newTransformation.Multiply(additionalTransform);
+//		newTransformation.MultiplyInverse(fParentGlobalTransformation);
+//		fObject->SetTransformable(newTransformation);
 
 		fDocument->WriteUnlock();
 	}
