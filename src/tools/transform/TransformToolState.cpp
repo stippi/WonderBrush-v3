@@ -110,13 +110,11 @@ public:
 
 	virtual void SetOrigin(BPoint origin)
 	{
-		fParent->TransformCanvasToObject(&origin);
 		DragState::SetOrigin(origin);
 	}
 
 	virtual void DragTo(BPoint current, uint32 modifiers)
 	{
-		fParent->TransformCanvasToObject(&current);
 		BPoint offset = current - fOrigin;
 		fOrigin = current;
 
@@ -514,7 +512,6 @@ public:
 		DragState::SetOrigin(origin);
 		fOldAngle = fParent->LocalRotation();
 		fPivot = fParent->Pivot();
-		fParent->TransformObjectToCanvas(&fPivot);
 	}
 
 	virtual void DragTo(BPoint current, uint32 modifiers)
@@ -535,7 +532,6 @@ public:
 	virtual BCursor ViewCursor(BPoint current) const
 	{
 		BPoint pivot(fParent->Pivot());
-		fParent->TransformObjectToCanvas(&pivot);
 		BPoint from = pivot + BPoint(sin(22.5 * 180.0 / M_PI) * 50.0,
 			-cos(22.5 * 180.0 / M_PI) * 50.0);
 	
@@ -841,7 +837,7 @@ TransformToolState::Draw(BView* view, BRect updateRect)
 	TransformObjectToView(&lbF2, round);
 	TransformObjectToView(&lbF3, round);
 
-	TransformObjectToView(&pivot, true);
+	TransformCanvasToView(&pivot);
 
 	view->PushState();
 
@@ -967,7 +963,7 @@ TransformToolState::Bounds() const
 		max_c(fModifiedBox.top, fModifiedBox.bottom));
 	TransformObjectToView(&bounds);
 	BPoint pivot = Pivot();
-	TransformObjectToView(&pivot, true);
+	TransformCanvasToView(&pivot);
 	if (bounds.left > pivot.x)
 		bounds.left = pivot.x;
 	if (bounds.right < pivot.x)
@@ -1013,15 +1009,15 @@ TransformToolState::DragStateFor(BPoint canvasWhere, float zoomLevel) const
 {
 	float inset = 7.0 / zoomLevel;
 
-	BPoint where = canvasWhere;
-	TransformCanvasToObject(&where);
-
 	// First priority has the pivot
 	BRect pR(Pivot(), Pivot());
 
 	pR.InsetBy(-inset, -inset);
-	if (pR.Contains(where))
+	if (pR.Contains(canvasWhere))
 		return fDragPivotState;
+
+	BPoint where = canvasWhere;
+	TransformCanvasToObject(&where);
 	
 	// Second priority has the inside of the box, checked with some inset so
 	// that the user can drag the whole box when the box is very small and
@@ -1164,9 +1160,7 @@ TransformToolState::SetObject(Object* object, bool modifySelection)
 	}
 
 	SetTransformable(object);
-
 	SetBox(box);
-	UpdateAdditionalTransformation();
 }
 
 // SetTransformablee
@@ -1189,11 +1183,17 @@ TransformToolState::SetTransformable(Transformable* object)
 void
 TransformToolState::SetBox(const BRect& box)
 {
+	SetAdditionalTransformation(Transformable());
+
 	fOriginalBox = box;
 	fModifiedBox = box;
+
 	fPivot = BPoint((box.left + box.right) / 2, (box.top + box.bottom) / 2);
+	TransformObjectToCanvas(&fPivot);
+
 	fRotation = 0.0;
-	UpdateBounds();
+
+	UpdateAdditionalTransformation();
 }
 
 // SetModifiedBox
@@ -1213,7 +1213,7 @@ TransformToolState::SetPivot(const BPoint& pivot)
 	if (fPivot == pivot)
 		return;
 	fPivot = pivot;
-	UpdateBounds();
+	UpdateAdditionalTransformation();
 }
 
 // TranslationX
@@ -1269,14 +1269,9 @@ TransformToolState::LocalYScale() const
 Transformable
 TransformToolState::UpdateAdditionalTransformation()
 {
-	Transformable additionalTransform;
-	SetAdditionalTransformation(additionalTransform);
-
 	// Only local rotation is treated as additional transformation.
-	BPoint pivot(Pivot());
-	TransformObjectToCanvas(&pivot);
-	additionalTransform.RotateBy(pivot, LocalRotation());
-
+	Transformable additionalTransform;
+	additionalTransform.RotateBy(Pivot(), LocalRotation());
 	SetAdditionalTransformation(additionalTransform);
 	UpdateBounds();
 
