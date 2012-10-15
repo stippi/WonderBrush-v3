@@ -1007,86 +1007,89 @@ point_line_dist(BPoint start, BPoint end, BPoint p, float radius)
 TransformToolState::DragState*
 TransformToolState::DragStateFor(BPoint canvasWhere, float zoomLevel) const
 {
-	float inset = 7.0 / zoomLevel;
-
-	// First priority has the pivot
-	BRect pR(Pivot(), Pivot());
-
-	pR.InsetBy(-inset, -inset);
-	if (pR.Contains(canvasWhere))
-		return fDragPivotState;
-
-	BPoint where = canvasWhere;
-	TransformCanvasToObject(&where);
-	
-	// Second priority has the inside of the box, checked with some inset so
-	// that the user can drag the whole box when the box is very small and
-	// the click is otherwise near enough to a corner.
-
-	BRect iR(fModifiedBox);
-	float hInset = min_c(inset, max_c(0, (iR.Width() - inset) / 2.0));
-	float vInset = min_c(inset, max_c(0, (iR.Height() - inset) / 2.0));
-
-	iR.InsetBy(hInset, vInset);
-	if (iR.Contains(where))
-		return fDragBoxState;
-
-	// Next priority have the corners.
-
-	BPoint lt(fModifiedBox.LeftTop());
-	BPoint rt(fModifiedBox.RightTop());
-	BPoint rb(fModifiedBox.RightBottom());
-	BPoint lb(fModifiedBox.LeftBottom());
-
-	TransformObjectToCanvas(&lt);
-	TransformObjectToCanvas(&rt);
-	TransformObjectToCanvas(&rb);
-	TransformObjectToCanvas(&lb);
-
-	float dLT = point_point_distance(canvasWhere, lt);
-	float dRT = point_point_distance(canvasWhere, rt);
-	float dRB = point_point_distance(canvasWhere, rb);
-	float dLB = point_point_distance(canvasWhere, lb);
-
-	float dist = min4(dLT, dRT, dRB, dLB);
-	if (dist < inset) {
-		if (dist == dLT)
-			return fDragLTState;
-		else if (dist == dRT)
-			return fDragRTState;
-		else if (dist == dRB)
-			return fDragRBState;
-		else if (dist == dLB)
-			return fDragLBState;
+	if (fObject != NULL) {
+		float inset = 7.0 / zoomLevel;
+		
+		// First priority has the pivot
+		BRect pR(Pivot(), Pivot());
+		
+		pR.InsetBy(-inset, -inset);
+		if (pR.Contains(canvasWhere))
+			return fDragPivotState;
+		
+		BPoint where = canvasWhere;
+		TransformCanvasToObject(&where);
+		
+		// Second priority has the inside of the box, checked with some inset
+		// so that the user can drag the whole box when the box is very small
+		// and the click is otherwise near enough to a corner.
+		
+		BRect iR(fModifiedBox);
+		float hInset = min_c(inset, max_c(0, (iR.Width() - inset) / 2.0));
+		float vInset = min_c(inset, max_c(0, (iR.Height() - inset) / 2.0));
+		
+		iR.InsetBy(hInset, vInset);
+		if (iR.Contains(where))
+			return fDragBoxState;
+		
+		// Next priority have the corners.
+		
+		BPoint lt(fModifiedBox.LeftTop());
+		BPoint rt(fModifiedBox.RightTop());
+		BPoint rb(fModifiedBox.RightBottom());
+		BPoint lb(fModifiedBox.LeftBottom());
+		
+		TransformObjectToCanvas(&lt);
+		TransformObjectToCanvas(&rt);
+		TransformObjectToCanvas(&rb);
+		TransformObjectToCanvas(&lb);
+		
+		float dLT = point_point_distance(canvasWhere, lt);
+		float dRT = point_point_distance(canvasWhere, rt);
+		float dRB = point_point_distance(canvasWhere, rb);
+		float dLB = point_point_distance(canvasWhere, lb);
+		
+		float dist = min4(dLT, dRT, dRB, dLB);
+		
+		if (dist < inset) {
+			if (dist == dLT)
+				return fDragLTState;
+			if (dist == dRT)
+				return fDragRTState;
+			if (dist == dRB)
+				return fDragRBState;
+			if (dist == dLB)
+				return fDragLBState;
+		}
+		
+		// Next priority have the sides.
+		
+		float dL = point_line_dist(lt, lb, canvasWhere, inset);
+		float dR = point_line_dist(rt, rb, canvasWhere, inset);
+		float dT = point_line_dist(lt, rt, canvasWhere, inset);
+		float dB = point_line_dist(lb, rb, canvasWhere, inset);
+		dist = min4(dL, dR, dT, dB);
+		if (dist < inset) {
+			if (dist == dL)
+				return fDragLState;
+			else if (dist == dR)
+				return fDragRState;
+			else if (dist == dT)
+				return fDragTState;
+			else if (dist == dB)
+				return fDragBState;
+		}
+		
+		// Check inside of the box again.
+		if (fModifiedBox.Contains(where))
+			return fDragBoxState;
+		
+		// Check outside perimeter for rotation.
+		BRect rotationRect(fModifiedBox);
+		rotationRect.InsetBy(-inset * 3, -inset * 3);
+		if (rotationRect.Contains(where))
+			return fDragRotationState;
 	}
-
-	// Next priority have the sides.
-
-	float dL = point_line_dist(lt, lb, canvasWhere, inset);
-	float dR = point_line_dist(rt, rb, canvasWhere, inset);
-	float dT = point_line_dist(lt, rt, canvasWhere, inset);
-	float dB = point_line_dist(lb, rb, canvasWhere, inset);
-	dist = min4(dL, dR, dT, dB);
-	if (dist < inset) {
-		if (dist == dL)
-			return fDragLState;
-		else if (dist == dR)
-			return fDragRState;
-		else if (dist == dT)
-			return fDragTState;
-		else if (dist == dB)
-			return fDragBState;
-	}
-
-	// Check inside of the box again.
-	if (fModifiedBox.Contains(where))
-		return fDragBoxState;
-
-	// Check outside perimeter for rotation.
-	BRect rotationRect(fModifiedBox);
-	rotationRect.InsetBy(-inset * 3, -inset * 3);
-	if (rotationRect.Contains(where))
-		return fDragRotationState;
 
 	// If there is still no state, switch to the PickObjectsState
 	// and try to find an object. If nothing is picked, unset on mouse down.

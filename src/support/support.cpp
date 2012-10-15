@@ -16,6 +16,16 @@
 #include <Point.h>
 #include <String.h>
 
+
+// point_point_distance
+float
+point_point_distance(BPoint a, BPoint b)
+{
+	float xDiff = b.x - a.x;
+	float yDiff = b.y - a.y;
+	return sqrtf(xDiff * xDiff + yDiff * yDiff);
+}
+
 // point_line_distance
 double
 point_line_distance(double x1, double y1,
@@ -75,6 +85,13 @@ calc_angle(BPoint origin, BPoint from, BPoint to, bool degree)
 		}
 	}
 	return angle;
+}
+
+// min4
+float
+min4(float a, float b, float c, float d)
+{
+	return min_c(a, min_c(b, min_c(c, d)));
 }
 
 // write_string

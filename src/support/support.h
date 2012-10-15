@@ -83,19 +83,13 @@ rect_to_int(BRect r, int32& left, int32& top, int32& right, int32& bottom)
 }
 
 // point_point_distance
-inline float
-point_point_distance(BPoint a, BPoint b)
-{
-	float xDiff = b.x - a.x;
-	float yDiff = b.y - a.y;
-	return sqrtf(xDiff * xDiff + yDiff * yDiff);
-}
+float
+point_point_distance(BPoint a, BPoint b);
 
 // point_line_distance
 double
-point_line_distance(double x1, double y1,
-					double x2, double y2,
-					double x,  double y);
+point_line_distance(double x1, double y1, double x2, double y2,
+	double x,  double y);
 
 // point_line_distance
 double
@@ -121,11 +115,8 @@ T max4(const T a, const T b, const T c, const T d)
 	return e > f ? e : f;
 }
 */
-inline float
-min4(float a, float b, float c, float d)
-{
-	return min_c(a, min_c(b, min_c(c, d)));
-}
+float
+min4(float a, float b, float c, float d);
 
 inline float
 max4(float a, float b, float c, float d)
