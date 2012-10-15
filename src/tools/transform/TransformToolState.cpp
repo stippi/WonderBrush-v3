@@ -1215,6 +1215,26 @@ TransformToolState::SetPivot(const BPoint& pivot)
 {
 	if (fPivot == pivot)
 		return;
+
+	// If we already have a rotation, just setting the pivot would add an
+	// undesired translation. We have to compute the translation to compensate.
+	if (LocalRotation() != 0) {
+		// Originally we had: G' = RGB.
+		// We change the rotation to R' and want to compensate with an
+		// additional translation T: G' = R'GTB.
+		// => RGB = R'GTB
+		// => T = (G^-1)(R'^-1)RG
+		Transformable globalTransformation(fOriginalTransformation);
+		globalTransformation.Multiply(fParentGlobalTransformation);
+
+		Transformable pivotTranslation(globalTransformation);
+		pivotTranslation.RotateBy(fPivot, LocalRotation());
+		pivotTranslation.RotateBy(pivot, -LocalRotation());
+		pivotTranslation.MultiplyInverse(globalTransformation);
+
+		fModifiedBox.OffsetBy(pivotTranslation.Translation());
+	}
+
 	fPivot = pivot;
 	UpdateAdditionalTransformation();
 }
