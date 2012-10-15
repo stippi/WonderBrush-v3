@@ -57,6 +57,8 @@ public:
 
 			double				Scale() const;
 			void				GetScale(double* scaleX, double* scaleY) const;
+			BPoint				Translation() const
+									{ return BPoint(tx, ty); }
 			bool				GetAffineParameters(double* translationX,
 									double* translationY, double* rotation,
 									double* scaleX, double* scaleY,
