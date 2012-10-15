@@ -53,6 +53,8 @@ public:
 									const PropertyObject* object,
 									uint32 flags = 0);
 
+	virtual	void				TransformationChanged();
+
 	// Object interface
 	virtual	ObjectSnapshot*		Snapshot() const;
 

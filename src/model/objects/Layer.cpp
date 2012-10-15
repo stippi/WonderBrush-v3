@@ -203,6 +203,23 @@ Layer::SetToPropertyObject(const PropertyObject* object, uint32 flags)
 	return HasPendingNotifications();
 }
 
+// TransformationChanged
+void
+Layer::TransformationChanged()
+{
+	// Override the Object version, which invalidates the whole parent,
+	// to invalidate ourselves
+	UpdateChangeCounter();
+	Invalidate(Bounds(), 0);
+
+	int32 count = CountObjects();
+	for (int32 i = 0; i < count; i++) {
+		Layer* layer = dynamic_cast<Layer*>(ObjectAtFast(i));
+		if (layer != NULL)
+			layer->TransformationChanged();
+	}
+}
+
 // #pragma mark -
 
 // Snapshot
