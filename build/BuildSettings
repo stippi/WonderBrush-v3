@@ -54,6 +54,10 @@ if $(OSPLAT) = X86 {
 	}
 }
 
+if $(OS) = LINUX {
+	SYSHDRS += /usr/include/freetype2 ;
+}
+
 # Use copyattr for copying.
 CP = copyattr --data ;
 
