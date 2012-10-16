@@ -1,5 +1,6 @@
 /*
- * Copyright 2009-2010 Stephan Aßmus <superstippi@gmx.de>
+ * Copyright 2009-2012 Stephan Aßmus <superstippi@gmx.de>
+ * Copyright 2012 Ingo Weinhold <ingo_weinhold@gmx.de>
  * All rights reserved. Distributed under the terms of the MIT license.
  */
 
@@ -146,20 +147,29 @@ public:
 
 	virtual void SetOrigin(BPoint origin)
 	{
+		fDragStart = origin;
+		fStartPivot = fParent->Pivot();
+
 		fParent->TransformCanvasToObject(&origin);
 		DragState::SetOrigin(origin);
 	}
 
 	virtual void DragTo(BPoint current, uint32 modifiers)
 	{
-		fParent->TransformCanvasToObject(&current);
-		BPoint offset = current - fOrigin;
-		fOrigin = current;
+		BPoint pivotOffset = current - fDragStart;
+		
+		BPoint objectCurrent = current;
+		fParent->TransformCanvasToObject(&objectCurrent);
+		BPoint boxOffset = objectCurrent - fOrigin;
 
 		BRect box = fParent->ModifiedBox();
-		box.OffsetBy(offset);
-		fParent->SetModifiedBox(box);
-//		fParent->SetPivot(fStartPivot + offset);
+		box.OffsetBy(boxOffset);
+		fParent->SetModifiedBox(box, false);
+
+		fParent->SetPivot(fStartPivot + pivotOffset);
+
+		fOrigin = current;
+		fParent->TransformCanvasToObject(&fOrigin);
 	}
 
 	virtual BCursor ViewCursor(BPoint current) const
@@ -174,6 +184,8 @@ public:
 
 private:
 	TransformToolState*	fParent;
+	BPoint				fStartPivot;
+	BPoint				fDragStart;
 };
 
 
@@ -1201,17 +1213,18 @@ TransformToolState::SetBox(const BRect& box)
 
 // SetModifiedBox
 void
-TransformToolState::SetModifiedBox(const BRect& box)
+TransformToolState::SetModifiedBox(const BRect& box, bool update)
 {
 	if (fModifiedBox == box)
 		return;
 	fModifiedBox = box;
-	UpdateAdditionalTransformation();
+	if (update)
+		UpdateAdditionalTransformation();
 }
 
 // SetPivot
 void
-TransformToolState::SetPivot(const BPoint& pivot)
+TransformToolState::SetPivot(const BPoint& pivot, bool update)
 {
 	if (fPivot == pivot)
 		return;
@@ -1236,7 +1249,8 @@ TransformToolState::SetPivot(const BPoint& pivot)
 	}
 
 	fPivot = pivot;
-	UpdateAdditionalTransformation();
+	if (update)
+		UpdateAdditionalTransformation();
 }
 
 // TranslationX

@@ -83,13 +83,15 @@ public:
 									bool modifySelection = false);
 			void				SetTransformable(Transformable* object);
 			void				SetBox(const BRect& box);
-			void				SetModifiedBox(const BRect& box);
+			void				SetModifiedBox(const BRect& box,
+									bool update = true);
 	inline	const BRect&		Box() const
 									{ return fOriginalBox; }
 	inline	const BRect&		ModifiedBox() const
 									{ return fModifiedBox; }
 
-			void				SetPivot(const BPoint& pivot);
+			void				SetPivot(const BPoint& pivot,
+									bool update = true);
 	inline	const BPoint&		Pivot() const
 									{ return fPivot; }
 
