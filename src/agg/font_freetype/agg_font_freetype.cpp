@@ -781,9 +781,9 @@ fflush(stdout);
     //------------------------------------------------------------------------
     bool font_engine_freetype_base::height(double h)
     {
-    	if (m_height == int(h * 64.0))
+        if (m_height == unsigned(h * 64.0))
     		return false;
-        m_height = int(h * 64.0);
+        m_height = unsigned(h * 64.0);
         if(m_cur_face)
         {
             update_char_size();
@@ -795,9 +795,9 @@ fflush(stdout);
     //------------------------------------------------------------------------
     bool font_engine_freetype_base::width(double w)
     {
-    	if (m_width == int(w * 64.0))
+        if (m_width == unsigned(w * 64.0))
     		return false;
-        m_width = int(w * 64.0);
+        m_width = unsigned(w * 64.0);
         if(m_cur_face)
         {
             update_char_size();
