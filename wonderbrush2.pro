@@ -1,6 +1,5 @@
 TEMPLATE = subdirs
 
 SUBDIRS += \
-    src/agg
-
-
+    src/agg \
+    src
