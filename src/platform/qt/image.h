@@ -1,5 +1,5 @@
-#ifndef IMAGE_H
-#define IMAGE_H
+#ifndef PLATFORM_QT_IMAGE_H
+#define PLATFORM_QT_IMAGE_H
 
 
 #include <SupportDefs.h>
@@ -8,4 +8,4 @@
 typedef int32 image_id;
 
 
-#endif // IMAGE_H
+#endif // PLATFORM_QT_IMAGE_H
