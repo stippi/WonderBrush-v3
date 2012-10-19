@@ -38,6 +38,7 @@ SOURCES += \
 	platform/qt/Alignment.cpp \
 	platform/qt/Archivable.cpp \
 	platform/qt/ArchivingManagers.cpp \
+	platform/qt/BRect.cpp \
 	platform/qt/ByteOrder.cpp \
 	platform/qt/DataIO.cpp \
 	platform/qt/Flattenable.cpp \
@@ -52,7 +53,6 @@ SOURCES += \
 	platform/qt/PlatformThread.cpp \
 	platform/qt/Point.cpp \
 	platform/qt/PointerList.cpp \
-	platform/qt/Rect.cpp \
 	platform/qt/Size.cpp \
 	platform/qt/String.cpp \
 	support/Command.cpp \
