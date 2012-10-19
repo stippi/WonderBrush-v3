@@ -7,8 +7,6 @@
 
 #include <stdio.h>
 
-#include <debugger.h>
-
 #include "Selectable.h"
 
 #undef DEBUG
