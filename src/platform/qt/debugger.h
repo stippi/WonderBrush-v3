@@ -1,0 +1,8 @@
+#ifndef PLATFORM_QT_DEBUGGER_H
+#define PLATFORM_QT_DEBUGGER_H
+
+
+#include <OS.h>
+
+
+#endif // PLATFORM_QT_DEBUGGER_H

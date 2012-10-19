@@ -126,5 +126,5 @@ HEADERS  += \
 	support/support.h \
 	support/support_ui.h \
 	support/Transformable.h \
-	support/ui_defines.h
-
+	support/ui_defines.h \
+    platform/qt/debugger.h
