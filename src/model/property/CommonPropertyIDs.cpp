@@ -10,7 +10,6 @@
 
 #include <stdio.h>
 
-#include <debugger.h>
 
 // name_for_id
 const char*
