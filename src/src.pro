@@ -12,6 +12,8 @@ TEMPLATE = app
 #INCLUDEPATH += platform/qt
 QMAKE_CXXFLAGS += -isystem $$PWD/platform/qt
 
+INCLUDEPATH += /usr/include/freetype2
+INCLUDEPATH += agg/font_freetype
 INCLUDEPATH += agg/include
 INCLUDEPATH += cimg
 
@@ -24,6 +26,7 @@ INCLUDEPATH += cimg
 #INCLUDEPATH += render
 #INCLUDEPATH += support
 
+QMAKE_CXXFLAGS += -iquote $$PWD/gui/icons
 QMAKE_CXXFLAGS += -iquote $$PWD/model
 QMAKE_CXXFLAGS += -iquote $$PWD/model/fills
 QMAKE_CXXFLAGS += -iquote $$PWD/model/objects
@@ -37,7 +40,7 @@ DEFINES += __STDC_LIMIT_MACROS=1
 DEFINES += __STDC_FORMAT_MACROS=1
 DEFINES += _GNU_SOURCE
 
-LIBS += -Lagg -lagg -ldl
+LIBS += -Lagg -lagg -ldl -lfreetype
 
 # Weirdly we need to explicitly add libX11, since otherwise the linker complains
 # about symbol XGetWindowAttributes not being defined.
@@ -106,11 +109,19 @@ SOURCES += \
 	platform/qt/PointerList.cpp \
 	platform/qt/Size.cpp \
 	platform/qt/String.cpp \
+	render/Font.cpp \
+	render/GaussFilter.cpp \
 	render/LayoutContext.cpp \
 	render/LayoutState.cpp \
+	render/Path.cpp \
 	render/RenderBuffer.cpp \
 	render/RenderEngine.cpp \
+#	render/RenderManager.cpp \
+#	render/RenderThread.cpp \
 	render/StackBlurFilter.cpp \
+	render/TextLayout.cpp \
+	render/TextRenderer.cpp \
+	render/VertexSource.cpp \
 	support/Command.cpp \
 	support/CommandStack.cpp \
 	support/CompoundCommand.cpp \
@@ -125,6 +136,7 @@ SOURCES += \
 
 HEADERS  += \
 	cimg/CImg.h \
+	gui/icons/PathPropertyIcon.h \
 	model/BaseObject.h \
 	model/Selectable.h \
 	model/Selection.h \
@@ -172,6 +184,8 @@ HEADERS  += \
 	platform/qt/ByteOrder.h \
 	platform/qt/clipping.h \
 	platform/qt/DataIO.h \
+	platform/qt/Debug.h \
+	platform/qt/debugger.h \
 	platform/qt/Errors.h \
 	platform/qt/Flattenable.h \
 	platform/qt/GraphicsDefs.h \
@@ -198,11 +212,21 @@ HEADERS  += \
 	platform/qt/SupportDefs.h \
 	platform/qt/TypeConstants.h \
 	platform/qt/utf8_functions.h \
+	render/FauxWeight.h \
+	render/Font.h \
+	render/GaussFilter.h \
 	render/LayoutContext.h \
 	render/LayoutState.h \
+	render/Path.h \
 	render/RenderBuffer.h \
 	render/RenderEngine.h \
+	render/RenderManager.h \
+	render/RenderThread.h \
+	render/Scanline.h \
 	render/StackBlurFilter.h \
+	render/TextLayout.h \
+	render/TextRenderer.h \
+	render/VertexSource.h \
 	support/AbstractLOAdapter.h \
 	support/AutoLocker.h \
 	support/BuildSupport.h \
@@ -220,6 +244,4 @@ HEADERS  += \
 	support/support.h \
 	support/support_ui.h \
 	support/Transformable.h \
-	support/ui_defines.h \
-    platform/qt/Debug.h \
-    platform/qt/debugger.h
+	support/ui_defines.h
