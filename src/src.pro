@@ -28,6 +28,7 @@ INCLUDEPATH += cimg
 
 QMAKE_CXXFLAGS += -iquote $$PWD/gui/icons
 QMAKE_CXXFLAGS += -iquote $$PWD/model
+QMAKE_CXXFLAGS += -iquote $$PWD/model/document
 QMAKE_CXXFLAGS += -iquote $$PWD/model/fills
 QMAKE_CXXFLAGS += -iquote $$PWD/model/objects
 QMAKE_CXXFLAGS += -iquote $$PWD/model/property
@@ -55,6 +56,7 @@ SOURCES += \
 	model/BaseObject.cpp \
 	model/Selectable.cpp \
 	model/Selection.cpp \
+	model/document/Document.cpp \
 	model/fills/Brush.cpp \
 	model/fills/Color.cpp \
 	model/fills/Gradient.cpp \
@@ -66,7 +68,7 @@ SOURCES += \
 	model/objects/Filter.cpp \
 	model/objects/Image.cpp \
 	model/objects/Layer.cpp \
-#	model/objects/LayerObserver.cpp \
+	model/objects/LayerObserver.cpp \
 	model/objects/Object.cpp \
 	model/objects/Rect.cpp \
 	model/objects/Shape.cpp \
@@ -141,6 +143,8 @@ HEADERS  += \
 	model/BaseObject.h \
 	model/Selectable.h \
 	model/Selection.h \
+	model/document/Document.h \
+	model/document/NotifyingList.h \
 	model/fills/BlendingMode.h \
 	model/fills/Brush.h \
 	model/fills/Color.h \
