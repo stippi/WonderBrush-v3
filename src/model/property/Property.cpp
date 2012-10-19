@@ -30,8 +30,10 @@ Property::Property(uint32 identifier)
 
 // constructor
 Property::Property(const Property& other)
-	: fIdentifier(other.fIdentifier),
-	  fEditable(other.fEditable)
+	:
+	BArchivable(other),
+	fIdentifier(other.fIdentifier),
+	fEditable(other.fEditable)
 {
 }
 
