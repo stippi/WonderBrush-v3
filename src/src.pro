@@ -25,6 +25,9 @@ QMAKE_CXXFLAGS_WARN_ON += -Wno-unused-parameter -Wno-multichar
 SOURCES += \
 	WonderBrush_qt.cpp \
 	model/property/CommonPropertyIDs.cpp \
+	model/BaseObject.cpp \
+	model/Selectable.cpp \
+	model/Selection.cpp \
 	model/property/Property.cpp \
 	model/property/PropertyObject.cpp \
 	model/property/PropertyObjectProperty.cpp \
@@ -66,6 +69,9 @@ SOURCES += \
 
 HEADERS  += \
 	cimg/CImg.h \
+	model/BaseObject.h \
+	model/Selectable.h \
+	model/Selection.h \
 	model/property/CommonPropertyIDs.h \
 	model/property/Property.h \
 	model/property/PropertyObject.h \
