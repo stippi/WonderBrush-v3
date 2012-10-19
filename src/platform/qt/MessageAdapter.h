@@ -9,7 +9,6 @@
 #define _MESSAGE_ADAPTER_H_
 
 #include <Message.h>
-#include <util/KMessage.h>
 
 // message formats
 #define MESSAGE_FORMAT_R5				'FOB1'
@@ -36,8 +35,6 @@ static	status_t		Unflatten(uint32 format, BMessage *into,
 							BDataIO *stream);
 
 private:
-static	status_t		_ConvertKMessage(const KMessage *from, BMessage *to);
-
 static	ssize_t			_R5FlattenedSize(const BMessage *from);
 
 static	status_t		_FlattenR5Message(uint32 format, const BMessage *from,

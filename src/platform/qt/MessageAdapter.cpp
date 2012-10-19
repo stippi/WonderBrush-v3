@@ -11,6 +11,7 @@
 #include <MessageUtils.h>
 
 #include <stdlib.h>
+#include <string.h>
 
 
 namespace BPrivate {
@@ -166,16 +167,6 @@ MessageAdapter::Flatten(uint32 format, const BMessage *from, BDataIO *stream,
 status_t
 MessageAdapter::Unflatten(uint32 format, BMessage *into, const char *buffer)
 {
-	if (format == KMessage::kMessageHeaderMagic) {
-		KMessage message;
-		status_t result = message.SetTo(buffer,
-			((KMessage::Header *)buffer)->size);
-		if (result != B_OK)
-			return result;
-
-		return _ConvertKMessage(&message, into);
-	}
-
 	try {
 		switch (format) {
 			case MESSAGE_FORMAT_R5:
@@ -234,63 +225,6 @@ MessageAdapter::Unflatten(uint32 format, BMessage *into, BDataIO *stream)
 	}
 
 	return B_NOT_A_MESSAGE;
-}
-
-
-status_t
-MessageAdapter::_ConvertKMessage(const KMessage *fromMessage,
-	BMessage *toMessage)
-{
-	if (!fromMessage || !toMessage)
-		return B_BAD_VALUE;
-
-	// make empty and init what of the target message
-	toMessage->MakeEmpty();
-	toMessage->what = fromMessage->What();
-
-	BMessage::Private toPrivate(toMessage);
-	toPrivate.SetTarget(fromMessage->TargetToken());
-	toPrivate.SetReply(B_SYSTEM_TEAM, fromMessage->ReplyPort(),
-		fromMessage->ReplyToken());
-
-	// iterate through the fields and import them in the target message
-	KMessageField field;
-	while (fromMessage->GetNextField(&field) == B_OK) {
-		int32 elementCount = field.CountElements();
-		if (elementCount > 0) {
-			for (int32 i = 0; i < elementCount; i++) {
-				int32 size;
-				const void *data = field.ElementAt(i, &size);
-				status_t result;
-
-				if (field.TypeCode() == B_MESSAGE_TYPE) {
-					// message type: if it's a KMessage, convert it
-					KMessage message;
-					if (message.SetTo(data, size) == B_OK) {
-						BMessage bMessage;
-						result = _ConvertKMessage(&message, &bMessage);
-						if (result < B_OK)
-							return result;
-
-						result = toMessage->AddMessage(field.Name(), &bMessage);
-					} else {
-						// just add it
-						result = toMessage->AddData(field.Name(),
-							field.TypeCode(), data, size,
-							field.HasFixedElementSize(), 1);
-					}
-				} else {
-					result = toMessage->AddData(field.Name(), field.TypeCode(),
-						data, size, field.HasFixedElementSize(), 1);
-				}
-
-				if (result < B_OK)
-					return result;
-			}
-		}
-	}
-
-	return B_OK;
 }
 
 

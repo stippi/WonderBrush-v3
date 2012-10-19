@@ -57,6 +57,7 @@ typedef int64					bigtime_t;
 typedef int64					nanotime_t;
 typedef uint32					type_code;
 typedef uint32					perform_code;
+typedef size_t					addr_t;
 
 //typedef __haiku_phys_addr_t		phys_addr_t;
 //typedef phys_addr_t				phys_size_t;

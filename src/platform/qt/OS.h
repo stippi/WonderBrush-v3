@@ -5,9 +5,11 @@
 #include <SupportDefs.h>
 
 
-typedef int32 thread_id;
-typedef int32 team_id;
+typedef int32 area_id;
+typedef int32 port_id;
 typedef int32 sem_id;
+typedef int32 team_id;
+typedef int32 thread_id;
 
 
 #define B_INFINITE_TIMEOUT      (9223372036854775807LL)

@@ -9,7 +9,6 @@
 #define _MESSAGE_H
 
 
-#include <BeBuild.h>
 #include <DataIO.h>
 #include <Flattenable.h>
 #include <OS.h>
@@ -20,7 +19,6 @@
 #include <TypeConstants.h>	/* For convenience */
 
 class BAlignment;
-class BBlockCache;
 class BMessenger;
 class BHandler;
 class BString;
@@ -78,23 +76,9 @@ class BMessage {
 		// Delivery info
 		bool			WasDelivered() const;
 		bool			IsSourceWaiting() const;
-		bool			IsSourceRemote() const;
-		BMessenger		ReturnAddress() const;
 		const BMessage	*Previous() const;
 		bool			WasDropped() const;
 		BPoint			DropPoint(BPoint *offset = NULL) const;
-
-		// Replying
-		status_t		SendReply(uint32 command, BHandler *replyTo = NULL);
-		status_t		SendReply(BMessage *reply, BHandler *replyTo = NULL,
-							bigtime_t timeout = B_INFINITE_TIMEOUT);
-		status_t		SendReply(BMessage *reply, BMessenger replyTo,
-							bigtime_t timeout = B_INFINITE_TIMEOUT);
-
-		status_t		SendReply(uint32 command, BMessage *replyToReply);
-		status_t		SendReply(BMessage *the_reply, BMessage *replyToReply,
-							bigtime_t sendTimeout = B_INFINITE_TIMEOUT,
-							bigtime_t replyTimeout = B_INFINITE_TIMEOUT);
 
 		// Flattening data
 		ssize_t			FlattenedSize() const;
@@ -137,7 +121,6 @@ class BMessage {
 		status_t		AddFloat(const char *name, float aFloat);
 		status_t		AddDouble(const char *name, double aDouble);
 		status_t		AddPointer(const char *name, const void *aPointer);
-		status_t		AddMessenger(const char *name, BMessenger messenger);
 		status_t		AddRef(const char *name, const entry_ref *ref);
 		status_t		AddMessage(const char *name, const BMessage *message);
 		status_t		AddFlat(const char *name, BFlattenable *object,
@@ -194,8 +177,6 @@ class BMessage {
 		status_t		FindDouble(const char *name, int32 index, double *value) const;
 		status_t		FindPointer(const char *name, void **pointer) const;
 		status_t		FindPointer(const char *name, int32 index,  void **pointer) const;
-		status_t		FindMessenger(const char *name, BMessenger *messenger) const;
-		status_t		FindMessenger(const char *name, int32 index, BMessenger *messenger) const;
 		status_t		FindRef(const char *name, entry_ref *ref) const;
 		status_t		FindRef(const char *name, int32 index, entry_ref *ref) const;
 		status_t		FindMessage(const char *name, BMessage *message) const;
@@ -249,8 +230,6 @@ class BMessage {
 		status_t		ReplaceDouble(const char *name, int32 index, double aDouble);
 		status_t		ReplacePointer(const char *name, const void *pointer);
 		status_t		ReplacePointer(const char *name,int32 index,const void *pointer);
-		status_t		ReplaceMessenger(const char *name, BMessenger messenger);
-		status_t		ReplaceMessenger(const char *name, int32 index, BMessenger messenger);
 		status_t		ReplaceRef(	const char *name,const entry_ref *ref);
 		status_t		ReplaceRef(	const char *name, int32 index, const entry_ref *ref);
 		status_t		ReplaceMessage(const char *name, const BMessage *message);
@@ -265,10 +244,6 @@ class BMessage {
 		// Comparing data - Haiku experimental API
 		bool			HasSameData(const BMessage &other,
 							bool ignoreFieldOrder = true, bool deep = false) const;
-
-		void			*operator new(size_t size);
-		void			*operator new(size_t, void *pointer);
-		void			operator delete(void *pointer, size_t size);
 
 		// Private, reserved, or obsolete
 		bool			HasAlignment(const char*, int32 n = 0) const;
@@ -317,7 +292,6 @@ class BMessage {
 		status_t		_InitHeader();
 		status_t		_Clear();
 
-		status_t		_FlattenToArea(message_header **_header) const;
 		status_t		_CopyForWrite();
 		status_t		_Reference();
 		status_t		_Dereference();
@@ -358,28 +332,6 @@ class BMessage {
 		virtual	void	_ReservedMessage1();
 		virtual	void	_ReservedMessage2();
 		virtual	void	_ReservedMessage3();
-
-		status_t		_SendMessage(port_id port, team_id portOwner, int32 token,
-							bigtime_t timeout, bool replyRequired,
-							BMessenger &replyTo) const;
-		status_t		_SendMessage(port_id port, team_id portOwner,
-							int32 token, BMessage *reply, bigtime_t sendTimeout,
-							bigtime_t replyTimeout) const;
-		static status_t	_SendFlattenedMessage(void *data, int32 size,
-							port_id port, int32 token, bigtime_t timeout);
-
-		static void		_StaticInit();
-		static void		_StaticReInitForkedChild();
-		static void		_StaticCleanup();
-		static void		_StaticCacheCleanup();
-		static int32	_StaticGetCachedReplyPort();
-
-		enum			{ sNumReplyPorts = 3 };
-		static port_id	sReplyPorts[sNumReplyPorts];
-		static int32	sReplyPortInUse[sNumReplyPorts];
-		static int32	sGetCachedReplyPort();
-
-		static BBlockCache* sMsgCache;
 };
 
 #endif	// _MESSAGE_H

@@ -16,13 +16,20 @@ DEFINES += _GNU_SOURCE
 
 LIBS += -Lagg -lagg
 
-# suppress -Wunused-parameter
-QMAKE_CXXFLAGS_WARN_ON += -Wno-unused-parameter
+# suppress undesired warnings
+QMAKE_CXXFLAGS_WARN_ON += -Wno-unused-parameter -Wno-multichar
 
 SOURCES += \
 	WonderBrush_qt.cpp \
+	platform/qt/Alignment.cpp \
+	platform/qt/ByteOrder.cpp \
+	platform/qt/DataIO.cpp \
+	platform/qt/Flattenable.cpp \
 	platform/qt/List.cpp \
 	platform/qt/Locker.cpp \
+	platform/qt/Message.cpp \
+	platform/qt/MessageAdapter.cpp \
+	platform/qt/MessageUtils.cpp \
 	platform/qt/OS.cpp \
 	platform/qt/platform_support.cpp \
 	platform/qt/PlatformSemaphoreManager.cpp \
@@ -45,8 +52,20 @@ SOURCES += \
 
 HEADERS  += \
 	cimg/CImg.h \
+	platform/qt/Alignment.h \
+	platform/qt/AppDefs.h \
+	platform/qt/BeBuild.h \
+	platform/qt/ByteOrder.h \
+	platform/qt/DataIO.h \
+	platform/qt/Errors.h \
+	platform/qt/Flattenable.h \
+	platform/qt/InterfaceDefs.h \
 	platform/qt/List.h \
 	platform/qt/Locker.h \
+	platform/qt/Message.h \
+	platform/qt/MessageAdapter.h \
+	platform/qt/MessagePrivate.h \
+	platform/qt/MessageUtils.h \
 	platform/qt/OS.h \
 	platform/qt/platform_support.h \
 	platform/qt/PlatformSemaphoreManager.h \
@@ -57,6 +76,7 @@ HEADERS  += \
 	platform/qt/String.h \
 	platform/qt/StringPrivate.h \
 	platform/qt/SupportDefs.h \
+	platform/qt/TypeConstants.h \
 	platform/qt/utf8_functions.h \
 	support/AutoLocker.h \
 	support/BuildSupport.h \
@@ -71,6 +91,5 @@ HEADERS  += \
 	support/Referenceable.h \
 	support/RWLocker.h \
 	support/support.h \
-	support/Transformable.h \
-	platform/qt/Errors.h
+	support/Transformable.h
 

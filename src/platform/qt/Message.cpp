@@ -12,19 +12,7 @@
 #include <MessagePrivate.h>
 #include <MessageUtils.h>
 
-#include <DirectMessageTarget.h>
-#include <MessengerPrivate.h>
-#include <TokenSpace.h>
-#include <util/KMessage.h>
-
 #include <Alignment.h>
-#include <Application.h>
-#include <AppMisc.h>
-#include <BlockCache.h>
-#include <Entry.h>
-#include <MessageQueue.h>
-#include <Messenger.h>
-#include <Path.h>
 #include <Point.h>
 #include <Rect.h>
 #include <String.h>
@@ -35,8 +23,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "tracing_config.h"
-	// kernel tracing configuration
 
 //#define VERBOSE_DEBUG_OUTPUT
 #ifdef VERBOSE_DEBUG_OUTPUT
@@ -66,21 +52,6 @@ const char *B_PROPERTY_ENTRY = "property";
 const char *B_PROPERTY_NAME_ENTRY = "name";
 
 
-static status_t	handle_reply(port_id replyPort, int32 *pCode, bigtime_t timeout,
-	BMessage *reply);
-
-extern "C" {
-	// private os function to set the owning team of an area
-	status_t _kern_transfer_area(area_id area, void **_address,
-		uint32 addressSpec, team_id target);
-}
-
-
-BBlockCache *BMessage::sMsgCache = NULL;
-port_id BMessage::sReplyPorts[sNumReplyPorts];
-int32 BMessage::sReplyPortInUse[sNumReplyPorts];
-
-
 template<typename Type>
 static void
 print_to_stream_type(uint8 *pointer)
@@ -105,39 +76,6 @@ print_type3(const char *format, uint8 *pointer)
 {
 	Type *item = (Type *)pointer;
 	printf(format, *item, *item, *item);
-}
-
-
-static status_t
-handle_reply(port_id replyPort, int32 *_code, bigtime_t timeout,
-	BMessage *reply)
-{
-	DEBUG_FUNCTION_ENTER2;
-	ssize_t size;
-	do {
-		size = port_buffer_size_etc(replyPort, B_RELATIVE_TIMEOUT, timeout);
-	} while (size == B_INTERRUPTED);
-
-	if (size < 0)
-		return size;
-
-	status_t result;
-	char *buffer = (char *)malloc(size);
-	if (buffer == NULL)
-		return B_NO_MEMORY;
-
-	do {
-		result = read_port(replyPort, _code, buffer, size);
-	} while (result == B_INTERRUPTED);
-
-	if (result < 0 || *_code != kPortMessageCode) {
-		free(buffer);
-		return result < 0 ? result : B_ERROR;
-	}
-
-	result = reply->Unflatten(buffer);
-	free(buffer);
-	return result;
 }
 
 
@@ -238,33 +176,6 @@ BMessage::operator=(const BMessage &other)
 	fDataAvailable = 0;
 
 	return *this;
-}
-
-
-void *
-BMessage::operator new(size_t size)
-{
-	DEBUG_FUNCTION_ENTER2;
-	void *pointer = sMsgCache->Get(size);
-	return pointer;
-}
-
-
-void *
-BMessage::operator new(size_t, void *pointer)
-{
-	DEBUG_FUNCTION_ENTER2;
-	return pointer;
-}
-
-
-void
-BMessage::operator delete(void *pointer, size_t size)
-{
-	DEBUG_FUNCTION_ENTER2;
-	if (pointer == NULL)
-		return;
-	sMsgCache->Save(pointer, size);
 }
 
 
@@ -392,15 +303,6 @@ BMessage::_Clear()
 {
 	DEBUG_FUNCTION_ENTER;
 	if (fHeader != NULL) {
-		// We're going to destroy all information of this message. If there's
-		// still someone waiting for a reply to this message, we have to send
-		// one now.
-		if (IsSourceWaiting())
-			SendReply(B_NO_REPLY);
-
-		if (fHeader->message_area >= 0)
-			_Dereference();
-
 		free(fHeader);
 		fHeader = NULL;
 	}
@@ -695,20 +597,6 @@ BMessage::_PrintToStream(const char *indent) const
 					print_type<double>("double(%.8f)\n", pointer);
 					break;
 
-				case B_REF_TYPE:
-				{
-					entry_ref ref;
-					BPrivate::entry_ref_unflatten(&ref, (char *)pointer, size);
-
-					printf("entry_ref(device=%d, directory=%" B_PRIdINO
-						", name=\"%s\", ", (int)ref.device, ref.directory,
-						ref.name);
-
-					BPath path(&ref);
-					printf("path=\"%s\")\n", path.Path());
-					break;
-				}
-
 				case B_MESSAGE_TYPE:
 				{
 					char buffer[1024];
@@ -749,9 +637,6 @@ BMessage::Rename(const char *oldEntry, const char *newEntry)
 
 	if (fHeader == NULL)
 		return B_NO_INIT;
-
-	if (fHeader->message_area >= 0)
-		_CopyForWrite();
 
 	uint32 hash = _HashName(oldEntry) % fHeader->hash_table_size;
 	int32 *nextField = &fHeader->hash_table[hash];
@@ -809,30 +694,6 @@ BMessage::IsSourceWaiting() const
 }
 
 
-bool
-BMessage::IsSourceRemote() const
-{
-	DEBUG_FUNCTION_ENTER;
-	return fHeader != NULL
-		&& (fHeader->flags & MESSAGE_FLAG_WAS_DELIVERED) != 0
-		&& fHeader->reply_team != BPrivate::current_team();
-}
-
-
-BMessenger
-BMessage::ReturnAddress() const
-{
-	DEBUG_FUNCTION_ENTER;
-	if (fHeader == NULL || (fHeader->flags & MESSAGE_FLAG_WAS_DELIVERED) == 0)
-		return BMessenger();
-
-	BMessenger messenger;
-	BMessenger::Private(messenger).SetTo(fHeader->reply_team,
-		fHeader->reply_port, fHeader->reply_target);
-	return messenger;
-}
-
-
 const BMessage *
 BMessage::Previous() const
 {
@@ -868,124 +729,6 @@ BMessage::DropPoint(BPoint *offset) const
 		*offset = FindPoint("_drop_offset_");
 
 	return FindPoint("_drop_point_");
-}
-
-
-status_t
-BMessage::SendReply(uint32 command, BHandler *replyTo)
-{
-	DEBUG_FUNCTION_ENTER;
-	BMessage message(command);
-	return SendReply(&message, replyTo);
-}
-
-
-status_t
-BMessage::SendReply(BMessage *reply, BHandler *replyTo, bigtime_t timeout)
-{
-	DEBUG_FUNCTION_ENTER;
-	BMessenger messenger(replyTo);
-	return SendReply(reply, messenger, timeout);
-}
-
-
-status_t
-BMessage::SendReply(BMessage *reply, BMessenger replyTo, bigtime_t timeout)
-{
-	DEBUG_FUNCTION_ENTER;
-	if (fHeader == NULL)
-		return B_NO_INIT;
-
-	BMessenger messenger;
-	BMessenger::Private messengerPrivate(messenger);
-	messengerPrivate.SetTo(fHeader->reply_team, fHeader->reply_port,
-		fHeader->reply_target);
-
-	if ((fHeader->flags & MESSAGE_FLAG_REPLY_REQUIRED) != 0) {
-		if ((fHeader->flags & MESSAGE_FLAG_REPLY_DONE) != 0)
-			return B_DUPLICATE_REPLY;
-
-		fHeader->flags |= MESSAGE_FLAG_REPLY_DONE;
-		reply->fHeader->flags |= MESSAGE_FLAG_IS_REPLY;
-		status_t result = messenger.SendMessage(reply, replyTo, timeout);
-		reply->fHeader->flags &= ~MESSAGE_FLAG_IS_REPLY;
-
-		if (result != B_OK) {
-			if (set_port_owner(messengerPrivate.Port(),
-				messengerPrivate.Team()) == B_BAD_TEAM_ID) {
-				delete_port(messengerPrivate.Port());
-			}
-		}
-
-		return result;
-	}
-
-	// no reply required
-	if ((fHeader->flags & MESSAGE_FLAG_WAS_DELIVERED) == 0)
-		return B_BAD_REPLY;
-
-	reply->AddMessage("_previous_", this);
-	reply->fHeader->flags |= MESSAGE_FLAG_IS_REPLY;
-	status_t result = messenger.SendMessage(reply, replyTo, timeout);
-	reply->fHeader->flags &= ~MESSAGE_FLAG_IS_REPLY;
-	reply->RemoveName("_previous_");
-	return result;
-}
-
-
-status_t
-BMessage::SendReply(uint32 command, BMessage *replyToReply)
-{
-	DEBUG_FUNCTION_ENTER;
-	BMessage message(command);
-	return SendReply(&message, replyToReply);
-}
-
-
-status_t
-BMessage::SendReply(BMessage *reply, BMessage *replyToReply,
-	bigtime_t sendTimeout, bigtime_t replyTimeout)
-{
-	DEBUG_FUNCTION_ENTER;
-	if (fHeader == NULL)
-		return B_NO_INIT;
-
-	BMessenger messenger;
-	BMessenger::Private messengerPrivate(messenger);
-	messengerPrivate.SetTo(fHeader->reply_team, fHeader->reply_port,
-		fHeader->reply_target);
-
-	if ((fHeader->flags & MESSAGE_FLAG_REPLY_REQUIRED) != 0) {
-		if ((fHeader->flags & MESSAGE_FLAG_REPLY_DONE) != 0)
-			return B_DUPLICATE_REPLY;
-
-		fHeader->flags |= MESSAGE_FLAG_REPLY_DONE;
-		reply->fHeader->flags |= MESSAGE_FLAG_IS_REPLY;
-		status_t result = messenger.SendMessage(reply, replyToReply,
-			sendTimeout, replyTimeout);
-		reply->fHeader->flags &= ~MESSAGE_FLAG_IS_REPLY;
-
-		if (result != B_OK) {
-			if (set_port_owner(messengerPrivate.Port(),
-				messengerPrivate.Team()) == B_BAD_TEAM_ID) {
-				delete_port(messengerPrivate.Port());
-			}
-		}
-
-		return result;
-	}
-
-	// no reply required
-	if ((fHeader->flags & MESSAGE_FLAG_WAS_DELIVERED) == 0)
-		return B_BAD_REPLY;
-
-	reply->AddMessage("_previous_", this);
-	reply->fHeader->flags |= MESSAGE_FLAG_IS_REPLY;
-	status_t result = messenger.SendMessage(reply, replyToReply, sendTimeout,
-		replyTimeout);
-	reply->fHeader->flags &= ~MESSAGE_FLAG_IS_REPLY;
-	reply->RemoveName("_previous_");
-	return result;
 }
 
 
@@ -1098,127 +841,6 @@ BMessage::Flatten(BDataIO *stream, ssize_t *size) const
 	an area behind or deleting one that is still in use.
 */
 
-status_t
-BMessage::_FlattenToArea(message_header **_header) const
-{
-	DEBUG_FUNCTION_ENTER;
-	if (fHeader == NULL)
-		return B_NO_INIT;
-
-	message_header *header = (message_header *)malloc(sizeof(message_header));
-	if (header == NULL)
-		return B_NO_MEMORY;
-
-	memcpy(header, fHeader, sizeof(message_header));
-
-	header->what = what;
-	header->message_area = -1;
-	*_header = header;
-
-	if (header->field_count == 0 && header->data_size == 0)
-		return B_OK;
-
-	char *address = NULL;
-	size_t fieldsSize = header->field_count * sizeof(field_header);
-	size_t size = fieldsSize + header->data_size;
-	size = (size + B_PAGE_SIZE) & ~(B_PAGE_SIZE - 1);
-	area_id area = create_area("BMessage data", (void **)&address,
-		B_ANY_ADDRESS, size, B_NO_LOCK, B_READ_AREA | B_WRITE_AREA);
-
-	if (area < 0) {
-		free(header);
-		*_header = NULL;
-		return area;
-	}
-
-	memcpy(address, fFields, fieldsSize);
-	memcpy(address + fieldsSize, fData, fHeader->data_size);
-	header->flags |= MESSAGE_FLAG_PASS_BY_AREA;
-	header->message_area = area;
-	return B_OK;
-}
-
-
-status_t
-BMessage::_Reference()
-{
-	DEBUG_FUNCTION_ENTER;
-	if (fHeader == NULL)
-		return B_NO_INIT;
-
-	fHeader->flags &= ~MESSAGE_FLAG_PASS_BY_AREA;
-
-	/* if there is no data at all we don't need the area */
-	if (fHeader->field_count == 0 && fHeader->data_size == 0)
-		return B_OK;
-
-	area_info areaInfo;
-	status_t result = get_area_info(fHeader->message_area, &areaInfo);
-	if (result != B_OK)
-		return result;
-
-	uint8 *address = (uint8 *)areaInfo.address;
-
-	fFields = (field_header *)address;
-	fData = address + fHeader->field_count * sizeof(field_header);
-	return B_OK;
-}
-
-
-status_t
-BMessage::_Dereference()
-{
-	DEBUG_FUNCTION_ENTER;
-	if (fHeader == NULL)
-		return B_NO_INIT;
-
-	delete_area(fHeader->message_area);
-	fHeader->message_area = -1;
-	fFields = NULL;
-	fData = NULL;
-	return B_OK;
-}
-
-
-status_t
-BMessage::_CopyForWrite()
-{
-	DEBUG_FUNCTION_ENTER;
-	if (fHeader == NULL)
-		return B_NO_INIT;
-
-	field_header *newFields = NULL;
-	uint8 *newData = NULL;
-
-	if (fHeader->field_count > 0) {
-		size_t fieldsSize = fHeader->field_count * sizeof(field_header);
-		newFields = (field_header *)malloc(fieldsSize);
-		if (newFields == NULL)
-			return B_NO_MEMORY;
-
-		memcpy(newFields, fFields, fieldsSize);
-	}
-
-	if (fHeader->data_size > 0) {
-		newData = (uint8 *)malloc(fHeader->data_size);
-		if (newData == NULL) {
-			free(newFields);
-			return B_NO_MEMORY;
-		}
-
-		memcpy(newData, fData, fHeader->data_size);
-	}
-
-	_Dereference();
-
-	fFieldsAvailable = 0;
-	fDataAvailable = 0;
-
-	fFields = newFields;
-	fData = newData;
-	return B_OK;
-}
-
 
 status_t
 BMessage::_ValidateMessage()
@@ -1279,12 +901,7 @@ BMessage::Unflatten(const char *flatBuffer)
 
 	what = fHeader->what;
 
-	if ((fHeader->flags & MESSAGE_FLAG_PASS_BY_AREA) != 0
-		&& fHeader->message_area >= 0) {
-		status_t result = _Reference();
-		if (result != B_OK)
-			return result;
-	} else {
+	{
 		fHeader->message_area = -1;
 
 		if (fHeader->field_count > 0) {
@@ -1784,9 +1401,6 @@ BMessage::AddData(const char *name, type_code type, const void *data,
 	if (fHeader == NULL)
 		return B_NO_INIT;
 
-	if (fHeader->message_area >= 0)
-		_CopyForWrite();
-
 	field_header *field = NULL;
 	status_t result = _FindField(name, type, &field);
 	if (result == B_NAME_NOT_FOUND)
@@ -1845,9 +1459,6 @@ BMessage::RemoveData(const char *name, int32 index)
 	if (fHeader == NULL)
 		return B_NO_INIT;
 
-	if (fHeader->message_area >= 0)
-		_CopyForWrite();
-
 	field_header *field = NULL;
 	status_t result = _FindField(name, B_ANY_TYPE, &field);
 	if (result != B_OK)
@@ -1893,9 +1504,6 @@ BMessage::RemoveName(const char *name)
 	DEBUG_FUNCTION_ENTER;
 	if (fHeader == NULL)
 		return B_NO_INIT;
-
-	if (fHeader->message_area >= 0)
-		_CopyForWrite();
 
 	field_header *field = NULL;
 	status_t result = _FindField(name, B_ANY_TYPE, &field);
@@ -1967,9 +1575,6 @@ BMessage::ReplaceData(const char *name, type_code type, int32 index,
 	if (index < 0 || (uint32)index >= field->count)
 		return B_BAD_INDEX;
 
-	if (fHeader->message_area >= 0)
-		_CopyForWrite();
-
 	if ((field->flags & FIELD_FLAG_FIXED_SIZE) != 0) {
 		ssize_t size = field->data_size / field->count;
 		if (size != numBytes)
@@ -2015,376 +1620,6 @@ BMessage::HasData(const char *name, type_code type, int32 index) const
 		return false;
 
 	return true;
-}
-
-
-/* Static functions for cache initialization and cleanup */
-void
-BMessage::_StaticInit()
-{
-	DEBUG_FUNCTION_ENTER2;
-	sReplyPorts[0] = create_port(1, "tmp_rport0");
-	sReplyPorts[1] = create_port(1, "tmp_rport1");
-	sReplyPorts[2] = create_port(1, "tmp_rport2");
-
-	sReplyPortInUse[0] = 0;
-	sReplyPortInUse[1] = 0;
-	sReplyPortInUse[2] = 0;
-
-	sMsgCache = new BBlockCache(20, sizeof(BMessage), B_OBJECT_CACHE);
-}
-
-
-void
-BMessage::_StaticReInitForkedChild()
-{
-	DEBUG_FUNCTION_ENTER2;
-
-	// overwrite the inherited ports with a set of our own
-	sReplyPorts[0] = create_port(1, "tmp_rport0");
-	sReplyPorts[1] = create_port(1, "tmp_rport1");
-	sReplyPorts[2] = create_port(1, "tmp_rport2");
-
-	sReplyPortInUse[0] = 0;
-	sReplyPortInUse[1] = 0;
-	sReplyPortInUse[2] = 0;
-}
-
-
-void
-BMessage::_StaticCleanup()
-{
-	DEBUG_FUNCTION_ENTER2;
-	delete_port(sReplyPorts[0]);
-	sReplyPorts[0] = -1;
-	delete_port(sReplyPorts[1]);
-	sReplyPorts[1] = -1;
-	delete_port(sReplyPorts[2]);
-	sReplyPorts[2] = -1;
-}
-
-
-void
-BMessage::_StaticCacheCleanup()
-{
-	DEBUG_FUNCTION_ENTER2;
-	delete sMsgCache;
-	sMsgCache = NULL;
-}
-
-
-int32
-BMessage::_StaticGetCachedReplyPort()
-{
-	DEBUG_FUNCTION_ENTER2;
-	int index = -1;
-	for (int32 i = 0; i < sNumReplyPorts; i++) {
-		int32 old = atomic_add(&(sReplyPortInUse[i]), 1);
-		if (old == 0) {
-			// This entry is free
-			index = i;
-			break;
-		} else {
-			// This entry is being used.
-			atomic_add(&(sReplyPortInUse[i]), -1);
-		}
-	}
-
-	return index;
-}
-
-
-status_t
-BMessage::_SendMessage(port_id port, team_id portOwner, int32 token,
-	bigtime_t timeout, bool replyRequired, BMessenger &replyTo) const
-{
-	DEBUG_FUNCTION_ENTER;
-	ssize_t size = 0;
-	char *buffer = NULL;
-	message_header *header = NULL;
-	status_t result = B_OK;
-
-	BPrivate::BDirectMessageTarget* direct = NULL;
-	BMessage *copy = NULL;
-	if (portOwner == BPrivate::current_team())
-		BPrivate::gDefaultTokens.AcquireHandlerTarget(token, &direct);
-
-	if (direct != NULL) {
-		// We have a direct local message target - we can just enqueue the
-		// message in its message queue. This will also prevent possible
-		// deadlocks when the queue is full.
-		copy = new BMessage(*this);
-		if (copy != NULL) {
-			header = copy->fHeader;
-			header->flags = fHeader->flags;
-		} else {
-			direct->Release();
-			return B_NO_MEMORY;
-		}
-#ifndef HAIKU_TARGET_PLATFORM_LIBBE_TEST
-	} else if (fHeader->data_size > B_PAGE_SIZE * 10) {
-		// ToDo: bind the above size to the max port message size
-		// use message passing by area for such a large message
-		result = _FlattenToArea(&header);
-		if (result != B_OK)
-			return result;
-
-		buffer = (char *)header;
-		size = sizeof(message_header);
-
-		if (header->message_area >= 0) {
-			team_id target = portOwner;
-			if (target < 0) {
-				port_info info;
-				result = get_port_info(port, &info);
-				if (result != B_OK) {
-					free(header);
-					return result;
-				}
-				target = info.team;
-			}
-
-			void *address = NULL;
-			area_id transfered = _kern_transfer_area(header->message_area,
-				&address, B_ANY_ADDRESS, target);
-			if (transfered < 0) {
-				delete_area(header->message_area);
-				free(header);
-				return transfered;
-			}
-
-			header->message_area = transfered;
-		}
-#endif
-	} else {
-		size = FlattenedSize();
-		buffer = (char *)malloc(size);
-		if (buffer == NULL)
-			return B_NO_MEMORY;
-
-		result = Flatten(buffer, size);
-		if (result != B_OK) {
-			free(buffer);
-			return result;
-		}
-
-		header = (message_header *)buffer;
-	}
-
-	if (!replyTo.IsValid()) {
-		BMessenger::Private(replyTo).SetTo(fHeader->reply_team,
-			fHeader->reply_port, fHeader->reply_target);
-
-		if (!replyTo.IsValid())
-			replyTo = be_app_messenger;
-	}
-
-	BMessenger::Private replyToPrivate(replyTo);
-
-	if (replyRequired) {
-		header->flags |= MESSAGE_FLAG_REPLY_REQUIRED;
-		header->flags &= ~MESSAGE_FLAG_REPLY_DONE;
-	}
-
-	header->target = token;
-	header->reply_team = replyToPrivate.Team();
-	header->reply_port = replyToPrivate.Port();
-	header->reply_target = replyToPrivate.Token();
-	header->flags |= MESSAGE_FLAG_WAS_DELIVERED;
-
-	if (direct == NULL) {
-		KTRACE("BMessage send remote: team: %ld, port: %ld, token: %ld, "
-			"message: '%c%c%c%c'", portOwner, port, token,
-			char(what >> 24), char(what >> 16), char(what >> 8), (char)what);
-
-		do {
-			result = write_port_etc(port, kPortMessageCode, (void *)buffer,
-				size, B_RELATIVE_TIMEOUT, timeout);
-		} while (result == B_INTERRUPTED);
-	}
-
-	if (result == B_OK && IsSourceWaiting()) {
-		// the forwarded message will handle the reply - we must not do
-		// this anymore
-		fHeader->flags |= MESSAGE_FLAG_REPLY_DONE;
-	}
-
-	// we need to do this last because it is possible our
-	// message might be destroyed after it's enqueued in the
-	// target looper. Thus we don't want to do any ops that depend on
-	// members of this after the enqueue.
-	if (direct != NULL) {
-		KTRACE("BMessage send direct: port: %ld, token: %ld, "
-			"message: '%c%c%c%c'", port, token,
-			char(what >> 24), char(what >> 16), char(what >> 8), (char)what);
-
-		// this is a local message transmission
-		direct->AddMessage(copy);
-		if (direct->Queue()->IsNextMessage(copy) && port_count(port) <= 0) {
-			// there is currently no message waiting, and we need to wakeup the
-			// looper
-			write_port_etc(port, 0, NULL, 0, B_RELATIVE_TIMEOUT, 0);
-		}
-		direct->Release();
-	}
-
-	free(buffer);
-	return result;
-}
-
-
-/*!
-	Sends a message and waits synchronously for a reply.
-*/
-status_t
-BMessage::_SendMessage(port_id port, team_id portOwner, int32 token,
-	BMessage *reply, bigtime_t sendTimeout, bigtime_t replyTimeout) const
-{
-	if (IsSourceWaiting()) {
-		// we can't forward this message synchronously when it's already
-		// waiting for a reply
-		return B_ERROR;
-	}
-
-	DEBUG_FUNCTION_ENTER;
-	const int32 cachedReplyPort = _StaticGetCachedReplyPort();
-	port_id replyPort = B_BAD_PORT_ID;
-	status_t result = B_OK;
-
-	if (cachedReplyPort < 0) {
-		// All the cached reply ports are in use; create a new one
-		replyPort = create_port(1 /* for one message */, "tmp_reply_port");
-		if (replyPort < 0)
-			return replyPort;
-	} else {
-		assert(cachedReplyPort < sNumReplyPorts);
-		replyPort = sReplyPorts[cachedReplyPort];
-	}
-
-	team_id team = B_BAD_TEAM_ID;
-	if (be_app != NULL)
-		team = be_app->Team();
-	else {
-		port_info portInfo;
-		result = get_port_info(replyPort, &portInfo);
-		if (result != B_OK)
-			goto error;
-
-		team = portInfo.team;
-	}
-
-	result = set_port_owner(replyPort, portOwner);
-	if (result != B_OK)
-		goto error;
-
-	// tests if the queue of the reply port is really empty
-#if 0
-	port_info portInfo;
-	if (get_port_info(replyPort, &portInfo) == B_OK
-		&& portInfo.queue_count > 0) {
-		debugger("reply port not empty!");
-		printf("  reply port not empty! %ld message(s) in queue\n",
-			portInfo.queue_count);
-
-		// fetch and print the messages
-		for (int32 i = 0; i < portInfo.queue_count; i++) {
-			char buffer[1024];
-			int32 code;
-			ssize_t size = read_port(replyPort, &code, buffer, sizeof(buffer));
-			if (size < 0) {
-				printf("failed to read message from reply port\n");
-				continue;
-			}
-			if (size >= (ssize_t)sizeof(buffer)) {
-				printf("message from reply port too big\n");
-				continue;
-			}
-
-			BMemoryIO stream(buffer, size);
-			BMessage reply;
-			if (reply.Unflatten(&stream) != B_OK) {
-				printf("failed to unflatten message from reply port\n");
-				continue;
-			}
-
-			printf("message %ld from reply port:\n", i);
-			reply.PrintToStream();
-		}
-	}
-#endif
-
-	{
-		BMessenger replyTarget;
-		BMessenger::Private(replyTarget).SetTo(team, replyPort,
-			B_PREFERRED_TOKEN);
-		// TODO: replying could also use a BDirectMessageTarget like mechanism
-		// for local targets
-		result = _SendMessage(port, -1, token, sendTimeout, true,
-			replyTarget);
-	}
-
-	if (result != B_OK)
-		goto error;
-
-	int32 code;
-	result = handle_reply(replyPort, &code, replyTimeout, reply);
-	if (result != B_OK && cachedReplyPort >= 0) {
-		delete_port(replyPort);
-		sReplyPorts[cachedReplyPort] = create_port(1, "tmp_rport");
-	}
-
-error:
-	if (cachedReplyPort >= 0) {
-		// Reclaim ownership of cached port
-		set_port_owner(replyPort, team);
-		// Flag as available
-		atomic_add(&sReplyPortInUse[cachedReplyPort], -1);
-		return result;
-	}
-
-	delete_port(replyPort);
-	return result;
-}
-
-
-status_t
-BMessage::_SendFlattenedMessage(void *data, int32 size, port_id port,
-	int32 token, bigtime_t timeout)
-{
-	DEBUG_FUNCTION_ENTER2;
-	if (data == NULL)
-		return B_BAD_VALUE;
-
-	uint32 magic = *(uint32 *)data;
-
-	if (magic == MESSAGE_FORMAT_HAIKU
-		|| magic == MESSAGE_FORMAT_HAIKU_SWAPPED) {
-		message_header *header = (message_header *)data;
-		header->target = token;
-		header->flags |= MESSAGE_FLAG_WAS_DELIVERED;
-	} else if (magic == MESSAGE_FORMAT_R5) {
-		uint8 *header = (uint8 *)data;
-		header += sizeof(uint32) /* magic */ + sizeof(uint32) /* checksum */
-			+ sizeof(ssize_t) /* flattenedSize */ + sizeof(int32) /* what */
-			+ sizeof(uint8) /* flags */;
-		*(int32 *)header = token;
-	} else if (((KMessage::Header *)data)->magic
-			== KMessage::kMessageHeaderMagic) {
-		KMessage::Header *header = (KMessage::Header *)data;
-		header->targetToken = token;
-	} else {
-		return B_NOT_A_MESSAGE;
-	}
-
-	// send the message
-	status_t result;
-
-	do {
-		result = write_port_etc(port, kPortMessageCode, data, size,
-			B_RELATIVE_TIMEOUT, timeout);
-	} while (result == B_INTERRUPTED);
-
-	return result;
 }
 
 
@@ -2479,8 +1714,6 @@ BMessage::Has##typeName(const char *name, int32 index) const				\
 DEFINE_HAS_FUNCTION(Alignment, B_ALIGNMENT_TYPE);
 DEFINE_HAS_FUNCTION(String, B_STRING_TYPE);
 DEFINE_HAS_FUNCTION(Pointer, B_POINTER_TYPE);
-DEFINE_HAS_FUNCTION(Messenger, B_MESSENGER_TYPE);
-DEFINE_HAS_FUNCTION(Ref, B_REF_TYPE);
 DEFINE_HAS_FUNCTION(Message, B_MESSAGE_TYPE);
 
 #undef DEFINE_HAS_FUNCTION
@@ -2535,28 +1768,6 @@ status_t
 BMessage::AddPointer(const char *name, const void *pointer)
 {
 	return AddData(name, B_POINTER_TYPE, &pointer, sizeof(pointer), true);
-}
-
-
-status_t
-BMessage::AddMessenger(const char *name, BMessenger messenger)
-{
-	return AddData(name, B_MESSENGER_TYPE, &messenger, sizeof(messenger), true);
-}
-
-
-status_t
-BMessage::AddRef(const char *name, const entry_ref *ref)
-{
-	size_t size = sizeof(entry_ref) + B_PATH_NAME_LENGTH;
-	char buffer[size];
-
-	status_t error = BPrivate::entry_ref_flatten(buffer, &size, ref);
-
-	if (error >= B_OK)
-		error = AddData(name, B_REF_TYPE, buffer, size, false);
-
-	return error;
 }
 
 
@@ -2719,61 +1930,6 @@ BMessage::FindPointer(const char *name, int32 index, void **pointer) const
 
 
 status_t
-BMessage::FindMessenger(const char *name, BMessenger *messenger) const
-{
-	return FindMessenger(name, 0, messenger);
-}
-
-
-status_t
-BMessage::FindMessenger(const char *name, int32 index, BMessenger *messenger)
-	const
-{
-	if (messenger == NULL)
-		return B_BAD_VALUE;
-
-	void *data = NULL;
-	ssize_t size = 0;
-	status_t error = FindData(name, B_MESSENGER_TYPE, index,
-		(const void **)&data, &size);
-
-	if (error == B_OK)
-		memcpy(messenger, data, sizeof(BMessenger));
-	else
-		*messenger = BMessenger();
-
-	return error;
-}
-
-
-status_t
-BMessage::FindRef(const char *name, entry_ref *ref) const
-{
-	return FindRef(name, 0, ref);
-}
-
-
-status_t
-BMessage::FindRef(const char *name, int32 index, entry_ref *ref) const
-{
-	if (ref == NULL)
-		return B_BAD_VALUE;
-
-	void *data = NULL;
-	ssize_t size = 0;
-	status_t error = FindData(name, B_REF_TYPE, index,
-		(const void **)&data, &size);
-
-	if (error == B_OK)
-		error = BPrivate::entry_ref_unflatten(ref, (char *)data, size);
-	else
-		*ref = entry_ref();
-
-	return error;
-}
-
-
-status_t
 BMessage::FindMessage(const char *name, BMessage *message) const
 {
 	return FindMessage(name, 0, message);
@@ -2897,44 +2053,6 @@ status_t
 BMessage::ReplacePointer(const char *name, int32 index, const void *pointer)
 {
 	return ReplaceData(name, B_POINTER_TYPE, index, &pointer, sizeof(pointer));
-}
-
-
-status_t
-BMessage::ReplaceMessenger(const char *name, BMessenger messenger)
-{
-	return ReplaceData(name, B_MESSENGER_TYPE, 0, &messenger,
-		sizeof(BMessenger));
-}
-
-
-status_t
-BMessage::ReplaceMessenger(const char *name, int32 index, BMessenger messenger)
-{
-	return ReplaceData(name, B_MESSENGER_TYPE, index, &messenger,
-		sizeof(BMessenger));
-}
-
-
-status_t
-BMessage::ReplaceRef(const char *name, const entry_ref *ref)
-{
-	return ReplaceRef(name, 0, ref);
-}
-
-
-status_t
-BMessage::ReplaceRef(const char *name, int32 index, const entry_ref *ref)
-{
-	size_t size = sizeof(entry_ref) + B_PATH_NAME_LENGTH;
-	char buffer[size];
-
-	status_t error = BPrivate::entry_ref_flatten(buffer, &size, ref);
-
-	if (error >= B_OK)
-		error = ReplaceData(name, B_REF_TYPE, index, &buffer, size);
-
-	return error;
 }
 
 

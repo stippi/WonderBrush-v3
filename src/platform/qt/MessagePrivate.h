@@ -9,13 +9,10 @@
 #define _MESSAGE_PRIVATE_H_
 
 #include <Message.h>
-#include <Messenger.h>
-#include <MessengerPrivate.h>
-#include <TokenSpace.h>
 
 
 #define MESSAGE_BODY_HASH_TABLE_SIZE	5
-#define MAX_DATA_PREALLOCATION			B_PAGE_SIZE * 10
+#define MAX_DATA_PREALLOCATION			40960
 #define MAX_FIELD_PREALLOCATION			50
 
 
@@ -95,41 +92,6 @@ class BMessage::Private {
 		}
 
 		void
-		SetTarget(int32 token)
-		{
-			fMessage->fHeader->target = token;
-		}
-
-		void
-		SetReply(BMessenger messenger)
-		{
-			BMessenger::Private messengerPrivate(messenger);
-			fMessage->fHeader->reply_port = messengerPrivate.Port();
-			fMessage->fHeader->reply_target = messengerPrivate.Token();
-			fMessage->fHeader->reply_team = messengerPrivate.Team();
-		}
-
-		void
-		SetReply(team_id team, port_id port, int32 target)
-		{
-			fMessage->fHeader->reply_port = port;
-			fMessage->fHeader->reply_target = target;
-			fMessage->fHeader->reply_team = team;
-		}
-
-		int32
-		GetTarget()
-		{
-			return fMessage->fHeader->target;
-		}
-
-		bool
-		UsePreferredTarget()
-		{
-			return fMessage->fHeader->target == B_PREFERRED_TOKEN;
-		}
-
-		void
 		SetWasDropped(bool wasDropped)
 		{
 			if (wasDropped)
@@ -168,29 +130,6 @@ class BMessage::Private {
 			return fMessage->fData;
 		}
 
-		status_t
-		FlattenToArea(message_header **header) const
-		{
-			return fMessage->_FlattenToArea(header);
-		}
-
-		status_t
-		SendMessage(port_id port, team_id portOwner, int32 token,
-			bigtime_t timeout, bool replyRequired, BMessenger &replyTo) const
-		{
-			return fMessage->_SendMessage(port, portOwner, token,
-				timeout, replyRequired, replyTo);
-		}
-
-		status_t
-		SendMessage(port_id port, team_id portOwner, int32 token,
-			BMessage *reply, bigtime_t sendTimeout,
-			bigtime_t replyTimeout) const
-		{
-			return fMessage->_SendMessage(port, portOwner, token,
-				reply, sendTimeout, replyTimeout);
-		}
-
 		void*
 		ArchivingPointer()
 		{
@@ -201,40 +140,6 @@ class BMessage::Private {
 		SetArchivingPointer(void* pointer)
 		{
 			fMessage->fArchivingPointer = pointer;
-		}
-
-		// static methods
-
-		static status_t
-		SendFlattenedMessage(void *data, int32 size, port_id port,
-			int32 token, bigtime_t timeout)
-		{
-			return BMessage::_SendFlattenedMessage(data, size,
-				port, token, timeout);
-		}
-
-		static void
-		StaticInit()
-		{
-			BMessage::_StaticInit();
-		}
-
-		static void
-		StaticReInitForkedChild()
-		{
-			BMessage::_StaticReInitForkedChild();
-		}
-
-		static void
-		StaticCleanup()
-		{
-			BMessage::_StaticCleanup();
-		}
-
-		static void
-		StaticCacheCleanup()
-		{
-			BMessage::_StaticCacheCleanup();
 		}
 
 	private:
