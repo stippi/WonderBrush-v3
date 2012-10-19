@@ -919,7 +919,7 @@ void
 Path::PrintToStream() const
 {
 	for (int32 i = 0; i < fPointCount; i++) {
-		printf("point %ld: (%f, %f) -> (%f, %f) -> (%f, %f) (%d)\n", i,
+		printf("point %" B_PRId32 ": (%f, %f) -> (%f, %f) -> (%f, %f) (%d)\n", i,
 				fPath[i].point_in.x, fPath[i].point_in.y,
 				fPath[i].point.x, fPath[i].point.y,
 				fPath[i].point_out.x, fPath[i].point_out.y,
@@ -1054,7 +1054,7 @@ Path::_SetPointCount(int32 count)
 		// reallocation might have failed
 		fPointCount = 0;
 		fAllocCount = 0;
-		fprintf(stderr, "Path::_SetPointCount(%ld) - allocation failed!\n", count);
+		fprintf(stderr, "Path::_SetPointCount(%" B_PRId32 ") - allocation failed!\n", count);
 	}
 
 	fCachedBounds.Set(0.0, 0.0, -1.0, -1.0);

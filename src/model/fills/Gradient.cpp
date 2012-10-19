@@ -655,7 +655,7 @@ Gradient::PrintToStream() const
 		   string_for_interpolation(fInterpolation),
 		   fInheritTransformation);
 	for (int32 i = 0; ColorStop* stop = ColorAt(i); i++) {
-		printf("  %ld: offset: %.1f -> color(%d, %d, %d, %d)\n",
+		printf("  %" B_PRId32 ": offset: %.1f -> color(%d, %d, %d, %d)\n",
 			   i, stop->offset,
 			   stop->color.red,
 			   stop->color.green,
