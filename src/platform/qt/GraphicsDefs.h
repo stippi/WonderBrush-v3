@@ -98,6 +98,36 @@ extern const uint8 		B_TRANSPARENT_8_BIT;
 extern const rgb_color	B_TRANSPARENT_32_BIT;
 
 
+// overlay
+typedef struct overlay_rect_limits {
+	uint16				horizontal_alignment;
+	uint16				vertical_alignment;
+	uint16				width_alignment;
+	uint16				height_alignment;
+	uint16				min_width;
+	uint16				max_width;
+	uint16				min_height;
+	uint16				max_height;
+	uint32				reserved[8];
+} overlay_rect_limits;
+
+
+typedef struct overlay_restrictions {
+	overlay_rect_limits	source;
+	overlay_rect_limits	destination;
+	float				min_width_scale;
+	float				max_width_scale;
+	float				min_height_scale;
+	float				max_height_scale;
+	uint32				reserved[8];
+} overlay_restrictions;
+
+
+// Screen ID
+struct screen_id { int32 id; };
+extern const struct screen_id B_MAIN_SCREEN_ID;
+
+
 // Color spaces
 typedef enum {
 	B_NO_COLOR_SPACE	= 0x0000,

@@ -1,5 +1,18 @@
+/*
+ * Copyright 2001-2008, Haiku, Inc. All rights reserved.
+ * Distributed under the terms of the MIT License.
+ */
 #ifndef INTERFACE_DEFS_H
 #define INTERFACE_DEFS_H
+
+
+#include <GraphicsDefs.h>
+#include <OS.h>
+
+
+class BBitmap;
+class BPoint;
+class BRect;
 
 
 enum alignment {
