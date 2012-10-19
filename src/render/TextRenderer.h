@@ -124,17 +124,17 @@ public:
 		return fBackground;
 	}
 
-	inline const bool getHinting() const
+	inline bool getHinting() const
 	{
 		return fHinting;
 	}
 
-	inline const bool getKerning() const
+	inline bool getKerning() const
 	{
 		return fKerning;
 	}
 
-	inline const bool getGrayScale() const
+	inline bool getGrayScale() const
 	{
 		return fGrayScale;
 	}
