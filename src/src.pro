@@ -38,6 +38,7 @@ SOURCES += \
 	platform/qt/Alignment.cpp \
 	platform/qt/Archivable.cpp \
 	platform/qt/ArchivingManagers.cpp \
+	platform/qt/BBitmap.cpp \
 	platform/qt/BRect.cpp \
 	platform/qt/ByteOrder.cpp \
 	platform/qt/DataIO.cpp \
@@ -85,6 +86,7 @@ HEADERS  += \
 	platform/qt/ArchivingManagers.h \
 	platform/qt/AppDefs.h \
 	platform/qt/BeBuild.h \
+	platform/qt/Bitmap.h \
 	platform/qt/ByteOrder.h \
 	platform/qt/DataIO.h \
 	platform/qt/Errors.h \
