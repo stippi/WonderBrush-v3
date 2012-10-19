@@ -86,6 +86,7 @@ SOURCES += \
 	model/snapshots/RectSnapshot.cpp \
 	model/snapshots/ShapeSnapshot.cpp \
 	model/snapshots/StyleableSnapshot.cpp \
+	platform/qt/AbstractLOAdapter.cpp \
 	platform/qt/Alignment.cpp \
 	platform/qt/Archivable.cpp \
 	platform/qt/ArchivingManagers.cpp \

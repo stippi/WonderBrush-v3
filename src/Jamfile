@@ -152,6 +152,7 @@ Application WonderBrush :
 	StyleableSnapshot.cpp
 
 	# platform/haiku
+	AbstractLOAdapter.cpp
 	platform_support.cpp
 
 	# render
@@ -176,7 +177,6 @@ Application WonderBrush :
 #	FontManager.cpp
 
 	# support
-	AbstractLOAdapter.cpp
 	bitmap_support.cpp
 	Command.cpp
 	CommandStack.cpp
