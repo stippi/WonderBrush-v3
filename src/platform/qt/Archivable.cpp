@@ -14,6 +14,7 @@
 
 
 #include <ctype.h>
+#include <dlfcn.h>
 #include <errno.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -22,16 +23,10 @@
 #include <typeinfo>
 #include <vector>
 
-#include <AppFileInfo.h>
 #include <Archivable.h>
-#include <Entry.h>
 #include <List.h>
 #include <OS.h>
-#include <Path.h>
-#include <Roster.h>
 #include <String.h>
-
-#include <binary_compatibility/Support.h>
 
 #include "ArchivingManagers.h"
 
@@ -195,45 +190,12 @@ add_private_namespace(BString& name)
 
 
 static instantiation_func
-find_function_in_image(BString& funcName, image_id id, status_t& err)
+find_function_in_image(BString& funcName, void* dlHandle, status_t& err)
 {
-	instantiation_func instantiationFunc = NULL;
-	err = get_image_symbol(id, funcName.String(), B_SYMBOL_TYPE_TEXT,
-		(void**)&instantiationFunc);
-	if (err != B_OK)
-		return NULL;
-
-	return instantiationFunc;
-}
-
-
-static status_t
-check_signature(const char* signature, image_info& info)
-{
-	if (signature == NULL) {
-		// If it wasn't specified, anything "matches"
-		return B_OK;
-	}
-
-	// Get image signature
-	BFile file(info.name, B_READ_ONLY);
-	status_t err = file.InitCheck();
-	if (err != B_OK)
-		return err;
-
-	char imageSignature[B_MIME_TYPE_LENGTH];
-	BAppFileInfo appFileInfo(&file);
-	err = appFileInfo.GetSignature(imageSignature);
-	if (err != B_OK) {
-		syslog(LOG_ERR, "instantiate_object - couldn't get mime sig for %s",
-			info.name);
-		return err;
-	}
-
-	if (strcmp(signature, imageSignature))
-		return B_MISMATCHED_VALUES;
-
-	return B_OK;
+	instantiation_func function
+		= (instantiation_func)dlsym(dlHandle, funcName.String());
+	err = function != NULL ? B_OK : B_ENTRY_NOT_FOUND;
+	return function;
 }
 
 
@@ -250,34 +212,23 @@ find_instantiation_func(const char* className, const char* signature,
 		return NULL;
 	}
 
-	thread_info threadInfo;
-	status_t err = get_thread_info(find_thread(NULL), &threadInfo);
-	if (err != B_OK) {
-		errno = err;
-		return NULL;
-	}
+	void* dlHandle = dlopen(NULL, RTLD_LAZY);
 
 	instantiation_func instantiationFunc = NULL;
-	image_info imageInfo;
 
 	BString name = className;
 	for (int32 pass = 0; pass < 2; pass++) {
 		BString funcName;
 		build_function_name(name, funcName);
 
-		// for each image_id in team_id
-		int32 cookie = 0;
-		while (instantiationFunc == NULL
-			&& get_next_image_info(threadInfo.team, &cookie, &imageInfo)
-				== B_OK) {
-			instantiationFunc = find_function_in_image(funcName, imageInfo.id,
-				err);
-		}
+		status_t err;
+		instantiationFunc = find_function_in_image(funcName, dlHandle, err);
 		if (instantiationFunc != NULL) {
 			// if requested, save the image id in
 			// which the function was found
+// NOTE: We don't have any useful ID to return.
 			if (id != NULL)
-				*id = imageInfo.id;
+				*id = -1;
 			break;
 		}
 
@@ -287,9 +238,7 @@ find_instantiation_func(const char* className, const char* signature,
 			break;
 	}
 
-	if (instantiationFunc != NULL
-		&& check_signature(signature, imageInfo) != B_OK)
-		return NULL;
+	dlclose(dlHandle);
 
 	return instantiationFunc;
 }
@@ -349,32 +298,6 @@ BArchivable::Instantiate(BMessage* from)
 {
 	debugger("Can't create a plain BArchivable object");
 	return NULL;
-}
-
-
-status_t
-BArchivable::Perform(perform_code d, void* arg)
-{
-	switch (d) {
-		case PERFORM_CODE_ALL_UNARCHIVED:
-		{
-			perform_data_all_unarchived* data =
-				(perform_data_all_unarchived*)arg;
-
-			data->return_value = BArchivable::AllUnarchived(data->archive);
-			return B_OK;
-		}
-
-		case PERFORM_CODE_ALL_ARCHIVED:
-		{
-			perform_data_all_archived* data =
-				(perform_data_all_archived*)arg;
-
-			data->return_value = BArchivable::AllArchived(data->archive);
-			return B_OK;
-		}
-	}
-	return B_NAME_NOT_FOUND;
 }
 
 
@@ -664,6 +587,8 @@ instantiate_object(BMessage* archive, image_id* _id)
 
 	// if find_instantiation_func() can't locate Class::Instantiate()
 	// and a signature was specified
+(void)hasSignature;
+#if 0
 	if (!instantiationFunc && hasSignature) {
 		// use BRoster::FindApp() to locate an app or add-on with the symbol
 		BRoster Roster;
@@ -726,6 +651,7 @@ instantiate_object(BMessage* archive, image_id* _id)
 		*status = B_NAME_NOT_FOUND;
 		return NULL;
 	}
+#endif	// 0
 
 	// if Class::Instantiate(BMessage*) was found
 	if (instantiationFunc != NULL) {
@@ -805,68 +731,6 @@ find_instantiation_func(BMessage* archive)
 
 	return find_instantiation_func(name, signature);
 }
-
-
-// BArchivable binary compatibility
-#if __GNUC__ == 2
-
-
-extern "C" status_t
-_ReservedArchivable1__11BArchivable(BArchivable* archivable,
-	const BMessage* archive)
-{
-	// AllUnarchived
-	perform_data_all_unarchived performData;
-	performData.archive = archive;
-
-	archivable->Perform(PERFORM_CODE_ALL_UNARCHIVED, &performData);
-	return performData.return_value;
-}
-
-
-extern "C" status_t
-_ReservedArchivable2__11BArchivable(BArchivable* archivable,
-	BMessage* archive)
-{
-	// AllArchived
-	perform_data_all_archived performData;
-	performData.archive = archive;
-
-	archivable->Perform(PERFORM_CODE_ALL_ARCHIVED, &performData);
-	return performData.return_value;
-}
-
-
-#elif __GNUC__ > 2
-
-
-extern "C" status_t
-_ZN11BArchivable20_ReservedArchivable1Ev(BArchivable* archivable,
-	const BMessage* archive)
-{
-	// AllUnarchived
-	perform_data_all_unarchived performData;
-	performData.archive = archive;
-
-	archivable->Perform(PERFORM_CODE_ALL_UNARCHIVED, &performData);
-	return performData.return_value;
-}
-
-
-extern "C" status_t
-_ZN11BArchivable20_ReservedArchivable2Ev(BArchivable* archivable,
-	BMessage* archive)
-{
-	// AllArchived
-	perform_data_all_archived performData;
-	performData.archive = archive;
-
-	archivable->Perform(PERFORM_CODE_ALL_ARCHIVED, &performData);
-	return performData.return_value;
-}
-
-
-#endif // _GNUC__ > 2
 
 
 void BArchivable::_ReservedArchivable3() {}

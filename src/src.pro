@@ -14,7 +14,7 @@ DEFINES += __STDC_LIMIT_MACROS=1
 DEFINES += __STDC_FORMAT_MACROS=1
 DEFINES += _GNU_SOURCE
 
-LIBS += -Lagg -lagg
+LIBS += -Lagg -lagg -ldl
 
 # suppress undesired warnings
 QMAKE_CXXFLAGS_WARN_ON += -Wno-unused-parameter -Wno-multichar
@@ -22,6 +22,8 @@ QMAKE_CXXFLAGS_WARN_ON += -Wno-unused-parameter -Wno-multichar
 SOURCES += \
 	WonderBrush_qt.cpp \
 	platform/qt/Alignment.cpp \
+	platform/qt/Archivable.cpp \
+	platform/qt/ArchivingManagers.cpp \
 	platform/qt/ByteOrder.cpp \
 	platform/qt/DataIO.cpp \
 	platform/qt/Flattenable.cpp \
@@ -35,6 +37,7 @@ SOURCES += \
 	platform/qt/PlatformSemaphoreManager.cpp \
 	platform/qt/PlatformThread.cpp \
 	platform/qt/Point.cpp \
+	platform/qt/PointerList.cpp \
 	platform/qt/Rect.cpp \
 	platform/qt/Size.cpp \
 	platform/qt/String.cpp \
@@ -53,12 +56,15 @@ SOURCES += \
 HEADERS  += \
 	cimg/CImg.h \
 	platform/qt/Alignment.h \
+	platform/qt/Archivable.h \
+	platform/qt/ArchivingManagers.h \
 	platform/qt/AppDefs.h \
 	platform/qt/BeBuild.h \
 	platform/qt/ByteOrder.h \
 	platform/qt/DataIO.h \
 	platform/qt/Errors.h \
 	platform/qt/Flattenable.h \
+	platform/qt/image.h \
 	platform/qt/InterfaceDefs.h \
 	platform/qt/List.h \
 	platform/qt/Locker.h \
@@ -66,6 +72,7 @@ HEADERS  += \
 	platform/qt/MessageAdapter.h \
 	platform/qt/MessagePrivate.h \
 	platform/qt/MessageUtils.h \
+	platform/qt/ObjectList.h \
 	platform/qt/OS.h \
 	platform/qt/platform_support.h \
 	platform/qt/PlatformSemaphoreManager.h \

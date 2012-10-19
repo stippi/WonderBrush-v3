@@ -34,8 +34,6 @@ public:
 	virtual	status_t 			Archive(BMessage* into, bool deep = true) const;
 	static 	BArchivable*		Instantiate(BMessage* archive);
 
-	virtual status_t			Perform(perform_code d, void* arg);
-
 	virtual	status_t 			AllUnarchived(const BMessage* archive);
 	virtual	status_t 			AllArchived(BMessage* archive) const;
 
