@@ -74,6 +74,7 @@ Gradient::ColorStop::operator!=(const ColorStop& other) const
 }
 
 
+#if 0
 static int
 sort_color_stops_by_offset(const void* _left, const void* _right)
 {
@@ -85,6 +86,7 @@ sort_color_stops_by_offset(const void* _left, const void* _right)
 		return -1;
 	return 0;
 }
+#endif
 
 
 // #pragma mark - Gradient
