@@ -347,7 +347,7 @@ Paint::HashKey() const
 	hash |= (fColor.green & 0x0f) << 22;
 	hash |= (fColor.blue & 0x0f) << 18;
 	hash |= (fColor.alpha & 0x0f) << 14;
-	hash |= ((uint32)fGradient & 0xff) << 6;
+	hash |= ((addr_t)fGradient & 0xff) << 6;
 
 	// TODO: pattern...
 
