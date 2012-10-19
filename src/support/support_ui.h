@@ -13,6 +13,8 @@
 #include <Rect.h>
 //#include <agg_math_stroke.h>
 
+#include "BuildSupport.h"
+
 class BBitmap;
 class BDataIO;
 class BMessage;
@@ -45,7 +47,8 @@ void print_color_space(color_space format);
 
 
 // Those are already defined in newer versions of BeOS
-#if !defined(B_BEOS_VERSION_DANO) && !defined(__HAIKU__)
+#if !defined(B_BEOS_VERSION_DANO) && !defined(__HAIKU__) \
+	&& !defined(WONDERBRUSH_PLATFORM_QT)
 
 // rgb_color == rgb_color
 static inline bool

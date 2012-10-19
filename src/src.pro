@@ -7,6 +7,9 @@ TEMPLATE = app
 
 INCLUDEPATH += agg/include
 INCLUDEPATH += cimg
+INCLUDEPATH += model
+INCLUDEPATH += model/property
+INCLUDEPATH += model/property/specific_properties
 INCLUDEPATH += platform/qt
 INCLUDEPATH += support
 
@@ -21,6 +24,14 @@ QMAKE_CXXFLAGS_WARN_ON += -Wno-unused-parameter -Wno-multichar
 
 SOURCES += \
 	WonderBrush_qt.cpp \
+	model/property/CommonPropertyIDs.cpp \
+	model/property/Property.cpp \
+	model/property/PropertyObject.cpp \
+	model/property/PropertyObjectProperty.cpp \
+	model/property/specific_properties/ColorProperty.cpp \
+	model/property/specific_properties/IconProperty.cpp \
+	model/property/specific_properties/Int64Property.cpp \
+	model/property/specific_properties/OptionProperty.cpp \
 	platform/qt/Alignment.cpp \
 	platform/qt/Archivable.cpp \
 	platform/qt/ArchivingManagers.cpp \
@@ -55,6 +66,14 @@ SOURCES += \
 
 HEADERS  += \
 	cimg/CImg.h \
+	model/property/CommonPropertyIDs.h \
+	model/property/Property.h \
+	model/property/PropertyObject.h \
+	model/property/PropertyObjectProperty.h \
+	model/property/specific_properties/ColorProperty.h \
+	model/property/specific_properties/IconProperty.h \
+	model/property/specific_properties/Int64Property.h \
+	model/property/specific_properties/OptionProperty.h \
 	platform/qt/Alignment.h \
 	platform/qt/Archivable.h \
 	platform/qt/ArchivingManagers.h \
@@ -64,6 +83,7 @@ HEADERS  += \
 	platform/qt/DataIO.h \
 	platform/qt/Errors.h \
 	platform/qt/Flattenable.h \
+	platform/qt/GraphicsDefs.h \
 	platform/qt/image.h \
 	platform/qt/InterfaceDefs.h \
 	platform/qt/List.h \
@@ -98,5 +118,7 @@ HEADERS  += \
 	support/Referenceable.h \
 	support/RWLocker.h \
 	support/support.h \
-	support/Transformable.h
+	support/support_ui.h \
+	support/Transformable.h \
+	support/ui_defines.h
 
