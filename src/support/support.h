@@ -3,11 +3,14 @@
 #ifndef SUPPORT_H
 #define SUPPORT_H
 
-#include <Rect.h>
-#include <String.h>
 
-class BPositionIO;
+#include <Rect.h>
+
+#include "platform_support.h"
+
+
 class BString;
+
 
 // constrain
 inline void
@@ -144,12 +147,9 @@ roundf(float v)
 	return ceilf(v - 0.5);
 }
 
-status_t write_string(BPositionIO* stream, BString& string);
-void append_float(BString& string, float n, int32 maxDigits = 4);
-
 double gauss(double f);
 
-void string_for_time_of_day(BString& string, uint32 secondOfDay);
-const char* print_week(uint8 days, BString& string);
+void append_float(BString& string, float n, int32 maxDigits = 4);
+
 
 # endif // SUPPORT_H
