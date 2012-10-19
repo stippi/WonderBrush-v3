@@ -10,8 +10,8 @@
 // constructor
 Object::Object()
 	:
-	BaseObject(),
 	Transformable(),
+	BaseObject(),
 	fChangeCounter(0),
 	fParent(NULL)
 {
