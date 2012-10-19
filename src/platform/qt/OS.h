@@ -1,5 +1,9 @@
-#ifndef OS_H
-#define OS_H
+/*
+ * Copyright 2004-2009, Haiku Inc. All Rights Reserved.
+ * Distributed under the terms of the MIT License.
+ */
+#ifndef PLATFORM_QT_OS_H
+#define PLATFORM_QT_OS_H
 
 
 #include <SupportDefs.h>
@@ -35,11 +39,7 @@ extern "C" {
 
 void debugger(const char *message);
 
-bigtime_t system_time(void);
-status_t snooze(bigtime_t amount);
-status_t snooze_until(bigtime_t time, int timeBase);
-
-thread_id find_thread(const char* name);
+bigtime_t	system_time(void);
 
 sem_id		create_sem(int32 count, const char* name);
 status_t	delete_sem(sem_id id);
@@ -61,9 +61,50 @@ status_t	get_next_sem_info(team_id team, int32* cookie,
 				struct sem_info* info);
 
 
+/* Threads */
+
+#define B_IDLE_PRIORITY					0
+#define B_LOWEST_ACTIVE_PRIORITY		1
+#define B_LOW_PRIORITY					5
+#define B_NORMAL_PRIORITY				10
+#define B_DISPLAY_PRIORITY				15
+#define	B_URGENT_DISPLAY_PRIORITY		20
+#define	B_REAL_TIME_DISPLAY_PRIORITY	100
+#define	B_URGENT_PRIORITY				110
+#define B_REAL_TIME_PRIORITY			120
+
+#define B_SYSTEM_TIMEBASE				0
+	/* time base for snooze_*(), compatible with the clockid_t constants defined
+	   in <time.h> */
+
+#define B_FIRST_REAL_TIME_PRIORITY		B_REAL_TIME_DISPLAY_PRIORITY
+
+typedef status_t (*thread_func)(void *);
+#define thread_entry thread_func
+	/* thread_entry is for backward compatibility only! Use thread_func */
+
+thread_id	spawn_thread(thread_func, const char *name, int32 priority,
+				void *data);
+status_t	kill_thread(thread_id thread);
+status_t	resume_thread(thread_id thread);
+status_t	suspend_thread(thread_id thread);
+
+status_t	rename_thread(thread_id thread, const char *newName);
+status_t	set_thread_priority(thread_id thread, int32 newPriority);
+void		exit_thread(status_t status);
+status_t	wait_for_thread(thread_id thread, status_t *returnValue);
+status_t	on_exit_thread(void (*callback)(void *), void *data);
+
+thread_id 	find_thread(const char *name);
+
+status_t	snooze(bigtime_t amount);
+status_t	snooze_etc(bigtime_t amount, int timeBase, uint32 flags);
+status_t	snooze_until(bigtime_t time, int timeBase);
+
+
 #ifdef __cplusplus
 }
 #endif
 
 
-#endif // OS_H
+#endif // PLATFORM_QT_OS_H
