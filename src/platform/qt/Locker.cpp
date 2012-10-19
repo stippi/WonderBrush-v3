@@ -2,24 +2,32 @@
 
 
 BLocker::BLocker()
+	:
+	fMutex(QMutex::Recursive)
 {
 	InitLocker(NULL, true);
 }
 
 
 BLocker::BLocker(const char *name)
+	:
+	fMutex(QMutex::Recursive)
 {
 	InitLocker(name, true);
 }
 
 
 BLocker::BLocker(bool benaphoreStyle)
+	:
+	fMutex(QMutex::Recursive)
 {
 	InitLocker(NULL, benaphoreStyle);
 }
 
 
 BLocker::BLocker(const char *name, bool benaphoreStyle)
+	:
+	fMutex(QMutex::Recursive)
 {
 	InitLocker(name, benaphoreStyle);
 }
