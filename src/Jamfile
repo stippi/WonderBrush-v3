@@ -12,7 +12,7 @@ local sourceDirs =
 	model/fills
 	model/objects
 	model/snapshots
-	platform/haiku
+	platform/$(WONDERBRUSH_PLATFORM)
 	render
 	render/text
 	support
@@ -151,7 +151,7 @@ Application WonderBrush :
 	Styleable.cpp
 	StyleableSnapshot.cpp
 
-	# platform/haiku
+	# platform/<platform>
 	AbstractLOAdapter.cpp
 	platform_support.cpp
 
@@ -189,7 +189,6 @@ Application WonderBrush :
 	Referenceable.cpp
 	RWLocker.cpp
 	support.cpp
-	support_haiku.cpp
 	support_settings.cpp
 	support_ui.cpp
 	Transformable.cpp

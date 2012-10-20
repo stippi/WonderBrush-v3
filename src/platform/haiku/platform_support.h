@@ -2,6 +2,9 @@
 #define PLATFORM_SUPPORT_H
 
 
+#include <SupportDefs.h>
+
+
 class BPositionIO;
 class BString;
 

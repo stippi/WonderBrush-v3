@@ -54,8 +54,19 @@ if $(OSPLAT) = X86 {
 	}
 }
 
-if $(OS) = LINUX {
-	SYSHDRS += /usr/include/freetype2 ;
+switch $(OS) {
+	case HAIKU : {
+		WONDERBRUSH_PLATFORM = haiku ;
+	} 
+
+	case LINUX : {
+		WONDERBRUSH_PLATFORM = qt ;
+		SYSHDRS += /usr/include/freetype2 ;
+	}
+
+	case * : {
+		Exit "Unsupported OS" $(OS) ;
+	}
 }
 
 # Use copyattr for copying.
