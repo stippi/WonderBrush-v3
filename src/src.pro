@@ -10,7 +10,7 @@ TEMPLATE = app
 # model/objects/Rect.h cannot be included now (though, surprisingly it seems to
 # work in model/objects/Rect.cpp).
 #INCLUDEPATH += platform/qt
-QMAKE_CXXFLAGS += -isystem $$PWD/platform/qt
+QMAKE_CXXFLAGS += -isystem $$PWD/platform/qt/system/include
 
 INCLUDEPATH += /usr/include/freetype2
 INCLUDEPATH += agg/font_freetype
@@ -34,6 +34,8 @@ QMAKE_CXXFLAGS += -iquote $$PWD/model/objects
 QMAKE_CXXFLAGS += -iquote $$PWD/model/property
 QMAKE_CXXFLAGS += -iquote $$PWD/model/property/specific_properties
 QMAKE_CXXFLAGS += -iquote $$PWD/model/snapshots
+QMAKE_CXXFLAGS += -iquote $$PWD/platform/qt
+QMAKE_CXXFLAGS += -iquote $$PWD/platform/qt/system
 QMAKE_CXXFLAGS += -iquote $$PWD/render
 QMAKE_CXXFLAGS += -iquote $$PWD/support
 
@@ -89,29 +91,29 @@ SOURCES += \
 	model/snapshots/ShapeSnapshot.cpp \
 	model/snapshots/StyleableSnapshot.cpp \
 	platform/qt/AbstractLOAdapter.cpp \
-	platform/qt/Alignment.cpp \
-	platform/qt/Archivable.cpp \
-	platform/qt/ArchivingManagers.cpp \
-	platform/qt/BBitmap.cpp \
-	platform/qt/BRect.cpp \
-	platform/qt/BRegion.cpp \
-	platform/qt/BRegionSupport.cpp \
-	platform/qt/ByteOrder.cpp \
-	platform/qt/DataIO.cpp \
-	platform/qt/Flattenable.cpp \
-	platform/qt/List.cpp \
-	platform/qt/Locker.cpp \
-	platform/qt/Message.cpp \
-	platform/qt/MessageAdapter.cpp \
-	platform/qt/MessageUtils.cpp \
-	platform/qt/OS.cpp \
 	platform/qt/platform_support.cpp \
 	platform/qt/PlatformSemaphoreManager.cpp \
 	platform/qt/PlatformThread.cpp \
-	platform/qt/Point.cpp \
-	platform/qt/PointerList.cpp \
-	platform/qt/Size.cpp \
-	platform/qt/String.cpp \
+	platform/qt/system/ArchivingManagers.cpp \
+	platform/qt/system/BAlignment.cpp \
+	platform/qt/system/BArchivable.cpp \
+	platform/qt/system/BBitmap.cpp \
+	platform/qt/system/BByteOrder.cpp \
+	platform/qt/system/BDataIO.cpp \
+	platform/qt/system/BFlattenable.cpp \
+	platform/qt/system/BList.cpp \
+	platform/qt/system/BLocker.cpp \
+	platform/qt/system/BMessageAdapter.cpp \
+	platform/qt/system/BMessage.cpp \
+	platform/qt/system/BMessageUtils.cpp \
+	platform/qt/system/BOS.cpp \
+	platform/qt/system/BPoint.cpp \
+	platform/qt/system/BPointerList.cpp \
+	platform/qt/system/BRect.cpp \
+	platform/qt/system/BRegion.cpp \
+	platform/qt/system/BRegionSupport.cpp \
+	platform/qt/system/BSize.cpp \
+	platform/qt/system/BString.cpp \
 	render/Font.cpp \
 	render/GaussFilter.cpp \
 	render/LayoutContext.cpp \
@@ -180,43 +182,77 @@ HEADERS  += \
 	model/snapshots/RectSnapshot.h \
 	model/snapshots/ShapeSnapshot.h \
 	model/snapshots/StyleableSnapshot.h \
-	platform/qt/Alignment.h \
-	platform/qt/Archivable.h \
-	platform/qt/ArchivingManagers.h \
-	platform/qt/AppDefs.h \
-	platform/qt/Autolock.h \
-	platform/qt/BeBuild.h \
-	platform/qt/Bitmap.h \
-	platform/qt/ByteOrder.h \
-	platform/qt/clipping.h \
-	platform/qt/DataIO.h \
-	platform/qt/Debug.h \
-	platform/qt/debugger.h \
-	platform/qt/Errors.h \
-	platform/qt/Flattenable.h \
-	platform/qt/GraphicsDefs.h \
-	platform/qt/image.h \
-	platform/qt/InterfaceDefs.h \
-	platform/qt/List.h \
-	platform/qt/Locker.h \
-	platform/qt/Message.h \
-	platform/qt/MessageAdapter.h \
-	platform/qt/MessagePrivate.h \
-	platform/qt/MessageUtils.h \
-	platform/qt/ObjectList.h \
-	platform/qt/OS.h \
 	platform/qt/PlatformSemaphoreManager.h \
 	platform/qt/PlatformThread.h \
-	platform/qt/Point.h \
-	platform/qt/Rect.h \
-	platform/qt/Region.h \
-	platform/qt/RegionSupport.h \
-	platform/qt/Size.h \
-	platform/qt/String.h \
-	platform/qt/StringPrivate.h \
-	platform/qt/SupportDefs.h \
-	platform/qt/TypeConstants.h \
-	platform/qt/utf8_functions.h \
+	platform/qt/system/ArchivingManagers.h \
+	platform/qt/system/BAlignment.h \
+	platform/qt/system/BAppDefs.h \
+	platform/qt/system/BArchivable.h \
+	platform/qt/system/BAutolock.h \
+	platform/qt/system/BBeBuild.h \
+	platform/qt/system/BBitmap.h \
+	platform/qt/system/BByteOrder.h \
+	platform/qt/system/Bclipping.h \
+	platform/qt/system/BDataIO.h \
+	platform/qt/system/BDebug.h \
+	platform/qt/system/Bdebugger.h \
+	platform/qt/system/BErrors.h \
+	platform/qt/system/BFlattenable.h \
+	platform/qt/system/BGraphicsDefs.h \
+	platform/qt/system/Bimage.h \
+	platform/qt/system/BInterfaceDefs.h \
+	platform/qt/system/BList.h \
+	platform/qt/system/BLocker.h \
+	platform/qt/system/BMessage.h \
+	platform/qt/system/BMessageAdapter.h \
+	platform/qt/system/BMessagePrivate.h \
+	platform/qt/system/BMessageUtils.h \
+	platform/qt/system/BObjectList.h \
+	platform/qt/system/BOS.h \
+	platform/qt/system/BPoint.h \
+	platform/qt/system/BRect.h \
+	platform/qt/system/BRegion.h \
+	platform/qt/system/BRegionSupport.h \
+	platform/qt/system/BSize.h \
+	platform/qt/system/BString.h \
+	platform/qt/system/BStringPrivate.h \
+	platform/qt/system/BSupportDefs.h \
+	platform/qt/system/BTypeConstants.h \
+	platform/qt/system/Butf8_functions.h \
+	platform/qt/system/include/Alignment.h \
+	platform/qt/system/include/AppDefs.h \
+	platform/qt/system/include/Archivable.h \
+	platform/qt/system/include/Autolock.h \
+	platform/qt/system/include/BeBuild.h \
+	platform/qt/system/include/Bitmap.h \
+	platform/qt/system/include/ByteOrder.h \
+	platform/qt/system/include/clipping.h \
+	platform/qt/system/include/DataIO.h \
+	platform/qt/system/include/Debug.h \
+	platform/qt/system/include/debugger.h \
+	platform/qt/system/include/Errors.h \
+	platform/qt/system/include/Flattenable.h \
+	platform/qt/system/include/GraphicsDefs.h \
+	platform/qt/system/include/image.h \
+	platform/qt/system/include/InterfaceDefs.h \
+	platform/qt/system/include/List.h \
+	platform/qt/system/include/Locker.h \
+	platform/qt/system/include/Message.h \
+	platform/qt/system/include/MessageAdapter.h \
+	platform/qt/system/include/MessagePrivate.h \
+	platform/qt/system/include/MessageUtils.h \
+	platform/qt/system/include/ObjectList.h \
+	platform/qt/system/include/OS.h \
+	platform/qt/system/include/Point.h \
+	platform/qt/system/include/Rect.h \
+	platform/qt/system/include/Region.h \
+	platform/qt/system/include/RegionSupport.h \
+	platform/qt/system/include/Size.h \
+	platform/qt/system/include/String.h \
+	platform/qt/system/include/StringPrivate.h \
+	platform/qt/system/include/SupportDefs.h \
+	platform/qt/system/include/TypeConstants.h \
+	platform/qt/system/include/utf8_functions.h \
 	render/FauxWeight.h \
 	render/Font.h \
 	render/GaussFilter.h \
@@ -234,6 +270,7 @@ HEADERS  += \
 	render/VertexSource.h \
 	support/AbstractLOAdapter.h \
 	support/AutoLocker.h \
+	support/bitmap_support.h \
 	support/BuildSupport.h \
 	support/Command.h \
 	support/CommandStack.h \
