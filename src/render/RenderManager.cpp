@@ -14,8 +14,8 @@
 #include <Bitmap.h>
 #include <Message.h>
 #include <Messenger.h>
-#include <View.h>
 
+#include "bitmap_support.h"
 #include "LayerSnapshot.h"
 #include "RenderBuffer.h"
 #include "RenderThread.h"
@@ -842,8 +842,14 @@ RenderManager::_CreateDisplayBitmaps(double zoomLevel)
 	bounds.right = ceilf(bounds.right * fZoomLevel);
 	bounds.bottom = ceilf(bounds.bottom * fZoomLevel);
 
-	fDisplayBitmap = new(nothrow) BBitmap(bounds, B_BITMAP_ACCEPTS_VIEWS,
-		B_RGBA32);
+	if (oldDisplayBitmap != NULL) {
+		fDisplayBitmap = scale_bitmap(oldDisplayBitmap, bounds);
+		delete oldDisplayBitmap;
+	} else {
+		fDisplayBitmap = new(nothrow) BBitmap(bounds, B_BITMAP_ACCEPTS_VIEWS,
+			B_RGBA32);
+	}
+
 	fRenderBuffer = new(nothrow) RenderBuffer(bounds);
 
 	if (fDisplayBitmap == NULL || !fDisplayBitmap->IsValid()
@@ -851,18 +857,8 @@ RenderManager::_CreateDisplayBitmaps(double zoomLevel)
 		return B_NO_MEMORY;
 	}
 
-	// Transfer old display bitmap or clear new bitmap
-	if (oldDisplayBitmap != NULL) {
-		BView view(bounds, "temp", 0, 0);
-		fDisplayBitmap->Lock();
-		fDisplayBitmap->AddChild(&view);
-		view.DrawBitmap(oldDisplayBitmap, oldDisplayBitmap->Bounds(), bounds,
-			B_FILTER_BITMAP_BILINEAR);
-		view.Sync();
-		view.RemoveSelf();
-		fDisplayBitmap->Unlock();
-		delete oldDisplayBitmap;
-	} else
+	// clear new bitmap, if there wasn't an old one
+	if (oldDisplayBitmap == NULL)
 		memset(fDisplayBitmap->Bits(), 0, fDisplayBitmap->BitsLength());
 
 	// Every layer needs to be rerendered

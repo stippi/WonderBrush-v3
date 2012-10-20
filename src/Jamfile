@@ -153,6 +153,7 @@ Application WonderBrush :
 
 	# platform/<platform>
 	AbstractLOAdapter.cpp
+	platform_bitmap_support.cpp
 	platform_support.cpp
 
 	# render
@@ -253,7 +254,7 @@ Application Resizer :
 			LayoutState.o
 			RenderBuffer.o
 			RenderEngine.o
-		
+
 			# support
 			Debug.o
 			support.o
@@ -295,7 +296,7 @@ Application Denoiser :
 			LayoutState.o
 			RenderBuffer.o
 			RenderEngine.o
-		
+
 			# support
 			Debug.o
 			support.o

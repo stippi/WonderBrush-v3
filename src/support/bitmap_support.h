@@ -23,4 +23,7 @@ void	blend_area(const BBitmap* source, const BBitmap* dest, BRect area);
 
 void	demultiply_area(const BBitmap* bitmap, BRect area);
 
+BBitmap* scale_bitmap(const BBitmap* bitmap, BRect newBounds);
+
+
 #endif // BITMAP_SUPPORT_H
