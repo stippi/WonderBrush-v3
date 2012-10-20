@@ -19,6 +19,7 @@
 #include "LayerSnapshot.h"
 #include "RenderBuffer.h"
 #include "RenderThread.h"
+#include "support.h"
 
 
 using std::nothrow;
@@ -203,10 +204,7 @@ RenderManager::Init()
 #endif
 
 #if 1
-	system_info info;
-	get_system_info(&info);
-
-	fRenderThreadCount = info.cpu_count;
+	fRenderThreadCount = get_optimal_worker_thread_count();
 #else
 	fRenderThreadCount = 1;
 #endif

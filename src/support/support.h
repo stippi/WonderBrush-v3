@@ -152,5 +152,7 @@ void append_float(BString& string, float n, int32 maxDigits = 4);
 
 status_t write_string(BPositionIO* stream, BString& string);
 
+int32 get_optimal_worker_thread_count();
+
 
 # endif // SUPPORT_H
