@@ -26,6 +26,7 @@ INCLUDEPATH += cimg
 #INCLUDEPATH += render
 #INCLUDEPATH += support
 
+QMAKE_CXXFLAGS += -iquote $$PWD/commands
 QMAKE_CXXFLAGS += -iquote $$PWD/gui/icons
 QMAKE_CXXFLAGS += -iquote $$PWD/model
 QMAKE_CXXFLAGS += -iquote $$PWD/model/document
@@ -54,6 +55,10 @@ QMAKE_CXXFLAGS_WARN_ON += -Wno-unused-parameter -Wno-multichar
 
 SOURCES += \
 	WonderBrush_qt.cpp \
+	commands/AddObjectsCommand.cpp \
+	commands/MoveObjectsCommand.cpp \
+	commands/ObjectAddedCommand.cpp \
+	commands/SetPropertiesCommand.cpp \
 	model/property/CommonPropertyIDs.cpp \
 	model/BaseObject.cpp \
 	model/Selectable.cpp \
@@ -144,6 +149,10 @@ SOURCES += \
 
 HEADERS  += \
 	cimg/CImg.h \
+	commands/AddObjectsCommand.h \
+	commands/MoveObjectsCommand.h \
+	commands/ObjectAddedCommand.h \
+	commands/SetPropertiesCommand.h \
 	gui/icons/PathPropertyIcon.h \
 	model/BaseObject.h \
 	model/Selectable.h \
