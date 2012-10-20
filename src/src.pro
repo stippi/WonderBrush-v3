@@ -204,7 +204,6 @@ HEADERS  += \
 	platform/qt/MessageUtils.h \
 	platform/qt/ObjectList.h \
 	platform/qt/OS.h \
-	platform/qt/platform_support.h \
 	platform/qt/PlatformSemaphoreManager.h \
 	platform/qt/PlatformThread.h \
 	platform/qt/Point.h \

@@ -12,6 +12,7 @@
 #include <stdio.h>
 #include <string.h>
 
+#include <DataIO.h>
 #include <Point.h>
 #include <String.h>
 #include <SupportDefs.h>
@@ -155,4 +156,19 @@ append_float(BString& string, float n, int32 maxDigits)
 			}
 		}
 	}
+}
+
+
+// write_string
+status_t
+write_string(BPositionIO* stream, BString& string)
+{
+	if (!stream)
+		return B_BAD_VALUE;
+
+	ssize_t written = stream->Write(string.String(), string.Length());
+	if (written > B_OK && written < string.Length())
+		written = B_ERROR;
+	string.SetTo("");
+	return written;
 }

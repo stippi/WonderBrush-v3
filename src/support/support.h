@@ -6,9 +6,8 @@
 
 #include <Rect.h>
 
-#include "platform_support.h"
 
-
+class BPositionIO;
 class BString;
 
 
@@ -150,6 +149,8 @@ roundf(float v)
 double gauss(double f);
 
 void append_float(BString& string, float n, int32 maxDigits = 4);
+
+status_t write_string(BPositionIO* stream, BString& string);
 
 
 # endif // SUPPORT_H
