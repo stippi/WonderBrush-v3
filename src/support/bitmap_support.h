@@ -10,10 +10,10 @@
 
 
 #include <GraphicsDefs.h>
+#include <Rect.h>
 
 
 class BBitmap;
-class BRect;
 
 void	clear_area(const BBitmap* bitmap, rgb_color color, BRect area);
 

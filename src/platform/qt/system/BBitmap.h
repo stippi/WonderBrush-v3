@@ -98,8 +98,8 @@ public:
 									overlay_restrictions* restrictions) const;
 
 	// to mimic a BWindow
-	virtual	void				AddChild(BView* view);
-	virtual	bool				RemoveChild(BView* view);
+			void				AddChild(BView* view);
+			bool				RemoveChild(BView* view);
 			int32				CountChildren() const;
 			BView*				ChildAt(int32 index) const;
 			BView*				FindView(const char* viewName) const;
@@ -116,11 +116,6 @@ private:
 	friend class BApplication;
 	friend class BPrivate::BPrivateScreen;
 	friend class Private;
-
-	virtual	status_t			Perform(perform_code d, void* arg);
-	virtual	void				_ReservedBitmap1();
-	virtual	void				_ReservedBitmap2();
-	virtual	void				_ReservedBitmap3();
 
 			int32				_ServerToken() const;
 			void				_InitObject(BRect bounds,

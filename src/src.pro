@@ -91,6 +91,7 @@ SOURCES += \
 	model/snapshots/ShapeSnapshot.cpp \
 	model/snapshots/StyleableSnapshot.cpp \
 	platform/qt/AbstractLOAdapter.cpp \
+	platform/qt/platform_bitmap_support.cpp \
 	platform/qt/platform_support.cpp \
 	platform/qt/PlatformSemaphoreManager.cpp \
 	platform/qt/PlatformThread.cpp \
@@ -101,6 +102,7 @@ SOURCES += \
 	platform/qt/system/BByteOrder.cpp \
 	platform/qt/system/BDataIO.cpp \
 	platform/qt/system/BFlattenable.cpp \
+	platform/qt/system/BGraphicsDefs.cpp \
 	platform/qt/system/BList.cpp \
 	platform/qt/system/BLocker.cpp \
 	platform/qt/system/BMessageAdapter.cpp \
