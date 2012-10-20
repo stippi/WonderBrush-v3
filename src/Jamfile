@@ -245,21 +245,23 @@ Application WonderBrush :
 
 Application Resizer :
 
-	# render
-	LayoutState.cpp
-	RenderBuffer.cpp
-	RenderEngine.cpp
-
-	# support
-	Debug.cpp
-	support.cpp
-	Referenceable.cpp
-	Transformable.cpp
-
 	# .
 	Resizer.cpp
 
 	:
+		[ FGristFiles
+			# render
+			LayoutState.o
+			RenderBuffer.o
+			RenderEngine.o
+		
+			# support
+			Debug.o
+			support.o
+			Referenceable.o
+			Transformable.o
+		]
+
 		libagg.a
 
 		tracker
@@ -285,21 +287,23 @@ Application Cropper :
 
 Application Denoiser :
 
-	# render
-	LayoutState.cpp
-	RenderBuffer.cpp
-	RenderEngine.cpp
-
-	# support
-	Debug.cpp
-	support.cpp
-	Referenceable.cpp
-	Transformable.cpp
-
 	# .
 	Denoiser.cpp
 
 	:
+		[ FGristFiles
+			# render
+			LayoutState.o
+			RenderBuffer.o
+			RenderEngine.o
+		
+			# support
+			Debug.o
+			support.o
+			Referenceable.o
+			Transformable.o
+		]
+
 		libagg.a
 
 		tracker

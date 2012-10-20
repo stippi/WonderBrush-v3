@@ -1,14 +1,13 @@
-SubDir WONDERBRUSH_TOP src model property ;
+SubDir TOP src model property ;
 
 # <pe-inc>
-SubDirHdrs $(WONDERBRUSH_TOP) src model property ;
-SubDirHdrs $(WONDERBRUSH_TOP) src model property specific_properties ;
-SubDirHdrs $(WONDERBRUSH_TOP) src support ;
+SubDirHdrs $(TOP) src model property ;
+SubDirHdrs $(TOP) src model property specific_properties ;
+SubDirHdrs $(TOP) src support ;
 # </pe-inc>
 
 # additional source directories
-SEARCH_SOURCE += [ FDirName $(WONDERBRUSH_TOP) src model property
-		specific_properties ] ;
+SEARCH_SOURCE += [ FDirName $(SUBDIR) specific_properties ] ;
 
 # <pe-src>
 StaticLibrary libproperty.a :
