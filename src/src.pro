@@ -124,8 +124,8 @@ SOURCES += \
 	render/Path.cpp \
 	render/RenderBuffer.cpp \
 	render/RenderEngine.cpp \
-#	render/RenderManager.cpp \
-#	render/RenderThread.cpp \
+	render/RenderManager.cpp \
+	render/RenderThread.cpp \
 	render/StackBlurFilter.cpp \
 	render/TextLayout.cpp \
 	render/TextRenderer.cpp \
