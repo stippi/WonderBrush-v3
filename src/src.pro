@@ -108,6 +108,7 @@ SOURCES += \
 	platform/qt/system/BMessageAdapter.cpp \
 	platform/qt/system/BMessage.cpp \
 	platform/qt/system/BMessageUtils.cpp \
+	platform/qt/system/BMessenger.cpp \
 	platform/qt/system/BOS.cpp \
 	platform/qt/system/BPoint.cpp \
 	platform/qt/system/BPointerList.cpp \
@@ -209,6 +210,7 @@ HEADERS  += \
 	platform/qt/system/BMessageAdapter.h \
 	platform/qt/system/BMessagePrivate.h \
 	platform/qt/system/BMessageUtils.h \
+	platform/qt/system/BMessenger.h \
 	platform/qt/system/BObjectList.h \
 	platform/qt/system/BOS.h \
 	platform/qt/system/BPoint.h \
@@ -243,6 +245,7 @@ HEADERS  += \
 	platform/qt/system/include/MessageAdapter.h \
 	platform/qt/system/include/MessagePrivate.h \
 	platform/qt/system/include/MessageUtils.h \
+	platform/qt/system/include/Messenger.h \
 	platform/qt/system/include/ObjectList.h \
 	platform/qt/system/include/OS.h \
 	platform/qt/system/include/Point.h \
