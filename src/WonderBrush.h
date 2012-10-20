@@ -1,35 +1,30 @@
 #ifndef WONDER_BRUSH_H
 #define WONDER_BRUSH_H
 
-#include <Application.h>
 #include <Rect.h>
+
+#include "PlatformWonderBrush.h"
+
 
 class BFile;
 class Document;
 class Layer;
 
-enum {
-	MSG_NEW_WINDOW	= 'nwnd',
-	MSG_WINDOW_QUIT	= 'wndq'
-};
 
-class WonderBrush : public BApplication {
+class WonderBrushBase {
 public:
-								WonderBrush(BRect bounds);
+								WonderBrushBase(BRect bounds);
 
-	virtual	void				MessageReceived(BMessage* message);
-	virtual void				ReadyToRun();
-	virtual	bool				QuitRequested();
+protected:
+	virtual	void				NewWindow() = 0;
+	virtual	void				WindowQuit(BMessage* message) = 0;
 
-private:
-			void				_NewWindow();
+	virtual	status_t			OpenSettingsFile(BFile& file,
+									bool forWriting) = 0;
+	virtual	void				StoreSettings() = 0;
+	virtual	void				RestoreSettings() = 0;
 
-			status_t			_OpenSettingsFile(BFile& file,
-									bool forWriting);
-			void				_StoreSettings();
-			void				_RestoreSettings();
-
-private:
+protected:
 			BMessage			fSettings;
 
 			Document*			fDocument;
@@ -37,6 +32,20 @@ private:
 
 			BRect				fWindowFrame;
 			int32				fWindowCount;
+};
+
+
+class WonderBrush : public PlatformWonderBrush<WonderBrushBase> {
+public:
+								WonderBrush(int argc, char** argv,
+									BRect bounds);
+
+protected:
+	virtual	void				NewWindow();
+	virtual	void				WindowQuit(BMessage* message);
+
+	virtual	void				StoreSettings();
+	virtual	void				RestoreSettings();
 };
 
 #endif // WONDER_BRUSH_H

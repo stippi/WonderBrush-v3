@@ -1,10 +1,6 @@
 #include "WonderBrush.h"
 
 #include <Bitmap.h>
-#include <Directory.h>
-#include <FindDirectory.h>
-#include <File.h>
-#include <Path.h>
 #include <String.h>
 #include <TranslationUtils.h>
 
@@ -18,12 +14,16 @@
 #include "Shape.h"
 #include "Window.h"
 
+
+// #pragma mark - WonderBrushBase
+
+
 // constructor
-WonderBrush::WonderBrush(BRect bounds)
-	: BApplication("application/x-vnd.Yellowbites.WonderBrush2")
-	, fDocument(new Document(bounds))
-	, fWindowFrame(bounds.OffsetToCopy(50, 50))
-	, fWindowCount(0)
+WonderBrushBase::WonderBrushBase(BRect bounds)
+	:
+	fDocument(new Document(bounds)),
+	fWindowFrame(bounds.OffsetToCopy(50, 50)),
+	fWindowCount(0)
 {
 	// create dummy contents for document
 	fDocument->RootLayer()->AddObject(new Rect(BRect(50, 100, 110, 130),
@@ -99,7 +99,7 @@ WonderBrush::WonderBrush(BRect bounds)
 	shapeWidthGlobalStyle->SetArea(BRect(120, 80, 230, 190));
 	shapeWidthGlobalStyle->SetStyle(style);
 	subSubSubLayer->AddObject(shapeWidthGlobalStyle);
-	
+
 	Rect* rectWidthGlobalStyle = new Rect();
 	rectWidthGlobalStyle->SetArea(BRect(150, 330, 240, 420));
 	rectWidthGlobalStyle->SetStyle(style);
@@ -126,56 +126,19 @@ WonderBrush::WonderBrush(BRect bounds)
 	fEditLayer = fDocument->RootLayer();
 }
 
-// MessageReceived
-void
-WonderBrush::MessageReceived(BMessage* message)
+
+// #pragma mark - WonderBrush
+
+
+WonderBrush::WonderBrush(int argc, char** argv, BRect bounds)
+	:
+	PlatformWonderBrush<WonderBrushBase>(argc, argv, bounds)
 {
-	switch (message->what) {
-		case MSG_NEW_WINDOW:
-			_NewWindow();
-			break;
-		case MSG_WINDOW_QUIT:
-		{
-			BMessage windowSettings;
-			if (message->FindMessage("window settings",
-					&windowSettings) == B_OK) {
-				fSettings.RemoveName("window settings");
-				fSettings.AddMessage("window settings", &windowSettings);
-			}
-			message->FindRect("window frame", &fWindowFrame);
-			
-			fWindowCount--;
-			if (fWindowCount == 0)
-				PostMessage(B_QUIT_REQUESTED, this);
-			break;
-		}
-		default:
-			BApplication::MessageReceived(message);
-			break;
-	}
 }
 
-// ReadyToRun
+// NewWindow
 void
-WonderBrush::ReadyToRun()
-{
-	_RestoreSettings();
-	_NewWindow();
-}
-
-// QuitRequested
-bool
-WonderBrush::QuitRequested()
-{
-	_StoreSettings();
-	return BApplication::QuitRequested();
-}
-
-// #pragma mark -
-
-// _NewWindow
-void
-WonderBrush::_NewWindow()
+WonderBrush::NewWindow()
 {
 	fWindowFrame.OffsetBy(30, 30);
 
@@ -192,62 +155,28 @@ WonderBrush::_NewWindow()
 	window->Show();
 }
 
-// _OpenSettingsFile
-status_t
-WonderBrush::_OpenSettingsFile(BFile& file, bool forWriting)
+
+// WindowQuit
+void
+WonderBrush::WindowQuit(BMessage* message)
 {
-	BPath path;
-	status_t ret = find_directory(B_USER_SETTINGS_DIRECTORY, &path);
-	if (ret != B_OK) {
-		fprintf(stderr, "Failed to find the user settings directory: %s\n",
-			strerror(ret));
-		return ret;
+	BMessage windowSettings;
+	if (message->FindMessage("window settings", &windowSettings) == B_OK) {
+		fSettings.RemoveName("window settings");
+		fSettings.AddMessage("window settings", &windowSettings);
 	}
-	ret = path.Append("WonderBrush3");
-	if (ret != B_OK) {
-		fprintf(stderr, "Failed to initialize the settings path: %s\n",
-			strerror(ret));
-		return ret;
-	}
+	message->FindRect("window frame", &fWindowFrame);
 
-	ret = create_directory(path.Path(), 0777);
-	if (ret != B_OK) {
-		fprintf(stderr, "Failed to create the settings path: %s\n",
-			strerror(ret));
-		return ret;
-	}
-
-	ret = path.Append("main_settings");
-	if (ret != B_OK) {
-		fprintf(stderr, "Failed to initialize the settings path: %s\n",
-			strerror(ret));
-		return ret;
-	}
-
-	if (forWriting) {
-		ret = file.SetTo(path.Path(), B_CREATE_FILE | B_ERASE_FILE
-			| B_WRITE_ONLY);
-	} else {
-		ret = file.SetTo(path.Path(), B_READ_ONLY);
-	}
-
-	if (ret != B_OK) {
-		if (ret != B_ENTRY_NOT_FOUND) {
-			fprintf(stderr, "Failed to initialize the settings file (%s): "
-				"%s\n", path.Path(), strerror(ret));
-		}
-		return ret;
-	}
-	
-	return B_OK;
+	fWindowCount--;
 }
 
-// _StoreSettings
+
+// StoreSettings
 void
-WonderBrush::_StoreSettings()
+WonderBrush::StoreSettings()
 {
 	BFile file;
-	status_t status = _OpenSettingsFile(file, true);
+	status_t status = OpenSettingsFile(file, true);
 	if (status != B_OK) {
 		fprintf(stderr, "Failed to create application settings: %s\n",
 			strerror(status));
@@ -265,12 +194,12 @@ WonderBrush::_StoreSettings()
 	}
 }
 
-// _RestoreSettings
+// RestoreSettings
 void
-WonderBrush::_RestoreSettings()
+WonderBrush::RestoreSettings()
 {
 	BFile file;
-	status_t status = _OpenSettingsFile(file, false);
+	status_t status = OpenSettingsFile(file, false);
 	if (status != B_OK) {
 		if (status != B_ENTRY_NOT_FOUND)
 			fprintf(stderr, "Failed to open application settings.\n");
@@ -286,13 +215,15 @@ WonderBrush::_RestoreSettings()
 		fWindowFrame.OffsetBy(-30, -30);
 }
 
+
 // #pragma mark -
+
 
 // main
 int
-main(int argc, const char* argv[])
+main(int argc, char* argv[])
 {
-	WonderBrush app(BRect(0, 0, 799, 599));
+	WonderBrush app(argc, argv, BRect(0, 0, 799, 599));
 	app.Run();
 	return 0;
 }
