@@ -184,6 +184,7 @@ HEADERS  += \
 	platform/qt/Archivable.h \
 	platform/qt/ArchivingManagers.h \
 	platform/qt/AppDefs.h \
+	platform/qt/Autolock.h \
 	platform/qt/BeBuild.h \
 	platform/qt/Bitmap.h \
 	platform/qt/ByteOrder.h \
