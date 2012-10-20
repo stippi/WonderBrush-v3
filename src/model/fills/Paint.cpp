@@ -460,11 +460,6 @@ Paint::SetGradient(const ::Gradient* gradient)
 //	return fGammaCorrectedColors;
 //}
 
-Paint
-Paint::sEmptyPaint;
-
-PaintCache
-Paint::sPaintCache;
 
 //static int
 //test_paint_cache()
@@ -502,11 +497,13 @@ Paint::sPaintCache;
 /*static*/ const Paint&
 Paint::EmptyPaint()
 {
-	return sEmptyPaint;
+	static Paint emptyPaint;
+	return emptyPaint;
 }
 
 /*static*/ ::PaintCache&
 Paint::PaintCache()
 {
-	return sPaintCache;
+	static ::PaintCache paintCache;
+	return paintCache;
 }

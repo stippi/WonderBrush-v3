@@ -17,9 +17,6 @@
 #include "PropertyObjectProperty.h"
 
 
-StrokePropertiesCache Style::sStrokePropertiesCache;
-Style Style::sNullStyle;
-
 // constructor
 Style::Style()
 	:
@@ -180,7 +177,7 @@ Style::UnsetStrokePaint()
 void
 Style::SetStrokeProperties(const ::StrokeProperties& properties)
 {
-	_SetProperty(fStrokeProperties, properties, sStrokePropertiesCache,
+	_SetProperty(fStrokeProperties, properties, _StrokePropertiesCache(),
 		properties.SetProperties());
 }
 
@@ -190,7 +187,7 @@ Style::UnsetStrokeProperties()
 {
 	uint64 properties = STROKE_WIDTH | STROKE_JOIN_MODE | STROKE_CAP_MODE 
 		| STROKE_MITER_LIMIT;
-	_UnsetProperty(fStrokeProperties, sStrokePropertiesCache, properties);
+	_UnsetProperty(fStrokeProperties, _StrokePropertiesCache(), properties);
 }
 
 // ExtendBounds
@@ -326,3 +323,18 @@ Style::_SetPaintToPropertyObject(SharedPaint*& member, uint64 setProperty,
 		_SetProperty(member, paint, Paint::PaintCache(), setProperty);
 }
 
+
+/*static*/ StrokePropertiesCache&
+Style::_StrokePropertiesCache()
+{
+	static StrokePropertiesCache strokePropertiesCache;
+	return strokePropertiesCache;
+}
+
+
+/*static*/ Style&
+Style::_NullStyle()
+{
+	static Style nullStyle;
+	return nullStyle;
+}

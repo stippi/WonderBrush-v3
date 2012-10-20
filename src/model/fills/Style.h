@@ -83,10 +83,10 @@ private:
 									const PropertyObject* object,
 									uint32 flags);
 
-private:
-	static	StrokePropertiesCache sStrokePropertiesCache;
-	static	Style				sNullStyle;
+	static	StrokePropertiesCache& _StrokePropertiesCache();
+	static	Style&				_NullStyle();
 
+private:
 			uint64				fSetProperties;
 
 			SharedPaint*		fFillPaint;

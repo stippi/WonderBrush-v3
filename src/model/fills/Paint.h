@@ -98,9 +98,6 @@ private:
 			// for caching gamma corrected gradient color array
 	mutable	agg::rgba8*			fGammaCorrectedColors;
 	mutable	bool				fGammaCorrectedColorsValid;
-
-	static	Paint				sEmptyPaint;
-	static	::PaintCache		sPaintCache;
 };
 
 #endif	// PAINT_H
