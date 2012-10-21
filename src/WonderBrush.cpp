@@ -66,10 +66,12 @@ WonderBrush::WonderBrush(BRect bounds)
 		printf("Test bitmap file not found or failed to load.\n");
 
 	Text* text = new Text((rgb_color){ 0, 0, 0, 255 });
+	text->TranslateBy(BPoint(522, 31));
 	text->SetFont("DejaVuSerif.ttf", 24.0);
 	text->SetWidth(200.0);
+	text->SetJustify(true);
 	text->SetText("This is a test of the new text layouting features.");
-	subLayer->AddObject(text);
+	fDocument->RootLayer()->AddObject(text);
 
 	Rect* transformedRect = new Rect(BRect(150, 200, 210, 330),
 		(rgb_color){ 55, 120, 80, 120 });
