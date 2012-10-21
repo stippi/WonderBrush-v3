@@ -100,6 +100,7 @@ public:
 	TextLayout& operator=(const TextLayout& other);
 
 	void setText(const char* text);
+	void setFont(const Font& font);
 	void setFirstLineInset(double inset);
 	void setLineInset(double inset);
 	void setWidth(double width);
@@ -262,6 +263,10 @@ private:
 
 private:
 	FontCache*			fFontCache;
+
+	Font				fFont;
+	double				fAscent;
+	double				fDescent;
 
 	double				fFirstLineInset;
 	double				fLineInset;

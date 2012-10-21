@@ -156,6 +156,10 @@ TextLayout::TextLayout(FontCache* fontCache)
 	:
 	fFontCache(fontCache),
 	
+	fFont("DejaVuSans.ttf", 12.0),
+	fAscent(0.0),
+	fDescent(0.0),
+	
 	fFirstLineInset(0.0),
 	fLineInset(0.0),
 	fWidth(0.0),
@@ -193,6 +197,7 @@ TextLayout::TextLayout(FontCache* fontCache)
 
 TextLayout::TextLayout(const TextLayout& other)
 	:
+	fFont(other.fFont),
 	fGlyphInfoBuffer(NULL),
 	fLineInfoBuffer(NULL),
 	fStyleRunBuffer(NULL),
@@ -207,6 +212,10 @@ TextLayout::operator=(const TextLayout& other)
 {
 	fFontCache = other.fFontCache;
 	
+	fFont = other.fFont;
+	fAscent = other.fAscent;
+	fDescent = other.fDescent;
+
 	fFirstLineInset = other.fFirstLineInset;
 	fLineInset = other.fLineInset;
 	fWidth = other.fWidth;
@@ -276,6 +285,16 @@ TextLayout::setText(const char* text)
 		fHinting, TextRenderer::AUTO_HINT_SCALE, subpixelScale);
 
 	invalidateLayout();
+}
+
+
+void
+TextLayout::setFont(const Font& font)
+{
+	if (fFont != font) {
+		fFont = font;
+		invalidateLayout();
+	}
 }
 
 
@@ -492,7 +511,7 @@ TextLayout::getHeight()
 		return fStyleRunBuffer[0].font.getSize();
 	}
 
-	return 0.0;
+	return fFont.getSize();
 }
 
 
@@ -884,7 +903,18 @@ TextLayout::init(const char* text, FontEngine& fontEngine,
 	fGlyphInfoCount = 0;
 	fLineInfoCount = 0;
 
-    double height = fontEngine.height();
+	BString resolvedFontPath = FontCache::getInstance()
+		->resolveFont(fFont.getName());
+    double height = fFont.getSize();
+
+	if (!fontEngine.load_font(resolvedFontPath.String(), 0,
+		agg::glyph_ren_outline, height, height)) {
+		fprintf(stderr, "Error loading font: '%s'\n",
+			resolvedFontPath.String());
+	}
+
+	fAscent = fontEngine.ascender();
+	fDescent = fontEngine.descender();
 
     fontEngine.width(height * scaleX * subpixelScale);
     fontEngine.hinting(hinting);
@@ -903,7 +933,11 @@ TextLayout::init(const char* text, FontEngine& fontEngine,
 			StyleRun* nextStyleRun = &(fStyleRunBuffer[styleIndex + 1]);
 			if (nextStyleRun->start == (int) offset) {
 				height = nextStyleRun->font.getSize();
-				fontEngine.load_font(nextStyleRun->font.getName(), 0,
+
+				resolvedFontPath = FontCache::getInstance()
+					->resolveFont(nextStyleRun->font.getName());
+
+				fontEngine.load_font(resolvedFontPath.String(), 0,
 					agg::glyph_ren_outline, height, height);
 				fontEngine.width(height * scaleX * subpixelScale);
 
@@ -1078,15 +1112,24 @@ TextLayout::layout(FontEngine& fontEngine, FontManager& fontManager,
 			double maxDescent = 0.0;
 
 			for (unsigned j = lineStart; j <= lineEnd; j++) {
-				if (fGlyphInfoBuffer[j].styleRun == NULL)
-					continue;
-
-				if (fGlyphInfoBuffer[j].styleRun->font.getSize() > lineHeight)
-					lineHeight = fGlyphInfoBuffer[j].styleRun->font.getSize();
-				if (fGlyphInfoBuffer[j].styleRun->ascent > maxAscent)
-					maxAscent = fGlyphInfoBuffer[j].styleRun->ascent;
-				if (fGlyphInfoBuffer[j].styleRun->descent > maxDescent)
-					maxDescent = fGlyphInfoBuffer[j].styleRun->descent;
+				if (fGlyphInfoBuffer[j].styleRun != NULL) {
+					if (fGlyphInfoBuffer[j].styleRun->font.getSize()
+							> lineHeight) {
+						lineHeight
+							= fGlyphInfoBuffer[j].styleRun->font.getSize();
+					}
+					if (fGlyphInfoBuffer[j].styleRun->ascent > maxAscent)
+						maxAscent = fGlyphInfoBuffer[j].styleRun->ascent;
+					if (fGlyphInfoBuffer[j].styleRun->descent > maxDescent)
+						maxDescent = fGlyphInfoBuffer[j].styleRun->descent;
+				} else {
+					if (fFont.getSize() > lineHeight)
+						lineHeight = fFont.getSize();
+					if (fAscent > maxAscent)
+						maxAscent = fAscent;
+					if (fDescent > maxDescent)
+						maxDescent = fDescent;
+				}
 			}
 
 			if (!appendLine(lineStart, y, lineHeight, maxAscent, maxDescent))
@@ -1114,16 +1157,23 @@ TextLayout::layout(FontEngine& fontEngine, FontManager& fontManager,
 		} else {
 			if (i < fGlyphInfoCount && kerning && i > lineStart) {
 				if (glyph != NULL && fGlyphInfoBuffer[i - 1].glyph != NULL
-					&& fGlyphInfoBuffer[i - 1].styleRun != NULL
-					&& fGlyphInfoBuffer[i - 1].styleRun->font
-						== fGlyphInfoBuffer[i].styleRun->font) {
+					&& ((fGlyphInfoBuffer[i].styleRun != NULL
+							&& fGlyphInfoBuffer[i - 1].styleRun != NULL
+							&& fGlyphInfoBuffer[i].styleRun->font
+								== fGlyphInfoBuffer[i - 1].styleRun->font)
+						|| (fGlyphInfoBuffer[i].styleRun == NULL
+							&& fGlyphInfoBuffer[i - 1].styleRun == NULL))) {
 
 					// For kerning to work at this point, the engine needs
 					// to have the right font loaded
 					if (lastLoadedStyleRun != fGlyphInfoBuffer[i].styleRun) {
 						lastLoadedStyleRun = fGlyphInfoBuffer[i].styleRun;
 						double size = lastLoadedStyleRun->font.getSize();
-						fontEngine.load_font(lastLoadedStyleRun->font.getName(),
+
+						BString resolvedFontPath = FontCache::getInstance()
+							->resolveFont(lastLoadedStyleRun->font.getName());
+
+						fontEngine.load_font(resolvedFontPath.String(),
 							0, agg::glyph_ren_outline, size, size);
 						fontEngine.width(size * scaleX * subpixelScale);
 					}
