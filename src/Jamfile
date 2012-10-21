@@ -149,9 +149,12 @@ Application WonderBrush :
 	ShapeSnapshot.cpp
 	Styleable.cpp
 	StyleableSnapshot.cpp
+	Text.cpp
+	TextSnapshot.cpp
 
 	# render
 	Font.cpp
+	FontCache.cpp
 	GaussFilter.cpp
 	LayoutContext.cpp
 	LayoutState.cpp
