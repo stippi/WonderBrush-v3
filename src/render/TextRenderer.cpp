@@ -134,8 +134,11 @@ TextRenderer::getFontManager() const
 bool
 TextRenderer::loadFont(const char* fontFilePath, double height)
 {
-	return getFontEngine().load_font(fontFilePath, 0, agg::glyph_ren_outline,
-    	height, height);
+	BString resolvedFontPath = FontCache::getInstance()->resolveFont(
+		fontFilePath);
+
+	return getFontEngine().load_font(resolvedFontPath.String(), 0,
+		agg::glyph_ren_outline, height, height);
 }
 
 
