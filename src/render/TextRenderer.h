@@ -23,17 +23,13 @@
 #include "agg_renderer_scanline.h"
 
 #include "FauxWeight.h"
+#include "RenderEngine.h"
 
 
 typedef agg::rendering_buffer							RenderingBuffer;
 
 typedef agg::rgba8										Color;
 
-#ifdef __APPLE__
-typedef agg::pixfmt_argb32_pre							PixelFormat;
-#else
-typedef agg::pixfmt_bgra32_pre							PixelFormat;
-#endif
 typedef agg::renderer_base<PixelFormat>					Renderer;
 typedef agg::renderer_scanline_aa_solid<Renderer>		RendererSolid;
 
@@ -46,8 +42,6 @@ typedef agg::pixfmt_lcd_bgra							PixelFormatLCD;
 typedef agg::renderer_base<PixelFormatLCD>				RendererLCD;
 typedef agg::renderer_scanline_aa_solid<RendererLCD>	RendererSolidLCD;
 
-typedef agg::scanline32_u8								Scanline;
-typedef agg::rasterizer_scanline_aa<>					Rasterizer;
 typedef agg::path_storage								Path;
 
 typedef agg::font_engine_freetype_int32					FontEngine;
@@ -61,12 +55,13 @@ typedef agg::conv_transform<Glyph, Matrix>				TransformedGlyph;
 typedef FauxWeight<TransformedGlyph>					FauxWeightGlyph;
 
 
+class FontCache;
 class TextLayout;
 
 
 class TextRenderer {
 public:
-	TextRenderer(int dpiX, int dpiY);
+	TextRenderer(FontCache* fontCache);
 
 	void attachToBuffer(unsigned char* data, int width, int height, int stride);
 
@@ -88,15 +83,8 @@ public:
 		return fRendererSolid;
 	}
 
-	static inline FontEngine& getFontEngine()
-	{
-		return sFontEngine;
-	}
-
-	static inline FontManager& getFontManager()
-	{
-		return sFontManager;
-	}
+	FontEngine& getFontEngine() const;
+	FontManager& getFontManager() const;
 
 	inline int getWidth() const
 	{
@@ -124,14 +112,29 @@ public:
 		return fBackground;
 	}
 
+	void setHinting(bool hinting)
+	{
+		fHinting = hinting;
+	}
+
 	inline const bool getHinting() const
 	{
 		return fHinting;
 	}
 
-	inline const bool getKerning() const
+	void setKerning(bool kerning)
+	{
+		fKerning = kerning;
+	}
+
+ 	inline const bool getKerning() const
 	{
 		return fKerning;
+	}
+
+	void setGrayScale(bool grayScale)
+	{
+		fGrayScale = grayScale;
 	}
 
 	inline const bool getGrayScale() const
@@ -199,9 +202,7 @@ private:
 
 	Path					fPath;
 
-	static bool				sTextEngineInitialized;
-	static FontEngine		sFontEngine;
-	static FontManager		sFontManager;
+	FontCache*				fFontCache;
 
 	Matrix					fMatrix;
 

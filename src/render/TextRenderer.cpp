@@ -4,18 +4,9 @@
  */
 #include "TextRenderer.h"
 
+#include "FontCache.h"
 #include "TextLayout.h"
 #include "UTF8Utils.h"
-
-
-bool
-TextRenderer::sTextEngineInitialized = false;
-
-FontEngine
-TextRenderer::sFontEngine;
-
-FontManager
-TextRenderer::sFontManager(TextRenderer::sFontEngine, 128);
 
 
 static inline bool
@@ -25,7 +16,7 @@ operator!=(const Color& a, const Color& b)
 }
 
 
-TextRenderer::TextRenderer(int dpiX, int dpiY)
+TextRenderer::TextRenderer(FontCache* fontCache)
 	:
 	fBuffer(),
 
@@ -52,8 +43,10 @@ TextRenderer::TextRenderer(int dpiX, int dpiY)
 	fRasterizer(),
 	fPath(),
 
+	fFontCache(fontCache),
+
 	fMatrix(),
-	fGlyph(sFontManager.path_adaptor()),
+	fGlyph(getFontManager().path_adaptor()),
     fTransformedGlyph(fGlyph, fMatrix),
     fFauxWeightGlyph(fTransformedGlyph),
 
@@ -61,11 +54,6 @@ TextRenderer::TextRenderer(int dpiX, int dpiY)
 	fKerning(true),
 	fGrayScale(false)
 {
-	if (!sTextEngineInitialized) {
-		sFontEngine.flip_y(true);
-		sFontEngine.resolution(dpiX, dpiY);
-		sTextEngineInitialized = true;
-	}
 }
 
 
@@ -129,10 +117,24 @@ TextRenderer::setBackground(int red, int green, int blue, int alpha)
 }
 
 
+FontEngine&
+TextRenderer::getFontEngine() const
+{
+	return fFontCache->getFontEngine();
+}
+
+
+FontManager&
+TextRenderer::getFontManager() const
+{
+	return fFontCache->getFontManager();
+}
+
+
 bool
 TextRenderer::loadFont(const char* fontFilePath, double height)
 {
-	return sFontEngine.load_font(fontFilePath, 0, agg::glyph_ren_outline,
+	return getFontEngine().load_font(fontFilePath, 0, agg::glyph_ren_outline,
     	height, height);
 }
 
@@ -168,11 +170,14 @@ double
 TextRenderer::drawString(RendererType& renderer,
 	const char* text, double x, double y, unsigned subpixelScale)
 {
-    double scaleX = AUTO_HINT_SCALE;
-    double height = sFontEngine.height();
+	FontEngine& fontEngine = getFontEngine();
+	FontManager& fontManager = getFontManager();
 
-    sFontEngine.width(height * scaleX * subpixelScale);
-    sFontEngine.hinting(fHinting);
+	double scaleX = AUTO_HINT_SCALE;
+	double height = fontEngine.height();
+
+	fontEngine.width(height * scaleX * subpixelScale);
+	fontEngine.hinting(fHinting);
 
 	const char* p = text;
 
@@ -181,9 +186,9 @@ TextRenderer::drawString(RendererType& renderer,
 
 	// Offset baseline so that original x and y coordinates are located
 	// at top-left corner of the string bounding box.
-	y += floor(sFontEngine.ascender() + 0.5);
+	y += floor(fontEngine.ascender() + 0.5);
 
-	double lineHeight = sFontEngine.height();
+	double lineHeight = fontEngine.height();
 
 	fRasterizer.clip_box(0, 0, fBuffer.width() * subpixelScale,
 		fBuffer.height());
@@ -199,20 +204,20 @@ TextRenderer::drawString(RendererType& renderer,
 			x = startX;
 			y += lineHeight;
 			// Don't apply kerning for the previous glyph and the next one
-			sFontManager.reset_last_glyph();
+			fontManager.reset_last_glyph();
 			continue;
 		}
 
-		const agg::glyph_cache* glyph = sFontManager.glyph(charCode);
+		const agg::glyph_cache* glyph = fontManager.glyph(charCode);
 
 		if (glyph == NULL)
 			continue;
 
 		if (fKerning) {
-			sFontManager.add_kerning(&x, &y);
+			fontManager.add_kerning(&x, &y);
 		}
 
-		sFontManager.init_embedded_adaptors(glyph, 0, 0);
+		fontManager.init_embedded_adaptors(glyph, 0, 0);
 
 		if (glyph->data_type == agg::glyph_data_outline) {
 			double ty = fHinting ? floor(y + 0.5) : y;
@@ -303,7 +308,7 @@ TextRenderer::drawText(RendererType& renderer,
 					x / scale + xOffset, yOffset + lineTop + 0.5,
 					x2 / scale + xOffset, yOffset + lineBottom - 0.5,
 					selectionBG);
-			} else {
+			} else if ((flags & TEXT_TRANSPARENT) == 0 || bg != fBackground) {
 				fRenderer.copy_bar(
 					x / scale + xOffset, yOffset + lineTop + 0.5,
 					x2 / scale + xOffset, yOffset + lineBottom - 0.5, bg);
@@ -325,7 +330,7 @@ TextRenderer::drawText(RendererType& renderer,
 					x / scale + xOffset, yOffset + lineTop + 0.5,
 					x2 / scale + xOffset, yOffset + lineBottom - 0.5,
 					selectionBG);
-			} else {
+			} else if ((flags & TEXT_TRANSPARENT) == 0 || bg != fBackground) {
 				fRenderer.copy_bar(
 					x / scale + xOffset, yOffset + lineTop + 0.5,
 					x2 / scale + xOffset, yOffset + lineBottom - 0.5, bg);
@@ -343,7 +348,7 @@ TextRenderer::drawText(RendererType& renderer,
 			selectionBG);
 	}
 
-	if (x + advanceX < width * scale) {
+	if ((flags & TEXT_TRANSPARENT) == 0 && x + advanceX < width * scale) {
 		double x2 = x + advanceX;
 		fRenderer.copy_bar(
 			x2 / scale + xOffset, yOffset + lineTop + 0.5,
@@ -364,6 +369,8 @@ TextRenderer::drawText(RendererType& renderer,
 	Color lastUnderlineColor = fForeground;
 
 	agg::rect_i clipRect = fRenderer.clip_box();
+	
+	FontManager& fontManager = getFontManager();
 
 	for (int index = 0; index < count; index++) {
 
@@ -388,7 +395,7 @@ TextRenderer::drawText(RendererType& renderer,
 			&& xOffset + (x + glyph->bounds.x1) / scale <= clipRect.x2
 			&& ty + glyph->bounds.y2 >= clipRect.y1
 			&& ty + glyph->bounds.y1 <= clipRect.y2) {
-			sFontManager.init_embedded_adaptors(glyph, 0, 0);
+			fontManager.init_embedded_adaptors(glyph, 0, 0);
 
 			fMatrix.reset();
 			fMatrix *= agg::trans_affine_scaling(
