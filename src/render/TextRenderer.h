@@ -42,7 +42,7 @@ typedef agg::pixfmt_lcd_bgra							PixelFormatLCD;
 typedef agg::renderer_base<PixelFormatLCD>				RendererLCD;
 typedef agg::renderer_scanline_aa_solid<RendererLCD>	RendererSolidLCD;
 
-typedef agg::path_storage								Path;
+typedef agg::path_storage								PathStorage;
 
 typedef agg::font_engine_freetype_int32					FontEngine;
 typedef agg::font_cache_manager<FontEngine>				FontManager;
@@ -68,7 +68,7 @@ public:
 	void setClipping(int x, int y, int width, int height);
 	void unsetClipping();
 
-	inline Path& getPath()
+	inline PathStorage& getPath()
 	{
 		return fPath;
 	}
@@ -200,7 +200,7 @@ private:
 	Scanline				fScanline;
 	Rasterizer				fRasterizer;
 
-	Path					fPath;
+	PathStorage				fPath;
 
 	FontCache*				fFontCache;
 
