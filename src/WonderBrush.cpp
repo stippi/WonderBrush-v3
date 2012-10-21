@@ -11,6 +11,7 @@
 #include "BrushStroke.h"
 #include "Document.h"
 #include "Filter.h"
+#include "FontCache.h"
 #include "Image.h"
 #include "Layer.h"
 #include "Rect.h"
@@ -65,6 +66,7 @@ WonderBrush::WonderBrush(BRect bounds)
 		printf("Test bitmap file not found or failed to load.\n");
 
 	Text* text = new Text((rgb_color){ 0, 0, 0, 255 });
+	text->SetFont("DejaVuSerif.ttf", 24.0);
 	text->SetWidth(200.0);
 	text->SetText("This is a test of the new text layouting features.");
 	subLayer->AddObject(text);
@@ -298,6 +300,14 @@ WonderBrush::_RestoreSettings()
 int
 main(int argc, const char* argv[])
 {
+	for (int i = 1; i < argc; i++) {
+		if (strcmp(argv[i], "--fonts") == 0 && i < argc - 1) {
+			printf("Using font folder: '%s'\n", argv[i + 1]);
+			FontCache::getInstance()->setFontFolder(argv[i + 1]);
+			break;
+		}
+	}
+
 	WonderBrush app(BRect(0, 0, 799, 599));
 	app.Run();
 	return 0;
