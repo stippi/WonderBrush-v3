@@ -29,6 +29,8 @@ public:
 			void				SetWidth(double width);
 			double				Width();
 
+			void				SetText(const char* utf8String);
+
 			const TextLayout&	getTextLayout() const;
 
 private:

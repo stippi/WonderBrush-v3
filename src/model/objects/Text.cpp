@@ -77,6 +77,16 @@ Text::Width()
 	return fTextLayout.getWidth();
 }
 
+// SetText
+void
+Text::SetText(const char* utf8String)
+{
+	fTextLayout.setText(utf8String);
+
+	UpdateChangeCounter();
+	UpdateBounds();
+}
+
 // getTextLayout
 const TextLayout&
 Text::getTextLayout() const
