@@ -186,7 +186,7 @@ TextLayout::TextLayout(FontCache* fontCache)
 	fTabBuffer(NULL),
 	fTabCount(0),
 	
-	fSubpixelRendering(true),
+	fSubpixelRendering(false),
 	fKerning(true),
 	fHinting(true),
 
@@ -900,6 +900,8 @@ TextLayout::init(const char* text, FontEngine& fontEngine,
 	FontManager& fontManager, bool hinting, double scaleX,
 	unsigned subpixelScale)
 {
+	AutoWriteLocker _(FontCache::getInstance());
+	
 	fGlyphInfoCount = 0;
 	fLineInfoCount = 0;
 
@@ -1202,15 +1204,21 @@ TextLayout::layout(FontEngine& fontEngine, FontManager& fontManager,
 		double maxDescent = 0.0;
 
 		for (unsigned j = lineStart; j <= fGlyphInfoCount - 1; j++) {
-			if (fGlyphInfoBuffer[j].styleRun == NULL)
-				continue;
-
-			if (fGlyphInfoBuffer[j].styleRun->font.getSize() > lineHeight)
-				lineHeight = fGlyphInfoBuffer[j].styleRun->font.getSize();
-			if (fGlyphInfoBuffer[j].styleRun->ascent > maxAscent)
-				maxAscent = fGlyphInfoBuffer[j].styleRun->ascent;
-			if (fGlyphInfoBuffer[j].styleRun->descent > maxDescent)
-				maxDescent = fGlyphInfoBuffer[j].styleRun->descent;
+			if (fGlyphInfoBuffer[j].styleRun != NULL) {
+				if (fGlyphInfoBuffer[j].styleRun->font.getSize() > lineHeight)
+					lineHeight = fGlyphInfoBuffer[j].styleRun->font.getSize();
+				if (fGlyphInfoBuffer[j].styleRun->ascent > maxAscent)
+					maxAscent = fGlyphInfoBuffer[j].styleRun->ascent;
+				if (fGlyphInfoBuffer[j].styleRun->descent > maxDescent)
+					maxDescent = fGlyphInfoBuffer[j].styleRun->descent;
+			} else {
+				if (fFont.getSize() > lineHeight)
+					lineHeight = fFont.getSize();
+				if (fAscent > maxAscent)
+					maxAscent = fAscent;
+				if (fDescent > maxDescent)
+					maxDescent = fDescent;
+			}
 		}
 
 		if (!appendLine(lineStart, y, lineHeight, maxAscent, maxDescent))

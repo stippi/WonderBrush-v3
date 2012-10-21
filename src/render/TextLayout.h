@@ -110,6 +110,16 @@ public:
 	void setLineSpacing(double spacing);
 	void setTabs(double* tabs, unsigned count);
 
+	inline unsigned getAlignment() const
+	{
+		return fAlignment;
+	}
+
+	inline unsigned getJustify() const
+	{
+		return fJustify;
+	}
+
 	void clearStyleRuns();
 	bool addStyleRun(int start, const char* fontPath,
 		double fontSize, unsigned fontStyle,
