@@ -137,6 +137,7 @@ void
 TextRenderer::setTransformation(const Transformation& transformation)
 {
 	fBaseMatrix = transformation;
+	fGlyph.approximation_scale(fBaseMatrix.scale());
 }
 
 
