@@ -12,6 +12,7 @@
 #include <algorithm>
 #include <string.h>
 
+#include "FontCache.h"
 #include "UTF8Utils.h"
 
 
@@ -151,10 +152,10 @@ canEndLine(GlyphInfo* buffer, int offset, int count)
 }
 
 
-TextLayout::TextLayout(const TextRenderer* textRenderer)
+TextLayout::TextLayout(FontCache* fontCache)
 	:
-	fTextRenderer(textRenderer),
-
+	fFontCache(fontCache),
+	
 	fFirstLineInset(0.0),
 	fLineInset(0.0),
 	fWidth(0.0),
@@ -180,9 +181,81 @@ TextLayout::TextLayout(const TextRenderer* textRenderer)
 
 	fTabBuffer(NULL),
 	fTabCount(0),
+	
+	fSubpixelRendering(true),
+	fKerning(true),
+	fHinting(true),
 
 	fLayoutPerformed(false)
 {
+}
+
+
+TextLayout::TextLayout(const TextLayout& other)
+	:
+	fGlyphInfoBuffer(NULL),
+	fLineInfoBuffer(NULL),
+	fStyleRunBuffer(NULL),
+	fTabBuffer(NULL)
+{
+	*this = other;
+}
+
+
+TextLayout&
+TextLayout::operator=(const TextLayout& other)
+{
+	fFontCache = other.fFontCache;
+	
+	fFirstLineInset = other.fFirstLineInset;
+	fLineInset = other.fLineInset;
+	fWidth = other.fWidth;
+	fAlignment = other.fAlignment;
+	fJustify = other.fJustify;
+
+	fHeight = other.fHeight;
+
+	fGlyphSpacing = other.fGlyphSpacing;
+	fLineSpacing = other.fLineSpacing;
+
+	fGlyphInfoBuffer = (GlyphInfo*)realloc(fGlyphInfoBuffer,
+		other.fGlyphInfoBufferSize * sizeof(GlyphInfo));
+	fGlyphInfoBufferSize = other.fGlyphInfoBufferSize;
+	fGlyphInfoCount = other.fGlyphInfoCount;
+	if (fGlyphInfoCount > 0) {
+		memcpy(fGlyphInfoBuffer, other.fGlyphInfoBuffer,
+			fGlyphInfoCount * sizeof(GlyphInfo));
+	}
+
+	fLineInfoBuffer = (LineInfo*)realloc(fLineInfoBuffer,
+		other.fLineInfoBufferSize * sizeof(LineInfo));
+	fLineInfoBufferSize = other.fLineInfoBufferSize;
+	fLineInfoCount = other.fLineInfoCount;
+	if (fLineInfoCount > 0) {
+		memcpy(fLineInfoBuffer, other.fLineInfoBuffer,
+			fLineInfoCount * sizeof(LineInfo));
+	}
+
+	fStyleRunBuffer = (StyleRun*)realloc(fStyleRunBuffer,
+		other.fStyleRunBufferSize * sizeof(StyleRun));
+	fStyleRunBufferSize = other.fStyleRunBufferSize;
+	fStyleRunCount = other.fStyleRunCount;
+	if (fStyleRunCount > 0) {
+		memcpy(fStyleRunBuffer, other.fStyleRunBuffer,
+			fStyleRunCount * sizeof(StyleRun));
+	}
+
+	fTabBuffer = (double*)realloc(fTabBuffer,
+		other.fTabCount * sizeof(double));;
+	fTabCount = other.fTabCount;
+	
+	fSubpixelRendering = other.fSubpixelRendering;
+	fKerning = other.fKerning;
+	fHinting = other.fHinting;
+
+	fLayoutPerformed = other.fLayoutPerformed;
+	
+	return *this;
 }
 
 
@@ -198,9 +271,9 @@ TextLayout::~TextLayout()
 void
 TextLayout::setText(const char* text)
 {
-	unsigned subpixelScale = fTextRenderer->getGrayScale() ? 1 : 3;
-	init(text, fTextRenderer->getFontEngine(), fTextRenderer->getFontManager(),
-		fTextRenderer->getHinting(), TextRenderer::AUTO_HINT_SCALE, subpixelScale);
+	unsigned subpixelScale = fSubpixelRendering ? 3 : 1;
+	init(text, fFontCache->getFontEngine(), fFontCache->getFontManager(),
+		fHinting, TextRenderer::AUTO_HINT_SCALE, subpixelScale);
 
 	invalidateLayout();
 }
@@ -313,6 +386,7 @@ TextLayout::clearStyleRuns()
 bool
 TextLayout::addStyleRun(int start, const char* fontPath,
 	double fontSize, unsigned fontStyle,
+	double metricsAscent, double metricsDescent, double metricsWidth,
 	int fgRed, int fgGreen, int fgBlue,
 	int bgRed, int bgGreen, int bgBlue,
 	bool strikeOut, int strikeRed, int strikeGreen, int strikeBlue,
@@ -343,8 +417,9 @@ TextLayout::addStyleRun(int start, const char* fontPath,
 	new (&(fStyleRunBuffer[fStyleRunCount].font)) Font(fontPath, fontSize,
 		fontStyle);
 
-	fStyleRunBuffer[fStyleRunCount].ascent = 0.0;
-	fStyleRunBuffer[fStyleRunCount].descent = 0.0;
+	fStyleRunBuffer[fStyleRunCount].ascent = metricsAscent;
+	fStyleRunBuffer[fStyleRunCount].descent = metricsDescent;
+	fStyleRunBuffer[fStyleRunCount].width = metricsWidth;
 
 	fStyleRunBuffer[fStyleRunCount].fgRed = fgRed;
 	fStyleRunBuffer[fStyleRunCount].fgGreen = fgGreen;
@@ -377,9 +452,9 @@ TextLayout::layout()
 	if (fGlyphInfoCount == 0)
 		return;
 
-	unsigned subpixelScale = fTextRenderer->getGrayScale() ? 1 : 3;
-	layout(fTextRenderer->getFontEngine(), fTextRenderer->getFontManager(),
-		fTextRenderer->getKerning(), TextRenderer::AUTO_HINT_SCALE, subpixelScale);
+	unsigned subpixelScale = fSubpixelRendering ? 3 : 1;
+	layout(fFontCache->getFontEngine(), fFontCache->getFontManager(),
+		fKerning, TextRenderer::AUTO_HINT_SCALE, subpixelScale);
 }
 
 
@@ -390,14 +465,11 @@ TextLayout::getActualWidth()
 
 	double maxWidth = 0.0;
 
-	double scale = fTextRenderer->getGrayScale() ? 1.0 : 3.0;
-	scale *= TextRenderer::AUTO_HINT_SCALE;
+	double scale = getScaleX();
 
 	for (unsigned i = 0; i < fGlyphInfoCount; i++) {
-		double width = fGlyphInfoBuffer[i].x;
-		if (fGlyphInfoBuffer[i].glyph != NULL)
-			width += fGlyphInfoBuffer[i].glyph->bounds.x2;
-		width /= scale;
+		double width = (fGlyphInfoBuffer[i].x + fGlyphInfoBuffer[i].advanceX)
+			/ scale;
 
 		if (width > maxWidth)
 			maxWidth = width;
@@ -427,7 +499,7 @@ TextLayout::getHeight()
 double
 TextLayout::getScaleX() const
 {
-	unsigned subpixelScale = fTextRenderer->getGrayScale() ? 1 : 3;
+	unsigned subpixelScale = fSubpixelRendering ? 3 : 1;
 	return TextRenderer::AUTO_HINT_SCALE * subpixelScale;
 }
 
@@ -472,13 +544,10 @@ TextLayout::getLineWidth(int lineIndex)
 		else if ((int) fGlyphInfoBuffer[i].lineIndex > lineIndex)
 			break;
 
-		width = fGlyphInfoBuffer[i].x;
-		if (fGlyphInfoBuffer[i].glyph != NULL)
-			width += fGlyphInfoBuffer[i].glyph->bounds.x2;
+		width = fGlyphInfoBuffer[i].x + fGlyphInfoBuffer[i].advanceX;
 	}
 
-	double scale = fTextRenderer->getGrayScale() ? 1.0 : 3.0;
-	scale *= TextRenderer::AUTO_HINT_SCALE;
+	double scale = getScaleX();
 	width /= scale;
 
 	return width;
@@ -512,13 +581,10 @@ TextLayout::getLineBounds(int lineIndex, double* x1, double* y1,
 			getGlyphBoundingBox(i, x1, y1, x2, y2);
 		}
 
-		*x2 = fGlyphInfoBuffer[i].x;
-		if (fGlyphInfoBuffer[i].glyph != NULL)
-			*x2 += fGlyphInfoBuffer[i].glyph->bounds.x2;
+		*x2 = fGlyphInfoBuffer[i].x + fGlyphInfoBuffer[i].advanceX;
 	}
 
-	double scale = fTextRenderer->getGrayScale() ? 1.0 : 3.0;
-	scale *= TextRenderer::AUTO_HINT_SCALE;
+	double scale = getScaleX();
 
 	*x1 /= scale;
 	*x2 /= scale;
@@ -552,8 +618,7 @@ TextLayout::getOffset(double x, double y, bool& rightOfCenter)
 {
 	validateLayout();
 
-	double scale = fTextRenderer->getGrayScale() ? 1.0 : 3.0;
-	scale *= TextRenderer::AUTO_HINT_SCALE;
+	double scale = getScaleX();
 	x *= scale;
 
 	rightOfCenter = false;
@@ -648,7 +713,7 @@ TextLayout::getLineMetrics(int lineIndex, double buffer[])
 		if (fStyleRunCount > 0) {
 			buffer[0] = fStyleRunBuffer[0].ascent;
 			buffer[1] = fStyleRunBuffer[0].descent;
-			buffer[2] = 0.0;
+			buffer[2] = fStyleRunBuffer[0].width;
 			buffer[4] = fStyleRunBuffer[0].font.getSize();
 			buffer[3] = buffer[4] - (buffer[0] + buffer[1]);
 //			printf("getLineMetrics() %.1f, %.1f, %.1f, %.1f, %.1f (empty)\n",
@@ -668,8 +733,7 @@ TextLayout::getLineMetrics(int lineIndex, double buffer[])
 	buffer[1] = fLineInfoBuffer[lineIndex].maxDescent;
 
 	// Figure out average char width
-	double scale = fTextRenderer->getGrayScale() ? 1.0 : 3.0;
-	scale *= TextRenderer::AUTO_HINT_SCALE;
+	double scale = getScaleX();
 
 	double charWidthSum = 0.0;
 	unsigned charCount = 0;
@@ -843,9 +907,13 @@ TextLayout::init(const char* text, FontEngine& fontEngine,
 					agg::glyph_ren_outline, height, height);
 				fontEngine.width(height * scaleX * subpixelScale);
 
-				// Init these two after having loaded the font in the engine
-				nextStyleRun->ascent = fontEngine.ascender();
-				nextStyleRun->descent = -fontEngine.descender();
+				// Init these two after having loaded the font in the engine.
+				// But only do so if the StyleRun does not provide it's own
+				// metrics.
+				if (nextStyleRun->width == 0.0) {
+					nextStyleRun->ascent = fontEngine.ascender();
+					nextStyleRun->descent = -fontEngine.descender();
+				}
 
 				styleIndex++;
 			}
@@ -906,8 +974,13 @@ TextLayout::layout(FontEngine& fontEngine, FontManager& fontManager,
 		double advanceX = 0.0;
 		double advanceY = 0.0;
 
-		if (glyph != NULL) {
-			// increment position
+		// increment position
+		if (fGlyphInfoBuffer[i].styleRun != NULL
+			&& fGlyphInfoBuffer[i].styleRun->width > 0.0) {
+			// Use the metrics provided by the StyleRun
+			advanceX = fGlyphInfoBuffer[i].styleRun->width * scaleX
+				* subpixelScale + additionalGlyphSpacing;
+		} else if (glyph != NULL) {
 			advanceX = glyph->advance_x + additionalGlyphSpacing;
 			advanceY = glyph->advance_y;
 		}
@@ -943,6 +1016,8 @@ TextLayout::layout(FontEngine& fontEngine, FontManager& fontManager,
 				advanceX = tabOffset - x;
 		}
 
+		fGlyphInfoBuffer[i].advanceX = advanceX;
+
 		if (fGlyphInfoBuffer[i].charCode == '\n') {
 			nextLine = true;
 			lineBreak = true;
@@ -969,7 +1044,12 @@ TextLayout::layout(FontEngine& fontEngine, FontManager& fontManager,
 					// Adjust the glyph info to point at the changed buffer
 					// position
 					glyph = fGlyphInfoBuffer[i].glyph;
-					if (glyph != NULL) {
+					if (fGlyphInfoBuffer[i].styleRun != NULL
+						&& fGlyphInfoBuffer[i].styleRun->width > 0.0) {
+						advanceX = fGlyphInfoBuffer[i].styleRun->width
+							+ additionalGlyphSpacing;
+						advanceY = 0.0;
+					} else if (glyph != NULL) {
 						advanceX = glyph->advance_x + additionalGlyphSpacing;
 						advanceY = glyph->advance_y;
 					} else {
@@ -1176,7 +1256,7 @@ TextLayout::applyAlignment(const double width)
 						if (charCount > 0)
 							spaceCount++;
 						else if (j < i)
-							spaceLeft += fGlyphInfoBuffer[i].glyph->advance_x;
+							spaceLeft += fGlyphInfoBuffer[i].advanceX;
 					} else {
 						charCount++;
 					}
@@ -1214,6 +1294,11 @@ TextLayout::applyAlignment(const double width)
 		// gradually decreased. This works since the iteration is backwards
 		// and the characters on the right are pushed farthest.
 		fGlyphInfoBuffer[i].x += spaceLeft;
+		if (i < (int) fGlyphInfoCount - 1
+			&& (int) fGlyphInfoBuffer[i + 1].lineIndex == lineIndex) {
+			fGlyphInfoBuffer[i].advanceX = fGlyphInfoBuffer[i + 1].x
+				- fGlyphInfoBuffer[i].x;
+		}
 
 		// The shift (spaceLeft) is reduced depending on the character
 		// classification.
@@ -1267,6 +1352,7 @@ TextLayout::appendGlyph(unsigned charCode, const agg::glyph_cache* glyph,
 	fGlyphInfoBuffer[fGlyphInfoCount].glyph = glyph;
 	fGlyphInfoBuffer[fGlyphInfoCount].x = 0;
 	fGlyphInfoBuffer[fGlyphInfoCount].y = 0;
+	fGlyphInfoBuffer[fGlyphInfoCount].advanceX = 0;
 	fGlyphInfoBuffer[fGlyphInfoCount].maxAscend = 0;
 	fGlyphInfoBuffer[fGlyphInfoCount].maxDescend = 0;
 	fGlyphInfoBuffer[fGlyphInfoCount].lineIndex = 0;
