@@ -66,8 +66,7 @@ Text::SetWidth(double width)
 
 	fTextLayout.setWidth(width);
 
-	UpdateChangeCounter();
-	UpdateBounds();
+	NotifyAndUpdate();
 }
 
 // Width
@@ -77,14 +76,22 @@ Text::Width()
 	return fTextLayout.getWidth();
 }
 
+// SetFont
+void
+Text::SetFont(const char* fontFilePath, double size)
+{
+	fTextLayout.setFont(Font(fontFilePath, size));
+
+	NotifyAndUpdate();
+}
+
 // SetText
 void
 Text::SetText(const char* utf8String)
 {
 	fTextLayout.setText(utf8String);
 
-	UpdateChangeCounter();
-	UpdateBounds();
+	NotifyAndUpdate();
 }
 
 // getTextLayout

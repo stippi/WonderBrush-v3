@@ -26,6 +26,8 @@ public:
 	virtual	BRect				Bounds();
 
 	// Text
+			void				SetFont(const char* fontFilePath, double size);
+	
 			void				SetWidth(double width);
 			double				Width();
 
