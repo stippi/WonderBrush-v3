@@ -5,10 +5,6 @@
 #include "FontCache.h"
 
 
-FontCache
-FontCache::sDefaultInstance(72, 72);
-
-
 FontCache::FontCache(int dpiX, int dpiY)
 	:
 	RWLocker(),
@@ -28,7 +24,8 @@ FontCache::~FontCache()
 FontCache*
 FontCache::getInstance()
 {
-	return &sDefaultInstance;
+	static FontCache cache(72, 72);
+	return &cache;
 }
 
 

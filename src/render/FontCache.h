@@ -34,8 +34,6 @@ public:
 	BString resolveFont(const char* fontFilePath) const;
 
 private:
-	static FontCache	sDefaultInstance;
-
 	FontEngine			fFontEngine;
 	FontManager			fFontManager;
 
