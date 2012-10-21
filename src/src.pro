@@ -39,6 +39,10 @@ QMAKE_CXXFLAGS += -iquote $$PWD/platform/qt
 QMAKE_CXXFLAGS += -iquote $$PWD/platform/qt/system
 QMAKE_CXXFLAGS += -iquote $$PWD/render
 QMAKE_CXXFLAGS += -iquote $$PWD/support
+QMAKE_CXXFLAGS += -iquote $$PWD/tools
+QMAKE_CXXFLAGS += -iquote $$PWD/tools/brush
+QMAKE_CXXFLAGS += -iquote $$PWD/tools/brush/pick
+QMAKE_CXXFLAGS += -iquote $$PWD/tools/brush/transform
 
 DEFINES += __STDC_LIMIT_MACROS=1
 DEFINES += __STDC_FORMAT_MACROS=1
@@ -147,7 +151,18 @@ SOURCES += \
 	support/Referenceable.cpp \
 	support/RWLocker.cpp \
 	support/support.cpp \
-	support/Transformable.cpp
+	support/Transformable.cpp \
+#	tools/DragStateViewState.cpp \
+#	tools/Tool.cpp \
+#	tools/TransformViewState.cpp \
+#	tools/brush/BrushTool.cpp \
+#	tools/brush/BrushToolState.cpp \
+#	tools/brush/pick/PickTool.cpp \
+#	tools/brush/pick/PickToolState.cpp \
+#	tools/brush/transform/ChannelTransform.cpp \
+#	tools/brush/transform/TransformableGroup.cpp \
+#	tools/brush/transform/TransformTool.cpp \
+#	tools/brush/transform/TransformToolState.cpp
 
 HEADERS  += \
 	cimg/CImg.h \
@@ -307,4 +322,15 @@ HEADERS  += \
 	support/support.h \
 	support/support_ui.h \
 	support/Transformable.h \
-	support/ui_defines.h
+	support/ui_defines.h \
+	tools/DragStateViewState.h \
+#	tools/Tool.h \
+#	tools/TransformViewState.h \
+#	tools/brush/BrushTool.h \
+#	tools/brush/BrushToolState.h \
+#	tools/brush/pick/PickTool.h \
+#	tools/brush/pick/PickToolState.h \
+#	tools/brush/transform/ChannelTransform.h \
+#	tools/brush/transform/TransformableGroup.h \
+#	tools/brush/transform/TransformTool.h \
+#	tools/brush/transform/TransformToolState.h
