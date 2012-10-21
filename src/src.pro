@@ -106,6 +106,7 @@ SOURCES += \
 	platform/qt/system/BBitmap.cpp \
 	platform/qt/system/BByteOrder.cpp \
 	platform/qt/system/BDataIO.cpp \
+	platform/qt/system/BFile.cpp \
 	platform/qt/system/BFlattenable.cpp \
 	platform/qt/system/BGraphicsDefs.cpp \
 	platform/qt/system/BList.cpp \
@@ -209,6 +210,7 @@ HEADERS  += \
 	platform/qt/system/BDebug.h \
 	platform/qt/system/Bdebugger.h \
 	platform/qt/system/BErrors.h \
+	platform/qt/system/BFile.h \
 	platform/qt/system/BFlattenable.h \
 	platform/qt/system/BGraphicsDefs.h \
 	platform/qt/system/Bimage.h \
@@ -227,6 +229,7 @@ HEADERS  += \
 	platform/qt/system/BRegion.h \
 	platform/qt/system/BRegionSupport.h \
 	platform/qt/system/BSize.h \
+	platform/qt/system/BStorageDefs.h \
 	platform/qt/system/BString.h \
 	platform/qt/system/BStringPrivate.h \
 	platform/qt/system/BSupportDefs.h \
@@ -244,6 +247,7 @@ HEADERS  += \
 	platform/qt/system/include/Debug.h \
 	platform/qt/system/include/debugger.h \
 	platform/qt/system/include/Errors.h \
+	platform/qt/system/include/File.h \
 	platform/qt/system/include/Flattenable.h \
 	platform/qt/system/include/GraphicsDefs.h \
 	platform/qt/system/include/image.h \
@@ -262,6 +266,7 @@ HEADERS  += \
 	platform/qt/system/include/Region.h \
 	platform/qt/system/include/RegionSupport.h \
 	platform/qt/system/include/Size.h \
+	platform/qt/system/include/StorageDefs.h \
 	platform/qt/system/include/String.h \
 	platform/qt/system/include/StringPrivate.h \
 	platform/qt/system/include/SupportDefs.h \
