@@ -57,6 +57,15 @@ Text::Bounds()
 
 // #pragma mark -
 
+// SetFont
+void
+Text::SetFont(const char* fontFilePath, double size)
+{
+	fTextLayout.setFont(Font(fontFilePath, size));
+
+	NotifyAndUpdate();
+}
+
 // SetWidth
 void
 Text::SetWidth(double width)
@@ -76,11 +85,26 @@ Text::Width()
 	return fTextLayout.getWidth();
 }
 
-// SetFont
+// SetAlignment
 void
-Text::SetFont(const char* fontFilePath, double size)
+Text::SetAlignment(uint32 alignment)
 {
-	fTextLayout.setFont(Font(fontFilePath, size));
+	if (alignment == fTextLayout.getAlignment())
+		return;
+
+	fTextLayout.setAlignment(alignment);
+
+	NotifyAndUpdate();
+}
+
+// SetJustify
+void
+Text::SetJustify(bool justify)
+{
+	if (justify == fTextLayout.getJustify())
+		return;
+
+	fTextLayout.setJustify(justify);
 
 	NotifyAndUpdate();
 }

@@ -31,6 +31,9 @@ public:
 			void				SetWidth(double width);
 			double				Width();
 
+			void				SetAlignment(uint32 alignment);
+			void				SetJustify(bool justify);
+
 			void				SetText(const char* utf8String);
 
 			const TextLayout&	getTextLayout() const;
