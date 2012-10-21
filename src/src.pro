@@ -36,6 +36,7 @@ QMAKE_CXXFLAGS += -iquote $$PWD/model/property
 QMAKE_CXXFLAGS += -iquote $$PWD/model/property/specific_properties
 QMAKE_CXXFLAGS += -iquote $$PWD/model/snapshots
 QMAKE_CXXFLAGS += -iquote $$PWD/platform/qt
+QMAKE_CXXFLAGS += -iquote $$PWD/platform/qt/gui
 QMAKE_CXXFLAGS += -iquote $$PWD/platform/qt/system
 QMAKE_CXXFLAGS += -iquote $$PWD/render
 QMAKE_CXXFLAGS += -iquote $$PWD/support
@@ -58,7 +59,7 @@ LIBS += -lX11
 QMAKE_CXXFLAGS_WARN_ON += -Wno-unused-parameter -Wno-multichar
 
 SOURCES += \
-	WonderBrush_qt.cpp \
+	WonderBrush.cpp \
 	commands/AddObjectsCommand.cpp \
 	commands/MoveObjectsCommand.cpp \
 	commands/ObjectAddedCommand.cpp \
@@ -104,6 +105,7 @@ SOURCES += \
 	platform/qt/platform_support.cpp \
 	platform/qt/PlatformSemaphoreManager.cpp \
 	platform/qt/PlatformThread.cpp \
+	platform/qt/gui/Window.cpp \
 	platform/qt/system/ArchivingManagers.cpp \
 	platform/qt/system/BAlignment.cpp \
 	platform/qt/system/BArchivable.cpp \
@@ -213,6 +215,8 @@ HEADERS  += \
 	model/snapshots/StyleableSnapshot.h \
 	platform/qt/PlatformSemaphoreManager.h \
 	platform/qt/PlatformThread.h \
+	platform/qt/PlatformWonderBrush.h \
+	platform/qt/gui/Window.h \
 	platform/qt/system/ArchivingManagers.h \
 	platform/qt/system/BAlignment.h \
 	platform/qt/system/BAppDefs.h \
@@ -334,3 +338,6 @@ HEADERS  += \
 #	tools/brush/transform/TransformableGroup.h \
 #	tools/brush/transform/TransformTool.h \
 #	tools/brush/transform/TransformToolState.h
+
+FORMS += \
+    platform/qt/gui/Window.ui

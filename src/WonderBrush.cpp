@@ -1,8 +1,13 @@
 #include "WonderBrush.h"
 
+#include "BuildSupport.h"
+
 #include <Bitmap.h>
 #include <String.h>
-#include <TranslationUtils.h>
+
+#ifdef	WONDERBRUSH_PLATFORM_HAIKU
+#	include <TranslationUtils.h>
+#endif
 
 #include "BrushStroke.h"
 #include "Document.h"
@@ -47,6 +52,7 @@ WonderBrushBase::WonderBrushBase(BRect bounds)
 	fDocument->RootLayer()->AddObject(new Rect(BRect(200, 10, 280, 70),
 		(rgb_color){ 255, 200, 50, 80 }));
 
+#ifdef	WONDERBRUSH_PLATFORM_HAIKU
 	BBitmap* bitmap = BTranslationUtils::GetBitmap(
 		"/boot/home/Desktop/gamma_dalai_lama_gray.jpg");
 	if (bitmap != NULL) {
@@ -62,6 +68,7 @@ WonderBrushBase::WonderBrushBase(BRect bounds)
 		delete bitmap;
 	} else
 		printf("Test bitmap file not found or failed to load.\n");
+#endif	// WONDERBRUSH_PLATFORM_HAIKU
 
 	Rect* transformedRect = new Rect(BRect(150, 200, 210, 330),
 		(rgb_color){ 55, 120, 80, 120 });
@@ -136,6 +143,7 @@ WonderBrush::WonderBrush(int argc, char** argv, BRect bounds)
 {
 }
 
+
 // NewWindow
 void
 WonderBrush::NewWindow()
@@ -193,6 +201,7 @@ WonderBrush::StoreSettings()
 		return;
 	}
 }
+
 
 // RestoreSettings
 void

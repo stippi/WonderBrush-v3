@@ -1,6 +1,7 @@
 #ifndef WONDER_BRUSH_H
 #define WONDER_BRUSH_H
 
+#include <Message.h>
 #include <Rect.h>
 
 #include "PlatformWonderBrush.h"
