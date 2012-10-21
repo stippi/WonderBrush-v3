@@ -125,7 +125,7 @@ BrushStroke::SetToPropertyObject(const PropertyObject* object, uint32 flags)
 
 // HitTest
 bool
-BrushStroke::HitTest(const BPoint& canvasPoint) const
+BrushStroke::HitTest(const BPoint& canvasPoint)
 {
 	// TODO
 	return false;

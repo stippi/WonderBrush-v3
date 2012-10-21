@@ -63,7 +63,7 @@ Image::DefaultName() const
 
 // HitTest
 bool
-Image::HitTest(const BPoint& canvasPoint) const
+Image::HitTest(const BPoint& canvasPoint)
 {
 	RenderEngine engine(Transformation());
 	return engine.HitTest(fBuffer->Bounds(), canvasPoint);

@@ -231,7 +231,7 @@ Layer::Snapshot() const
 
 // HitTest
 bool
-Layer::HitTest(const BPoint& canvasPoint) const
+Layer::HitTest(const BPoint& canvasPoint)
 {
 	for (int32 i = CountObjects() - 1; i >= 0; i--) {
 		Object* object = ObjectAtFast(i);

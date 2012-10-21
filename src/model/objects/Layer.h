@@ -58,7 +58,7 @@ public:
 	// Object interface
 	virtual	ObjectSnapshot*		Snapshot() const;
 
-	virtual	bool				HitTest(const BPoint& canvasPoint) const;
+	virtual	bool				HitTest(const BPoint& canvasPoint);
 
 	// Layer
 			bool				AddObject(Object* object);
