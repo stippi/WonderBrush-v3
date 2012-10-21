@@ -141,6 +141,7 @@ SOURCES += \
 	support/CompoundCommand.cpp \
 	support/Debug.cpp \
 	support/Listener.cpp \
+	support/ListenerAdapter.cpp \
 	support/Notifier.cpp \
 	support/ObjectTracker.cpp \
 	support/Referenceable.cpp \
@@ -297,6 +298,7 @@ HEADERS  += \
 	support/Debug.h \
 	support/DLList.h \
 	support/Listener.h \
+	support/ListenerAdapter.h \
 	support/Notifier.h \
 	support/ObjectCache.h \
 	support/ObjectTracker.h \
