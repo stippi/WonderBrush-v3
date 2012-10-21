@@ -5,6 +5,8 @@
 #ifndef FONT_CACHE_H
 #define FONT_CACHE_H
 
+#include <String.h>
+
 #include "RWLocker.h"
 #include "TextRenderer.h"
 
@@ -25,11 +27,19 @@ public:
 		return fFontManager;
 	}
 
+	void setFontFolder(const char* path);
+	
+	const BString& getFontFolder() const;
+
+	BString resolveFont(const char* fontFilePath) const;
+
 private:
 	static FontCache	sDefaultInstance;
 
 	FontEngine			fFontEngine;
 	FontManager			fFontManager;
+
+	BString				fFontFolder;
 };
 
 #endif // FONT_CACHE_H
