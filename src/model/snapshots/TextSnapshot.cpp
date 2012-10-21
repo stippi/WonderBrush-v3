@@ -67,7 +67,7 @@ TextSnapshot::Render(RenderEngine& engine, RenderBuffer* bitmap,
 	
 //	if (FontCache::getInstance()->ReadLock()) {
 	if (FontCache::getInstance()->WriteLock()) {
-			renderer.drawText(
+		renderer.drawText(
 			const_cast<TextLayout*>(&fTextLayout),
 			0, 0, -1, -1,
 			Color(255, 255, 255), Color(80, 128, 255),
