@@ -12,8 +12,7 @@
 #include "agg_gamma_lut.h"
 #include "agg_path_storage.h"
 #include "agg_pixfmt_rgb.h"
-#include "agg_pixfmt_lcd_bgra.h"
-#include "agg_pixfmt_lcd_argb.h"
+#include "agg_pixfmt_lcd_bgra16.h"
 #include "agg_pixfmt_rgba.h"
 #include "agg_primary_weights.h"
 #include "agg_scanline_bin.h"
@@ -28,17 +27,15 @@
 
 typedef agg::rendering_buffer							RenderingBuffer;
 
-typedef agg::rgba8										Color;
+typedef agg::rgba16										Color;
+
+typedef agg::scanline_u8								ScanlineUnpacked;
 
 typedef agg::renderer_base<PixelFormat>					Renderer;
 typedef agg::renderer_scanline_aa_solid<Renderer>		RendererSolid;
 
 typedef agg::primary_weights							PrimaryWeights;
-#ifdef __APPLE__
-typedef agg::pixfmt_lcd_argb							PixelFormatLCD;
-#else
-typedef agg::pixfmt_lcd_bgra							PixelFormatLCD;
-#endif
+typedef agg::pixfmt_lcd_bgra16							PixelFormatLCD;
 typedef agg::renderer_base<PixelFormatLCD>				RendererLCD;
 typedef agg::renderer_scanline_aa_solid<RendererLCD>	RendererSolidLCD;
 
@@ -48,10 +45,9 @@ typedef agg::font_engine_freetype_int32					FontEngine;
 typedef agg::font_cache_manager<FontEngine>				FontManager;
 
 typedef agg::gamma_lut<>								GammaLUT;
-typedef agg::trans_affine								Matrix;
 
 typedef agg::conv_curve<FontManager::path_adaptor_type>	Glyph;
-typedef agg::conv_transform<Glyph, Matrix>				TransformedGlyph;
+typedef agg::conv_transform<Glyph, Transformation>		TransformedGlyph;
 typedef FauxWeight<TransformedGlyph>					FauxWeightGlyph;
 
 
@@ -142,6 +138,8 @@ public:
 		return fGrayScale;
 	}
 
+	void setTransformation(const Transformation& transformation);
+
 	bool loadFont(const char* fontFilePath, double height);
 
 	double drawString(const char* text, double x, double y);
@@ -197,14 +195,15 @@ private:
 	RendererLCD				fRendererLCD;
 	RendererSolidLCD		fRendererSolidLCD;
 
-	Scanline				fScanline;
+	ScanlineUnpacked		fScanline;
 	Rasterizer				fRasterizer;
 
 	PathStorage				fPath;
 
 	FontCache*				fFontCache;
 
-	Matrix					fMatrix;
+	Transformation			fBaseMatrix;
+	Transformation			fMatrix;
 
 	// AGG-Pipeline to process vector glyphs (path->transformation->faux weight)
 	Glyph					fGlyph;

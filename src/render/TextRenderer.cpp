@@ -24,8 +24,9 @@ TextRenderer::TextRenderer(FontCache* fontCache)
 	fRenderer(fPixelFormat),
 	fRendererSolid(fRenderer),
 
-	fForeground(0, 0, 0, 255),
-	fBackground(255, 255, 255, 255),
+	fForeground(0, 0, 0, (255 << 8) | 255),
+	fBackground((255 << 8) | 255, (255 << 8) | 255,
+		(255 << 8) | 255, (255 << 8) | 255),
 
 	fGamma(1.0),				// 0.50-2.50, Default: 1.0
 	fPrimaryWeight(1.0 / 3.0),	// 0.00-1.00, Default: 1/3
@@ -45,6 +46,7 @@ TextRenderer::TextRenderer(FontCache* fontCache)
 
 	fFontCache(fontCache),
 
+	fBaseMatrix(),
 	fMatrix(),
 	fGlyph(getFontManager().path_adaptor()),
     fTransformedGlyph(fGlyph, fMatrix),
@@ -128,6 +130,13 @@ FontManager&
 TextRenderer::getFontManager() const
 {
 	return fFontCache->getFontManager();
+}
+
+
+void
+TextRenderer::setTransformation(const Transformation& transformation)
+{
+	fBaseMatrix = transformation;
 }
 
 
@@ -232,6 +241,7 @@ TextRenderer::drawString(RendererType& renderer,
 				fFauxItalic * subpixelScale / 3, 0);
 			fMatrix *= agg::trans_affine_translation(
 				startX + x / scaleX, ty);
+			fMatrix *= fBaseMatrix;
 
 			fRasterizer.reset();
 
@@ -407,6 +417,7 @@ TextRenderer::drawText(RendererType& renderer,
 				fFauxItalic * subpixelScale / 3, 0);
 			fMatrix *= agg::trans_affine_translation(
 				xOffsetScaled + x / scaleX, ty);
+			fMatrix *= fBaseMatrix;
 
 			fRasterizer.reset();
 
