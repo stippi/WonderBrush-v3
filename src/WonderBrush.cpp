@@ -16,6 +16,7 @@
 #include "Rect.h"
 #include "RenderBuffer.h"
 #include "Shape.h"
+#include "Text.h"
 #include "Window.h"
 
 // constructor
@@ -62,6 +63,11 @@ WonderBrush::WonderBrush(BRect bounds)
 		delete bitmap;
 	} else
 		printf("Test bitmap file not found or failed to load.\n");
+
+	Text* text = new Text((rgb_color){ 0, 0, 0, 255 });
+	text->SetWidth(200.0);
+	text->SetText("This is a test of the new text layouting features.");
+	subLayer->AddObject(text);
 
 	Rect* transformedRect = new Rect(BRect(150, 200, 210, 330),
 		(rgb_color){ 55, 120, 80, 120 });
