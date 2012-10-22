@@ -103,6 +103,7 @@ SOURCES += \
 	platform/qt/AbstractLOAdapter.cpp \
 	platform/qt/platform_bitmap_support.cpp \
 	platform/qt/platform_support.cpp \
+	platform/qt/platform_support_ui.cpp \
 	platform/qt/PlatformSemaphoreManager.cpp \
 	platform/qt/PlatformThread.cpp \
 	platform/qt/gui/Window.cpp \
@@ -213,6 +214,7 @@ HEADERS  += \
 	model/snapshots/RectSnapshot.h \
 	model/snapshots/ShapeSnapshot.h \
 	model/snapshots/StyleableSnapshot.h \
+	platform/qt/platform_support_ui.h \
 	platform/qt/PlatformSemaphoreManager.h \
 	platform/qt/PlatformThread.h \
 	platform/qt/PlatformWonderBrush.h \
