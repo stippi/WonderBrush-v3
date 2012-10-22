@@ -5,15 +5,25 @@
 #include <Handler.h>
 #include <Rect.h>
 
-#include <QAbstractScrollArea>
 #include <QBrush>
+
+#include "PlatformScrollArea.h"
 
 
 class Document;
 class RenderManager;
 
 
-class CanvasView : public PlatformWidgetHandler<QAbstractScrollArea>
+enum {
+	MSG_ZOOM_SET		= 'zmst',
+	MSG_ZOOM_IN			= 'zmin',
+	MSG_ZOOM_OUT		= 'zmot',
+	MSG_ZOOM_ORIGINAL	= 'zmor',
+	MSG_ZOOM_TO_FIT		= 'zmft'
+};
+
+
+class CanvasView : public PlatformWidgetHandler<PlatformScrollArea>
 {
 	Q_OBJECT
 
@@ -39,14 +49,35 @@ public:
 
 	virtual	float				ZoomLevel() const;
 
+	virtual	void				InvalidateCanvas(const BRect& bounds);
+
+	// Scrollable interface
+protected:
+	virtual	void				SetScrollOffset(BPoint offset);
+
+	virtual	void				ScrollOffsetChanged(BPoint oldOffset,
+													BPoint newOffset);
+	virtual	void				VisibleSizeChanged(float oldWidth,
+									float oldHeight, float newWidth,
+									float newHeight);
+
+public:
+			double				NextZoomInLevel(double zoom) const;
+			double				NextZoomOutLevel(double zoom) const;
+			void				SetZoomLevel(double zoomLevel,
+										 bool mouseIsAnchor = true);
+
+			void				SetZoomPolicy(uint32 policy);
+
+			void				SetAutoScrolling(bool scroll);
+
 protected:
 	virtual	void				paintEvent(QPaintEvent* event);
-	virtual	void				resizeEvent(QResizeEvent * event);
-	virtual	void				scrollContentsBy(int dx, int dy);
 
 private:
 			BRect				_CanvasRect() const;
-			void				_UpdateScrollPosition();
+			BRect				_LayoutCanvas();
+			void				_SetRenderManagerZoom();
 
 private:
 			Document*			fDocument;
@@ -54,6 +85,13 @@ private:
 
 			double				fZoomLevel;
 			uint32				fZoomPolicy;
+
+			bool				fSpaceHeldDown;
+			bool				fScrollTracking;
+			bool				fInScrollTo;
+			BPoint				fScrollTrackingStart;
+			BPoint				fScrollOffsetStart;
+			bool				fDelayedScrolling;
 
 			QBrush				fStripesBrush;
 };

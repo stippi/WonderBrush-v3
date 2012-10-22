@@ -17,16 +17,25 @@
 
 #define AUTO_SCROLL_DELAY		40000 // 40 ms
 #define USE_DELAYED_SCROLLING	0
-#define USE_NATIVE_SCROLLING	1
 
 
 CanvasView::CanvasView(QWidget* parent)
 	:
-	PlatformWidgetHandler<QAbstractScrollArea>("canvas view", parent),
+	PlatformWidgetHandler<PlatformScrollArea>("canvas view", parent),
 	fDocument(NULL),
 	fRenderManager(NULL),
 	fZoomLevel(1.0),
 	fZoomPolicy(ZOOM_POLICY_ENLARGE_PIXELS),
+
+	fSpaceHeldDown(false),
+	fScrollTracking(false),
+	fInScrollTo(false),
+	fScrollTrackingStart(0.0, 0.0),
+	fScrollOffsetStart(0.0, 0.0),
+	fDelayedScrolling(false),
+
+//	fAutoScroller(NULL),
+
 	fStripesBrush(pattern_to_brush(kStripes, kStripesLow, kStripesHigh))
 {
 }
@@ -47,18 +56,18 @@ CanvasView::Init(Document* document, RenderManager* manager)
 		// TODO: Bail out, throw exception or something...
 	}
 
-//	// init data rect for scrolling and center bitmap in the view
-//	BRect dataRect = _LayoutCanvas();
-//	SetDataRect(dataRect);
-//	BRect bounds(Bounds());
-//	BPoint dataRectCenter((dataRect.left + dataRect.right) / 2,
-//		(dataRect.top + dataRect.bottom) / 2);
-//	BPoint boundsCenter((bounds.left + bounds.right) / 2,
-//		(bounds.top + bounds.bottom) / 2);
-//	BPoint offset = ScrollOffset();
-//	offset.x = roundf(offset.x + dataRectCenter.x - boundsCenter.x);
-//	offset.y = roundf(offset.y + dataRectCenter.y - boundsCenter.y);
-//	SetScrollOffset(offset);
+	// init data rect for scrolling and center bitmap in the view
+	BRect dataRect = _LayoutCanvas();
+	SetDataRect(dataRect);
+	BRect bounds(BRect::FromQRect(viewport()->rect()));
+	BPoint dataRectCenter((dataRect.left + dataRect.right) / 2,
+		(dataRect.top + dataRect.bottom) / 2);
+	BPoint boundsCenter((bounds.left + bounds.right) / 2,
+		(bounds.top + bounds.bottom) / 2);
+	BPoint offset = ScrollOffset();
+	offset.x = roundf(offset.x + dataRectCenter.x - boundsCenter.x);
+	offset.y = roundf(offset.y + dataRectCenter.y - boundsCenter.y);
+	SetScrollOffset(offset);
 }
 
 
@@ -118,27 +127,27 @@ CanvasView::MessageReceived(BMessage* message)
 			break;
 		}
 
-//		case MSG_ZOOM_SET:
-//		{
-//			double zoom;
-//			if (message->FindDouble("zoom", &zoom) == B_OK)
-//				SetZoomLevel(zoom);
-//			break;
-//		}
-//		case MSG_ZOOM_IN:
-//			SetZoomLevel(NextZoomInLevel(fZoomLevel), false);
-//			break;
-//		case MSG_ZOOM_OUT:
-//			SetZoomLevel(NextZoomOutLevel(fZoomLevel), false);
-//			break;
-//		case MSG_ZOOM_ORIGINAL:
-//			SetZoomLevel(1.0, false);
-//			break;
-//		case MSG_ZOOM_TO_FIT:
-//		{
-//			printf("MSG_ZOOM_TO_FIT\n");
-//			break;
-//		}
+		case MSG_ZOOM_SET:
+		{
+			double zoom;
+			if (message->FindDouble("zoom", &zoom) == B_OK)
+				SetZoomLevel(zoom);
+			break;
+		}
+		case MSG_ZOOM_IN:
+			SetZoomLevel(NextZoomInLevel(fZoomLevel), false);
+			break;
+		case MSG_ZOOM_OUT:
+			SetZoomLevel(NextZoomOutLevel(fZoomLevel), false);
+			break;
+		case MSG_ZOOM_ORIGINAL:
+			SetZoomLevel(1.0, false);
+			break;
+		case MSG_ZOOM_TO_FIT:
+		{
+			printf("MSG_ZOOM_TO_FIT\n");
+			break;
+		}
 
 		default:
 //			StateView::MessageReceived(message);
@@ -152,18 +161,14 @@ CanvasView::ConvertFromCanvas(BPoint* point) const
 {
 	point->x *= fZoomLevel;
 	point->y *= fZoomLevel;
-#if !USE_NATIVE_SCROLLING
 	*point -= ScrollOffset();
-#endif
 }
 
 
 void
 CanvasView::ConvertToCanvas(BPoint* point) const
 {
-#if !USE_NATIVE_SCROLLING
 	*point += ScrollOffset();
-#endif
 	point->x /= fZoomLevel;
 	point->y /= fZoomLevel;
 }
@@ -181,19 +186,14 @@ CanvasView::ConvertFromCanvas(BRect* r) const
 	r->right--;
 	r->bottom--;
 
-#if !USE_NATIVE_SCROLLING
 	r->OffsetBy(-ScrollOffset());
-#endif
 }
 
 
 void
 CanvasView::ConvertToCanvas(BRect* r) const
 {
-#if !USE_NATIVE_SCROLLING
 	r->OffsetBy(ScrollOffset());
-#endif
-
 	r->left /= fZoomLevel;
 	r->right /= fZoomLevel;
 	r->top /= fZoomLevel;
@@ -205,6 +205,192 @@ float
 CanvasView::ZoomLevel() const
 {
 	return fZoomLevel;
+}
+
+
+void
+CanvasView::SetScrollOffset(BPoint newOffset)
+{
+	if (fInScrollTo)
+		return;
+
+	fInScrollTo = true;
+#if USE_DELAYED_SCROLLING
+	fDelayedScrolling = true;
+#endif
+
+	newOffset = ValidScrollOffsetFor(newOffset);
+	if (!fScrollTracking) {
+#if USE_DELAYED_SCROLLING
+		MouseMoved(fMouseInfo.position, fMouseInfo.transit, NULL);
+#else
+//		BPoint mouseOffset = newOffset - ScrollOffset();
+//		MouseMoved(fMouseInfo.position + mouseOffset, fMouseInfo.transit,
+//			NULL);
+#endif
+	}
+
+	Scrollable::SetScrollOffset(newOffset);
+
+	fInScrollTo = false;
+}
+
+
+void
+CanvasView::ScrollOffsetChanged(BPoint oldOffset, BPoint newOffset)
+{
+	BPoint offset = newOffset - oldOffset;
+
+	if (offset == B_ORIGIN) {
+		// prevent circular code (MouseMoved might call ScrollBy...)
+		return;
+	}
+
+#if USE_DELAYED_SCROLLING
+	fDelayedScrolling = fRenderManager->ScrollBy(offset);
+	if (!fDelayedScrolling)
+		Invalidate();
+#else
+	viewport()->scroll(offset.x, offset.y);
+#endif
+	// TODO: Move delayed scrolling stuff into this method:
+	fRenderManager->SetCanvasLayout(DataRect(), VisibleRect());
+}
+
+
+void
+CanvasView::VisibleSizeChanged(float oldWidth, float oldHeight,
+							   float newWidth, float newHeight)
+{
+	BRect dataRect(_LayoutCanvas());
+	SetDataRect(dataRect);
+
+	fRenderManager->SetCanvasLayout(dataRect, VisibleRect());
+}
+
+
+// #pragma mark -
+
+
+double
+CanvasView::NextZoomInLevel(double zoom) const
+{
+	if (zoom < 0.25)
+		return 0.25;
+	if (zoom < 0.33)
+		return 0.33;
+	if (zoom < 0.5)
+		return 0.5;
+	if (zoom < 0.66)
+		return 0.66;
+	if (zoom < 1)
+		return 1;
+	if (zoom < 1.5)
+		return 1.5;
+	if (zoom < 2)
+		return 2;
+	if (zoom < 3)
+		return 3;
+	if (zoom < 4)
+		return 4;
+	if (zoom < 6)
+		return 6;
+	if (zoom < 8)
+		return 8;
+	if (zoom < 16)
+		return 16;
+	if (zoom < 32)
+		return 32;
+	return 64;
+}
+
+
+double
+CanvasView::NextZoomOutLevel(double zoom) const
+{
+	if (zoom > 32)
+		return 32;
+	if (zoom > 16)
+		return 16;
+	if (zoom > 8)
+		return 8;
+	if (zoom > 6)
+		return 6;
+	if (zoom > 4)
+		return 4;
+	if (zoom > 3)
+		return 3;
+	if (zoom > 2)
+		return 2;
+	if (zoom > 1.5)
+		return 1.5;
+	if (zoom > 1.0)
+		return 1.0;
+	if (zoom > 0.66)
+		return 0.66;
+	if (zoom > 0.5)
+		return 0.5;
+	if (zoom > 0.33)
+		return 0.33;
+	return 0.25;
+}
+
+
+void
+CanvasView::SetZoomLevel(double zoomLevel, bool mouseIsAnchor)
+{
+	if (fZoomLevel == zoomLevel)
+		return;
+
+	BPoint anchor;
+	if (mouseIsAnchor) {
+		// zoom into mouse position
+//		anchor = MouseInfo()->position;
+anchor = BPoint::FromQPoint(QCursor::pos());
+	} else {
+		// zoom into center of view
+		BRect bounds(BRect::FromQRect(viewport()->rect()));
+		anchor.x = (bounds.left + bounds.right + 1) / 2.0;
+		anchor.y = (bounds.top + bounds.bottom + 1) / 2.0;
+	}
+
+	BPoint canvasAnchor = anchor;
+	ConvertToCanvas(&canvasAnchor);
+
+	fZoomLevel = zoomLevel;
+	BRect dataRect = _LayoutCanvas();
+
+	ConvertFromCanvas(&canvasAnchor);
+
+	BPoint offset = ScrollOffset();
+	offset.x = roundf(offset.x + canvasAnchor.x - anchor.x);
+	offset.y = roundf(offset.y + canvasAnchor.y - anchor.y);
+
+	SetDataRectAndScrollOffset(dataRect, offset);
+
+	_SetRenderManagerZoom();
+}
+
+
+void
+CanvasView::SetZoomPolicy(uint32 policy)
+{
+	if (fZoomPolicy == policy)
+		return;
+
+	fZoomPolicy = policy;
+	_SetRenderManagerZoom();
+}
+
+
+void
+CanvasView::InvalidateCanvas(const BRect& bounds)
+{
+#if USE_DELAYED_SCROLLING
+	if (fDelayedScrolling)
+		return;
+#endif
+	viewport()->update(bounds.ToQRect());
 }
 
 
@@ -229,9 +415,6 @@ CanvasView::paintEvent(QPaintEvent* event)
 	}
 
 	// outside canvas
-//	BRegion outside(Bounds() & updateRect);
-//	outside.Exclude(canvas);
-//	FillRegion(&outside, kStripes);
 	QRegion outside = event->region().subtracted(canvas.ToQRect());
 	if (!outside.isEmpty())
 	{
@@ -240,28 +423,6 @@ CanvasView::paintEvent(QPaintEvent* event)
 	}
 
 	//	StateView::Draw(this, updateRect);
-}
-
-
-void
-CanvasView::resizeEvent(QResizeEvent* /*event*/)
-{
-	QSize viewportSize = viewport()->size();
-	QSize canvasSize = _CanvasRect().ToQRect().size();
-
-	verticalScrollBar()->setPageStep(viewportSize.height());
-	horizontalScrollBar()->setPageStep(viewportSize.width());
-	verticalScrollBar()->setRange(0, canvasSize.height() - viewportSize.height());
-	horizontalScrollBar()->setRange(0, canvasSize.width() - viewportSize.width());
-
-	_UpdateScrollPosition();
-}
-
-
-void
-CanvasView::scrollContentsBy(int dx, int dy)
-{
-	_UpdateScrollPosition();
 }
 
 
@@ -276,12 +437,47 @@ CanvasView::_CanvasRect() const
 	return r;
 }
 
-void
-CanvasView::_UpdateScrollPosition()
-{
-	int hvalue = horizontalScrollBar()->value();
-	int vvalue = verticalScrollBar()->value();
-	QPoint topLeft = viewport()->rect().topLeft();
 
-//	widget->move(topLeft.x() - hvalue, topLeft.y() - vvalue);
+BRect
+CanvasView::_LayoutCanvas()
+{
+	// size of zoomed bitmap
+	BRect r(_CanvasRect());
+	r.OffsetTo(0, 0);
+
+	// ask current view state to extend size
+//	BRect stateBounds = ViewStateBounds();
+
+	// resize for empty area around bitmap
+	// (the size we want, but might still be much smaller than view)
+	r.InsetBy(-50, -50);
+
+	// center data rect in bounds
+	BRect bounds(BRect::FromQRect(viewport()->rect()));
+	if (bounds.Width() > r.Width())
+		r.InsetBy(-ceilf((bounds.Width() - r.Width()) / 2), 0);
+	if (bounds.Height() > r.Height())
+		r.InsetBy(0, -ceilf((bounds.Height() - r.Height()) / 2));
+
+//	if (stateBounds.IsValid()) {
+//		stateBounds.InsetBy(-20, -20);
+//		r = r | stateBounds;
+//	}
+
+	return r;
+}
+
+
+void
+CanvasView::_SetRenderManagerZoom()
+{
+	if (fZoomLevel <= 1.0)
+		fRenderManager->SetZoomLevel(fZoomLevel);
+	else {
+		// upscaling depends on zoom policy
+		if (fZoomPolicy == ZOOM_POLICY_ENLARGE_PIXELS)
+			fRenderManager->SetZoomLevel(1.0);
+		else
+			fRenderManager->SetZoomLevel(fZoomLevel);
+	}
 }
