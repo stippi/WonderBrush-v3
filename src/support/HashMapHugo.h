@@ -94,7 +94,7 @@ public:
 
 	HashMapValueType Get(const HashMapKeyType& key) const
 	{
-		LinkType* link = Lookup(key);
+		LinkType* link = HashTableType::Lookup(key);
 		if (link != NULL)
 			return link->Value;
 
@@ -106,7 +106,7 @@ public:
 		LinkType* link = NULL;
 		try {
 			link = new LinkType(key, value);
-			if (Insert(link) == B_OK)
+			if (HashTableType::Insert(link) == B_OK)
 				return B_OK;
 		} catch (std::bad_alloc) {
 		}
@@ -145,7 +145,7 @@ public:
 	{
 		typename HashTableType::Iterator iterator(this);
 		while (LinkType* link = iterator.Next()) {
-			RemoveUnchecked(link);
+			HashTableType::RemoveUnchecked(link);
 			delete link;
 		}
 	}
