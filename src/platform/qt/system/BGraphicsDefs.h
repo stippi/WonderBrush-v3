@@ -10,6 +10,8 @@
 
 #include <SupportDefs.h>
 
+#include <QColor>
+
 
 // Pattern
 typedef struct pattern {
@@ -73,6 +75,11 @@ typedef struct rgb_color {
 	operator=(const rgb_color& other)
 	{
 		return set_to(other.red, other.green, other.blue, other.alpha);
+	}
+
+	operator QColor() const
+	{
+		return QColor(red, green, blue, alpha);
 	}
 #endif
 } rgb_color;
