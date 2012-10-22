@@ -10,8 +10,9 @@
 #include <InterfaceDefs.h>
 #include <Rect.h>
 
-class BView;
-class BWindow;
+#include <QImage>
+
+
 namespace BPrivate {
 	class BPrivateScreen;
 }
@@ -63,6 +64,8 @@ public:
 	static	BArchivable*		Instantiate(BMessage* data);
 	virtual	status_t			Archive(BMessage* data, bool deep = true) const;
 
+			void				Unset();
+
 			status_t			InitCheck() const;
 			bool				IsValid() const;
 
@@ -97,49 +100,23 @@ public:
 			status_t			GetOverlayRestrictions(
 									overlay_restrictions* restrictions) const;
 
-	// to mimic a BWindow
-			void				AddChild(BView* view);
-			bool				RemoveChild(BView* view);
-			int32				CountChildren() const;
-			BView*				ChildAt(int32 index) const;
-			BView*				FindView(const char* viewName) const;
-			BView*				FindView(BPoint point) const;
-			bool				Lock();
-			void				Unlock();
-			bool				IsLocked() const;
-
 			BBitmap&			operator=(const BBitmap& source);
 
+			QImage*				GetQImage() const
+									{ return fImage; }
+
 	class Private;
+
 private:
-	friend class BView;
-	friend class BApplication;
-	friend class BPrivate::BPrivateScreen;
 	friend class Private;
 
-			int32				_ServerToken() const;
-			void				_InitObject(BRect bounds,
-									color_space colorSpace, uint32 flags,
-									int32 bytesPerRow, screen_id screenID);
-			void				_CleanUp();
-			void				_AssertPointer();
-
-			void				_ReconnectToAppServer();
-
 private:
-			uint8*				fBasePointer;
+			uint8*				fData;
 			int32				fSize;
-			color_space			fColorSpace;
-			BRect				fBounds;
 			int32				fBytesPerRow;
-			BWindow*			fWindow;
-			int32				fServerToken;
-			int32				fAreaOffset;
-			uint8				unused;
-			area_id				fArea;
-			area_id				fServerArea;
-			uint32				fFlags;
-			status_t			fInitError;
+			color_space			fColorSpace;
+			QImage*				fImage;
 };
+
 
 #endif	// _BITMAP_H
