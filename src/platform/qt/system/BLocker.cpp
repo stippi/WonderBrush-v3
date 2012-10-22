@@ -51,7 +51,7 @@ BLocker::Lock()
 	fMutex.lock();
 	if (++fRecursiveCount == 1)
 		fLockOwner = find_thread(NULL);
-	return B_OK;
+	return true;
 }
 
 
