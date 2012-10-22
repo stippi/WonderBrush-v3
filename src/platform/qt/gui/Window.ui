@@ -128,7 +128,7 @@
                  <x>0</x>
                  <y>0</y>
                  <width>664</width>
-                 <height>455</height>
+                 <height>475</height>
                 </rect>
                </property>
               </widget>
@@ -140,7 +140,7 @@
         </item>
        </layout>
       </widget>
-      <widget class="QWidget" name="">
+      <widget class="QWidget" name="layoutWidget">
        <layout class="QVBoxLayout" name="verticalLayout_4">
         <property name="spacing">
          <number>0</number>
@@ -182,21 +182,7 @@
          </widget>
         </item>
         <item>
-         <widget class="QScrollArea" name="canvasScrollView">
-          <property name="widgetResizable">
-           <bool>true</bool>
-          </property>
-          <widget class="QWidget" name="scrollAreaWidgetContents_2">
-           <property name="geometry">
-            <rect>
-             <x>0</x>
-             <y>0</y>
-             <width>310</width>
-             <height>815</height>
-            </rect>
-           </property>
-          </widget>
-         </widget>
+         <widget class="CanvasView" name="canvasView" native="true"/>
         </item>
        </layout>
       </widget>
@@ -225,6 +211,14 @@
    </property>
   </action>
  </widget>
+ <customwidgets>
+  <customwidget>
+   <class>CanvasView</class>
+   <extends>QWidget</extends>
+   <header>CanvasView.h</header>
+   <container>1</container>
+  </customwidget>
+ </customwidgets>
  <resources/>
  <connections/>
 </ui>

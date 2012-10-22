@@ -106,6 +106,7 @@ SOURCES += \
 	platform/qt/platform_support_ui.cpp \
 	platform/qt/PlatformSemaphoreManager.cpp \
 	platform/qt/PlatformThread.cpp \
+	platform/qt/gui/CanvasView.cpp \
 	platform/qt/gui/Window.cpp \
 	platform/qt/system/ArchivingManagers.cpp \
 	platform/qt/system/BAlignment.cpp \
@@ -218,6 +219,7 @@ HEADERS  += \
 	platform/qt/PlatformSemaphoreManager.h \
 	platform/qt/PlatformThread.h \
 	platform/qt/PlatformWonderBrush.h \
+	platform/qt/gui/CanvasView.h \
 	platform/qt/gui/Window.h \
 	platform/qt/system/ArchivingManagers.h \
 	platform/qt/system/BAlignment.h \

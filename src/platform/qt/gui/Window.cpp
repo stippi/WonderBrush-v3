@@ -3,6 +3,7 @@
 
 #include "CommandStack.h"
 #include "Document.h"
+#include "RenderManager.h"
 
 
 Window::Window(BRect frame, const char* title, Document* document, Layer* layer,
@@ -17,6 +18,12 @@ Window::Window(BRect frame, const char* title, Document* document, Layer* layer,
 	fCommandStackListener(NULL)
 {
 	fUi->setupUi(this);
+
+	fRenderManager = new RenderManager(fDocument);
+	// TODO: Check error
+	fRenderManager->Init();
+
+	fUi->canvasView->Init(fDocument, fRenderManager);
 
 //	_InitTools();
 
