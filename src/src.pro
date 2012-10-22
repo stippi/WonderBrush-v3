@@ -107,6 +107,7 @@ SOURCES += \
 	platform/qt/platform_bitmap_support.cpp \
 	platform/qt/platform_support.cpp \
 	platform/qt/platform_support_ui.cpp \
+	platform/qt/PlatformMessageEvent.cpp \
 	platform/qt/PlatformSemaphoreManager.cpp \
 	platform/qt/PlatformThread.cpp \
 	platform/qt/gui/CanvasView.cpp \
@@ -120,6 +121,7 @@ SOURCES += \
 	platform/qt/system/BFile.cpp \
 	platform/qt/system/BFlattenable.cpp \
 	platform/qt/system/BGraphicsDefs.cpp \
+	platform/qt/system/BHandler.cpp \
 	platform/qt/system/BList.cpp \
 	platform/qt/system/BLocker.cpp \
 	platform/qt/system/BMessageAdapter.cpp \
@@ -224,6 +226,7 @@ HEADERS  += \
 	model/snapshots/StyleableSnapshot.h \
 	model/snapshots/TextSnapshot.h \
 	platform/qt/platform_support_ui.h \
+	platform/qt/PlatformMessageEvent.h \
 	platform/qt/PlatformSemaphoreManager.h \
 	platform/qt/PlatformThread.h \
 	platform/qt/PlatformWonderBrush.h \
@@ -245,6 +248,7 @@ HEADERS  += \
 	platform/qt/system/BFile.h \
 	platform/qt/system/BFlattenable.h \
 	platform/qt/system/BGraphicsDefs.h \
+	platform/qt/system/BHandler.h \
 	platform/qt/system/Bimage.h \
 	platform/qt/system/BInterfaceDefs.h \
 	platform/qt/system/BList.h \
@@ -282,6 +286,7 @@ HEADERS  += \
 	platform/qt/system/include/File.h \
 	platform/qt/system/include/Flattenable.h \
 	platform/qt/system/include/GraphicsDefs.h \
+	platform/qt/system/include/Handler.h \
 	platform/qt/system/include/image.h \
 	platform/qt/system/include/InterfaceDefs.h \
 	platform/qt/system/include/List.h \
