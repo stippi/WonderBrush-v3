@@ -18,6 +18,7 @@ local sourceDirs =
 	tools
 	tools/brush
 	tools/pick
+	tools/text
 	tools/transform
 ;
 
@@ -104,6 +105,7 @@ Application WonderBrush :
 
 	# gui/tools
 	BrushToolConfigView.cpp
+	TextToolConfigView.cpp
 	TransformToolConfigView.cpp
 
 	# gui (WonderBrush specific)
@@ -204,6 +206,10 @@ Application WonderBrush :
 	# tools/pick
 	PickTool.cpp
 	PickToolState.cpp
+
+	# tools/text
+	TextTool.cpp
+	TextToolState.cpp
 
 	# tools/transform
 	ChannelTransform.cpp
