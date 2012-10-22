@@ -103,7 +103,6 @@ SOURCES += \
 	model/snapshots/ShapeSnapshot.cpp \
 	model/snapshots/StyleableSnapshot.cpp \
 	model/snapshots/TextSnapshot.cpp \
-	platform/qt/AbstractLOAdapter.cpp \
 	platform/qt/platform_bitmap_support.cpp \
 	platform/qt/platform_support.cpp \
 	platform/qt/platform_support_ui.cpp \
@@ -150,6 +149,7 @@ SOURCES += \
 	render/TextLayout.cpp \
 	render/TextRenderer.cpp \
 	render/VertexSource.cpp \
+	support/AbstractLOAdapter.cpp \
 	support/Command.cpp \
 	support/CommandStack.cpp \
 	support/CompoundCommand.cpp \

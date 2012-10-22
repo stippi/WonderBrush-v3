@@ -156,7 +156,6 @@ Application WonderBrush :
 	TextSnapshot.cpp
 
 	# platform/<platform>
-	AbstractLOAdapter.cpp
 	platform_bitmap_support.cpp
 	platform_support.cpp
 
@@ -183,6 +182,7 @@ Application WonderBrush :
 #	FontManager.cpp
 
 	# support
+	AbstractLOAdapter.cpp
 	bitmap_support.cpp
 	Command.cpp
 	CommandStack.cpp
