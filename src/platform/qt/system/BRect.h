@@ -11,6 +11,8 @@
 
 #include <math.h>
 
+#include <QRect>
+
 
 class BRect {
 public:
@@ -83,6 +85,9 @@ public:
 			bool				Intersects(BRect r) const;
 			bool				Contains(BPoint p) const;
 			bool				Contains(BRect r) const;
+
+			QRect				ToQRect() const;
+	static	BRect				FromQRect(const QRect & qRect);
 };
 
 
@@ -242,6 +247,28 @@ inline BSize
 BRect::Size() const
 {
 	return BSize(right - left, bottom - top);
+}
+
+
+inline QRect
+BRect::ToQRect() const
+{
+	if (!IsValid())
+		return QRect();
+
+	return QRect((int)left, (int)top, IntegerWidth() + 1, IntegerHeight() + 1);
+}
+
+
+/*static*/ inline BRect
+BRect::FromQRect(const QRect & qRect)
+{
+	if (qRect.isNull())
+		return BRect();
+
+	// Note: right() and bottom() are offset by -1, so that they really match
+	// BRect's right and bottom.
+	return BRect(qRect.left(), qRect.top(), qRect.right(), qRect.bottom());
 }
 
 
