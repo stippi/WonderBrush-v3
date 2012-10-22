@@ -42,9 +42,9 @@ QMAKE_CXXFLAGS += -iquote $$PWD/render
 QMAKE_CXXFLAGS += -iquote $$PWD/support
 QMAKE_CXXFLAGS += -iquote $$PWD/tools
 QMAKE_CXXFLAGS += -iquote $$PWD/tools/brush
-QMAKE_CXXFLAGS += -iquote $$PWD/tools/brush/pick
+QMAKE_CXXFLAGS += -iquote $$PWD/tools/pick
 QMAKE_CXXFLAGS += -iquote $$PWD/tools/text
-QMAKE_CXXFLAGS += -iquote $$PWD/tools/brush/transform
+QMAKE_CXXFLAGS += -iquote $$PWD/tools/transform
 
 DEFINES += __STDC_LIMIT_MACROS=1
 DEFINES += __STDC_FORMAT_MACROS=1
@@ -345,14 +345,14 @@ HEADERS  += \
 #	tools/TransformViewState.h \
 #	tools/brush/BrushTool.h \
 #	tools/brush/BrushToolState.h \
-#	tools/brush/pick/PickTool.h \
-#	tools/brush/pick/PickToolState.h \
+#	tools/pick/PickTool.h \
+#	tools/pick/PickToolState.h \
 #	tools/text/TextTool.h \
 #	tools/text/TextToolState.h \
-#	tools/brush/transform/ChannelTransform.h \
-#	tools/brush/transform/TransformableGroup.h \
-#	tools/brush/transform/TransformTool.h \
-#	tools/brush/transform/TransformToolState.h
+#	tools/transform/ChannelTransform.h \
+#	tools/transform/TransformableGroup.h \
+#	tools/transform/TransformTool.h \
+#	tools/transform/TransformToolState.h
 
 FORMS += \
     platform/qt/gui/Window.ui
