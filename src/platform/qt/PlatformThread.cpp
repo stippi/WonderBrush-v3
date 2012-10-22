@@ -94,6 +94,10 @@ struct PlatformThread::Manager {
 
 	status_t WaitFor(thread_id id, status_t* _returnValue)
 	{
+		// If the thread isn't running yet, resume it. We make the call
+		// unconditionally -- it's a no-op, if the thread is already running.
+		ResumeThread(id);
+
 		Reference<PlatformThread> threadReference = ThreadReferenceByID(id);
 		PlatformThread* thread = threadReference.Get();
 		if (thread == NULL)
