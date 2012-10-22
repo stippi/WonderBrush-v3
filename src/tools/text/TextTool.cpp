@@ -1,0 +1,108 @@
+/*
+ * Copyright 20012, Stephan Aßmus <superstippi@gmx.de>
+ * All rights reserved.
+ */
+
+#include "TextTool.h"
+
+#include <stdio.h>
+
+#include "IconButton.h"
+#include "TextToolConfigView.h"
+#include "TextToolState.h"
+
+// constructor
+TextTool::TextTool()
+	: Tool("Text")
+{
+}
+
+// destructor
+TextTool::~TextTool()
+{
+}
+
+// #pragma mark -
+
+// SaveSettings
+status_t
+TextTool::SaveSettings(BMessage* message)
+{
+	return Tool::SaveSettings(message);
+}
+
+// LoadSettings
+status_t
+TextTool::LoadSettings(BMessage* message)
+{
+	return Tool::LoadSettings(message);
+}
+
+// #pragma mark -
+
+// ShortHelpMessage
+const char*
+TextTool::ShortHelpMessage()
+{
+	return "Create and edit text on the canvas.";
+}
+
+// #pragma mark -
+
+// MakeViewState
+ViewState*
+TextTool::MakeViewState(StateView* view, Document* document,
+	Selection* selection)
+{
+	return new(std::nothrow) TextToolState(view, document, selection);
+}
+
+// MakeConfigView
+ToolConfigView*
+TextTool::MakeConfigView()
+{
+	return new(std::nothrow) TextToolConfigView(this);
+}
+
+// MakeIcon
+IconButton*
+TextTool::MakeIcon()
+{
+	IconButton* button = new IconButton("text", 0);
+	button->SetIcon(503, 32);
+	button->TrimIcon(BRect(0, 0, 21, 21));
+	return button;
+}
+
+// #pragma mark -
+
+// SetOption
+void
+TextTool::SetOption(uint32 option, bool value)
+{
+	switch (option) {
+		case SUBPIXELS:
+			// TODO
+			break;
+	}
+}
+
+// SetOption
+void
+TextTool::SetOption(uint32 option, float value)
+{
+	switch (option) {
+		case SIZE:
+			// TODO
+			break;
+	}
+		
+}
+
+// SetOption
+void
+TextTool::SetOption(uint32 option, int32 value)
+{
+}
+
+

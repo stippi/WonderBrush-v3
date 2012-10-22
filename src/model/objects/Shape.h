@@ -45,7 +45,7 @@ public:
 
 	virtual	const char*			DefaultName() const;
 
-	virtual	bool				HitTest(const BPoint& canvasPoint) const;
+	virtual	bool				HitTest(const BPoint& canvasPoint);
 
 	// Shape
 			void				SetArea(const BRect& area);

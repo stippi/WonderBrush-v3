@@ -19,6 +19,7 @@ local sourceDirs =
 	tools
 	tools/brush
 	tools/pick
+	tools/text
 	tools/transform
 ;
 
@@ -105,6 +106,7 @@ Application WonderBrush :
 
 	# gui/tools
 	BrushToolConfigView.cpp
+	TextToolConfigView.cpp
 	TransformToolConfigView.cpp
 
 	# gui (WonderBrush specific)
@@ -150,6 +152,8 @@ Application WonderBrush :
 	ShapeSnapshot.cpp
 	Styleable.cpp
 	StyleableSnapshot.cpp
+	Text.cpp
+	TextSnapshot.cpp
 
 	# platform/<platform>
 	AbstractLOAdapter.cpp
@@ -158,6 +162,7 @@ Application WonderBrush :
 
 	# render
 	Font.cpp
+	FontCache.cpp
 	GaussFilter.cpp
 	LayoutContext.cpp
 	LayoutState.cpp
@@ -206,6 +211,10 @@ Application WonderBrush :
 	# tools/pick
 	PickTool.cpp
 	PickToolState.cpp
+
+	# tools/text
+	TextTool.cpp
+	TextToolState.cpp
 
 	# tools/transform
 	ChannelTransform.cpp

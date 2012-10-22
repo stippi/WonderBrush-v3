@@ -16,6 +16,7 @@ public:
 	};
 
 public:
+	Font(const char* name, double size);
 	Font(const char* name, double size, unsigned style);
 	Font(const char* name, double size, unsigned style,
 			ScriptLevel scriptLevel);

@@ -88,7 +88,7 @@ Shape::DefaultName() const
 
 // HitTest
 bool
-Shape::HitTest(const BPoint& canvasPoint) const
+Shape::HitTest(const BPoint& canvasPoint)
 {
 	PathStorage path;
 	_GetPath(path);

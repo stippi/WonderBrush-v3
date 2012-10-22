@@ -8,14 +8,16 @@
 #include "TextRenderer.h"
 #include "Font.h"
 
+class FontCache;
 
 struct StyleRun {
 	int							start;
 
 	Font						font;
 
-	double						ascent;		// Not yet used
-	double						descent;	// Not yet used
+	double						ascent;
+	double						descent;
+	double						width;
 
 	int							fgRed;
 	int							fgGreen;
@@ -53,6 +55,7 @@ struct GlyphInfo {
 
 	double						x;
 	double						y;
+	double						advanceX;
 
 	double						maxAscend;
 	double						maxDescend;
@@ -86,13 +89,18 @@ static const unsigned ALIGNMENT_CENTER			= 2;
 static const unsigned SELECTION_FULL			= 1 << 16;
 static const unsigned SELECTION_LINE_DELIMITER	= 1 << 17;
 static const unsigned SELECTION_LAST_LINE		= 1 << 20;
+static const unsigned TEXT_TRANSPARENT			= 1 << 30;
 
 class TextLayout {
 public:
-	TextLayout(const TextRenderer* renderer);
+	TextLayout(FontCache* fontCache);
+	TextLayout(const TextLayout& layout);
 	virtual ~TextLayout();
 
+	TextLayout& operator=(const TextLayout& other);
+
 	void setText(const char* text);
+	void setFont(const Font& font);
 	void setFirstLineInset(double inset);
 	void setLineInset(double inset);
 	void setWidth(double width);
@@ -102,9 +110,20 @@ public:
 	void setLineSpacing(double spacing);
 	void setTabs(double* tabs, unsigned count);
 
+	inline unsigned getAlignment() const
+	{
+		return fAlignment;
+	}
+
+	inline unsigned getJustify() const
+	{
+		return fJustify;
+	}
+
 	void clearStyleRuns();
 	bool addStyleRun(int start, const char* fontPath,
 		double fontSize, unsigned fontStyle,
+		double metricsAscent, double metricsDescent, double metricsWidth,
 		int fgRed, int fgGreen, int fgBlue,
 		int bgRed, int bgGreen, int bgBlue,
 		bool strikeOut, int strikeRed, int strikeGreen, int strikeBlue,
@@ -116,6 +135,13 @@ public:
 	inline unsigned getGlyphCount() const
 	{
 		return fGlyphInfoCount;
+	}
+
+	inline void getAdvanceX(int index, double* advanceX) {
+		if (fGlyphInfoBuffer[index].advanceX > 0.0)
+			*advanceX = fGlyphInfoBuffer[index].advanceX;
+		else
+			*advanceX = 3.0;
 	}
 
 	inline void getInfo(int index, const agg::glyph_cache** glyph, double* x,
@@ -152,6 +178,11 @@ public:
 				underlineColor.b = style->underlineBlue;
 				underlineColor.a = 255;
 			}
+			if (style->width > 0.0) {
+				// Client provided metrics for this glyph, do not draw the
+				// place-holder glyph.
+				*glyph = NULL;
+			}
 		}
 	}
 
@@ -162,8 +193,8 @@ public:
 		*lineIndex = fGlyphInfoBuffer[index].lineIndex;
 
 		*x = fGlyphInfoBuffer[index].x;
-		if (fGlyphInfoBuffer[index].glyph != NULL)
-			*advanceX = fGlyphInfoBuffer[index].glyph->advance_x;
+		if (fGlyphInfoBuffer[index].advanceX > 0.0)
+			*advanceX = fGlyphInfoBuffer[index].advanceX;
 		else
 			*advanceX = 3.0;
 		*lineTop = fLineInfoBuffer[*lineIndex].y;
@@ -186,16 +217,8 @@ public:
 
 		*x1 = fGlyphInfoBuffer[index].x;
 		*y1 = y - fGlyphInfoBuffer[index].maxAscend;
-		*x2 = *x1;
+		*x2 = *x1 + fGlyphInfoBuffer[index].advanceX;
 		*y2 = y + fGlyphInfoBuffer[index].maxDescend;
-
-		if (index < fGlyphInfoCount - 1
-			&& fGlyphInfoBuffer[index + 1].lineIndex
-				== fGlyphInfoBuffer[index].lineIndex) {
-			*x2 = fGlyphInfoBuffer[index + 1].x;
-		} else if (fGlyphInfoBuffer[index].glyph != NULL) {
-			*x2 += fGlyphInfoBuffer[index].glyph->advance_x;
-		}
 	}
 
 	inline double getFirstLineInset() const
@@ -249,7 +272,11 @@ private:
 		double maxAscent, double maxDescent);
 
 private:
-	const TextRenderer*	fTextRenderer;
+	FontCache*			fFontCache;
+
+	Font				fFont;
+	double				fAscent;
+	double				fDescent;
 
 	double				fFirstLineInset;
 	double				fLineInset;
@@ -276,6 +303,10 @@ private:
 
 	double*				fTabBuffer;
 	unsigned			fTabCount;
+
+	bool				fSubpixelRendering;
+	bool				fKerning;
+	bool				fHinting;
 
 	bool				fLayoutPerformed;
 };

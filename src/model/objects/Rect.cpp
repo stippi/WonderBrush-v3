@@ -75,7 +75,7 @@ Rect::DefaultName() const
 
 // HitTest
 bool
-Rect::HitTest(const BPoint& canvasPoint) const
+Rect::HitTest(const BPoint& canvasPoint)
 {
 	RenderEngine engine(Transformation());
 	return engine.HitTest(fArea, canvasPoint);
@@ -92,6 +92,8 @@ Rect::SetArea(const BRect& area)
 
 	BRect oldArea(fArea);
 	fArea = area;
+
+	UpdateChangeCounter();
 
 	_NotifyAreaChanged(oldArea, fArea);
 
@@ -138,8 +140,6 @@ Rect::RemoveListener(RectListener* listener)
 void
 Rect::_NotifyAreaChanged(const BRect& oldArea, const BRect& newArea)
 {
-	UpdateChangeCounter();
-
 	int32 count = fListeners.CountItems();
 	if (count == 0)
 		return;

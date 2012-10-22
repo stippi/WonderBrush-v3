@@ -99,7 +99,7 @@ Object::InvalidateParent()
 
 // HitTest
 bool
-Object::HitTest(const BPoint& canvasPoint) const
+Object::HitTest(const BPoint& canvasPoint)
 {
 	return false;
 }

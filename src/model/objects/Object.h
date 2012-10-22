@@ -41,7 +41,7 @@ public:
 			void				InvalidateParent(const BRect& area);
 			void				InvalidateParent();
 
-	virtual	bool				HitTest(const BPoint& canvasPoint) const;
+	virtual	bool				HitTest(const BPoint& canvasPoint);
 
 			void				UpdateChangeCounter();
 	inline	uint32				ChangeCounter() const

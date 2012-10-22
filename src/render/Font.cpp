@@ -8,6 +8,16 @@
 #include <string.h>
 
 
+Font::Font(const char* name, double size)
+	:
+	fSize(size),
+	fStyle(kNormal),
+	fScriptLevel(NORMAL)
+{
+	snprintf(fName, sizeof(fName), "%s", name);
+}
+
+
 Font::Font(const char* name, double size, unsigned style)
 	:
 	fSize(size),

@@ -12,11 +12,13 @@
 #include "BrushStroke.h"
 #include "Document.h"
 #include "Filter.h"
+#include "FontCache.h"
 #include "Image.h"
 #include "Layer.h"
 #include "Rect.h"
 #include "RenderBuffer.h"
 #include "Shape.h"
+#include "Text.h"
 #include "Window.h"
 
 
@@ -69,6 +71,14 @@ WonderBrushBase::WonderBrushBase(BRect bounds)
 	} else
 		printf("Test bitmap file not found or failed to load.\n");
 #endif	// WONDERBRUSH_PLATFORM_HAIKU
+
+	Text* text = new Text((rgb_color){ 0, 0, 0, 255 });
+	text->TranslateBy(BPoint(522, 31));
+	text->SetFont("DejaVuSerif.ttf", 24.0);
+	text->SetWidth(200.0);
+	text->SetJustify(true);
+	text->SetText("This is a test of the new text layouting features.");
+	fDocument->RootLayer()->AddObject(text);
 
 	Rect* transformedRect = new Rect(BRect(150, 200, 210, 330),
 		(rgb_color){ 55, 120, 80, 120 });
@@ -232,6 +242,14 @@ WonderBrush::RestoreSettings()
 int
 main(int argc, char* argv[])
 {
+	for (int i = 1; i < argc; i++) {
+		if (strcmp(argv[i], "--fonts") == 0 && i < argc - 1) {
+			printf("Using font folder: '%s'\n", argv[i + 1]);
+			FontCache::getInstance()->setFontFolder(argv[i + 1]);
+			break;
+		}
+	}
+
 	WonderBrush app(argc, argv, BRect(0, 0, 799, 599));
 	app.Run();
 	return 0;

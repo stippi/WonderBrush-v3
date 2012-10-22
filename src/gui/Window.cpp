@@ -32,6 +32,7 @@
 #include "NavigatorView.h"
 #include "ObjectTreeView.h"
 #include "PickTool.h"
+#include "TextTool.h"
 #include "ToolConfigView.h"
 #include "TransformTool.h"
 #include "RenderManager.h"
@@ -481,6 +482,7 @@ Window::_InitTools()
 //	AddTool(new(std::nothrow) PickTool());
 	AddTool(new(std::nothrow) TransformTool());
 	AddTool(new(std::nothrow) BrushTool());
+	AddTool(new(std::nothrow) TextTool());
 }
 
 // _ObjectChanged

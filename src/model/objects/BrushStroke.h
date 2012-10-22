@@ -45,7 +45,7 @@ public:
 	virtual	bool				SetToPropertyObject(
 									const PropertyObject* object,
 									uint32 flags = 0);
-	virtual	bool				HitTest(const BPoint& canvasPoint) const;
+	virtual	bool				HitTest(const BPoint& canvasPoint);
 
 	// BoundedObject interface
 	virtual	BRect				Bounds();

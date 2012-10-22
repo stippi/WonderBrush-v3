@@ -43,6 +43,7 @@ QMAKE_CXXFLAGS += -iquote $$PWD/support
 QMAKE_CXXFLAGS += -iquote $$PWD/tools
 QMAKE_CXXFLAGS += -iquote $$PWD/tools/brush
 QMAKE_CXXFLAGS += -iquote $$PWD/tools/brush/pick
+QMAKE_CXXFLAGS += -iquote $$PWD/tools/text
 QMAKE_CXXFLAGS += -iquote $$PWD/tools/brush/transform
 
 DEFINES += __STDC_LIMIT_MACROS=1
@@ -85,6 +86,7 @@ SOURCES += \
 	model/objects/Rect.cpp \
 	model/objects/Shape.cpp \
 	model/objects/Styleable.cpp \
+	model/objects/Text.cpp \
 	model/property/Property.cpp \
 	model/property/PropertyObject.cpp \
 	model/property/PropertyObjectProperty.cpp \
@@ -100,6 +102,7 @@ SOURCES += \
 	model/snapshots/RectSnapshot.cpp \
 	model/snapshots/ShapeSnapshot.cpp \
 	model/snapshots/StyleableSnapshot.cpp \
+	model/snapshots/TextSnapshot.cpp \
 	platform/qt/AbstractLOAdapter.cpp \
 	platform/qt/platform_bitmap_support.cpp \
 	platform/qt/platform_support.cpp \
@@ -132,6 +135,7 @@ SOURCES += \
 	platform/qt/system/BSize.cpp \
 	platform/qt/system/BString.cpp \
 	render/Font.cpp \
+	render/FontCache.cpp \
 	render/GaussFilter.cpp \
 	render/LayoutContext.cpp \
 	render/LayoutState.cpp \
@@ -164,6 +168,8 @@ SOURCES += \
 #	tools/brush/pick/PickTool.cpp \
 #	tools/brush/pick/PickToolState.cpp \
 #	tools/brush/transform/ChannelTransform.cpp \
+#	tools/text/TextTool.cpp \
+#	tools/text/TextToolState.cpp \
 #	tools/brush/transform/TransformableGroup.cpp \
 #	tools/brush/transform/TransformTool.cpp \
 #	tools/brush/transform/TransformToolState.cpp
@@ -199,6 +205,7 @@ HEADERS  += \
 	model/objects/Rect.h \
 	model/objects/Shape.h \
 	model/objects/Styleable.h \
+	model/objects/Text.h \
 	model/property/CommonPropertyIDs.h \
 	model/property/Property.h \
 	model/property/PropertyObject.h \
@@ -215,6 +222,7 @@ HEADERS  += \
 	model/snapshots/RectSnapshot.h \
 	model/snapshots/ShapeSnapshot.h \
 	model/snapshots/StyleableSnapshot.h \
+	model/snapshots/TextSnapshot.h \
 	platform/qt/platform_support_ui.h \
 	platform/qt/PlatformSemaphoreManager.h \
 	platform/qt/PlatformThread.h \
@@ -298,6 +306,7 @@ HEADERS  += \
 	platform/qt/system/include/utf8_functions.h \
 	render/FauxWeight.h \
 	render/Font.h \
+	render/FontCache.h \
 	render/GaussFilter.h \
 	render/LayoutContext.h \
 	render/LayoutState.h \
@@ -338,6 +347,8 @@ HEADERS  += \
 #	tools/brush/BrushToolState.h \
 #	tools/brush/pick/PickTool.h \
 #	tools/brush/pick/PickToolState.h \
+#	tools/text/TextTool.h \
+#	tools/text/TextToolState.h \
 #	tools/brush/transform/ChannelTransform.h \
 #	tools/brush/transform/TransformableGroup.h \
 #	tools/brush/transform/TransformTool.h \
