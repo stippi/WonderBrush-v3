@@ -87,7 +87,7 @@ public:
 			bool				Contains(BRect r) const;
 
 			QRect				ToQRect() const;
-	static	BRect				FromQRect(const QRect & qRect);
+	static	BRect				FromQRect(const QRect& qRect);
 };
 
 
