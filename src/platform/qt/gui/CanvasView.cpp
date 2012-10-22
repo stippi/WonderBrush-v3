@@ -1,6 +1,7 @@
 #include "CanvasView.h"
 
 #include <Bitmap.h>
+#include <Messenger.h>
 #include <Region.h>
 
 #include <QPainter>
@@ -21,7 +22,7 @@
 
 CanvasView::CanvasView(QWidget* parent)
 	:
-	QAbstractScrollArea(parent),
+	PlatformWidgetHandler<QAbstractScrollArea>("canvas view", parent),
 	fDocument(NULL),
 	fRenderManager(NULL),
 	fZoomLevel(1.0),
@@ -36,6 +37,113 @@ CanvasView::Init(Document* document, RenderManager* manager)
 {
 	fDocument = document;
 	fRenderManager = manager;
+
+//	StateView::AttachedToWindow();
+
+	BMessenger* bitmapListener = new(std::nothrow) BMessenger(this);
+	if (bitmapListener == NULL
+		|| !fRenderManager->AddBitmapListener(bitmapListener)) {
+		delete bitmapListener;
+		// TODO: Bail out, throw exception or something...
+	}
+
+//	// init data rect for scrolling and center bitmap in the view
+//	BRect dataRect = _LayoutCanvas();
+//	SetDataRect(dataRect);
+//	BRect bounds(Bounds());
+//	BPoint dataRectCenter((dataRect.left + dataRect.right) / 2,
+//		(dataRect.top + dataRect.bottom) / 2);
+//	BPoint boundsCenter((bounds.left + bounds.right) / 2,
+//		(bounds.top + bounds.bottom) / 2);
+//	BPoint offset = ScrollOffset();
+//	offset.x = roundf(offset.x + dataRectCenter.x - boundsCenter.x);
+//	offset.y = roundf(offset.y + dataRectCenter.y - boundsCenter.y);
+//	SetScrollOffset(offset);
+}
+
+
+void
+CanvasView::MessageReceived(BMessage* message)
+{
+	switch (message->what) {
+//		case MSG_AUTO_SCROLL:
+//			if (fAutoScroller) {
+//				BPoint scrollOffset(0.0, 0.0);
+//				BRect bounds(Bounds());
+//				BPoint mousePos = MouseInfo()->position;
+//				mousePos.ConstrainTo(bounds);
+//				float inset = min_c(min_c(40.0, bounds.Width() / 10),
+//					min_c(40.0, bounds.Height() / 10));
+//				bounds.InsetBy(inset, inset);
+//				if (!bounds.Contains(mousePos)) {
+//					// mouse is close to the border
+//					if (mousePos.x <= bounds.left)
+//						scrollOffset.x = mousePos.x - bounds.left;
+//					else if (mousePos.x >= bounds.right)
+//						scrollOffset.x = mousePos.x - bounds.right;
+//					if (mousePos.y <= bounds.top)
+//						scrollOffset.y = mousePos.y - bounds.top;
+//					else if (mousePos.y >= bounds.bottom)
+//						scrollOffset.y = mousePos.y - bounds.bottom;
+
+//					scrollOffset.x = roundf(scrollOffset.x * 0.8);
+//					scrollOffset.y = roundf(scrollOffset.y * 0.8);
+//				}
+//				if (scrollOffset != B_ORIGIN) {
+//					SetScrollOffset(ScrollOffset() + scrollOffset);
+//				}
+//			}
+//			break;
+		case MSG_BITMAP_CLEAN: {
+#if USE_DELAYED_SCROLLING
+			bool scrollingDelayed;
+			if (message->FindBool("scrolling delayed",
+				&scrollingDelayed) == B_OK) {
+				fDelayedScrolling = false;
+				// just invalidate everything, it will simulate scrolling,
+				// but only after rendering is done
+				Invalidate();
+				break;
+			}
+#endif
+			BRect area;
+			if (message->FindRect("area", &area) == B_OK) {
+				ConvertFromCanvas(&area);
+				area.left = floorf(area.left);
+				area.top = floorf(area.top);
+				area.right = ceilf(area.right);
+				area.bottom = ceilf(area.bottom);
+				viewport()->update();
+			}
+			break;
+		}
+
+//		case MSG_ZOOM_SET:
+//		{
+//			double zoom;
+//			if (message->FindDouble("zoom", &zoom) == B_OK)
+//				SetZoomLevel(zoom);
+//			break;
+//		}
+//		case MSG_ZOOM_IN:
+//			SetZoomLevel(NextZoomInLevel(fZoomLevel), false);
+//			break;
+//		case MSG_ZOOM_OUT:
+//			SetZoomLevel(NextZoomOutLevel(fZoomLevel), false);
+//			break;
+//		case MSG_ZOOM_ORIGINAL:
+//			SetZoomLevel(1.0, false);
+//			break;
+//		case MSG_ZOOM_TO_FIT:
+//		{
+//			printf("MSG_ZOOM_TO_FIT\n");
+//			break;
+//		}
+
+		default:
+//			StateView::MessageReceived(message);
+			break;
+	}
 }
 
 

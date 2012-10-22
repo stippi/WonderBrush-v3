@@ -2,6 +2,7 @@
 #define PLATFORM_QT_CANVAS_VIEW_H
 
 
+#include <Handler.h>
 #include <Rect.h>
 
 #include <QAbstractScrollArea>
@@ -12,7 +13,7 @@ class Document;
 class RenderManager;
 
 
-class CanvasView : public QAbstractScrollArea
+class CanvasView : public PlatformWidgetHandler<QAbstractScrollArea>
 {
 	Q_OBJECT
 
@@ -27,6 +28,8 @@ public:
 
 			void				Init(Document* document,
 									RenderManager* manager);
+
+	virtual	void				MessageReceived(BMessage* message);
 
 	virtual	void				ConvertFromCanvas(BPoint* point) const;
 	virtual	void				ConvertToCanvas(BPoint* point) const;
