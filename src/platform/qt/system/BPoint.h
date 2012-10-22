@@ -8,6 +8,8 @@
 
 #include <SupportDefs.h>
 
+#include <QPoint>
+
 
 class BRect;
 
@@ -35,6 +37,9 @@ public:
 
 			bool				operator!=(const BPoint& other) const;
 			bool				operator==(const BPoint& other) const;
+
+			QPoint				ToQPoint() const;
+	static	BPoint				FromQPoint(const QPoint& qPoint);
 };
 
 
@@ -84,5 +89,20 @@ BPoint::Set(float x, float y)
 	this->x = x;
 	this->y = y;
 }
+
+
+inline QPoint
+BPoint::ToQPoint() const
+{
+	return QPoint(x, y);
+}
+
+
+/*static*/ inline BPoint
+BPoint::FromQPoint(const QPoint& qPoint)
+{
+	return BPoint(qPoint.x(), qPoint.y());
+}
+
 
 #endif // _POINT_H
