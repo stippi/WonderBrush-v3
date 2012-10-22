@@ -1,5 +1,7 @@
 #include <File.h>
 
+#include <unistd.h>
+
 
 BFile::BFile()
 	:
