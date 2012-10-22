@@ -28,6 +28,7 @@ INCLUDEPATH += cimg
 
 QMAKE_CXXFLAGS += -iquote $$PWD/commands
 QMAKE_CXXFLAGS += -iquote $$PWD/gui/icons
+QMAKE_CXXFLAGS += -iquote $$PWD/gui/scrollview
 QMAKE_CXXFLAGS += -iquote $$PWD/model
 QMAKE_CXXFLAGS += -iquote $$PWD/model/document
 QMAKE_CXXFLAGS += -iquote $$PWD/model/fills
@@ -65,6 +66,8 @@ SOURCES += \
 	commands/MoveObjectsCommand.cpp \
 	commands/ObjectAddedCommand.cpp \
 	commands/SetPropertiesCommand.cpp \
+	gui/scrollview/Scrollable.cpp \
+	gui/scrollview/Scroller.cpp \
 	model/property/CommonPropertyIDs.cpp \
 	model/BaseObject.cpp \
 	model/Selectable.cpp \
@@ -107,6 +110,7 @@ SOURCES += \
 	platform/qt/platform_support.cpp \
 	platform/qt/platform_support_ui.cpp \
 	platform/qt/PlatformMessageEvent.cpp \
+	platform/qt/PlatformScrollArea.cpp \
 	platform/qt/PlatformSemaphoreManager.cpp \
 	platform/qt/PlatformThread.cpp \
 	platform/qt/gui/CanvasView.cpp \
@@ -183,6 +187,8 @@ HEADERS  += \
 	commands/ObjectAddedCommand.h \
 	commands/SetPropertiesCommand.h \
 	gui/icons/PathPropertyIcon.h \
+	gui/scrollview/Scrollable.h \
+	gui/scrollview/Scroller.h \
 	model/BaseObject.h \
 	model/Selectable.h \
 	model/Selection.h \
@@ -227,6 +233,7 @@ HEADERS  += \
 	model/snapshots/TextSnapshot.h \
 	platform/qt/platform_support_ui.h \
 	platform/qt/PlatformMessageEvent.h \
+	platform/qt/PlatformScrollArea.h \
 	platform/qt/PlatformSemaphoreManager.h \
 	platform/qt/PlatformThread.h \
 	platform/qt/PlatformWonderBrush.h \
