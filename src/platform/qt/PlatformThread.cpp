@@ -32,9 +32,6 @@ struct PlatformThread::Thread : public QThread {
 		// PlatformThread object is dereferenced when the thread terminates.
 		CurrentThread();
 
-		// wait for the resume_thread()
-		fPlatformThread->Block();
-
 		// invoke the actual thread function
 		fPlatformThread->fExitValue = fFunction(fData);
 	}
@@ -277,11 +274,6 @@ PlatformThread::Spawn(thread_func function, const char* name, int32 priority,
 {
 	PlatformThread* platformThread = new PlatformThread(_NextThreadID(), false);
 
-	// Prepare to block. The blocking itself happens in Thread::run(). This
-	// emulates Haiku behavior, where resume_thread() has to be called to run
-	// the new thread.
-	platformThread->PrepareToBlock();
-
 	new Thread(platformThread, function, name, priority, data);
 
 	return platformThread;
@@ -321,7 +313,7 @@ PlatformThread::_Resume()
 	QMutexLocker mutexLocker(&fMutex);
 	if (!fRunning) {
 		fRunning = true;
-		_UnblockLocked();
+		fThread->start();
 	}
 }
 
