@@ -4,6 +4,7 @@
 
 #include <Message.h>
 #include <MessageFilter.h>
+#include <Messenger.h>
 #include <Screen.h>
 #include <Window.h>
 
@@ -630,8 +631,8 @@ StateView::PerformCommand(Command* command)
 void
 StateView::TriggerUpdate()
 {
-	if (fUpdateTarget != NULL && fUpdateTarget->Looper())
-		fUpdateTarget->Looper()->PostMessage(fUpdateCommand);
+	if (fUpdateTarget != NULL)
+		BMessenger(fUpdateTarget).SendMessage(fUpdateCommand);
 }
 
 // #pragma mark -
