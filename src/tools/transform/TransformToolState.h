@@ -9,7 +9,6 @@
 #include <Messenger.h>
 
 #include "AbstractLOAdapter.h"
-#include "ChannelTransform.h"
 #include "DragStateViewState.h"
 #include "Rect.h"
 #include "Selection.h"
@@ -106,10 +105,6 @@ public:
 
 	inline	Transformable		UpdateAdditionalTransformation();
 
-//	inline	const ChannelTransform& Transformation() const
-//									{ return fTransformation; }
-//			void				SetTransformation(const ChannelTransform&);
-
 private:
 			void				_RegisterObject(Transformable* object);
 			void				_UnregisterObject(Transformable* object);
@@ -119,7 +114,6 @@ private:
 			BRect				fModifiedBox;
 			BPoint				fPivot;
 			double				fRotation;
-//			ChannelTransform	fTransformation;
 
 			BMessenger			fConfigViewMessenger;
 
