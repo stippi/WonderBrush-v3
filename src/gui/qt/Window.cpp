@@ -10,7 +10,7 @@
 Window::Window(BRect frame, const char* title, Document* document, Layer* layer,
 	QWidget* parent)
 	:
-	QMainWindow(parent),
+	BWindow(parent),
 	fUi(new Ui::Window),
 	fView(new CanvasView()),
 	fDocument(document),

@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
  <class>Window</class>
- <widget class="QMainWindow" name="Window">
+ <widget class="BWindow" name="Window">
   <property name="geometry">
    <rect>
     <x>0</x>
@@ -219,6 +219,12 @@
    <class>ScrollView</class>
    <extends>QWidget</extends>
    <header>ScrollView.h</header>
+   <container>1</container>
+  </customwidget>
+  <customwidget>
+   <class>BWindow</class>
+   <extends>QMainWindow</extends>
+   <header>BWindow.h</header>
    <container>1</container>
   </customwidget>
  </customwidgets>

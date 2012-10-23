@@ -2,7 +2,7 @@
 #define WINDOW_H
 
 
-#include <QMainWindow>
+#include <Window.h>
 
 #include "ListenerAdapter.h"
 #include "Selection.h"
@@ -18,7 +18,7 @@ namespace Ui {
 class Window;
 }
 
-class Window : public QMainWindow
+class Window : public BWindow
 {
 	Q_OBJECT
 	
