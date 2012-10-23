@@ -53,8 +53,8 @@ struct PlatformThread::Manager {
 
 	static Manager* GetManager()
 	{
-		static Manager manager;
-		return &manager;
+		static Manager* manager = new Manager;
+		return manager;
 	}
 
 	void RegisterThread(PlatformThread* thread)
@@ -247,7 +247,8 @@ PlatformThread::Unblock()
 PlatformThread*
 PlatformThread::CurrentThread()
 {
-	static QThreadStorage<PlatformThread::Handle*> threads;
+	static QThreadStorage<PlatformThread::Handle*>& threads
+		= *new QThreadStorage<PlatformThread::Handle*>();
 
 	if (threads.hasLocalData())
 		return threads.localData()->GetThread();

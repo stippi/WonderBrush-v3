@@ -114,8 +114,8 @@ private:
 /*static*/PlatformSemaphoreManager*
 PlatformSemaphoreManager::Manager()
 {
-	static PlatformSemaphoreManager manager;
-	return &manager;
+	static PlatformSemaphoreManager* manager = new PlatformSemaphoreManager;
+	return manager;
 }
 
 
