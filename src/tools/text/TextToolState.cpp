@@ -21,10 +21,13 @@
 
 // constructor
 TextToolState::TextToolState(StateView* view, Document* document,
-		Selection* selection)
+		Selection* selection, const BMessenger& configView)
 	: TransformViewState(view)
 	, fDocument(document)
 	, fSelection(selection)
+
+	, fConfigViewMessenger(configView)
+
 	, fInsertionLayer(NULL)
 	, fInsertionIndex(-1)
 	, fText(NULL)
@@ -32,11 +35,15 @@ TextToolState::TextToolState(StateView* view, Document* document,
 	// TODO: Find a way to change this later...
 	SetInsertionInfo(fDocument->RootLayer(),
 		fDocument->RootLayer()->CountObjects());
+
+	fSelection->AddListener(this);
 }
 
 // destructor
 TextToolState::~TextToolState()
 {
+	fSelection->RemoveListener(this);
+
 	SetInsertionInfo(NULL, -1);
 }
 
@@ -112,16 +119,7 @@ TextToolState::MouseMoved(const MouseInfo& info)
 Command*
 TextToolState::MouseUp()
 {
-	if (fText == NULL)
-		return NULL;
-
-	Command* command = new(std::nothrow) ObjectAddedCommand(fText,
-		fSelection);
-
-	fText->RemoveReference();
-	fText = NULL;
-
-	return command;
+	return NULL;
 }
 
 // Draw
@@ -139,6 +137,39 @@ TextToolState::Bounds() const
 
 // #pragma mark -
 
+// ObjectSelected
+void
+TextToolState::ObjectSelected(const Selectable& selectable,
+	const Selection::Controller* controller)
+{
+	if (controller == this) {
+		// ignore changes triggered by ourself
+		return;
+	}
+
+printf("ObjectSelected(%p)\n", selectable.Get());
+
+	Text* text = dynamic_cast<Text*>(selectable.Get());
+	SetText(text);
+}
+
+// ObjectDeselected
+void
+TextToolState::ObjectDeselected(const Selectable& selectable,
+	const Selection::Controller* controller)
+{
+	if (controller == this) {
+		// ignore changes triggered by ourself
+		return;
+	}
+
+	Text* text = dynamic_cast<Text*>(selectable.Get());
+	if (text == fText)
+		SetText(NULL);
+}
+
+// #pragma mark -
+
 // SetInsertionInfo
 void
 TextToolState::SetInsertionInfo(Layer* layer, int32 index)
@@ -151,4 +182,53 @@ TextToolState::SetInsertionInfo(Layer* layer, int32 index)
 		fInsertionLayer = layer;
 	}
 	fInsertionIndex = index;
+}
+
+// SetText
+void
+TextToolState::SetText(Text* text, bool modifySelection)
+{
+	if (fText == text)
+		return;
+	
+	if (fText != NULL)
+		fText->RemoveReference();
+
+	fText = text;
+	
+	if (fText != NULL)
+		fText->AddReference();
+	
+	if (text != NULL) {
+		if (modifySelection)
+			fSelection->Select(Selectable(text), this);
+		SetObjectToCanvasTransformation(text->Transformation());
+	} else {
+		if (modifySelection)
+			fSelection->DeselectAll(this);
+		SetObjectToCanvasTransformation(Transformable());
+	}
+
+	_UpdateConfigView();
+}
+
+
+void
+TextToolState::_UpdateConfigView() const
+{
+	if (!fConfigViewMessenger.IsValid())
+		return;
+
+	printf("_UpdateConfigView()\n");
+
+	BMessage message(MSG_LAYOUT_CHANGED);
+
+	if (fText != NULL) {
+		message.AddFloat("size", fText->getTextLayout().getFont().getSize());
+		message.AddString("text", fText->GetText());
+	} else {
+		message.AddString("text", "");
+	}
+
+	fConfigViewMessenger.SendMessage(&message);
 }

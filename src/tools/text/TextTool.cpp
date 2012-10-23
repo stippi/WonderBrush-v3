@@ -54,7 +54,8 @@ ViewState*
 TextTool::MakeViewState(StateView* view, Document* document,
 	Selection* selection)
 {
-	return new(std::nothrow) TextToolState(view, document, selection);
+	return new(std::nothrow) TextToolState(view, document, selection,
+		BMessenger(ConfigView()));
 }
 
 // MakeConfigView

@@ -37,6 +37,8 @@ TextToolConfigView::TextToolConfigView(::Tool* tool)
 
 	fSizeSlider = new BSlider("size slider", "", new BMessage(MSG_SIZE_SLIDER),
 		1, 1024, B_HORIZONTAL, B_TRIANGLE_THUMB);
+	fSizeSlider->SetExplicitMinSize(BSize(80, B_SIZE_UNSET));
+		
 	fSizeTextControl = new BTextControl("size text y", "", "",
 		new BMessage(MSG_SIZE_TEXT));
 
@@ -53,7 +55,7 @@ TextToolConfigView::TextToolConfigView(::Tool* tool)
 		.End()
 		.Add(new BSeparatorView(B_VERTICAL, B_PLAIN_BORDER))
 		.Add(fSubpixels)
-		.AddGlue()
+//		.AddGlue()
 		.SetInsets(5, 5, 5, 5)
 	;
 }

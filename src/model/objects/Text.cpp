@@ -12,6 +12,7 @@
 // constructor
 Text::Text(const rgb_color& color)
 	: Styleable(color)
+	, fText()
 	, fTextLayout(FontCache::getInstance())
 {
 	InitBounds();
@@ -113,9 +114,20 @@ Text::SetJustify(bool justify)
 void
 Text::SetText(const char* utf8String)
 {
+	if (fText == utf8String)
+		return;
+	
+	fText = utf8String;
 	fTextLayout.setText(utf8String);
 
 	NotifyAndUpdate();
+}
+
+// GetText
+const char*
+Text::GetText() const
+{
+	return fText.String();
 }
 
 // getTextLayout

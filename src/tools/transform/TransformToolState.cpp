@@ -1138,7 +1138,7 @@ TransformToolState::ObjectDeselected(const Selectable& selectable,
 	}
 
 	Object* object = dynamic_cast<Object*>(selectable.Get());
-	if (object == fObject)
+	if (object != NULL && object == fObject)
 		SetObject(NULL);
 }
 

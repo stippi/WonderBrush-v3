@@ -7,6 +7,7 @@
 
 #include <GraphicsDefs.h>
 #include <List.h>
+#include <String.h>
 
 #include "Styleable.h"
 #include "TextLayout.h"
@@ -35,10 +36,12 @@ public:
 			void				SetJustify(bool justify);
 
 			void				SetText(const char* utf8String);
+			const char*			GetText() const;
 
 			const TextLayout&	getTextLayout() const;
 
 private:
+			BString				fText;
 			TextLayout			fTextLayout;
 };
 

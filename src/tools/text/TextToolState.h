@@ -6,6 +6,8 @@
 #ifndef TEXT_TOOL_STATE_H
 #define TEXT_TOOL_STATE_H
 
+#include <Messenger.h>
+
 #include "Selection.h"
 #include "TransformViewState.h"
 
@@ -18,10 +20,11 @@ enum {
 };
 
 class TextToolState : public TransformViewState,
-	public Selection::Controller {
+	public Selection::Controller, public Selection::Listener {
 public:
 								TextToolState(StateView* view,
-									Document* document, Selection* selection);
+									Document* document, Selection* selection,
+									const BMessenger& configView);
 	virtual						~TextToolState();
 
 	// ViewState interface
@@ -35,12 +38,25 @@ public:
 
 	virtual	BRect				Bounds() const;
 
+	// Selection::Listener interface
+	virtual	void				ObjectSelected(const Selectable& object,
+									const Selection::Controller* controller);
+	virtual	void				ObjectDeselected(const Selectable& object,
+									const Selection::Controller* controller);
+
 	// TextToolState
 			void				SetInsertionInfo(Layer* layer, int32 index);
+
+			void				SetText(Text* text,
+									bool modifySelection = false);
+private:
+			void				_UpdateConfigView() const;
 
 private:
 			Document*			fDocument;
 			Selection*			fSelection;
+
+			BMessenger			fConfigViewMessenger;
 
 			Layer*				fInsertionLayer;
 			int32				fInsertionIndex;
