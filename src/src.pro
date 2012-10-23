@@ -28,6 +28,7 @@ QMAKE_CXXFLAGS += -iquote $$PWD/gui/icons
 QMAKE_CXXFLAGS += -iquote $$PWD/gui/qt
 QMAKE_CXXFLAGS += -iquote $$PWD/gui/scrollview
 QMAKE_CXXFLAGS += -iquote $$PWD/gui/scrollview/qt
+QMAKE_CXXFLAGS += -iquote $$PWD/gui/stateview
 QMAKE_CXXFLAGS += -iquote $$PWD/model
 QMAKE_CXXFLAGS += -iquote $$PWD/model/document
 QMAKE_CXXFLAGS += -iquote $$PWD/model/fills
@@ -57,6 +58,8 @@ SOURCES += \
 	commands/SetPropertiesCommand.cpp \
 	gui/qt/CanvasView.cpp \
 	gui/qt/Window.cpp \
+	gui/stateview/StateView.cpp \
+	gui/stateview/ViewState.cpp \
 	model/property/CommonPropertyIDs.cpp \
 	model/BaseObject.cpp \
 	model/Selectable.cpp \
@@ -160,9 +163,9 @@ SOURCES += \
 	support/RWLocker.cpp \
 	support/support.cpp \
 	support/Transformable.cpp \
-#	tools/DragStateViewState.cpp \
-#	tools/Tool.cpp \
-#	tools/TransformViewState.cpp \
+	tools/DragStateViewState.cpp \
+	tools/Tool.cpp \
+	tools/TransformViewState.cpp \
 #	tools/brush/BrushTool.cpp \
 #	tools/brush/BrushToolState.cpp \
 #	tools/brush/pick/PickTool.cpp \
@@ -183,6 +186,8 @@ HEADERS  += \
 	gui/qt/CanvasView.h \
 	gui/qt/Window.h \
 	gui/icons/PathPropertyIcon.h \
+	gui/stateview/StateView.h \
+	gui/stateview/ViewState.h \
 	model/BaseObject.h \
 	model/Selectable.h \
 	model/Selection.h \
@@ -355,8 +360,8 @@ HEADERS  += \
 	support/Transformable.h \
 	support/ui_defines.h \
 	tools/DragStateViewState.h \
-#	tools/Tool.h \
-#	tools/TransformViewState.h \
+	tools/Tool.h \
+	tools/TransformViewState.h \
 #	tools/brush/BrushTool.h \
 #	tools/brush/BrushToolState.h \
 #	tools/pick/PickTool.h \
