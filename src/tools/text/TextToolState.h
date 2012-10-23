@@ -49,6 +49,10 @@ public:
 
 			void				SetText(Text* text,
 									bool modifySelection = false);
+
+			void				SetString(const char* text);
+			void				SetSize(float size);
+
 private:
 			void				_UpdateConfigView() const;
 

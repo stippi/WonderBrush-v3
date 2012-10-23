@@ -12,6 +12,7 @@ class BCheckBox;
 class BSlider;
 class BStringView;
 class BTextControl;
+class NotifyingTextView;
 
 class TextToolConfigView : public ToolConfigView {
 public:
@@ -39,6 +40,8 @@ private:
 			BTextControl*		fSizeTextControl;
 
 			BCheckBox*			fSubpixels;
+
+			NotifyingTextView*	fTextView;
 };
 
 #endif // TEXT_TOOL_CONFIG_VIEW_H

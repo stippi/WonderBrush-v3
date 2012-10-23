@@ -147,8 +147,6 @@ TextToolState::ObjectSelected(const Selectable& selectable,
 		return;
 	}
 
-printf("ObjectSelected(%p)\n", selectable.Get());
-
 	Text* text = dynamic_cast<Text*>(selectable.Get());
 	SetText(text);
 }
@@ -212,14 +210,28 @@ TextToolState::SetText(Text* text, bool modifySelection)
 	_UpdateConfigView();
 }
 
+// SetString
+void
+TextToolState::SetString(const char* text)
+{
+	if (fText != NULL)
+		fText->SetText(text);
+}
 
+// SetSize
+void
+TextToolState::SetSize(float size)
+{
+	if (fText != NULL)
+		fText->SetFont(fText->getTextLayout().getFont().getName(), size);
+}
+
+// _UpdateConfigView
 void
 TextToolState::_UpdateConfigView() const
 {
 	if (!fConfigViewMessenger.IsValid())
 		return;
-
-	printf("_UpdateConfigView()\n");
 
 	BMessage message(MSG_LAYOUT_CHANGED);
 

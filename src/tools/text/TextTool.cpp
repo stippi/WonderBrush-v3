@@ -92,9 +92,11 @@ TextTool::SetOption(uint32 option, bool value)
 void
 TextTool::SetOption(uint32 option, float value)
 {
+	TextToolState* state = static_cast<TextToolState*>(fViewState);
+
 	switch (option) {
 		case SIZE:
-			// TODO
+			state->SetSize(value);
 			break;
 	}
 		
@@ -104,6 +106,19 @@ TextTool::SetOption(uint32 option, float value)
 void
 TextTool::SetOption(uint32 option, int32 value)
 {
+}
+
+// SetOption
+void
+TextTool::SetOption(uint32 option, const char* value)
+{
+	TextToolState* state = static_cast<TextToolState*>(fViewState);
+
+	switch (option) {
+		case TEXT:
+			state->SetString(value);
+			break;
+	}
 }
 
 
