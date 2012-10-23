@@ -12,6 +12,7 @@ class CanvasView;
 class Document;
 class Layer;
 class RenderManager;
+class Tool;
 
 
 namespace Ui {
@@ -28,10 +29,17 @@ public:
 									QWidget* parent = 0);
 								~Window();
 
+			void				AddTool(Tool* tool);
+
 			status_t			StoreSettings(BMessage& settings) const;
 			void				RestoreSettings(const BMessage& settings);
 
 			void				Show();
+
+private:
+			void				_InitTools();
+
+			void				_ObjectChanged(const Notifier* object);
 
 private:
 			Ui::Window*			fUi;
@@ -42,6 +50,8 @@ private:
 			RenderManager*		fRenderManager;
 			ListenerAdapter		fCommandStackListener;
 			Selection			fSelection;
+
+			BList				fTools;
 };
 
 

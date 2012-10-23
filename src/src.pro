@@ -56,6 +56,7 @@ SOURCES += \
 	commands/MoveObjectsCommand.cpp \
 	commands/ObjectAddedCommand.cpp \
 	commands/SetPropertiesCommand.cpp \
+	gui/ToolConfigView.cpp \
 	gui/qt/CanvasView.cpp \
 	gui/qt/Window.cpp \
 	gui/stateview/StateView.cpp \
@@ -183,6 +184,7 @@ HEADERS  += \
 	commands/MoveObjectsCommand.h \
 	commands/ObjectAddedCommand.h \
 	commands/SetPropertiesCommand.h \
+	gui/ToolConfigView.h \
 	gui/qt/CanvasView.h \
 	gui/qt/Window.h \
 	gui/icons/PathPropertyIcon.h \
