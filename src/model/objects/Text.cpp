@@ -51,7 +51,8 @@ Text::HitTest(const BPoint& canvasPoint)
 BRect
 Text::Bounds()
 {
-	BRect bounds(0.0f, 0.0f, fTextLayout.getWidth(), fTextLayout.getHeight());
+	BRect bounds(0.0f, 0.0f, fTextLayout.getActualWidth(),
+		fTextLayout.getHeight());
 	Style()->ExtendBounds(bounds);
 	return bounds;
 }
