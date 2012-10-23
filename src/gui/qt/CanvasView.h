@@ -2,13 +2,10 @@
 #define PLATFORM_QT_CANVAS_VIEW_H
 
 
-#include <Handler.h>
-#include <Rect.h>
-
 #include <QBrush>
-#include <QWidget>
 
 #include "Scrollable.h"
+#include "StateView.h"
 
 
 class Document;
@@ -24,7 +21,7 @@ enum {
 };
 
 
-class CanvasView : public PlatformWidgetHandler<QWidget>, public Scrollable
+class CanvasView : public StateView, public Scrollable
 {
 	Q_OBJECT
 

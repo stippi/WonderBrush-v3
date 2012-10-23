@@ -21,7 +21,7 @@
 
 CanvasView::CanvasView(QWidget* parent)
 	:
-	PlatformWidgetHandler<QWidget>("canvas view", parent),
+	StateView(BRect(), "canvas view", 0, 0),
 	fDocument(NULL),
 	fRenderManager(NULL),
 	fZoomLevel(1.0),
@@ -38,6 +38,7 @@ CanvasView::CanvasView(QWidget* parent)
 
 	fStripesBrush(pattern_to_brush(kStripes, kStripesLow, kStripesHigh))
 {
+	setParent(parent);
 }
 
 
