@@ -16,6 +16,7 @@ public:
 								BMessenger();
 								BMessenger(BHandler* handler);
 
+			status_t			SendMessage(uint32 messageWhat) const;
 			status_t			SendMessage(BMessage* message) const;
 
 private:

@@ -39,4 +39,7 @@ enum vertical_alignment {
 };
 
 
+uint32			modifiers();
+
+
 #endif // INTERFACE_DEFS_H

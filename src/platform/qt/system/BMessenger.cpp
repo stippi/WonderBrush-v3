@@ -24,6 +24,14 @@ BMessenger::BMessenger(BHandler* handler)
 
 
 status_t
+BMessenger::SendMessage(uint32 messageWhat) const
+{
+	BMessage message(messageWhat);
+	return SendMessage(&message);
+}
+
+
+status_t
 BMessenger::SendMessage(BMessage* message) const
 {
 	BHandler::ProxyPointer handlerProxy = fHandlerProxy.toStrongRef();

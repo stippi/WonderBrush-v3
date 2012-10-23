@@ -102,20 +102,24 @@ SOURCES += \
 	platform/qt/PlatformScrollArea.cpp \
 	platform/qt/PlatformSemaphoreManager.cpp \
 	platform/qt/PlatformThread.cpp \
+	platform/qt/system/BAppDefs.cpp \
 	platform/qt/system/ArchivingManagers.cpp \
 	platform/qt/system/BAlignment.cpp \
 	platform/qt/system/BArchivable.cpp \
 	platform/qt/system/BBitmap.cpp \
 	platform/qt/system/BByteOrder.cpp \
+	platform/qt/system/BCursor.cpp \
 	platform/qt/system/BDataIO.cpp \
 	platform/qt/system/BFile.cpp \
 	platform/qt/system/BFlattenable.cpp \
 	platform/qt/system/BGraphicsDefs.cpp \
+	platform/qt/system/BInterfaceDefs.cpp \
 	platform/qt/system/BHandler.cpp \
 	platform/qt/system/BList.cpp \
 	platform/qt/system/BLocker.cpp \
-	platform/qt/system/BMessageAdapter.cpp \
 	platform/qt/system/BMessage.cpp \
+	platform/qt/system/BMessageAdapter.cpp \
+	platform/qt/system/BMessageFilter.cpp \
 	platform/qt/system/BMessageUtils.cpp \
 	platform/qt/system/BMessenger.cpp \
 	platform/qt/system/BOS.cpp \
@@ -125,7 +129,10 @@ SOURCES += \
 	platform/qt/system/BRegion.cpp \
 	platform/qt/system/BRegionSupport.cpp \
 	platform/qt/system/BSize.cpp \
+	platform/qt/system/BScreen.cpp \
 	platform/qt/system/BString.cpp \
+	platform/qt/system/BView.cpp \
+	platform/qt/system/BWindow.cpp \
 	render/Font.cpp \
 	render/FontCache.cpp \
 	render/GaussFilter.cpp \
@@ -233,6 +240,7 @@ HEADERS  += \
 	platform/qt/system/BBitmap.h \
 	platform/qt/system/BByteOrder.h \
 	platform/qt/system/Bclipping.h \
+	platform/qt/system/BCursor.h \
 	platform/qt/system/BDataIO.h \
 	platform/qt/system/BDebug.h \
 	platform/qt/system/Bdebugger.h \
@@ -247,6 +255,7 @@ HEADERS  += \
 	platform/qt/system/BLocker.h \
 	platform/qt/system/BMessage.h \
 	platform/qt/system/BMessageAdapter.h \
+	platform/qt/system/BMessageFilter.h \
 	platform/qt/system/BMessagePrivate.h \
 	platform/qt/system/BMessageUtils.h \
 	platform/qt/system/BMessenger.h \
@@ -256,6 +265,7 @@ HEADERS  += \
 	platform/qt/system/BRect.h \
 	platform/qt/system/BRegion.h \
 	platform/qt/system/BRegionSupport.h \
+	platform/qt/system/BScreen.h \
 	platform/qt/system/BSize.h \
 	platform/qt/system/BStorageDefs.h \
 	platform/qt/system/BString.h \
@@ -263,6 +273,8 @@ HEADERS  += \
 	platform/qt/system/BSupportDefs.h \
 	platform/qt/system/BTypeConstants.h \
 	platform/qt/system/Butf8_functions.h \
+	platform/qt/system/BView.h \
+	platform/qt/system/BWindow.h \
 	platform/qt/system/include/Alignment.h \
 	platform/qt/system/include/AppDefs.h \
 	platform/qt/system/include/Archivable.h \
@@ -271,6 +283,7 @@ HEADERS  += \
 	platform/qt/system/include/Bitmap.h \
 	platform/qt/system/include/ByteOrder.h \
 	platform/qt/system/include/clipping.h \
+	platform/qt/system/include/Cursor.h \
 	platform/qt/system/include/DataIO.h \
 	platform/qt/system/include/Debug.h \
 	platform/qt/system/include/debugger.h \
@@ -285,6 +298,7 @@ HEADERS  += \
 	platform/qt/system/include/Locker.h \
 	platform/qt/system/include/Message.h \
 	platform/qt/system/include/MessageAdapter.h \
+	platform/qt/system/include/MessageFilter.h \
 	platform/qt/system/include/MessagePrivate.h \
 	platform/qt/system/include/MessageUtils.h \
 	platform/qt/system/include/Messenger.h \
@@ -294,6 +308,7 @@ HEADERS  += \
 	platform/qt/system/include/Rect.h \
 	platform/qt/system/include/Region.h \
 	platform/qt/system/include/RegionSupport.h \
+	platform/qt/system/include/Screen.h \
 	platform/qt/system/include/Size.h \
 	platform/qt/system/include/StorageDefs.h \
 	platform/qt/system/include/String.h \
@@ -301,6 +316,8 @@ HEADERS  += \
 	platform/qt/system/include/SupportDefs.h \
 	platform/qt/system/include/TypeConstants.h \
 	platform/qt/system/include/utf8_functions.h \
+	platform/qt/system/include/View.h \
+	platform/qt/system/include/Window.h \
 	render/FauxWeight.h \
 	render/Font.h \
 	render/FontCache.h \
