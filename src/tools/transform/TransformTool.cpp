@@ -132,3 +132,9 @@ TransformTool::SetOption(uint32 option, int32 value)
 {
 }
 
+// SetOption
+void
+TransformTool::SetOption(uint32 option, const char* value)
+{
+}
+

@@ -119,4 +119,10 @@ Tool::SetOption(uint32 option, int32 value)
 {
 }
 
+// SetOption
+void
+Tool::SetOption(uint32 option, const char* value)
+{
+}
+
 
