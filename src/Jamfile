@@ -5,6 +5,7 @@ local sourceDirs =
 #	alm
 	commands
 	gui
+	gui/haiku
 	gui/misc
 	gui/tools
 	model
@@ -48,6 +49,7 @@ SubDirHdrs [ FDirName $(TOP) src commands ] ;
 SubDirHdrs [ FDirName $(TOP) src gui ] ;
 SubDirHdrs [ FDirName $(TOP) src gui colorpicker ] ;
 SubDirHdrs [ FDirName $(TOP) src gui columntreeview ] ;
+SubDirHdrs [ FDirName $(TOP) src gui haiku ] ;
 SubDirHdrs [ FDirName $(TOP) src gui icons ] ;
 SubDirHdrs [ FDirName $(TOP) src gui misc ] ;
 SubDirHdrs [ FDirName $(TOP) src gui popupcontrol ] ;
@@ -110,11 +112,13 @@ Application WonderBrush :
 	TransformToolConfigView.cpp
 
 	# gui (WonderBrush specific)
-	CanvasView.cpp
 	InspectorView.cpp
 	ObjectTreeView.cpp
 	ResourceTreeView.cpp
 	ToolConfigView.cpp
+
+	# gui/haiku
+	CanvasView.cpp
 	Window.cpp
 
 	# model

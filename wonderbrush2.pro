@@ -2,4 +2,9 @@ TEMPLATE = subdirs
 
 SUBDIRS += \
     src/agg \
-    src
+    src \
+    src/gui/scrollview
+
+src.depends = \
+	src/agg \
+	src/gui/scrollview

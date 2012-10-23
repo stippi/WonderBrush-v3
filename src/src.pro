@@ -5,12 +5,8 @@ greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 TARGET = WonderBrush
 TEMPLATE = app
 
-# TODO: Must be first for now, since otherwise model/objects/Rect.h hides
-# platform/qt/Rect.h. This needs to be solved differently, since I believe
-# model/objects/Rect.h cannot be included now (though, surprisingly it seems to
-# work in model/objects/Rect.cpp).
-#INCLUDEPATH += platform/qt
-QMAKE_CXXFLAGS += -isystem $$PWD/platform/qt/system/include
+include (src_common.pro)
+
 
 INCLUDEPATH += /usr/include/freetype2
 INCLUDEPATH += agg/font_freetype
@@ -27,7 +23,9 @@ INCLUDEPATH += cimg
 #INCLUDEPATH += support
 
 QMAKE_CXXFLAGS += -iquote $$PWD/commands
+QMAKE_CXXFLAGS += -iquote $$PWD/gui
 QMAKE_CXXFLAGS += -iquote $$PWD/gui/icons
+QMAKE_CXXFLAGS += -iquote $$PWD/gui/qt
 QMAKE_CXXFLAGS += -iquote $$PWD/gui/scrollview
 QMAKE_CXXFLAGS += -iquote $$PWD/model
 QMAKE_CXXFLAGS += -iquote $$PWD/model/document
@@ -36,9 +34,6 @@ QMAKE_CXXFLAGS += -iquote $$PWD/model/objects
 QMAKE_CXXFLAGS += -iquote $$PWD/model/property
 QMAKE_CXXFLAGS += -iquote $$PWD/model/property/specific_properties
 QMAKE_CXXFLAGS += -iquote $$PWD/model/snapshots
-QMAKE_CXXFLAGS += -iquote $$PWD/platform/qt
-QMAKE_CXXFLAGS += -iquote $$PWD/platform/qt/gui
-QMAKE_CXXFLAGS += -iquote $$PWD/platform/qt/system
 QMAKE_CXXFLAGS += -iquote $$PWD/render
 QMAKE_CXXFLAGS += -iquote $$PWD/support
 QMAKE_CXXFLAGS += -iquote $$PWD/tools
@@ -47,18 +42,11 @@ QMAKE_CXXFLAGS += -iquote $$PWD/tools/pick
 QMAKE_CXXFLAGS += -iquote $$PWD/tools/text
 QMAKE_CXXFLAGS += -iquote $$PWD/tools/transform
 
-DEFINES += __STDC_LIMIT_MACROS=1
-DEFINES += __STDC_FORMAT_MACROS=1
-DEFINES += _GNU_SOURCE
-
-LIBS += -Lagg -lagg -ldl -lfreetype
+LIBS += -Lagg -lagg -Lgui/scrollview -lscrollview -ldl -lfreetype
 
 # Weirdly we need to explicitly add libX11, since otherwise the linker complains
 # about symbol XGetWindowAttributes not being defined.
 LIBS += -lX11
-
-# suppress undesired warnings
-QMAKE_CXXFLAGS_WARN_ON += -Wno-unused-parameter -Wno-multichar
 
 SOURCES += \
 	WonderBrush.cpp \
@@ -66,8 +54,8 @@ SOURCES += \
 	commands/MoveObjectsCommand.cpp \
 	commands/ObjectAddedCommand.cpp \
 	commands/SetPropertiesCommand.cpp \
-	gui/scrollview/Scrollable.cpp \
-	gui/scrollview/Scroller.cpp \
+	gui/qt/CanvasView.cpp \
+	gui/qt/Window.cpp \
 	model/property/CommonPropertyIDs.cpp \
 	model/BaseObject.cpp \
 	model/Selectable.cpp \
@@ -113,8 +101,6 @@ SOURCES += \
 	platform/qt/PlatformScrollArea.cpp \
 	platform/qt/PlatformSemaphoreManager.cpp \
 	platform/qt/PlatformThread.cpp \
-	platform/qt/gui/CanvasView.cpp \
-	platform/qt/gui/Window.cpp \
 	platform/qt/system/ArchivingManagers.cpp \
 	platform/qt/system/BAlignment.cpp \
 	platform/qt/system/BArchivable.cpp \
@@ -186,9 +172,9 @@ HEADERS  += \
 	commands/MoveObjectsCommand.h \
 	commands/ObjectAddedCommand.h \
 	commands/SetPropertiesCommand.h \
+	gui/qt/CanvasView.h \
+	gui/qt/Window.h \
 	gui/icons/PathPropertyIcon.h \
-	gui/scrollview/Scrollable.h \
-	gui/scrollview/Scroller.h \
 	model/BaseObject.h \
 	model/Selectable.h \
 	model/Selection.h \
@@ -237,8 +223,6 @@ HEADERS  += \
 	platform/qt/PlatformSemaphoreManager.h \
 	platform/qt/PlatformThread.h \
 	platform/qt/PlatformWonderBrush.h \
-	platform/qt/gui/CanvasView.h \
-	platform/qt/gui/Window.h \
 	platform/qt/system/ArchivingManagers.h \
 	platform/qt/system/BAlignment.h \
 	platform/qt/system/BAppDefs.h \
@@ -367,4 +351,4 @@ HEADERS  += \
 #	tools/transform/TransformToolState.h
 
 FORMS += \
-    platform/qt/gui/Window.ui
+	gui/qt/Window.ui
