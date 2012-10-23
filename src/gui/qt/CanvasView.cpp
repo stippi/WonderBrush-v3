@@ -21,7 +21,7 @@
 
 CanvasView::CanvasView(QWidget* parent)
 	:
-	PlatformWidgetHandler<PlatformScrollArea>("canvas view", parent),
+	PlatformWidgetHandler<QWidget>("canvas view", parent),
 	fDocument(NULL),
 	fRenderManager(NULL),
 	fZoomLevel(1.0),
@@ -59,7 +59,7 @@ CanvasView::Init(Document* document, RenderManager* manager)
 	// init data rect for scrolling and center bitmap in the view
 	BRect dataRect = _LayoutCanvas();
 	SetDataRect(dataRect);
-	BRect bounds(BRect::FromQRect(viewport()->rect()));
+	BRect bounds(BRect::FromQRect(rect()));
 	BPoint dataRectCenter((dataRect.left + dataRect.right) / 2,
 		(dataRect.top + dataRect.bottom) / 2);
 	BPoint boundsCenter((bounds.left + bounds.right) / 2,
@@ -122,7 +122,7 @@ CanvasView::MessageReceived(BMessage* message)
 				area.top = floorf(area.top);
 				area.right = ceilf(area.right);
 				area.bottom = ceilf(area.bottom);
-				viewport()->update();
+				update();
 			}
 			break;
 		}
@@ -251,7 +251,7 @@ CanvasView::ScrollOffsetChanged(BPoint oldOffset, BPoint newOffset)
 	if (!fDelayedScrolling)
 		Invalidate();
 #else
-	viewport()->scroll(offset.x, offset.y);
+	scroll(offset.x, offset.y);
 #endif
 	// TODO: Move delayed scrolling stuff into this method:
 	fRenderManager->SetCanvasLayout(DataRect(), VisibleRect());
@@ -349,7 +349,7 @@ CanvasView::SetZoomLevel(double zoomLevel, bool mouseIsAnchor)
 anchor = BPoint::FromQPoint(QCursor::pos());
 	} else {
 		// zoom into center of view
-		BRect bounds(BRect::FromQRect(viewport()->rect()));
+		BRect bounds(BRect::FromQRect(rect()));
 		anchor.x = (bounds.left + bounds.right + 1) / 2.0;
 		anchor.y = (bounds.top + bounds.bottom + 1) / 2.0;
 	}
@@ -390,7 +390,7 @@ CanvasView::InvalidateCanvas(const BRect& bounds)
 	if (fDelayedScrolling)
 		return;
 #endif
-	viewport()->update(bounds.ToQRect());
+	update(bounds.ToQRect());
 }
 
 
@@ -399,7 +399,7 @@ CanvasView::paintEvent(QPaintEvent* event)
 {
 	BRect canvas(_CanvasRect());
 
-	QPainter painter(viewport());
+	QPainter painter(this);
 
 	// draw document bitmap
 	if (fRenderManager->LockDisplay()) {
@@ -453,7 +453,7 @@ CanvasView::_LayoutCanvas()
 	r.InsetBy(-50, -50);
 
 	// center data rect in bounds
-	BRect bounds(BRect::FromQRect(viewport()->rect()));
+	BRect bounds(BRect::FromQRect(rect()));
 	if (bounds.Width() > r.Width())
 		r.InsetBy(-ceilf((bounds.Width() - r.Width()) / 2), 0);
 	if (bounds.Height() > r.Height())

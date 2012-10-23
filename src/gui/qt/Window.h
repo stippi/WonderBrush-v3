@@ -8,6 +8,7 @@
 #include "Selection.h"
 
 
+class CanvasView;
 class Document;
 class Layer;
 class RenderManager;
@@ -34,6 +35,8 @@ public:
 
 private:
 			Ui::Window*			fUi;
+
+			CanvasView*			fView;
 
 			Document*			fDocument;
 			RenderManager*		fRenderManager;

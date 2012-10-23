@@ -27,6 +27,7 @@ QMAKE_CXXFLAGS += -iquote $$PWD/gui
 QMAKE_CXXFLAGS += -iquote $$PWD/gui/icons
 QMAKE_CXXFLAGS += -iquote $$PWD/gui/qt
 QMAKE_CXXFLAGS += -iquote $$PWD/gui/scrollview
+QMAKE_CXXFLAGS += -iquote $$PWD/gui/scrollview/qt
 QMAKE_CXXFLAGS += -iquote $$PWD/model
 QMAKE_CXXFLAGS += -iquote $$PWD/model/document
 QMAKE_CXXFLAGS += -iquote $$PWD/model/fills

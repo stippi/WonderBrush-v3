@@ -130,8 +130,8 @@
                 <rect>
                  <x>0</x>
                  <y>0</y>
-                 <width>821</width>
-                 <height>490</height>
+                 <width>779</width>
+                 <height>480</height>
                 </rect>
                </property>
               </widget>
@@ -185,7 +185,7 @@
          </widget>
         </item>
         <item>
-         <widget class="CanvasView" name="canvasView" native="true"/>
+         <widget class="ScrollView" name="canvasScrollView" native="true"/>
         </item>
        </layout>
       </widget>
@@ -216,9 +216,9 @@
  </widget>
  <customwidgets>
   <customwidget>
-   <class>CanvasView</class>
+   <class>ScrollView</class>
    <extends>QWidget</extends>
-   <header>CanvasView.h</header>
+   <header>ScrollView.h</header>
    <container>1</container>
   </customwidget>
  </customwidgets>

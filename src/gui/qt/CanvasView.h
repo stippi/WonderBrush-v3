@@ -6,8 +6,9 @@
 #include <Rect.h>
 
 #include <QBrush>
+#include <QWidget>
 
-#include "PlatformScrollArea.h"
+#include "Scrollable.h"
 
 
 class Document;
@@ -23,7 +24,7 @@ enum {
 };
 
 
-class CanvasView : public PlatformWidgetHandler<PlatformScrollArea>
+class CanvasView : public PlatformWidgetHandler<QWidget>, public Scrollable
 {
 	Q_OBJECT
 

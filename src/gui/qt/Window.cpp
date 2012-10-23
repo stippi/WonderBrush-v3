@@ -1,6 +1,7 @@
 #include "Window.h"
 #include "ui_Window.h"
 
+#include "CanvasView.h"
 #include "CommandStack.h"
 #include "Document.h"
 #include "RenderManager.h"
@@ -11,6 +12,7 @@ Window::Window(BRect frame, const char* title, Document* document, Layer* layer,
 	:
 	QMainWindow(parent),
 	fUi(new Ui::Window),
+	fView(new CanvasView()),
 	fDocument(document),
 	fRenderManager(NULL),
 // TODO:...
@@ -23,7 +25,8 @@ Window::Window(BRect frame, const char* title, Document* document, Layer* layer,
 	// TODO: Check error
 	fRenderManager->Init();
 
-	fUi->canvasView->Init(fDocument, fRenderManager);
+	fView->Init(fDocument, fRenderManager);
+	fUi->canvasScrollView->SetScrollTarget(fView);
 
 //	_InitTools();
 
