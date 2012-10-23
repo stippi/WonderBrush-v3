@@ -74,11 +74,25 @@ BView::SetViewCursor(const BCursor* cursor, bool sync)
 }
 
 
+void
+BView::SetViewColor(rgb_color c)
+{
+// TODO:...
+}
+
+
 status_t
 BView::SetMouseEventMask(uint32 mask, uint32 options)
 {
 	// TODO:...
 	return B_ERROR;
+}
+
+
+void
+BView::SetExplicitMaxSize(BSize size)
+{
+// TODO:...
 }
 
 

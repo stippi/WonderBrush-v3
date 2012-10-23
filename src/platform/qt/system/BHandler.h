@@ -45,6 +45,7 @@ public:
 
 			const char*			Name() const
 									{ return fName; }
+			void				SetName(const char* name);
 
 	virtual	void				MessageReceived(BMessage* message);
 

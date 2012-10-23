@@ -8,3 +8,10 @@ modifiers()
 	return 0;
 }
 
+
+rgb_color
+ui_color(color_which which)
+{
+// TODO:...
+	return make_color(0, 0, 0);
+}

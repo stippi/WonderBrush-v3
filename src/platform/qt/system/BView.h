@@ -50,6 +50,21 @@ enum {
 	B_FULL_POINTER_HISTORY				= 0x00000008
 };
 
+// view flags
+const uint32 B_FULL_UPDATE_ON_RESIZE 	= 0x80000000UL;	/* 31 */
+const uint32 _B_RESERVED1_ 				= 0x40000000UL;	/* 30 */
+const uint32 B_WILL_DRAW 				= 0x20000000UL;	/* 29 */
+const uint32 B_PULSE_NEEDED 			= 0x10000000UL;	/* 28 */
+const uint32 B_NAVIGABLE_JUMP 			= 0x08000000UL;	/* 27 */
+const uint32 B_FRAME_EVENTS				= 0x04000000UL;	/* 26 */
+const uint32 B_NAVIGABLE 				= 0x02000000UL;	/* 25 */
+const uint32 B_SUBPIXEL_PRECISE 		= 0x01000000UL;	/* 24 */
+const uint32 B_DRAW_ON_CHILDREN 		= 0x00800000UL;	/* 23 */
+const uint32 B_INPUT_METHOD_AWARE 		= 0x00400000UL;	/* 23 */
+const uint32 _B_RESERVED7_ 				= 0x00200000UL;	/* 22 */
+const uint32 B_SUPPORTS_LAYOUT			= 0x00100000UL;	/* 21 */
+const uint32 B_INVALIDATE_AFTER_LAYOUT	= 0x00080000UL;	/* 20 */
+
 
 class BView : public PlatformWidgetHandler<QWidget>
 {
@@ -75,8 +90,15 @@ public:
 			void				SetViewCursor(const BCursor* cursor,
 									bool sync = true);
 
+	virtual	void				SetViewColor(rgb_color c);
+			void				SetViewColor(uchar r, uchar g, uchar b,
+									uchar a = 255)
+									{ SetViewColor(make_color(r, g, b, a)); }
+
 			status_t			SetMouseEventMask(uint32 mask,
 									uint32 options = 0);
+
+			void				SetExplicitMaxSize(BSize size);
 
 	virtual	void				AttachedToWindow();
 	virtual	void				DetachedFromWindow();

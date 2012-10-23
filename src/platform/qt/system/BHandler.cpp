@@ -33,9 +33,10 @@ BHandlerProxy::customEvent(QEvent* event)
 
 BHandler::BHandler(const char* name)
 	:
-	fName(name != NULL ? strdup(name) : NULL),
+	fName(NULL),
 	fProxy(new(std::nothrow) BHandlerProxy(this))
 {
+	SetName(name);
 }
 
 
@@ -43,6 +44,13 @@ BHandler::~BHandler()
 {
 	fProxy->HandlerDeleted();
 	free(fName);
+}
+
+void
+BHandler::SetName(const char* name)
+{
+	free(fName);
+	fName = name != NULL ? strdup(name) : NULL;
 }
 
 
