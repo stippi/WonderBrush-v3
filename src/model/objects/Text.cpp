@@ -12,6 +12,7 @@
 // constructor
 Text::Text(const rgb_color& color)
 	: Styleable(color)
+	, fText()
 	, fTextLayout(FontCache::getInstance())
 {
 	InitBounds();
@@ -50,7 +51,8 @@ Text::HitTest(const BPoint& canvasPoint)
 BRect
 Text::Bounds()
 {
-	BRect bounds(0.0f, 0.0f, fTextLayout.getWidth(), fTextLayout.getHeight());
+	BRect bounds(0.0f, 0.0f, fTextLayout.getActualWidth(),
+		fTextLayout.getHeight());
 	Style()->ExtendBounds(bounds);
 	return bounds;
 }
@@ -62,6 +64,7 @@ void
 Text::SetFont(const char* fontFilePath, double size)
 {
 	fTextLayout.setFont(Font(fontFilePath, size));
+	fTextLayout.setText(fText.String());
 
 	NotifyAndUpdate();
 }
@@ -113,9 +116,20 @@ Text::SetJustify(bool justify)
 void
 Text::SetText(const char* utf8String)
 {
+	if (fText == utf8String)
+		return;
+	
+	fText = utf8String;
 	fTextLayout.setText(utf8String);
 
 	NotifyAndUpdate();
+}
+
+// GetText
+const char*
+Text::GetText() const
+{
+	return fText.String();
 }
 
 // getTextLayout

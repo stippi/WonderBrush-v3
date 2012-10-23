@@ -110,6 +110,11 @@ public:
 	void setLineSpacing(double spacing);
 	void setTabs(double* tabs, unsigned count);
 
+	inline const Font& getFont() const
+	{
+		return fFont;
+	}
+
 	inline unsigned getAlignment() const
 	{
 		return fAlignment;

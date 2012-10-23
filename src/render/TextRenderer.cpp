@@ -28,7 +28,7 @@ TextRenderer::TextRenderer(FontCache* fontCache)
 	fBackground((255 << 8) | 255, (255 << 8) | 255,
 		(255 << 8) | 255, (255 << 8) | 255),
 
-	fGamma(1.0),				// 0.50-2.50, Default: 1.0
+	fGamma(1.0 / 2.2),				// 0.50-2.50, Default: 1.0
 	fPrimaryWeight(1.0 / 3.0),	// 0.00-1.00, Default: 1/3
 	fGlyphWidthScale(1.0),		// 0.75-1.25, Default: 1.0
 	fGlyphSpacing(0.0),			// -0.2-0.20, Default: 0.0
@@ -56,6 +56,7 @@ TextRenderer::TextRenderer(FontCache* fontCache)
 	fKerning(true),
 	fGrayScale(false)
 {
+	fRasterizer.gamma(agg::gamma_power(fGamma));
 }
 
 

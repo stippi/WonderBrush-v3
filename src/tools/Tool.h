@@ -48,6 +48,7 @@ public:
 	virtual	void				SetOption(uint32 option, bool value);
 	virtual	void				SetOption(uint32 option, float value);
 	virtual	void				SetOption(uint32 option, int32 value);
+	virtual	void				SetOption(uint32 option, const char* value);
 	// TODO: More overloaded versions.
 
 protected:
