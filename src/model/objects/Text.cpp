@@ -63,6 +63,7 @@ void
 Text::SetFont(const char* fontFilePath, double size)
 {
 	fTextLayout.setFont(Font(fontFilePath, size));
+	fTextLayout.setText(fText.String());
 
 	NotifyAndUpdate();
 }
