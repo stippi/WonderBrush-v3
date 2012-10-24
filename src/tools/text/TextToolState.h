@@ -11,6 +11,7 @@
 #include "DragStateViewState.h"
 #include "Selection.h"
 
+class BMessageRunner;
 class Document;
 class Layer;
 class Text;
@@ -28,6 +29,9 @@ public:
 	virtual						~TextToolState();
 
 	// ViewState interface
+	virtual	void				Init();
+	virtual	void				Cleanup();
+
 	virtual	bool				MessageReceived(BMessage* message,
 									Command** _command);
 
@@ -61,11 +65,14 @@ public:
 			void				SetWidth(float width);
 			float				Width() const;
 
+			void				SelectionChanged(int32 startOffset,
+									int32 endOffset);
+
 private:
 			void				_UpdateConfigView() const;
 			
 			void				_DrawControls(BView* view);
-			void				_DrawCaret(BView* view, int textOffset);
+			void				_DrawCaret(BView* view, int32 textOffset);
 
 private:
 			class PickTextState;
@@ -89,6 +96,10 @@ private:
 			int32				fInsertionIndex;
 
 			Text*				fText;
+
+			int32				fCaretOffset;
+			bool				fShowCaret;
+			BMessageRunner*		fCaretPulseRunner;
 };
 
 #endif // TEXT_TOOL_STATE_H

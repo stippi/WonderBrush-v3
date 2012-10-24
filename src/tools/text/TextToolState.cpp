@@ -6,6 +6,7 @@
 #include "TextToolState.h"
 
 #include <Cursor.h>
+#include <MessageRunner.h>
 #include <Shape.h>
 
 #include <new>
@@ -194,6 +195,10 @@ private:
 // #pragma mark -
 
 
+enum {
+	MSG_CARET_PULSE				= 'plse',
+};
+
 // constructor
 TextToolState::TextToolState(StateView* view, Document* document,
 		Selection* selection, const BMessenger& configView)
@@ -212,6 +217,10 @@ TextToolState::TextToolState(StateView* view, Document* document,
 	, fInsertionLayer(NULL)
 	, fInsertionIndex(-1)
 	, fText(NULL)
+	
+	, fCaretOffset(0)
+	, fShowCaret(true)
+	, fCaretPulseRunner(NULL)
 {
 	// TODO: Find a way to change this later...
 	SetInsertionInfo(fDocument->RootLayer(),
@@ -231,6 +240,31 @@ TextToolState::~TextToolState()
 	delete fDragWidthState;
 
 	SetInsertionInfo(NULL, -1);
+
+	delete fCaretPulseRunner;
+}
+
+// Init
+void
+TextToolState::Init()
+{
+	DragStateViewState::Init();
+
+	if (fCaretPulseRunner == NULL) {
+		BMessage pulseMessage(MSG_CARET_PULSE);
+		fCaretPulseRunner = new BMessageRunner(BMessenger(fView),
+			&pulseMessage, 1000000LL);
+	}
+}
+
+// Cleanup
+void
+TextToolState::Cleanup()
+{
+	delete fCaretPulseRunner;
+	fCaretPulseRunner = NULL;
+
+	DragStateViewState::Cleanup();
 }
 
 // MessageReceived
@@ -240,7 +274,10 @@ TextToolState::MessageReceived(BMessage* message, Command** _command)
 	bool handled = true;
 
 	switch (message->what) {
-		
+		case MSG_CARET_PULSE:
+			fShowCaret = !fShowCaret;
+			UpdateBounds();
+			break;
 		default:
 			handled = TransformViewState::MessageReceived(message, _command);
 	}
@@ -256,6 +293,9 @@ TextToolState::Draw(BView* view, BRect updateRect)
 		return;
 	
 	_DrawControls(view);
+	
+	if (fShowCaret)
+		_DrawCaret(view, fCaretOffset);
 }
 
 // Bounds
@@ -435,6 +475,8 @@ TextToolState::SetText(Text* text, bool modifySelection)
 		SetObjectToCanvasTransformation(Transformable());
 	}
 
+	fCaretOffset = 0;
+
 	_UpdateConfigView();
 }
 
@@ -487,6 +529,15 @@ TextToolState::Width() const
 	if (fText != NULL)
 		return fText->Width();
 	return 0.0f;
+}
+
+// SelectionChanged
+void
+TextToolState::SelectionChanged(int32 startOffset, int32 endOffset)
+{
+	fCaretOffset = startOffset;
+	fShowCaret = true;
+	UpdateBounds();
 }
 
 // #pragma mark - private
@@ -556,7 +607,40 @@ TextToolState::_DrawControls(BView* view)
 
 // _DrawCaret
 void
-TextToolState::_DrawCaret(BView* view, int textOffset)
+TextToolState::_DrawCaret(BView* view, int32 textOffset)
 {
+	double x1;
+	double y1;
+	double x2;
+	double y2;
+	
+	fText->getTextLayout().getTextBounds(textOffset, x1, y1, x2, y2);
+	x2 = x1 + 2;
+
+	BPoint lt(x1, y1);
+	BPoint rt(x2, y1);
+	BPoint lb(x1, y2);
+	BPoint rb(x2, y2);
+
+	TransformObjectToView(&lt, false);
+	TransformObjectToView(&rt, false);
+	TransformObjectToView(&lb, false);
+	TransformObjectToView(&rb, false);
+
+	BShape shape;
+	shape.MoveTo(lt);
+	shape.LineTo(rt);
+	shape.LineTo(rb);
+	shape.LineTo(lb);
+	shape.Close();
+
+	view->PushState();
+	uint32 flags = view->Flags();
+	view->SetFlags(flags | B_SUBPIXEL_PRECISE);
+	view->SetDrawingMode(B_OP_INVERT);
+	view->MovePenTo(B_ORIGIN);
+	view->FillShape(&shape);
+	view->SetFlags(flags);
+	view->PopState();
 }
 
