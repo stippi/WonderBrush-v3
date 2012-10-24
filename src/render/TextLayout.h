@@ -259,6 +259,9 @@ public:
 	int getPreviousOffset(int offset, unsigned movement);
 	int getNextOffset(int offset, unsigned movement);
 
+	void getTextBounds(int textOffset, double& x1, double& y1,
+		double& x2, double& y2);
+
 private:
 	bool init(const char* text, FontEngine& fontEngine,
 		FontManager& fontManager, bool hinting, double scaleX,

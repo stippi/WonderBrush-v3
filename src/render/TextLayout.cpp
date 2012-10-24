@@ -895,6 +895,38 @@ TextLayout::getNextOffset(int offset, unsigned movement)
 }
 
 
+void
+TextLayout::getTextBounds(int textOffset, double& x1, double& y1,
+	double& x2, double& y2)
+{
+	validateLayout();
+	
+	if (textOffset < 0) {
+		x1 = 0.0;
+		y1 = 0.0;
+		x2 = 0.0;
+		y2 = 0.0;
+	} else if (textOffset >= (int) fGlyphInfoCount) {
+		if (fGlyphInfoCount == 0) {
+			getLineBounds(0, &x1, &y1, &x2, &y2);
+		} else {
+			getGlyphBoundingBox(fGlyphInfoCount - 1, &x1, &y1, &x2, &y2);
+			x1 = x2;
+
+			const double scale = getScaleX();
+			x1 /= scale;
+			x2 /= scale;
+		}
+	} else {
+		getGlyphBoundingBox(textOffset, &x1, &y1, &x2, &y2);
+
+		const double scale = getScaleX();
+		x1 /= scale;
+		x2 /= scale;
+	}
+}
+
+
 bool
 TextLayout::init(const char* text, FontEngine& fontEngine,
 	FontManager& fontManager, bool hinting, double scaleX,
