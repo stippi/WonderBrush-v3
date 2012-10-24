@@ -73,7 +73,8 @@ public:
 	virtual void SetOrigin(BPoint origin)
 	{
 		fParent->TransformCanvasToObject(&origin);
-		DragState::SetOrigin(origin);
+		BPoint widthOffset(fParent->Width(), 0);
+		DragState::SetOrigin(widthOffset - origin);
 	}
 
 	virtual void DragTo(BPoint current, uint32 modifiers)
@@ -81,17 +82,17 @@ public:
 		BPoint objectCurrent = current;
 		fParent->TransformCanvasToObject(&objectCurrent);
 		
-//		BPoint leftTopOffset = objectCurrent - fOrigin;
-
-//		fParent->SetWidth(leftTopOffset);
-
-		fOrigin = current;
-		fParent->TransformCanvasToObject(&fOrigin);
+		objectCurrent += fOrigin;
+		
+		if (objectCurrent.x < 0)
+			objectCurrent.x = 0;
+		
+		fParent->SetWidth(objectCurrent.x);
 	}
 
 	virtual BCursor ViewCursor(BPoint current) const
 	{
-		return BCursor(B_CURSOR_ID_MOVE);
+		return BCursor(B_CURSOR_ID_RESIZE_EAST_WEST);
 	}
 
 	virtual const char* CommandName() const
@@ -177,7 +178,7 @@ public:
 
 	virtual BCursor ViewCursor(BPoint current) const
 	{
-		return BCursor(B_CURSOR_I_BEAM);
+		return BCursor(B_CURSOR_ID_I_BEAM);
 	}
 
 	virtual const char* CommandName() const
@@ -251,13 +252,22 @@ TextToolState::MessageReceived(BMessage* message, Command** _command)
 void
 TextToolState::Draw(BView* view, BRect updateRect)
 {
+	if (fText == NULL)
+		return;
+	
+	_DrawControls(view);
 }
 
 // Bounds
 BRect
 TextToolState::Bounds() const
 {
-	return BRect(0, 0, -1, -1);
+	if (fText == NULL)
+		return BRect(0, 0, -1, -1);
+
+	BRect bounds = fText->TransformedBounds();
+	bounds.InsetBy(-15, -15);
+	return bounds;
 }
 
 // #pragma mark -
@@ -273,13 +283,25 @@ TextToolState::StartTransaction(const char* commandName)
 TextToolState::DragState*
 TextToolState::DragStateFor(BPoint canvasWhere, float zoomLevel) const
 {
-	if (fText != NULL) {
-//		float inset = 7.0 / zoomLevel;
+	double scaleX;
+	double scaleY;
+	if (fText != NULL
+		&& fText->GetAffineParameters(NULL, NULL, NULL,
+			&scaleX, &scaleY, NULL, NULL)) {
+		float inset = 7.0 / zoomLevel;
 		
-		BPoint where = canvasWhere;
-		TransformCanvasToObject(&where);
+		BPoint objectWhere = canvasWhere;
+		TransformCanvasToObject(&objectWhere);
 
-		if (fText->Bounds().Contains(where))
+		BPoint widthOffset(fText->Width(), -10.0f / scaleY);
+		if (point_point_distance(objectWhere, widthOffset) < inset)
+			return fDragWidthState;
+
+		BRect bounds = fText->Bounds();
+		bounds.top -= 10.0f / scaleY;
+		bounds.InsetBy(-inset, -inset);
+
+		if (bounds.Contains(objectWhere))
 			return fDragLeftTopState;
 	}
 
@@ -362,7 +384,7 @@ TextToolState::CreateText(BPoint canvasLocation)
 	}
 
 	text->SetFont("DejaVuSerif.ttf", 12.0);
-	text->SetWidth(200.0);
+	text->SetWidth(0.0);
 	text->SetText("Text");
 	text->TranslateBy(canvasLocation);
 
@@ -420,30 +442,54 @@ TextToolState::SetText(Text* text, bool modifySelection)
 void
 TextToolState::OffsetTextBy(BPoint offset)
 {
-	if (fText == NULL)
-		return;
-	
-	// TODO: Not correct...
-	//fText->InverseTransform(&offset);
-	fText->TranslateBy(offset);
-	SetObjectToCanvasTransformation(fText->Transformation());
+	if (fText != NULL) {
+		// TODO: Not correct...
+		fText->TranslateBy(offset);
+		SetObjectToCanvasTransformation(fText->Transformation());
+		UpdateBounds();
+	}
 }
 
 // SetString
 void
 TextToolState::SetString(const char* text)
 {
-	if (fText != NULL)
+	if (fText != NULL) {
 		fText->SetText(text);
+		UpdateBounds();
+	}
 }
 
 // SetSize
 void
 TextToolState::SetSize(float size)
 {
-	if (fText != NULL)
+	if (fText != NULL) {
 		fText->SetFont(fText->getTextLayout().getFont().getName(), size);
+		UpdateBounds();
+	}
 }
+
+// SetWidth
+void
+TextToolState::SetWidth(float width)
+{
+	if (fText != NULL) {
+		fText->SetWidth(width);
+		UpdateBounds();
+	}
+}
+
+// Width
+float
+TextToolState::Width() const
+{
+	if (fText != NULL)
+		return fText->Width();
+	return 0.0f;
+}
+
+// #pragma mark - private
 
 // _UpdateConfigView
 void
@@ -463,3 +509,54 @@ TextToolState::_UpdateConfigView() const
 
 	fConfigViewMessenger.SendMessage(&message);
 }
+
+// _DrawControls
+void
+TextToolState::_DrawControls(BView* view)
+{
+	double scaleX;
+	double scaleY;
+	if (!EffectiveTransformation().GetAffineParameters(NULL, NULL, NULL,
+		&scaleX, &scaleY, NULL, NULL)) {
+		return;
+	}
+
+	scaleX *= fView->ZoomLevel();
+	scaleY *= fView->ZoomLevel();
+
+	BPoint origin(0.0f, -10.0f / scaleY);
+	TransformObjectToView(&origin, true);
+
+	BPoint widthOffset(fText->Width(), -10.0f / scaleY);
+	TransformObjectToView(&widthOffset, true);
+
+	view->SetHighColor(0, 0, 0, 200);
+	view->SetPenSize(3.0);
+	view->StrokeLine(origin, widthOffset);
+	view->SetHighColor(255, 255, 255, 200);
+	view->SetPenSize(1.0);
+	view->StrokeLine(origin, widthOffset);
+
+	float size = 3;
+	view->SetHighColor(255, 255, 255, 200);
+	view->FillEllipse(BRect(origin.x - size, origin.y - size,
+		origin.x + size + 0.5, origin.y + size + 0.5));
+	view->SetHighColor(0, 0, 0, 200);
+	view->StrokeEllipse(BRect(origin.x - size, origin.y - size,
+		origin.x + size + 1, origin.y + size + 1));
+
+	size = 2;
+	view->SetHighColor(255, 255, 255, 200);
+	view->FillRect(BRect(widthOffset.x - size, widthOffset.y - size,
+		widthOffset.x + size + 0.5, widthOffset.y + size + 0.5));
+	view->SetHighColor(0, 0, 0, 200);
+	view->StrokeRect(BRect(widthOffset.x - size, widthOffset.y - size,
+		widthOffset.x + size + 1, widthOffset.y + size + 1));
+}
+
+// _DrawCaret
+void
+TextToolState::_DrawCaret(BView* view, int textOffset)
+{
+}
+

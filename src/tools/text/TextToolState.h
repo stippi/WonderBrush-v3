@@ -57,9 +57,15 @@ public:
 			void				OffsetTextBy(BPoint offset);
 			void				SetString(const char* text);
 			void				SetSize(float size);
+			
+			void				SetWidth(float width);
+			float				Width() const;
 
 private:
 			void				_UpdateConfigView() const;
+			
+			void				_DrawControls(BView* view);
+			void				_DrawCaret(BView* view, int textOffset);
 
 private:
 			class PickTextState;
