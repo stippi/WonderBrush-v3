@@ -39,6 +39,7 @@ public:
 			const char*			GetText() const;
 
 			const TextLayout&	getTextLayout() const;
+			TextLayout&			getTextLayout();
 
 private:
 			BString				fText;

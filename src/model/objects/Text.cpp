@@ -133,6 +133,13 @@ Text::GetText() const
 }
 
 // getTextLayout
+TextLayout&
+Text::getTextLayout()
+{
+	return fTextLayout;
+}
+
+// getTextLayout
 const TextLayout&
 Text::getTextLayout() const
 {
