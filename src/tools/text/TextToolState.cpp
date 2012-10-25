@@ -120,15 +120,15 @@ public:
 		fParent->TransformCanvasToObject(&origin);
 		DragState::SetOrigin(origin);
 
-		fParent->SetCaretAnchor(origin);
+		bool select = (fParent->Modifiers() & B_SHIFT_KEY) != 0;
+		fParent->SetCaret(origin, select);
 	}
 
 	virtual void DragTo(BPoint current, uint32 modifiers)
 	{
 		fParent->TransformCanvasToObject(&current);
 
-		// TODO: Support dragging the selection
-		fParent->SetCaretAnchor(current);
+		fParent->SetCaret(current, true);
 	}
 
 	virtual BCursor ViewCursor(BPoint current) const
@@ -350,27 +350,41 @@ TextToolState::HandleKeyDown(const StateView::KeyEvent& event,
 	if (fText != NULL) {
 		*_command = NULL;
 
+		bool select = (event.modifiers & B_SHIFT_KEY) != 0;
+
 		switch (event.key) {
 			case B_UP_ARROW:
-				_LineUp();
+				_LineUp(select);
 				break;
 			case B_DOWN_ARROW:
-				_LineDown();
+				_LineDown(select);
 				break;
 			case B_LEFT_ARROW:
-				_SetCaretOffset(fCaretOffset - 1, true);
+				if (fCaretOffset != fSelectionAnchorOffset && !select) {
+					_SetCaretOffset(
+						min_c(fCaretOffset, fSelectionAnchorOffset),
+						true, false
+					);
+				} else
+					_SetCaretOffset(fCaretOffset - 1, true, select);
 				break;
 			case B_RIGHT_ARROW:
-				_SetCaretOffset(fCaretOffset + 1, true);
+				if (fCaretOffset != fSelectionAnchorOffset && !select) {
+					_SetCaretOffset(
+						max_c(fCaretOffset, fSelectionAnchorOffset),
+						true, false
+					);
+				} else
+					_SetCaretOffset(fCaretOffset + 1, true, select);
 				break;
 
 			case B_HOME:
 				//_SetCaretOffset(0, true);
-				_LineStart();
+				_LineStart(select);
 				break;
 			case B_END:
 				//_SetCaretOffset(fText->GetCharCount(), true);
-				_LineEnd();
+				_LineEnd(select);
 				break;
 
 			case B_ENTER:
@@ -439,9 +453,15 @@ TextToolState::Draw(BView* view, BRect updateRect)
 		return;
 	
 	_DrawControls(view);
-	
-	if (fShowCaret)
-		_DrawCaret(view, fCaretOffset);
+	if (fSelectionAnchorOffset == fCaretOffset) {
+		if (fShowCaret)
+			_DrawCaret(view, fCaretOffset);
+	} else {
+		if (fSelectionAnchorOffset < fCaretOffset)
+			_DrawSelection(view, fSelectionAnchorOffset, fCaretOffset);
+		else
+			_DrawSelection(view, fCaretOffset, fSelectionAnchorOffset);
+	}
 }
 
 // Bounds
@@ -451,8 +471,10 @@ TextToolState::Bounds() const
 	if (fText == NULL)
 		return BRect(0, 0, -1, -1);
 
-	BRect bounds = fText->TransformedBounds();
+	BRect bounds = fText->Bounds();
+	bounds.right = fText->Width();
 	bounds.InsetBy(-15, -15);
+	TransformObjectToCanvas(&bounds);
 	return bounds;
 }
 
@@ -672,10 +694,23 @@ TextToolState::Insert(int32 textOffset, const char* text,
 	bool setCaretOffset)
 {
 	if (fText != NULL) {
+		if (setCaretOffset && fSelectionAnchorOffset != fCaretOffset) {
+			int start = fSelectionAnchorOffset;
+			int end = fCaretOffset;
+			if (start > end) {
+				start = fCaretOffset;
+				end = fSelectionAnchorOffset;
+			}
+			fText->Remove(start, end - start);
+			textOffset = start;
+		}
+		
 		fText->Insert(textOffset, text, "DejaVuSerif.ttf", fSize, fStyle);
-		if (setCaretOffset)
-			_SetCaretOffset(textOffset + BString(text).CountChars(), true);
-		else
+		
+		if (setCaretOffset) {
+			_SetCaretOffset(textOffset + BString(text).CountChars(), true,
+				false);
+		} else
 			UpdateBounds();
 	} else {
 		fNextText.InsertChars(text, textOffset);
@@ -688,9 +723,9 @@ TextToolState::Remove(int32 textOffset, int32 length, bool setCaretOffset)
 {
 	if (fText != NULL) {
 		fText->Remove(textOffset, length);
-		if (setCaretOffset)
-			_SetCaretOffset(textOffset, true);
-		else
+		if (setCaretOffset) {
+			_SetCaretOffset(textOffset, true, false);
+		} else
 			UpdateBounds();
 	} else {
 		fNextText.RemoveChars(textOffset, length);
@@ -739,13 +774,15 @@ TextToolState::Width() const
 void
 TextToolState::SelectionChanged(int32 startOffset, int32 endOffset)
 {
-	if (fText != NULL)
-		_SetCaretOffset(startOffset, true);
+	if (fText != NULL) {
+		_SetCaretOffset(startOffset, false, false);
+		_SetCaretOffset(endOffset, true, true);
+	}
 }
 
-// SetCaretAnchor
+// SetCaret
 void
-TextToolState::SetCaretAnchor(const BPoint& location)
+TextToolState::SetCaret(const BPoint& location, bool select)
 {
 	if (fText == NULL)
 		return;
@@ -757,7 +794,7 @@ TextToolState::SetCaretAnchor(const BPoint& location)
 	if (rightOfChar)
 		caretOffset++;
 
-	_SetCaretOffset(caretOffset, true);
+	_SetCaretOffset(caretOffset, true, select);
 }
 
 // #pragma mark - private
@@ -854,6 +891,22 @@ TextToolState::_DrawCaret(BView* view, int32 textOffset)
 	shape.LineTo(lb);
 	shape.Close();
 
+	_DrawInvertedShape(view, shape);
+}
+
+// _DrawSelection
+void
+TextToolState::_DrawSelection(BView* view, int32 startOffset, int32 endOffset)
+{
+	BShape shape;
+	_GetSelectionShape(fText->getTextLayout(), shape, startOffset, endOffset);
+	_DrawInvertedShape(view, shape);
+}
+
+// _DrawInvertedShape
+void
+TextToolState::_DrawInvertedShape(BView* view, BShape& shape)
+{
 	view->PushState();
 	uint32 flags = view->Flags();
 	view->SetFlags(flags | B_SUBPIXEL_PRECISE);
@@ -864,49 +917,51 @@ TextToolState::_DrawCaret(BView* view, int32 textOffset)
 	view->PopState();
 }
 
+// #pragma mark -
+
 // _LineStart
 void
-TextToolState::_LineStart()
+TextToolState::_LineStart(bool select)
 {
 	TextLayout& layout = fText->getTextLayout();
 	
 	int lineIndex = layout.getLineIndex(fCaretOffset);
-	_SetCaretOffset(layout.getFirstOffsetOnLine(lineIndex), true);
+	_SetCaretOffset(layout.getFirstOffsetOnLine(lineIndex), true, select);
 }
 
 // _LineEnd
 void
-TextToolState::_LineEnd()
+TextToolState::_LineEnd(bool select)
 {
 	TextLayout& layout = fText->getTextLayout();
 	
 	int lineIndex = layout.getLineIndex(fCaretOffset);
-	_SetCaretOffset(layout.getLastOffsetOnLine(lineIndex), true);
+	_SetCaretOffset(layout.getLastOffsetOnLine(lineIndex), true, select);
 }
 
 // _LineUp
 void
-TextToolState::_LineUp()
+TextToolState::_LineUp(bool select)
 {
 	TextLayout& layout = fText->getTextLayout();
 	
 	int lineIndex = layout.getLineIndex(fCaretOffset);
-	_MoveToLine(layout, lineIndex - 1);
+	_MoveToLine(layout, lineIndex - 1, select);
 }
 
 // _LineDown
 void
-TextToolState::_LineDown()
+TextToolState::_LineDown(bool select)
 {
 	TextLayout& layout = fText->getTextLayout();
 	
 	int lineIndex = layout.getLineIndex(fCaretOffset);
-	_MoveToLine(layout, lineIndex + 1);
+	_MoveToLine(layout, lineIndex + 1, select);
 }
 
 // _MoveToLine
 void
-TextToolState::_MoveToLine(TextLayout& layout, int32 lineIndex)
+TextToolState::_MoveToLine(TextLayout& layout, int32 lineIndex, bool select)
 {
 	if (lineIndex < 0 || lineIndex >= layout.getLineCount())
 		return;
@@ -924,20 +979,26 @@ TextToolState::_MoveToLine(TextLayout& layout, int32 lineIndex)
 	if (rightOfCenter)
 		textOffset++;
 
-	_SetCaretOffset(textOffset, false);
+	_SetCaretOffset(textOffset, false, select);
 }
 
 // _SetCaretOffset
 void
-TextToolState::_SetCaretOffset(int32 offset, bool updateAnchor)
+TextToolState::_SetCaretOffset(int32 offset, bool updateAnchor,
+	bool lockSelectionAnchor)
 {
 	if (offset < 0)
 		offset = 0;
 	if (offset > fText->GetCharCount())
 		offset = fText->GetCharCount();
 
-	if (offset == fCaretOffset)
+	if (offset == fCaretOffset && (lockSelectionAnchor
+			|| offset == fSelectionAnchorOffset)) {
 		return;
+	}
+
+	if (!lockSelectionAnchor)
+		fSelectionAnchorOffset = offset;
 
 	fCaretOffset = offset;
 	fShowCaret = true;
@@ -955,3 +1016,78 @@ TextToolState::_SetCaretOffset(int32 offset, bool updateAnchor)
 	UpdateBounds();
 }
 
+// _GetSelectionShape
+void
+TextToolState::_GetSelectionShape(TextLayout& layout, BShape& shape,
+	int32 start, int32 end) const
+{
+	double startX1;
+	double startY1;
+	double startX2;
+	double startY2;
+	layout.getTextBounds(start, startX1, startY1, startX2, startY2);
+
+	double endX1;
+	double endY1;
+	double endX2;
+	double endY2;
+	layout.getTextBounds(end, endX1, endY1, endX2, endY2);
+
+	int32 startLineIndex = layout.getLineIndex(start);
+	int32 endLineIndex = layout.getLineIndex(end);
+
+	if (startLineIndex == endLineIndex) {
+		// Selection on one line
+		BPoint lt(startX1, startY1);
+		BPoint rt(endX1, endY1);
+		BPoint rb(endX1, endY2);
+		BPoint lb(startX1, startY2);
+
+		TransformObjectToView(&lt, false);
+		TransformObjectToView(&rt, false);
+		TransformObjectToView(&rb, false);
+		TransformObjectToView(&lb, false);
+
+		shape.MoveTo(lt);
+		shape.LineTo(rt);
+		shape.LineTo(rb);
+		shape.LineTo(lb);
+		shape.Close();
+	} else {
+		// Selection over multiple lines
+		BPoint p;
+		p = BPoint(startX1, startY1);
+		TransformObjectToView(&p, false);
+		shape.MoveTo(p);
+
+		p = BPoint(layout.getWidth(), startY1);
+		TransformObjectToView(&p, false);
+		shape.LineTo(p);
+
+		p = BPoint(layout.getWidth(), endY1);
+		TransformObjectToView(&p, false);
+		shape.LineTo(p);
+
+		p = BPoint(endX1, endY1);
+		TransformObjectToView(&p, false);
+		shape.LineTo(p);
+
+		p = BPoint(endX1, endY2);
+		TransformObjectToView(&p, false);
+		shape.LineTo(p);
+
+		p = BPoint(0, endY2);
+		TransformObjectToView(&p, false);
+		shape.LineTo(p);
+
+		p = BPoint(0, startY2);
+		TransformObjectToView(&p, false);
+		shape.LineTo(p);
+
+		p = BPoint(startX1, startY2);
+		TransformObjectToView(&p, false);
+		shape.LineTo(p);
+
+		shape.Close();
+	}
+}

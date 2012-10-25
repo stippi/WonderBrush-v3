@@ -88,24 +88,33 @@ public:
 			void				SelectionChanged(int32 startOffset,
 									int32 endOffset);
 
-			void				SetCaretAnchor(const BPoint& location);
+			void				SetCaret(const BPoint& location, bool select);
 
 private:
 			void				_UpdateConfigView() const;
 			
 			void				_DrawControls(BView* view);
+
 			void				_DrawCaret(BView* view, int32 textOffset);
+			void				_DrawSelection(BView* view, int32 startOffset,
+									int32 endOffset);
+			void				_DrawInvertedShape(BView* view, BShape& shape);
 
-			void				_LineStart();
-			void				_LineEnd();
+			void				_LineStart(bool select);
+			void				_LineEnd(bool select);
 
-			void				_LineUp();
-			void				_LineDown();
+			void				_LineUp(bool select);
+			void				_LineDown(bool select);
 			void				_MoveToLine(TextLayout& layout,
-									int32 lineIndex);
+									int32 lineIndex, bool select);
 
 			void				_SetCaretOffset(int32 offset,
-									bool updateAnchor);
+									bool updateAnchor,
+									bool lockSelectionAnchor);
+
+			void				_GetSelectionShape(TextLayout& layout,
+									BShape& shape, int32 start,
+									int32 end) const;
 
 private:
 			class PickTextState;
@@ -134,6 +143,7 @@ private:
 
 			BString				fNextText;
 
+			int32				fSelectionAnchorOffset;
 			int32				fCaretOffset;
 			bool				fShowCaret;
 			double				fCaretAnchorX;
