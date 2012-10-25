@@ -80,6 +80,18 @@ class BMessage {
 		bool			WasDropped() const;
 		BPoint			DropPoint(BPoint *offset = NULL) const;
 
+		// Replying
+		status_t		SendReply(uint32 command, BHandler *replyTo = NULL);
+		status_t		SendReply(BMessage *reply, BHandler *replyTo = NULL,
+							bigtime_t timeout = B_INFINITE_TIMEOUT);
+		status_t		SendReply(BMessage *reply, BMessenger replyTo,
+							bigtime_t timeout = B_INFINITE_TIMEOUT);
+
+		status_t		SendReply(uint32 command, BMessage *replyToReply);
+		status_t		SendReply(BMessage *the_reply, BMessage *replyToReply,
+							bigtime_t sendTimeout = B_INFINITE_TIMEOUT,
+							bigtime_t replyTimeout = B_INFINITE_TIMEOUT);
+
 		// Flattening data
 		ssize_t			FlattenedSize() const;
 		status_t		Flatten(char *buffer, ssize_t size) const;
@@ -121,6 +133,7 @@ class BMessage {
 		status_t		AddFloat(const char *name, float aFloat);
 		status_t		AddDouble(const char *name, double aDouble);
 		status_t		AddPointer(const char *name, const void *aPointer);
+		status_t		AddMessenger(const char *name, BMessenger messenger);
 		status_t		AddRef(const char *name, const entry_ref *ref);
 		status_t		AddMessage(const char *name, const BMessage *message);
 		status_t		AddFlat(const char *name, BFlattenable *object,
@@ -177,6 +190,8 @@ class BMessage {
 		status_t		FindDouble(const char *name, int32 index, double *value) const;
 		status_t		FindPointer(const char *name, void **pointer) const;
 		status_t		FindPointer(const char *name, int32 index,  void **pointer) const;
+		status_t		FindMessenger(const char *name, BMessenger *messenger) const;
+		status_t		FindMessenger(const char *name, int32 index, BMessenger *messenger) const;
 		status_t		FindRef(const char *name, entry_ref *ref) const;
 		status_t		FindRef(const char *name, int32 index, entry_ref *ref) const;
 		status_t		FindMessage(const char *name, BMessage *message) const;
@@ -230,6 +245,8 @@ class BMessage {
 		status_t		ReplaceDouble(const char *name, int32 index, double aDouble);
 		status_t		ReplacePointer(const char *name, const void *pointer);
 		status_t		ReplacePointer(const char *name,int32 index,const void *pointer);
+		status_t		ReplaceMessenger(const char *name, BMessenger messenger);
+		status_t		ReplaceMessenger(const char *name, int32 index, BMessenger messenger);
 		status_t		ReplaceRef(	const char *name,const entry_ref *ref);
 		status_t		ReplaceRef(	const char *name, int32 index, const entry_ref *ref);
 		status_t		ReplaceMessage(const char *name, const BMessage *message);

@@ -13,6 +13,7 @@
 #include <MessageUtils.h>
 
 #include <Alignment.h>
+#include <Messenger.h>
 #include <Point.h>
 #include <Rect.h>
 #include <String.h>
@@ -729,6 +730,104 @@ BMessage::DropPoint(BPoint *offset) const
 		*offset = FindPoint("_drop_offset_");
 
 	return FindPoint("_drop_point_");
+}
+
+
+status_t
+BMessage::SendReply(uint32 command, BHandler *replyTo)
+{
+	DEBUG_FUNCTION_ENTER;
+	BMessage message(command);
+	return SendReply(&message, replyTo);
+}
+
+
+status_t
+BMessage::SendReply(BMessage *reply, BHandler *replyTo, bigtime_t timeout)
+{
+	DEBUG_FUNCTION_ENTER;
+	BMessenger messenger(replyTo);
+	return SendReply(reply, messenger, timeout);
+}
+
+
+status_t
+BMessage::SendReply(BMessage *reply, BMessenger replyTo, bigtime_t timeout)
+{
+	DEBUG_FUNCTION_ENTER;
+	if (fHeader == NULL)
+		return B_NO_INIT;
+
+	BMessenger messenger(fHeader->reply_target);
+
+	if ((fHeader->flags & MESSAGE_FLAG_REPLY_REQUIRED) != 0) {
+		if ((fHeader->flags & MESSAGE_FLAG_REPLY_DONE) != 0)
+			return B_DUPLICATE_REPLY;
+
+		fHeader->flags |= MESSAGE_FLAG_REPLY_DONE;
+		reply->fHeader->flags |= MESSAGE_FLAG_IS_REPLY;
+		status_t result = messenger.SendMessage(reply, replyTo, timeout);
+		reply->fHeader->flags &= ~MESSAGE_FLAG_IS_REPLY;
+
+		return result;
+	}
+
+	// no reply required
+	if ((fHeader->flags & MESSAGE_FLAG_WAS_DELIVERED) == 0)
+		return B_BAD_REPLY;
+
+	reply->AddMessage("_previous_", this);
+	reply->fHeader->flags |= MESSAGE_FLAG_IS_REPLY;
+	status_t result = messenger.SendMessage(reply, replyTo, timeout);
+	reply->fHeader->flags &= ~MESSAGE_FLAG_IS_REPLY;
+	reply->RemoveName("_previous_");
+	return result;
+}
+
+
+status_t
+BMessage::SendReply(uint32 command, BMessage *replyToReply)
+{
+	DEBUG_FUNCTION_ENTER;
+	BMessage message(command);
+	return SendReply(&message, replyToReply);
+}
+
+
+status_t
+BMessage::SendReply(BMessage *reply, BMessage *replyToReply,
+	bigtime_t sendTimeout, bigtime_t replyTimeout)
+{
+	DEBUG_FUNCTION_ENTER;
+	if (fHeader == NULL)
+		return B_NO_INIT;
+
+	BMessenger messenger(fHeader->reply_target);
+
+	if ((fHeader->flags & MESSAGE_FLAG_REPLY_REQUIRED) != 0) {
+		if ((fHeader->flags & MESSAGE_FLAG_REPLY_DONE) != 0)
+			return B_DUPLICATE_REPLY;
+
+		fHeader->flags |= MESSAGE_FLAG_REPLY_DONE;
+		reply->fHeader->flags |= MESSAGE_FLAG_IS_REPLY;
+		status_t result = messenger.SendMessage(reply, replyToReply,
+			sendTimeout, replyTimeout);
+		reply->fHeader->flags &= ~MESSAGE_FLAG_IS_REPLY;
+
+		return result;
+	}
+
+	// no reply required
+	if ((fHeader->flags & MESSAGE_FLAG_WAS_DELIVERED) == 0)
+		return B_BAD_REPLY;
+
+	reply->AddMessage("_previous_", this);
+	reply->fHeader->flags |= MESSAGE_FLAG_IS_REPLY;
+	status_t result = messenger.SendMessage(reply, replyToReply, sendTimeout,
+		replyTimeout);
+	reply->fHeader->flags &= ~MESSAGE_FLAG_IS_REPLY;
+	reply->RemoveName("_previous_");
+	return result;
 }
 
 
@@ -1714,6 +1813,7 @@ BMessage::Has##typeName(const char *name, int32 index) const				\
 DEFINE_HAS_FUNCTION(Alignment, B_ALIGNMENT_TYPE);
 DEFINE_HAS_FUNCTION(String, B_STRING_TYPE);
 DEFINE_HAS_FUNCTION(Pointer, B_POINTER_TYPE);
+DEFINE_HAS_FUNCTION(Messenger, B_MESSENGER_TYPE);
 DEFINE_HAS_FUNCTION(Message, B_MESSAGE_TYPE);
 
 #undef DEFINE_HAS_FUNCTION
@@ -1768,6 +1868,15 @@ status_t
 BMessage::AddPointer(const char *name, const void *pointer)
 {
 	return AddData(name, B_POINTER_TYPE, &pointer, sizeof(pointer), true);
+}
+
+
+status_t
+BMessage::AddMessenger(const char *name, BMessenger messenger)
+{
+	// NOTE: Not compatible with Haiku!
+	int32 token = messenger.HandlerToken();
+	return AddData(name, B_MESSENGER_TYPE, &token, sizeof(token), true);
 }
 
 
@@ -1930,6 +2039,38 @@ BMessage::FindPointer(const char *name, int32 index, void **pointer) const
 
 
 status_t
+BMessage::FindMessenger(const char *name, BMessenger *messenger) const
+{
+	return FindMessenger(name, 0, messenger);
+}
+
+
+status_t
+BMessage::FindMessenger(const char *name, int32 index, BMessenger *messenger)
+	const
+{
+	if (messenger == NULL)
+		return B_BAD_VALUE;
+
+	void *data = NULL;
+	ssize_t size = 0;
+	status_t error = FindData(name, B_MESSENGER_TYPE, index,
+		(const void **)&data, &size);
+
+	int32 token;
+	if (error != B_OK || size != sizeof(token)) {
+		*messenger = BMessenger();
+		return error;
+	}
+
+	memcpy(&token, data, sizeof(token));
+	*messenger = BMessenger(token);
+
+	return error;
+}
+
+
+status_t
 BMessage::FindMessage(const char *name, BMessage *message) const
 {
 	return FindMessage(name, 0, message);
@@ -2053,6 +2194,22 @@ status_t
 BMessage::ReplacePointer(const char *name, int32 index, const void *pointer)
 {
 	return ReplaceData(name, B_POINTER_TYPE, index, &pointer, sizeof(pointer));
+}
+
+
+status_t
+BMessage::ReplaceMessenger(const char *name, BMessenger messenger)
+{
+	int32 token = messenger.HandlerToken();
+	return ReplaceData(name, B_MESSENGER_TYPE, 0, &token, sizeof(token));
+}
+
+
+status_t
+BMessage::ReplaceMessenger(const char *name, int32 index, BMessenger messenger)
+{
+	int32 token = messenger.HandlerToken();
+	return ReplaceData(name, B_MESSENGER_TYPE, index, &token, sizeof(token));
 }
 
 

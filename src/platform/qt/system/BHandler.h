@@ -2,6 +2,7 @@
 #define PLATFORM_QT_BHANDLER_H
 
 
+#include <Archivable.h>
 #include <String.h>
 
 #include <QObject>
@@ -18,13 +19,18 @@ class BHandlerProxy : public QObject {
 
 public:
 	explicit					BHandlerProxy(BHandler* handler);
+								~BHandlerProxy();
+
+			BHandler*			Handler() const
+									{ return fHandler; }
+			int32				Token() const;
+
+			// conceptually private
+			void				HandlerDeleted()
+									{ fHandler = NULL; }
 
 protected:
 	virtual	void				customEvent(QEvent* event);
-
-private:
-			void				HandlerDeleted()
-									{ fHandler = NULL; }
 
 private:
 			friend class BHandler;
@@ -34,12 +40,13 @@ private:
 };
 
 
-class BHandler
+class BHandler : public BArchivable
 {
 public:
 			typedef QSharedPointer<BHandlerProxy> ProxyPointer;
 
 public:
+								BHandler(BMessage* archive);
 								BHandler(const char* name = NULL);
 	virtual						~BHandler();
 
@@ -49,8 +56,19 @@ public:
 
 	virtual	void				MessageReceived(BMessage* message);
 
+	virtual	void				SendNotices(uint32 what,
+									const BMessage* notice = NULL);
+			bool				IsWatched() const;
+
 			ProxyPointer		Proxy() const
 									{ return fProxy; }
+			int32				Token() const
+									{ return fToken; }
+	static	ProxyPointer		ProxyForToken(int32 token);
+
+			// conceptually private
+			void				SetToken(int32 token)
+									{ fToken = token; }
 
 			void				ObjectConstructed(QObject* object);
 			void				ObjectAboutToBeDestroyed(QObject* object);
@@ -58,6 +76,7 @@ public:
 private:
 			char*				fName;
 			ProxyPointer		fProxy;
+			int32				fToken;
 };
 
 
@@ -102,6 +121,14 @@ public:
 		:
 		BaseClass(parent),
 		BHandler(name)
+	{
+		ObjectConstructed(this);
+	}
+
+	PlatformWidgetHandler(BMessage* archive)
+		:
+		BaseClass(),
+		BHandler(archive)
 	{
 		ObjectConstructed(this);
 	}
