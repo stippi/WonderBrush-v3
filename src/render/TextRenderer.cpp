@@ -293,6 +293,7 @@ TextRenderer::drawText(RendererType& renderer,
 
 	unsigned lineIndex = 0;
 	double advanceX = 0.0;
+#if 0
 	double lineTop = 0.0;
 	double lineBottom = layout->getHeight();
 	Color bg(fBackground);
@@ -369,7 +370,7 @@ TextRenderer::drawText(RendererType& renderer,
 			x2 / scale + xOffset, yOffset + lineTop + 0.5,
 			width + xOffset, yOffset + lineBottom - 0.5, fBackground);
 	}
-
+#endif
 
 	x = layout->getFirstLineInset() * scale;
 	double lastX = x;
