@@ -87,4 +87,48 @@ enum {
 };
 
 
+// Other Commands
+enum {
+	B_SET_PROPERTY				= 'PSET',
+	B_GET_PROPERTY				= 'PGET',
+	B_CREATE_PROPERTY			= 'PCRT',
+	B_DELETE_PROPERTY			= 'PDEL',
+	B_COUNT_PROPERTIES			= 'PCNT',
+	B_EXECUTE_PROPERTY			= 'PEXE',
+	B_GET_SUPPORTED_SUITES		= 'SUIT',
+	B_UNDO						= 'UNDO',
+	B_REDO						= 'REDO',
+	B_CUT 						= 'CCUT',
+	B_COPY 						= 'COPY',
+	B_PASTE 					= 'PSTE',
+	B_SELECT_ALL				= 'SALL',
+	B_SAVE_REQUESTED 			= 'SAVE',
+	B_MESSAGE_NOT_UNDERSTOOD	= 'MNOT',
+	B_NO_REPLY 					= 'NONE',
+	B_REPLY 					= 'RPLY',
+	B_SIMPLE_DATA				= 'DATA',
+	B_MIME_DATA					= 'MIME',
+	B_ARCHIVED_OBJECT			= 'ARCV',
+	B_UPDATE_STATUS_BAR			= 'SBUP',
+	B_RESET_STATUS_BAR			= 'SBRS',
+	B_NODE_MONITOR				= 'NDMN',
+	B_QUERY_UPDATE				= 'QUPD',
+	B_ENDORSABLE				= 'ENDO',
+	B_COPY_TARGET				= 'DDCP',
+	B_MOVE_TARGET				= 'DDMV',
+	B_TRASH_TARGET				= 'DDRM',
+	B_LINK_TARGET				= 'DDLN',
+	B_INPUT_DEVICES_CHANGED		= 'IDCH',
+	B_INPUT_METHOD_EVENT		= 'IMEV',
+	B_WINDOW_MOVE_TO			= 'WDMT',
+	B_WINDOW_MOVE_BY			= 'WDMB',
+	B_SILENT_RELAUNCH			= 'AREL',
+	B_OBSERVER_NOTICE_CHANGE 	= 'NTCH',
+	B_CONTROL_INVOKED			= 'CIVK',
+	B_CONTROL_MODIFIED			= 'CMOD'
+
+	// Media Kit reserves all reserved codes starting in 'TRI'
+};
+
+
 #endif // PLATFORM_QT_APP_DEFS_H

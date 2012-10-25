@@ -15,6 +15,66 @@ class BPoint;
 class BRect;
 
 
+// Key definitions
+
+struct key_info {
+	uint32	modifiers;
+	uint8	key_states[16];
+};
+
+enum {
+	B_BACKSPACE			= 0x08,
+	B_RETURN			= 0x0a,
+	B_ENTER				= 0x0a,
+	B_SPACE				= 0x20,
+	B_TAB				= 0x09,
+	B_ESCAPE			= 0x1b,
+	B_SUBSTITUTE		= 0x1a,
+
+	B_LEFT_ARROW		= 0x1c,
+	B_RIGHT_ARROW		= 0x1d,
+	B_UP_ARROW			= 0x1e,
+	B_DOWN_ARROW		= 0x1f,
+
+	B_INSERT			= 0x05,
+	B_DELETE			= 0x7f,
+	B_HOME				= 0x01,
+	B_END				= 0x04,
+	B_PAGE_UP			= 0x0b,
+	B_PAGE_DOWN			= 0x0c,
+
+	B_FUNCTION_KEY		= 0x10,
+
+	// for Japanese keyboards
+	B_KATAKANA_HIRAGANA	= 0xf2,
+	B_HANKAKU_ZENKAKU	= 0xf3
+};
+
+enum {
+	B_F1_KEY			= 0x02,
+	B_F2_KEY			= 0x03,
+	B_F3_KEY			= 0x04,
+	B_F4_KEY			= 0x05,
+	B_F5_KEY			= 0x06,
+	B_F6_KEY			= 0x07,
+	B_F7_KEY			= 0x08,
+	B_F8_KEY			= 0x09,
+	B_F9_KEY			= 0x0a,
+	B_F10_KEY			= 0x0b,
+	B_F11_KEY			= 0x0c,
+	B_F12_KEY			= 0x0d,
+	B_PRINT_KEY			= 0x0e,
+	B_SCROLL_KEY		= 0x0f,
+	B_PAUSE_KEY			= 0x10
+};
+
+
+enum orientation {
+	B_HORIZONTAL,
+	B_VERTICAL
+};
+
+
 enum alignment {
 	B_ALIGN_LEFT,
 	B_ALIGN_RIGHT,
