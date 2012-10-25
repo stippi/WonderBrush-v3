@@ -523,7 +523,7 @@ Text::getTextLayout() const
 void
 Text::_UpdateLayout()
 {
-//	printf("_UpdateLayout()\n");
+//	printf("_UpdateLayout() (%p)\n", &fTextLayout);
 
 	fTextLayout.clearStyleRuns();
 	
