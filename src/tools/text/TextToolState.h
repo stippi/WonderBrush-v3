@@ -23,7 +23,8 @@ enum {
 };
 
 class TextToolState : public DragStateViewState,
-	public Selection::Controller, public Selection::Listener {
+	public Selection::Controller, public Selection::Listener,
+	public Listener {
 public:
 								TextToolState(StateView* view,
 									Document* document, Selection* selection,
@@ -62,6 +63,9 @@ public:
 	virtual	void				ObjectDeselected(const Selectable& object,
 									const Selection::Controller* controller);
 
+	// Listener interface
+	virtual	void				ObjectChanged(const Notifier* object);
+
 	// TextToolState
 			void				SetInsertionInfo(Layer* layer, int32 index);
 			bool				CreateText(BPoint canvasLocation);
@@ -83,6 +87,8 @@ public:
 
 			void				SelectionChanged(int32 startOffset,
 									int32 endOffset);
+
+			void				SetCaretAnchor(const BPoint& location);
 
 private:
 			void				_UpdateConfigView() const;
@@ -106,6 +112,7 @@ private:
 			class CreateTextState;
 			class DragLeftTopState;
 			class DragWidthState;
+			class DragCaretState;
 
 			friend class PickTextState;
 
@@ -113,6 +120,7 @@ private:
 			CreateTextState*	fCreateTextState;
 			DragLeftTopState*	fDragLeftTopState;
 			DragWidthState*		fDragWidthState;
+			DragCaretState*		fDragCaretState;
 
 			Document*			fDocument;
 			Selection*			fSelection;
@@ -123,6 +131,8 @@ private:
 			int32				fInsertionIndex;
 
 			Text*				fText;
+
+			BString				fNextText;
 
 			int32				fCaretOffset;
 			bool				fShowCaret;

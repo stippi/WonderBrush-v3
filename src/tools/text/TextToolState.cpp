@@ -106,6 +106,44 @@ private:
 	TextToolState*		fParent;
 };
 
+// DragCaretState
+class TextToolState::DragCaretState : public DragStateViewState::DragState {
+public:
+	DragCaretState(TextToolState* parent)
+		: DragState(parent)
+		, fParent(parent)
+	{
+	}
+
+	virtual void SetOrigin(BPoint origin)
+	{
+		fParent->TransformCanvasToObject(&origin);
+		DragState::SetOrigin(origin);
+
+		fParent->SetCaretAnchor(origin);
+	}
+
+	virtual void DragTo(BPoint current, uint32 modifiers)
+	{
+		fParent->TransformCanvasToObject(&current);
+
+		// TODO: Support dragging the selection
+		fParent->SetCaretAnchor(current);
+	}
+
+	virtual BCursor ViewCursor(BPoint current) const
+	{
+		return BCursor(B_CURSOR_ID_I_BEAM);
+	}
+
+	virtual const char* CommandName() const
+	{
+		return "Select text";
+	}
+
+private:
+	TextToolState*		fParent;
+};
 
 // PickTextState
 class TextToolState::PickTextState : public DragStateViewState::DragState {
@@ -125,8 +163,8 @@ public:
 		if (fText == NULL)
 			return;
 
-		fParent->SetDragState(fParent->fDragLeftTopState);
-		fParent->fDragLeftTopState->SetOrigin(origin);
+		fParent->SetDragState(fParent->fDragCaretState);
+		fParent->fDragCaretState->SetOrigin(origin);
 	}
 
 	virtual void DragTo(BPoint current, uint32 modifiers)
@@ -180,7 +218,7 @@ public:
 
 	virtual BCursor ViewCursor(BPoint current) const
 	{
-		return BCursor(B_CURSOR_ID_I_BEAM);
+		return BCursor(B_CURSOR_ID_SYSTEM_DEFAULT);
 	}
 
 	virtual const char* CommandName() const
@@ -209,6 +247,7 @@ TextToolState::TextToolState(StateView* view, Document* document,
 	, fCreateTextState(new(std::nothrow) CreateTextState(this))
 	, fDragLeftTopState(new(std::nothrow) DragLeftTopState(this))
 	, fDragWidthState(new(std::nothrow) DragWidthState(this))
+	, fDragCaretState(new(std::nothrow) DragCaretState(this))
 
 	, fDocument(document)
 	, fSelection(selection)
@@ -242,9 +281,10 @@ TextToolState::~TextToolState()
 	fSelection->RemoveListener(this);
 
 	delete fPickTextState;
-	delete fPickTextState;
+	delete fCreateTextState;
 	delete fDragLeftTopState;
 	delete fDragWidthState;
+	delete fDragCaretState;
 
 	SetInsertionInfo(NULL, -1);
 
@@ -442,12 +482,16 @@ TextToolState::DragStateFor(BPoint canvasWhere, float zoomLevel) const
 		if (point_point_distance(objectWhere, widthOffset) < inset)
 			return fDragWidthState;
 
+		BPoint leftTop(0.0, -10.0f / scaleY);
+		if (point_point_distance(objectWhere, leftTop) < inset)
+			return fDragLeftTopState;
+
 		BRect bounds = fText->Bounds();
 		bounds.top -= 10.0f / scaleY;
 		bounds.InsetBy(-inset, -inset);
 
 		if (bounds.Contains(objectWhere))
-			return fDragLeftTopState;
+			return fDragCaretState;
 	}
 
 	// If there is still no state, switch to the PickObjectsState
@@ -497,6 +541,20 @@ TextToolState::ObjectDeselected(const Selectable& selectable,
 
 // #pragma mark -
 
+// ObjectChanged
+void
+TextToolState::ObjectChanged(const Notifier* object)
+{
+	if (fText != NULL && object == fText) {
+		SetObjectToCanvasTransformation(fText->Transformation());
+		UpdateBounds();
+		UpdateDragState();
+		_UpdateConfigView();
+	}
+}
+
+// #pragma mark -
+
 // SetInsertionInfo
 void
 TextToolState::SetInsertionInfo(Layer* layer, int32 index)
@@ -530,7 +588,11 @@ TextToolState::CreateText(BPoint canvasLocation)
 
 	text->SetWidth(0.0);
 	
-	text->SetText("Text", "DejaVuSerif.ttf", fSize, fStyle);
+	BString initialText = fNextText;
+	if (initialText.Length() == 0)
+		initialText = "Text";
+	
+	text->SetText(initialText.String(), "DejaVuSerif.ttf", fSize, fStyle);
 	text->TranslateBy(canvasLocation);
 
 	if (fInsertionIndex < 0)
@@ -562,13 +624,17 @@ TextToolState::SetText(Text* text, bool modifySelection)
 	if (fText == text)
 		return;
 	
-	if (fText != NULL)
+	if (fText != NULL) {
+		fText->RemoveListener(this);
 		fText->RemoveReference();
+	}
 
 	fText = text;
 	
-	if (fText != NULL)
+	if (fText != NULL) {
 		fText->AddReference();
+		fText->AddListener(this);
+	}
 	
 	if (text != NULL) {
 		if (modifySelection)
@@ -580,6 +646,7 @@ TextToolState::SetText(Text* text, bool modifySelection)
 		SetObjectToCanvasTransformation(Transformable());
 	}
 
+	fNextText = "";
 	fCaretOffset = 0;
 	fCaretAnchorX = 0.0;
 
@@ -609,6 +676,8 @@ TextToolState::Insert(int32 textOffset, const char* text,
 			_SetCaretOffset(textOffset + BString(text).CountChars(), true);
 		else
 			UpdateBounds();
+	} else {
+		fNextText.InsertChars(text, textOffset);
 	}
 }
 
@@ -622,6 +691,8 @@ TextToolState::Remove(int32 textOffset, int32 length, bool setCaretOffset)
 			_SetCaretOffset(textOffset, true);
 		else
 			UpdateBounds();
+	} else {
+		fNextText.RemoveChars(textOffset, length);
 	}
 }
 
@@ -667,7 +738,25 @@ TextToolState::Width() const
 void
 TextToolState::SelectionChanged(int32 startOffset, int32 endOffset)
 {
-	_SetCaretOffset(startOffset, true);
+	if (fText != NULL)
+		_SetCaretOffset(startOffset, true);
+}
+
+// SetCaretAnchor
+void
+TextToolState::SetCaretAnchor(const BPoint& location)
+{
+	if (fText == NULL)
+		return;
+	
+	bool rightOfChar = false;
+	int32 caretOffset = fText->getTextLayout().getOffset(location.x, location.y,
+		rightOfChar);
+	
+	if (rightOfChar)
+		caretOffset++;
+
+	_SetCaretOffset(caretOffset, true);
 }
 
 // #pragma mark - private

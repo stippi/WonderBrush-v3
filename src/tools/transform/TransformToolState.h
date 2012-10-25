@@ -23,33 +23,8 @@ enum {
 };
 
 class TransformToolState : public DragStateViewState,
-	public Selection::Controller, public Selection::Listener {
-private:
-	class RectLOAdapater : public RectListener,
-		public AbstractLOAdapter {
-	public:
-								RectLOAdapater(BHandler* handler);
-		virtual					~RectLOAdapater();
-
-		virtual	void			AreaChanged(Rect* rect,
-									const BRect& oldArea,
-									const BRect& newArea);
-		virtual	void			Deleted(Rect* rect);
-	};
-
-	class ShapeLOAdapater : public ShapeListener,
-		public AbstractLOAdapter {
-	public:
-								ShapeLOAdapater(BHandler* handler);
-		virtual					~ShapeLOAdapater();
-
-		virtual	void			AreaChanged(Shape* shape,
-									const BRect& oldArea,
-									const BRect& newArea);
-		virtual	void			Deleted(Shape* shape);
-	};
-
-
+	public Selection::Controller, public Selection::Listener,
+	public Listener {
 public:
 								TransformToolState(StateView* view,
 									const BRect& box, Document* document,
@@ -77,10 +52,13 @@ public:
 	virtual	void				ObjectDeselected(const Selectable& object,
 									const Selection::Controller* controller);
 
+	// Listener interface
+	virtual	void				ObjectChanged(const Notifier* object);
+
 	// TransformToolState
 			void				SetObject(Object* object,
 									bool modifySelection = false);
-			void				SetTransformable(Transformable* object);
+			void				AdoptObject();
 			void				SetBox(const BRect& box);
 			void				SetModifiedBox(const BRect& box,
 									bool update = true);
@@ -104,10 +82,6 @@ public:
 	inline	double				LocalYScale() const;
 
 	inline	Transformable		UpdateAdditionalTransformation();
-
-private:
-			void				_RegisterObject(Transformable* object);
-			void				_UnregisterObject(Transformable* object);
 
 private:
 			BRect				fOriginalBox;
@@ -146,12 +120,11 @@ private:
 			Document*			fDocument;
 			Selection*			fSelection;
 
-			Transformable*		fObject;
+			Object*				fObject;
 			Transformable		fOriginalTransformation;
 			Transformable		fParentGlobalTransformation;
 
-			RectLOAdapater		fRectLOAdapter;
-			ShapeLOAdapater		fShapeLOAdapter;
+			bool				fIgnoreObjectEvents;
 };
 
 #endif // TRANSFORM_TOOL_STATE_H
