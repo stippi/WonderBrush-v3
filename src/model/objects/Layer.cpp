@@ -17,6 +17,7 @@ using std::nothrow;
 
 // constructor
 Layer::Listener::Listener()
+	: fUpdatesSuspended(0)
 {
 }
 
