@@ -119,6 +119,23 @@ Style::SetToPropertyObject(const PropertyObject* object, uint32 flags)
 
 // #pragma mark -
 
+// operator==
+bool
+Style::operator==(const Style& other) const
+{
+	return fSetProperties == other.fSetProperties
+		&& fFillPaint == other.fFillPaint
+		&& fStrokePaint == other.fStrokePaint
+		&& fStrokeProperties == other.fStrokeProperties;
+}
+
+// operator!=
+bool
+Style::operator!=(const Style& other) const
+{
+	return !(*this == other);
+}
+
 // operator=
 Style&
 Style::operator=(const Style& other)

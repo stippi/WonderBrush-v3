@@ -36,6 +36,9 @@ public:
 									uint32 flags = 0);
 
 	// Style
+			bool				operator==(const Style& other) const;
+			bool				operator!=(const Style& other) const;
+
 			Style&				operator=(const Style& other);
 
 			void				SetFillPaint(const Paint& paint);
@@ -94,5 +97,7 @@ private:
 
 			SharedStrokeProperties*	fStrokeProperties;
 };
+
+typedef Reference< ::Style>		StyleRef;
 
 #endif // STYLE_H
