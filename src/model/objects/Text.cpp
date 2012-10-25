@@ -294,6 +294,7 @@ private:
 Text::Text(const rgb_color& color)
 	: Styleable(color)
 	, fText()
+	, fCharCount(0)
 	, fTextLayout(FontCache::getInstance())
 	, fStyleRuns(new(std::nothrow) StyleRunList())
 {
@@ -418,6 +419,13 @@ Text::GetText() const
 	return fText.String();
 }
 
+// GetCharCount
+int32
+Text::GetCharCount() const
+{
+	return fCharCount;
+}
+
 // Insert
 void
 Text::Insert(int32 textOffset, const char* utf8String,
@@ -435,14 +443,16 @@ Text::Insert(int32 textOffset, const char* utf8String,
 	CharacterStyleRef styleRef(characterStyle);
 
 	BString text(utf8String);
+	int32 charCount = text.CountChars();
 
 	StyleRun styleRun(styleRef);
-	styleRun.SetLength(text.CountChars());
+	styleRun.SetLength(charCount);
 
 	if (!fStyleRuns->Insert(textOffset, styleRun))
 		return;
 
 	fText.InsertChars(text, textOffset);
+	fCharCount += charCount;
 
 	styleRef.Detach();
 
@@ -458,6 +468,7 @@ Text::Remove(int32 textOffset, int32 length)
 
 	fText.RemoveChars(textOffset, length);
 	fStyleRuns->Remove(textOffset, length);
+	fCharCount -= length;
 
 	_UpdateLayout();
 }
@@ -545,6 +556,8 @@ Text::_UpdateLayout()
 	
 //	printf("  chars: %ld, total run length: %ld\n",
 //		fText.CountChars(), start);
+	if (fText.CountChars() != start)
+		debugger("Text::_UpdateLayout() - StyleRunList invalid!");
 	
 	fTextLayout.setText(fText.String());
 

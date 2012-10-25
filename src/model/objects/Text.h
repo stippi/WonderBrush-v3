@@ -43,6 +43,8 @@ public:
 			
 			const char*			GetText() const;
 
+			int32				GetCharCount() const;
+
 			void				Insert(int32 textOffset,
 									const char* utf8String,
 									const char* fontFilePath, double size,
@@ -69,6 +71,7 @@ private:
 
 private:
 			BString				fText;
+			int32				fCharCount;
 			TextLayout			fTextLayout;
 			StyleRunList*		fStyleRuns;
 };
