@@ -107,18 +107,21 @@ SOURCES += \
 	platform/qt/PlatformScrollArea.cpp \
 	platform/qt/PlatformSemaphoreManager.cpp \
 	platform/qt/PlatformThread.cpp \
-	platform/qt/system/BAppDefs.cpp \
 	platform/qt/system/ArchivingManagers.cpp \
 	platform/qt/system/BAlignment.cpp \
+	platform/qt/system/BAppDefs.cpp \
 	platform/qt/system/BArchivable.cpp \
 	platform/qt/system/BBitmap.cpp \
 	platform/qt/system/BByteOrder.cpp \
+	platform/qt/system/BControl.cpp \
 	platform/qt/system/BCursor.cpp \
 	platform/qt/system/BDataIO.cpp \
 	platform/qt/system/BFile.cpp \
 	platform/qt/system/BFlattenable.cpp \
+	platform/qt/system/BGradient.cpp \
 	platform/qt/system/BGraphicsDefs.cpp \
 	platform/qt/system/BInterfaceDefs.cpp \
+	platform/qt/system/BInvoker.cpp \
 	platform/qt/system/BHandler.cpp \
 	platform/qt/system/BList.cpp \
 	platform/qt/system/BLocker.cpp \
@@ -245,11 +248,13 @@ HEADERS  += \
 	platform/qt/system/BAlignment.h \
 	platform/qt/system/BAppDefs.h \
 	platform/qt/system/BArchivable.h \
+	platform/qt/system/BAutoDeleter.h \
 	platform/qt/system/BAutolock.h \
 	platform/qt/system/BBeBuild.h \
 	platform/qt/system/BBitmap.h \
 	platform/qt/system/BByteOrder.h \
 	platform/qt/system/Bclipping.h \
+	platform/qt/system/BControl.h \
 	platform/qt/system/BCursor.h \
 	platform/qt/system/BDataIO.h \
 	platform/qt/system/BDebug.h \
@@ -257,10 +262,12 @@ HEADERS  += \
 	platform/qt/system/BErrors.h \
 	platform/qt/system/BFile.h \
 	platform/qt/system/BFlattenable.h \
+	platform/qt/system/BGradient.h \
 	platform/qt/system/BGraphicsDefs.h \
 	platform/qt/system/BHandler.h \
 	platform/qt/system/Bimage.h \
 	platform/qt/system/BInterfaceDefs.h \
+	platform/qt/system/BInvoker.h \
 	platform/qt/system/BList.h \
 	platform/qt/system/BLocker.h \
 	platform/qt/system/BMessage.h \
@@ -289,11 +296,13 @@ HEADERS  += \
 	platform/qt/system/include/Alignment.h \
 	platform/qt/system/include/AppDefs.h \
 	platform/qt/system/include/Archivable.h \
+	platform/qt/system/include/AutoDeleter.h \
 	platform/qt/system/include/Autolock.h \
 	platform/qt/system/include/BeBuild.h \
 	platform/qt/system/include/Bitmap.h \
 	platform/qt/system/include/ByteOrder.h \
 	platform/qt/system/include/clipping.h \
+	platform/qt/system/include/Control.h \
 	platform/qt/system/include/Cursor.h \
 	platform/qt/system/include/DataIO.h \
 	platform/qt/system/include/Debug.h \
@@ -301,10 +310,12 @@ HEADERS  += \
 	platform/qt/system/include/Errors.h \
 	platform/qt/system/include/File.h \
 	platform/qt/system/include/Flattenable.h \
+	platform/qt/system/include/Gradient.h \
 	platform/qt/system/include/GraphicsDefs.h \
 	platform/qt/system/include/Handler.h \
 	platform/qt/system/include/image.h \
 	platform/qt/system/include/InterfaceDefs.h \
+	platform/qt/system/include/Invoker.h \
 	platform/qt/system/include/List.h \
 	platform/qt/system/include/Locker.h \
 	platform/qt/system/include/Message.h \
