@@ -16,6 +16,7 @@ class BMessageRunner;
 class Document;
 class Layer;
 class Text;
+class TextLayout;
 
 enum {
 	MSG_LAYOUT_CHANGED			= 'lych',
@@ -34,6 +35,15 @@ public:
 	virtual	void				Cleanup();
 
 	virtual	bool				MessageReceived(BMessage* message,
+									Command** _command);
+
+	// modifiers
+	virtual	void				ModifiersChanged(uint32 modifiers);
+
+	// TODO: mouse wheel
+	virtual	bool				HandleKeyDown(const StateView::KeyEvent& event,
+									Command** _command);
+	virtual	bool				HandleKeyUp(const StateView::KeyEvent& event,
 									Command** _command);
 
 	virtual void				Draw(BView* view, BRect updateRect);
@@ -60,8 +70,10 @@ public:
 									bool modifySelection = false);
 
 			void				OffsetTextBy(BPoint offset);
-			void				Insert(int32 textOffset, const char* text);
-			void				Remove(int32 textOffset, int32 length);
+			void				Insert(int32 textOffset, const char* text,
+									bool setCaretOffset = true);
+			void				Remove(int32 textOffset, int32 length,
+									bool setCaretOffset = true);
 			void				SetSize(float size);
 			void				SetSize(float size, int32 textOffset,
 									int32 length);
@@ -77,6 +89,17 @@ private:
 			
 			void				_DrawControls(BView* view);
 			void				_DrawCaret(BView* view, int32 textOffset);
+
+			void				_LineStart();
+			void				_LineEnd();
+
+			void				_LineUp();
+			void				_LineDown();
+			void				_MoveToLine(TextLayout& layout,
+									int32 lineIndex);
+
+			void				_SetCaretOffset(int32 offset,
+									bool updateAnchor);
 
 private:
 			class PickTextState;
@@ -103,6 +126,7 @@ private:
 
 			int32				fCaretOffset;
 			bool				fShowCaret;
+			double				fCaretAnchorX;
 			BMessageRunner*		fCaretPulseRunner;
 
 			StyleRef			fStyle;

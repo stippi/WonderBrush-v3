@@ -220,6 +220,7 @@ TextToolState::TextToolState(StateView* view, Document* document,
 	, fText(NULL)
 	
 	, fCaretOffset(0)
+	, fCaretAnchorX(0.0)
 	, fShowCaret(true)
 	, fCaretPulseRunner(NULL)
 	
@@ -290,6 +291,104 @@ TextToolState::MessageReceived(BMessage* message, Command** _command)
 
 	return handled;
 }
+
+// #pragma mark -
+
+// ModifiersChanged
+void
+TextToolState::ModifiersChanged(uint32 modifiers)
+{
+	DragStateViewState::ModifiersChanged(modifiers);
+}
+
+// HandleKeyDown
+bool
+TextToolState::HandleKeyDown(const StateView::KeyEvent& event,
+	Command** _command)
+{
+	if (fText != NULL) {
+		*_command = NULL;
+
+		switch (event.key) {
+			case B_UP_ARROW:
+				_LineUp();
+				break;
+			case B_DOWN_ARROW:
+				_LineDown();
+				break;
+			case B_LEFT_ARROW:
+				_SetCaretOffset(fCaretOffset - 1, true);
+				break;
+			case B_RIGHT_ARROW:
+				_SetCaretOffset(fCaretOffset + 1, true);
+				break;
+
+			case B_HOME:
+				//_SetCaretOffset(0, true);
+				_LineStart();
+				break;
+			case B_END:
+				//_SetCaretOffset(fText->GetCharCount(), true);
+				_LineEnd();
+				break;
+
+			case B_ENTER:
+				Insert(fCaretOffset, "\n");
+				break;
+			case B_SPACE:
+				Insert(fCaretOffset, " ");
+				break;
+			case B_TAB:
+				Insert(fCaretOffset, " ");
+				break;
+
+			case B_ESCAPE:
+				SetText(NULL, true);
+				break;
+
+			case B_BACKSPACE:
+				if (fCaretOffset > 0)
+					Remove(fCaretOffset - 1, 1);
+				break;
+			case B_DELETE:
+				if (fCaretOffset < fText->GetCharCount())
+					Remove(fCaretOffset, 1);
+				break;
+			case B_INSERT:
+				// TODO: Toggle insert mode
+				break;
+
+			case B_PAGE_UP:
+			case B_PAGE_DOWN:
+			case B_SUBSTITUTE:
+			case B_FUNCTION_KEY:
+			case B_KATAKANA_HIRAGANA:
+			case B_HANKAKU_ZENKAKU:
+				break;
+
+			default:
+				if (event.bytes != NULL && event.length > 0) {
+					// Handle null-termintating the string
+					BString text(event.bytes, event.length);
+					Insert(fCaretOffset, text.String());
+				}
+				break;
+		}
+		return true;
+	}
+	
+	return DragStateViewState::HandleKeyDown(event, _command);
+}
+
+// HandleKeyUp
+bool
+TextToolState::HandleKeyUp(const StateView::KeyEvent& event,
+	Command** _command)
+{
+	return DragStateViewState::HandleKeyUp(event, _command);
+}
+
+// #pragma mark -
 
 // Draw
 void
@@ -482,6 +581,7 @@ TextToolState::SetText(Text* text, bool modifySelection)
 	}
 
 	fCaretOffset = 0;
+	fCaretAnchorX = 0.0;
 
 	_UpdateConfigView();
 }
@@ -500,21 +600,28 @@ TextToolState::OffsetTextBy(BPoint offset)
 
 // Insert
 void
-TextToolState::Insert(int32 textOffset, const char* text)
+TextToolState::Insert(int32 textOffset, const char* text,
+	bool setCaretOffset)
 {
 	if (fText != NULL) {
 		fText->Insert(textOffset, text, "DejaVuSerif.ttf", fSize, fStyle);
-		UpdateBounds();
+		if (setCaretOffset)
+			_SetCaretOffset(textOffset + BString(text).CountChars(), true);
+		else
+			UpdateBounds();
 	}
 }
 
 // Remove
 void
-TextToolState::Remove(int32 textOffset, int32 length)
+TextToolState::Remove(int32 textOffset, int32 length, bool setCaretOffset)
 {
 	if (fText != NULL) {
 		fText->Remove(textOffset, length);
-		UpdateBounds();
+		if (setCaretOffset)
+			_SetCaretOffset(textOffset, true);
+		else
+			UpdateBounds();
 	}
 }
 
@@ -560,9 +667,7 @@ TextToolState::Width() const
 void
 TextToolState::SelectionChanged(int32 startOffset, int32 endOffset)
 {
-	fCaretOffset = startOffset;
-	fShowCaret = true;
-	UpdateBounds();
+	_SetCaretOffset(startOffset, true);
 }
 
 // #pragma mark - private
@@ -667,5 +772,96 @@ TextToolState::_DrawCaret(BView* view, int32 textOffset)
 	view->FillShape(&shape);
 	view->SetFlags(flags);
 	view->PopState();
+}
+
+// _LineStart
+void
+TextToolState::_LineStart()
+{
+	TextLayout& layout = fText->getTextLayout();
+	
+	int lineIndex = layout.getLineIndex(fCaretOffset);
+	_SetCaretOffset(layout.getFirstOffsetOnLine(lineIndex), true);
+}
+
+// _LineEnd
+void
+TextToolState::_LineEnd()
+{
+	TextLayout& layout = fText->getTextLayout();
+	
+	int lineIndex = layout.getLineIndex(fCaretOffset);
+	_SetCaretOffset(layout.getLastOffsetOnLine(lineIndex), true);
+}
+
+// _LineUp
+void
+TextToolState::_LineUp()
+{
+	TextLayout& layout = fText->getTextLayout();
+	
+	int lineIndex = layout.getLineIndex(fCaretOffset);
+	_MoveToLine(layout, lineIndex - 1);
+}
+
+// _LineDown
+void
+TextToolState::_LineDown()
+{
+	TextLayout& layout = fText->getTextLayout();
+	
+	int lineIndex = layout.getLineIndex(fCaretOffset);
+	_MoveToLine(layout, lineIndex + 1);
+}
+
+// _MoveToLine
+void
+TextToolState::_MoveToLine(TextLayout& layout, int32 lineIndex)
+{
+	if (lineIndex < 0 || lineIndex >= layout.getLineCount())
+		return;
+	
+	double x1;
+	double y1;
+	double x2;
+	double y2;
+	layout.getLineBounds(lineIndex , &x1, &y1, &x2, &y2);
+	
+	bool rightOfCenter;
+	int32 textOffset = layout.getOffset(fCaretAnchorX, (y1 + y2) / 2,
+		rightOfCenter);
+
+	if (rightOfCenter)
+		textOffset++;
+
+	_SetCaretOffset(textOffset, false);
+}
+
+// _SetCaretOffset
+void
+TextToolState::_SetCaretOffset(int32 offset, bool updateAnchor)
+{
+	if (offset < 0)
+		offset = 0;
+	if (offset > fText->GetCharCount())
+		offset = fText->GetCharCount();
+
+	if (offset == fCaretOffset)
+		return;
+
+	fCaretOffset = offset;
+	fShowCaret = true;
+	
+	if (updateAnchor) {
+		double x1;
+		double y1;
+		double x2;
+		double y2;
+		
+		fText->getTextLayout().getTextBounds(fCaretOffset, x1, y1, x2, y2);
+		fCaretAnchorX = x1;
+	}
+	
+	UpdateBounds();
 }
 
