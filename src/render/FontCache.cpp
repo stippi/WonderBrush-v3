@@ -4,7 +4,6 @@
  */
 #include "FontCache.h"
 
-
 FontCache::FontCache(int dpiX, int dpiY)
 	:
 	RWLocker(),
