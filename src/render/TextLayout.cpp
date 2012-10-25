@@ -636,6 +636,36 @@ TextLayout::getLineOffsets(int offsets[], unsigned count)
 }
 
 
+int
+TextLayout::getFirstOffsetOnLine(int lineIndex)
+{
+	validateLayout();
+	
+	if (lineIndex < 0)
+		return 0;
+	
+	if (lineIndex >= (int)fLineInfoCount)
+		return fGlyphInfoCount;
+
+	return fLineInfoBuffer[lineIndex].startOffset;
+}
+
+
+int
+TextLayout::getLastOffsetOnLine(int lineIndex)
+{
+	validateLayout();
+
+	if (lineIndex < 0)
+		return 0;
+	
+	if (lineIndex >= (int)fLineInfoCount - 1)
+		return fGlyphInfoCount;
+
+	return fLineInfoBuffer[lineIndex + 1].startOffset - 1;
+}
+
+
 unsigned
 TextLayout::getOffset(double x, double y, bool& rightOfCenter)
 {

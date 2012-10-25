@@ -251,6 +251,9 @@ public:
 		double* x2, double* y2);
 
 	int getLineOffsets(int offsets[], unsigned count);
+	
+	int getFirstOffsetOnLine(int lineIndex);
+	int getLastOffsetOnLine(int lineIndex);
 
 	unsigned getOffset(double x, double y, bool& rightOfCenter);
 
