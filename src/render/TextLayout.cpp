@@ -412,6 +412,10 @@ TextLayout::addStyleRun(int start, const char* fontPath,
 	bool underline, unsigned underlineStyle,
 	int underlineRed, int underlineGreen, int underlineBlue)
 {
+//printf("TextLayout::addStyleRun(%d, font('%s', %.1f, %u), "
+//	"color(%d, %d, %d)) (index: %u)\n",
+//	start, fontPath, fontSize, fontStyle, fgRed, fgGreen, fgBlue,
+//	fStyleRunCount);
 	// Enlarge buffer if necessary
 	if (fStyleRunCount == fStyleRunBufferSize) {
 		int size = fStyleRunBufferSize + 64;
@@ -942,7 +946,7 @@ TextLayout::init(const char* text, FontEngine& fontEngine,
     double height = fFont.getSize();
 
 	if (!fontEngine.load_font(resolvedFontPath.String(), 0,
-		agg::glyph_ren_outline, height, height)) {
+		agg::glyph_ren_outline, height * scaleX * subpixelScale, height)) {
 		fprintf(stderr, "Error loading font: '%s'\n",
 			resolvedFontPath.String());
 	}
@@ -950,7 +954,6 @@ TextLayout::init(const char* text, FontEngine& fontEngine,
 	fAscent = fontEngine.ascender();
 	fDescent = fontEngine.descender();
 
-    fontEngine.width(height * scaleX * subpixelScale);
     fontEngine.hinting(hinting);
 
 	const char* p = text;
@@ -971,9 +974,12 @@ TextLayout::init(const char* text, FontEngine& fontEngine,
 				resolvedFontPath = FontCache::getInstance()
 					->resolveFont(nextStyleRun->font.getName());
 
-				fontEngine.load_font(resolvedFontPath.String(), 0,
-					agg::glyph_ren_outline, height, height);
-				fontEngine.width(height * scaleX * subpixelScale);
+				if (!fontEngine.load_font(resolvedFontPath.String(), 0,
+					agg::glyph_ren_outline, height * scaleX * subpixelScale,
+					height)) {
+					fprintf(stderr, "Error loading font: '%s'\n",
+						resolvedFontPath.String());
+				}
 
 				// Init these two after having loaded the font in the engine.
 				// But only do so if the StyleRun does not provide it's own
@@ -1020,6 +1026,8 @@ TextLayout::layout(FontEngine& fontEngine, FontManager& fontManager,
 
 	if (fGlyphInfoCount == 0)
 		return;
+
+	AutoWriteLocker _(FontCache::getInstance());
 
 	const double width = fWidth * scaleX * subpixelScale;
 	const double additionalGlyphSpacing = fGlyphSpacing * scaleX
@@ -1207,9 +1215,12 @@ TextLayout::layout(FontEngine& fontEngine, FontManager& fontManager,
 						BString resolvedFontPath = FontCache::getInstance()
 							->resolveFont(lastLoadedStyleRun->font.getName());
 
-						fontEngine.load_font(resolvedFontPath.String(),
-							0, agg::glyph_ren_outline, size, size);
-						fontEngine.width(size * scaleX * subpixelScale);
+						if (!fontEngine.load_font(resolvedFontPath.String(), 0,
+							agg::glyph_ren_outline,
+							size * scaleX * subpixelScale, size)) {
+							fprintf(stderr, "Error loading font: '%s'\n",
+								resolvedFontPath.String());
+						}
 					}
 
 					fontEngine.add_kerning(
