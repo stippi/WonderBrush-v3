@@ -111,6 +111,13 @@ private:
 	friend class Private;
 
 private:
+			status_t			_Init(BRect bounds, uint32 flags,
+									color_space colorSpace,
+									int32 bytesPerRow = B_ANY_BYTES_PER_ROW,
+									screen_id screenID = B_MAIN_SCREEN_ID);
+
+
+private:
 			uint8*				fData;
 			int32				fSize;
 			int32				fBytesPerRow;
