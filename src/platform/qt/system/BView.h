@@ -69,6 +69,7 @@ const uint32 B_INVALIDATE_AFTER_LAYOUT	= 0x00080000UL;	/* 20 */
 class BView : public PlatformWidgetHandler<QWidget>
 {
 public:
+								BView(BMessage* archive);
 								BView(const char* name, uint32 flags);
 								BView(BRect frame, const char* name,
 									uint32 resizeMask, uint32 flags);
@@ -76,9 +77,15 @@ public:
 
 			BWindow*			Window() const;
 
+			BRect				Bounds() const;
+
+			uint32				Flags() const;
+	virtual	void				SetFlags(uint32 flags);
+
 			void				Invalidate(BRect invalRect);
 			void				Invalidate(const BRegion* invalRegion);
 			void				Invalidate();
+			void				InvalidateLayout(bool descendants = false);
 
 			void				ConvertToScreen(BPoint* pt) const
 									{ *pt = ConvertToScreen(*pt); }
@@ -102,6 +109,15 @@ public:
 
 	virtual	void				AttachedToWindow();
 	virtual	void				DetachedFromWindow();
+	virtual	void				AllAttached();
+	virtual	void				AllDetached();
+
+	virtual	void				WindowActivated(bool state);
+
+	virtual	void				MouseDown(BPoint where);
+	virtual	void				MouseUp(BPoint where);
+	virtual	void				MouseMoved(BPoint where, uint32 code,
+									const BMessage* dragMessage);
 
 	virtual	void				KeyDown(const char* bytes, int32 numBytes);
 	virtual	void				KeyUp(const char* bytes, int32 numBytes);
