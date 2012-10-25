@@ -49,10 +49,7 @@ Transformable::LoadFrom(const double matrix[9])
 void
 Transformable::SetTransformable(const Transformable& other)
 {
-	if (*this != other) {
-		*this = other;
-		TransformationChanged();
-	}
+	*this = other;
 }
 
 // operator=
