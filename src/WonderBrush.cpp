@@ -74,10 +74,10 @@ WonderBrushBase::WonderBrushBase(BRect bounds)
 
 	Text* text = new Text((rgb_color){ 0, 0, 0, 255 });
 	text->TranslateBy(BPoint(522, 31));
-	text->SetFont("DejaVuSerif.ttf", 24.0);
 	text->SetWidth(200.0);
 	text->SetJustify(true);
-	text->SetText("This is a test of the new text layouting features.");
+	text->SetText("This is a test of the new text layouting features.",
+		"DejaVuSerif.ttf", 24.0, (rgb_color) { 0, 0, 0, 255 });
 	fDocument->RootLayer()->AddObject(text);
 
 	Rect* transformedRect = new Rect(BRect(150, 200, 210, 330),

@@ -112,13 +112,20 @@ TextTool::SetOption(uint32 option, int32 value)
 void
 TextTool::SetOption(uint32 option, const char* value)
 {
-	TextToolState* state = static_cast<TextToolState*>(fViewState);
-
-	switch (option) {
-		case TEXT:
-			state->SetString(value);
-			break;
-	}
 }
 
+// Insert
+void
+TextTool::Insert(int32 textOffset, const char* text)
+{
+	TextToolState* state = static_cast<TextToolState*>(fViewState);
+	state->Insert(textOffset, text);
+}
 
+// Remove
+void
+TextTool::Remove(int32 textOffset, int32 length)
+{
+	TextToolState* state = static_cast<TextToolState*>(fViewState);
+	state->Remove(textOffset, length);
+}

@@ -10,6 +10,7 @@
 
 #include "DragStateViewState.h"
 #include "Selection.h"
+#include "Style.h"
 
 class BMessageRunner;
 class Document;
@@ -59,8 +60,11 @@ public:
 									bool modifySelection = false);
 
 			void				OffsetTextBy(BPoint offset);
-			void				SetString(const char* text);
+			void				Insert(int32 textOffset, const char* text);
+			void				Remove(int32 textOffset, int32 length);
 			void				SetSize(float size);
+			void				SetSize(float size, int32 textOffset,
+									int32 length);
 			
 			void				SetWidth(float width);
 			float				Width() const;
@@ -100,6 +104,9 @@ private:
 			int32				fCaretOffset;
 			bool				fShowCaret;
 			BMessageRunner*		fCaretPulseRunner;
+
+			StyleRef			fStyle;
+			double				fSize;
 };
 
 #endif // TEXT_TOOL_STATE_H

@@ -19,6 +19,7 @@
 #include "ObjectAddedCommand.h"
 #include "support.h"
 #include "Text.h"
+#include "ui_defines.h"
 
 // DragLeftTopState
 class TextToolState::DragLeftTopState : public DragStateViewState::DragState {
@@ -204,10 +205,10 @@ TextToolState::TextToolState(StateView* view, Document* document,
 		Selection* selection, const BMessenger& configView)
 	: DragStateViewState(view)
 
-	, fPickTextState(new (std::nothrow) PickTextState(this))
-	, fCreateTextState(new (std::nothrow) CreateTextState(this))
-	, fDragLeftTopState(new (std::nothrow) DragLeftTopState(this))
-	, fDragWidthState(new (std::nothrow) DragWidthState(this))
+	, fPickTextState(new(std::nothrow) PickTextState(this))
+	, fCreateTextState(new(std::nothrow) CreateTextState(this))
+	, fDragLeftTopState(new(std::nothrow) DragLeftTopState(this))
+	, fDragWidthState(new(std::nothrow) DragWidthState(this))
 
 	, fDocument(document)
 	, fSelection(selection)
@@ -221,12 +222,17 @@ TextToolState::TextToolState(StateView* view, Document* document,
 	, fCaretOffset(0)
 	, fShowCaret(true)
 	, fCaretPulseRunner(NULL)
+	
+	, fStyle(new(std::nothrow) Style(), true)
+	, fSize(12.0)
 {
 	// TODO: Find a way to change this later...
 	SetInsertionInfo(fDocument->RootLayer(),
 		fDocument->RootLayer()->CountObjects());
 
 	fSelection->AddListener(this);
+
+	fStyle.Get()->SetFillPaint(Paint(kBlack));
 }
 
 // destructor
@@ -416,16 +422,16 @@ TextToolState::CreateText(BPoint canvasLocation)
 		return false;
 	}
 
-	Text* text = new(std::nothrow) Text((rgb_color){ 0, 0, 0, 255 });
+	Text* text = new(std::nothrow) Text(kBlack);
 	if (text == NULL) {
 		fprintf(stderr, "TextToolState::CreateText(): Failed to allocate "
 			"Text. Out of memory\n");
 		return false;
 	}
 
-	text->SetFont("DejaVuSerif.ttf", 12.0);
 	text->SetWidth(0.0);
-	text->SetText("Text");
+	
+	text->SetText("Text", "DejaVuSerif.ttf", fSize, fStyle);
 	text->TranslateBy(canvasLocation);
 
 	if (fInsertionIndex < 0)
@@ -492,12 +498,22 @@ TextToolState::OffsetTextBy(BPoint offset)
 	}
 }
 
-// SetString
+// Insert
 void
-TextToolState::SetString(const char* text)
+TextToolState::Insert(int32 textOffset, const char* text)
 {
 	if (fText != NULL) {
-		fText->SetText(text);
+		fText->Insert(textOffset, text, "DejaVuSerif.ttf", fSize, fStyle);
+		UpdateBounds();
+	}
+}
+
+// Remove
+void
+TextToolState::Remove(int32 textOffset, int32 length)
+{
+	if (fText != NULL) {
+		fText->Remove(textOffset, length);
 		UpdateBounds();
 	}
 }
@@ -506,8 +522,17 @@ TextToolState::SetString(const char* text)
 void
 TextToolState::SetSize(float size)
 {
+	fSize = size;
+}
+
+// SetSize
+void
+TextToolState::SetSize(float size, int32 textOffset, int32 length)
+{
+	fSize = size;
 	if (fText != NULL) {
-		fText->SetFont(fText->getTextLayout().getFont().getName(), size);
+// TODO: Apply size to all fonts within range
+//		fText->SetFont(fText->getTextLayout().getFont().getName(), size);
 		UpdateBounds();
 	}
 }

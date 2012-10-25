@@ -31,6 +31,9 @@ public:
 	virtual	void				SetOption(uint32 option, int32 value);
 	virtual void				SetOption(uint32 option, const char* value);
 
+			void				Insert(int32 textOffset, const char* text);
+			void				Remove(int32 textOffset, int32 length);
+
 private:
 	virtual	ViewState*			MakeViewState(StateView* view,
 									Document* document, Selection* selection);
