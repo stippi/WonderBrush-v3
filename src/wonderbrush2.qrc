@@ -1,0 +1,5 @@
+<RCC>
+    <qresource prefix="/resources">
+        <file alias="rdef">WonderBrush.rdef</file>
+    </qresource>
+</RCC>

@@ -103,6 +103,7 @@ SOURCES += \
 	platform/qt/platform_support.cpp \
 	platform/qt/platform_support_ui.cpp \
 	platform/qt/PlatformMessageEvent.cpp \
+	platform/qt/PlatformResourceParser.cpp \
 	platform/qt/PlatformScrollArea.cpp \
 	platform/qt/PlatformSemaphoreManager.cpp \
 	platform/qt/PlatformThread.cpp \
@@ -132,6 +133,7 @@ SOURCES += \
 	platform/qt/system/BRect.cpp \
 	platform/qt/system/BRegion.cpp \
 	platform/qt/system/BRegionSupport.cpp \
+	platform/qt/system/BResources.cpp \
 	platform/qt/system/BSize.cpp \
 	platform/qt/system/BScreen.cpp \
 	platform/qt/system/BString.cpp \
@@ -234,6 +236,7 @@ HEADERS  += \
 	model/snapshots/TextSnapshot.h \
 	platform/qt/platform_support_ui.h \
 	platform/qt/PlatformMessageEvent.h \
+	platform/qt/PlatformResourceParser.h \
 	platform/qt/PlatformScrollArea.h \
 	platform/qt/PlatformSemaphoreManager.h \
 	platform/qt/PlatformThread.h \
@@ -272,6 +275,7 @@ HEADERS  += \
 	platform/qt/system/BRect.h \
 	platform/qt/system/BRegion.h \
 	platform/qt/system/BRegionSupport.h \
+	platform/qt/system/BResources.h \
 	platform/qt/system/BScreen.h \
 	platform/qt/system/BSize.h \
 	platform/qt/system/BStorageDefs.h \
@@ -315,6 +319,7 @@ HEADERS  += \
 	platform/qt/system/include/Rect.h \
 	platform/qt/system/include/Region.h \
 	platform/qt/system/include/RegionSupport.h \
+	platform/qt/system/include/Resources.h \
 	platform/qt/system/include/Screen.h \
 	platform/qt/system/include/Size.h \
 	platform/qt/system/include/StorageDefs.h \
@@ -377,3 +382,6 @@ HEADERS  += \
 
 FORMS += \
 	gui/qt/Window.ui
+
+RESOURCES += \
+    wonderbrush2.qrc

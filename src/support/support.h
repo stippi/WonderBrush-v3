@@ -8,6 +8,7 @@
 
 
 class BPositionIO;
+class BResources;
 class BString;
 
 
@@ -154,5 +155,6 @@ status_t write_string(BPositionIO* stream, BString& string);
 
 int32 get_optimal_worker_thread_count();
 
+status_t get_app_resources(BResources& resources);
 
 # endif // SUPPORT_H
