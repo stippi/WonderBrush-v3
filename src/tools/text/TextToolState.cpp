@@ -278,6 +278,7 @@ TextToolState::TextToolState(StateView* view, Document* document,
 // destructor
 TextToolState::~TextToolState()
 {
+	SetText(NULL);
 	fSelection->RemoveListener(this);
 
 	delete fPickTextState;

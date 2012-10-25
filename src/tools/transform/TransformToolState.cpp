@@ -600,6 +600,7 @@ TransformToolState::TransformToolState(StateView* view, const BRect& box,
 // destructor
 TransformToolState::~TransformToolState()
 {
+	SetObject(NULL);
 	fSelection->RemoveListener(this);
 
 	delete fPickObjectState;
