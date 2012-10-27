@@ -7,6 +7,7 @@ local sourceDirs =
 	gui
 	gui/haiku
 	gui/misc
+	gui/misc/haiku
 	gui/tools
 	model
 	model/document
@@ -52,6 +53,7 @@ SubDirHdrs [ FDirName $(TOP) src gui columntreeview ] ;
 SubDirHdrs [ FDirName $(TOP) src gui haiku ] ;
 SubDirHdrs [ FDirName $(TOP) src gui icons ] ;
 SubDirHdrs [ FDirName $(TOP) src gui misc ] ;
+SubDirHdrs [ FDirName $(TOP) src gui misc haiku ] ;
 SubDirHdrs [ FDirName $(TOP) src gui popupcontrol ] ;
 SubDirHdrs [ FDirName $(TOP) src gui propertylistview ] ;
 SubDirHdrs [ FDirName $(TOP) src gui propertylistview
@@ -95,9 +97,6 @@ Application WonderBrush :
 	SetPropertiesCommand.cpp
 
 	# gui/misc
-	DualSlider.cpp
-	IconButton.cpp
-	IconOptionsControl.cpp
 	InputTextView.cpp
 	NavigatorView.cpp
 	NummericalTextView.cpp
@@ -105,6 +104,11 @@ Application WonderBrush :
 	StringTextView.cpp
 	SwatchView.cpp
 	TextViewPopup.cpp
+
+	# gui/misc/haiku
+	DualSlider.cpp
+	IconButton.cpp
+	IconOptionsControl.cpp
 
 	# gui/tools
 	BrushToolConfigView.cpp

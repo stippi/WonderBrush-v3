@@ -30,6 +30,8 @@
 #include <Window.h>
 #include "IconUtils.h"
 
+#include "support.h"
+
 using std::nothrow;
 
 // constructor
@@ -366,13 +368,8 @@ IconButton::IsPressed() const
 status_t
 IconButton::SetIcon(int32 resourceID, int32 size)
 {
-	app_info info;
-	status_t status = be_app->GetAppInfo(&info);
-	if (status != B_OK)
-		return status;
-
-	BResources resources(&info.ref);
-	status = resources.InitCheck();
+	BResources resources;
+	status_t status = get_app_resources(resources);
 	if (status != B_OK)
 		return status;
 

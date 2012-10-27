@@ -1,0 +1,85 @@
+#include "IconOptionsControl.h"
+
+#include <QHBoxLayout>
+#include <QVBoxLayout>
+
+#include "IconButton.h"
+
+
+IconOptionsControl::IconOptionsControl(QWidget* parent)
+	:
+	BControl(NULL, NULL, NULL, 0)
+{
+	setParent(parent);
+	_Init(B_HORIZONTAL);
+}
+
+
+IconOptionsControl::IconOptionsControl(const char* name, const char* label,
+	BMessage* message, BHandler* target, enum orientation orientation)
+	:
+	BControl(name, label, message, 0)
+{
+	_Init(orientation);
+}
+
+
+void
+IconOptionsControl::AddOption(IconButton* icon)
+{
+qDebug("IconOptionsControl::AddOption(%p)", icon);
+	if (icon == NULL)
+		return;
+
+	// first icon added, mark it
+	icon->SetPressed(!_FindIcon(0));
+
+	fIconGroupLayout->addWidget(icon);
+	icon->SetTarget(this);
+}
+
+
+void
+IconOptionsControl::MessageReceived(BMessage* message)
+{
+qDebug("IconOptionsControl::MessageReceived()");
+	// catch a message from the attached IconButtons to
+	// handle switching the pressed icon
+	BHandler* source;
+	if (message->FindPointer("be:source", (void**)&source) >= B_OK) {
+		if (IconButton* sourceIcon = dynamic_cast<IconButton*>(source)) {
+			for (int32 i = 0; IconButton* button = _FindIcon(i); i++) {
+				if (button == sourceIcon) {
+					SetValue(i);
+					break;
+				}
+			}
+			// forward the message
+			Invoke(message);
+			return;
+		}
+	}
+	BControl::MessageReceived(message);
+}
+
+
+void
+IconOptionsControl::_Init(enum orientation orientation)
+{
+	QBoxLayout* layout = new QHBoxLayout(this);
+
+	fIconGroup = new(std::nothrow) QWidget(this);
+	layout->addWidget(fIconGroup);
+
+	if (orientation == B_HORIZONTAL)
+		fIconGroupLayout = new(std::nothrow) QHBoxLayout(fIconGroup);
+	else
+		fIconGroupLayout = new(std::nothrow) QVBoxLayout(fIconGroup);
+}
+
+
+IconButton*
+IconOptionsControl::_FindIcon(int32 index) const
+{
+	return dynamic_cast<IconButton*>(fIconGroup->children().value(index));
+}

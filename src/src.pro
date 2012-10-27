@@ -12,6 +12,7 @@ INCLUDEPATH += /usr/include/freetype2
 INCLUDEPATH += agg/font_freetype
 INCLUDEPATH += agg/include
 INCLUDEPATH += cimg
+INCLUDEPATH += icon/include
 
 #INCLUDEPATH += model
 #INCLUDEPATH += model/fills
@@ -25,6 +26,7 @@ INCLUDEPATH += cimg
 QMAKE_CXXFLAGS += -iquote $$PWD/commands
 QMAKE_CXXFLAGS += -iquote $$PWD/gui
 QMAKE_CXXFLAGS += -iquote $$PWD/gui/icons
+QMAKE_CXXFLAGS += -iquote $$PWD/gui/misc/qt
 QMAKE_CXXFLAGS += -iquote $$PWD/gui/qt
 QMAKE_CXXFLAGS += -iquote $$PWD/gui/scrollview
 QMAKE_CXXFLAGS += -iquote $$PWD/gui/scrollview/qt
@@ -44,7 +46,7 @@ QMAKE_CXXFLAGS += -iquote $$PWD/tools/pick
 QMAKE_CXXFLAGS += -iquote $$PWD/tools/text
 QMAKE_CXXFLAGS += -iquote $$PWD/tools/transform
 
-LIBS += -Lagg -lagg -Lgui/scrollview -lscrollview -ldl -lfreetype
+LIBS += -Lagg -lagg -Lgui/scrollview -lscrollview -Licon -licon -ldl -lfreetype
 
 # Weirdly we need to explicitly add libX11, since otherwise the linker complains
 # about symbol XGetWindowAttributes not being defined.
@@ -57,6 +59,9 @@ SOURCES += \
 	commands/ObjectAddedCommand.cpp \
 	commands/SetPropertiesCommand.cpp \
 	gui/ToolConfigView.cpp \
+	gui/misc/qt/DualSlider.cpp \
+	gui/misc/qt/IconButton.cpp \
+	gui/misc/qt/IconOptionsControl.cpp \
 	gui/qt/CanvasView.cpp \
 	gui/qt/Window.cpp \
 	gui/stateview/StateView.cpp \
@@ -190,6 +195,9 @@ HEADERS  += \
 	commands/ObjectAddedCommand.h \
 	commands/SetPropertiesCommand.h \
 	gui/ToolConfigView.h \
+	gui/misc/qt/DualSlider.h \
+	gui/misc/qt/IconButton.h \
+	gui/misc/qt/IconOptionsControl.h \
 	gui/qt/CanvasView.h \
 	gui/qt/Window.h \
 	gui/icons/PathPropertyIcon.h \
