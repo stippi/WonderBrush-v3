@@ -10,6 +10,7 @@
 #include <InterfaceDefs.h>
 #include <Rect.h>
 
+#include <QIcon>
 #include <QImage>
 
 
@@ -104,6 +105,7 @@ public:
 
 			QImage*				GetQImage() const
 									{ return fImage; }
+			QIcon				ToQIcon() const;
 
 	class Private;
 

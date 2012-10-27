@@ -111,6 +111,18 @@ BBitmap::Bounds() const
 }
 
 
+QIcon
+BBitmap::ToQIcon() const
+{
+	if (fImage == NULL)
+		return QIcon();
+
+	QPixmap pixmap;
+	pixmap.convertFromImage(*fImage);
+	return QIcon(pixmap);
+}
+
+
 status_t
 BBitmap::_Init(BRect bounds, uint32 flags, color_space colorSpace,
 	int32 bytesPerRow, screen_id screenID)
@@ -160,4 +172,3 @@ BBitmap::_Init(BRect bounds, uint32 flags, color_space colorSpace,
 
 	return B_OK;
 }
-
