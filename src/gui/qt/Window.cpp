@@ -1,9 +1,11 @@
 #include "Window.h"
 #include "ui_Window.h"
 
+#include "BrushTool.h"
 #include "CanvasView.h"
 #include "CommandStack.h"
 #include "Document.h"
+#include "IconButton.h"
 #include "RenderManager.h"
 #include "Tool.h"
 #include "ToolConfigView.h"
@@ -67,11 +69,11 @@ Window::AddTool(Tool* tool)
 	}
 
 	// add the tools icon
-//	IconButton* icon = tool->Icon();
-//	BMessage* message = new BMessage(MSG_SET_TOOL);
-//	message->AddInt32("tool", count);
-//	icon->SetMessage(message);
-//	fToolIconControl->AddOption(icon);
+	IconButton* icon = tool->Icon();
+	BMessage* message = new BMessage(MSG_SET_TOOL);
+	message->AddInt32("tool", count);
+	icon->SetMessage(message);
+	fUi->toolIconControl->AddOption(icon);
 
 	// add tool configuration interface
 	BView* configView = tool->ConfigView();
@@ -120,7 +122,7 @@ Window::_InitTools()
 	// create canvas tools
 //	AddTool(new(std::nothrow) PickTool());
 //	AddTool(new(std::nothrow) TransformTool());
-//	AddTool(new(std::nothrow) BrushTool());
+	AddTool(new(std::nothrow) BrushTool());
 //	AddTool(new(std::nothrow) TextTool());
 }
 

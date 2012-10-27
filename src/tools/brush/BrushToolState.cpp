@@ -6,7 +6,6 @@
 #include "BrushToolState.h"
 
 #include <Cursor.h>
-#include <Shape.h>
 
 #include <new>
 

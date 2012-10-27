@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>BrushToolConfigView</class>
+ <widget class="ToolConfigView" name="BrushToolConfigView">
+  <property name="sizePolicy">
+   <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+    <horstretch>0</horstretch>
+    <verstretch>0</verstretch>
+   </sizepolicy>
+  </property>
+  <property name="windowTitle">
+   <string>Form</string>
+  </property>
+  <layout class="QHBoxLayout" name="horizontalLayout_2">
+   <item>
+    <widget class="DualSlider" name="opacitySlider" native="true"/>
+   </item>
+   <item>
+    <widget class="DualSlider" name="radiusSlider" native="true"/>
+   </item>
+   <item>
+    <widget class="DualSlider" name="hardnessSlider" native="true"/>
+   </item>
+   <item>
+    <widget class="DualSlider" name="spacingSlider" native="true"/>
+   </item>
+   <item>
+    <widget class="Line" name="line">
+     <property name="orientation">
+      <enum>Qt::Vertical</enum>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <layout class="QVBoxLayout" name="verticalLayout">
+     <item>
+      <layout class="QHBoxLayout" name="horizontalLayout">
+       <item>
+        <widget class="QCheckBox" name="solidCheckBox">
+         <property name="text">
+          <string>Solid</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QCheckBox" name="tiltCheckBox">
+         <property name="text">
+          <string>Tilt</string>
+         </property>
+        </widget>
+       </item>
+      </layout>
+     </item>
+     <item>
+      <widget class="QCheckBox" name="subpixelsCheckBox">
+       <property name="text">
+        <string>Subpixels</string>
+       </property>
+      </widget>
+     </item>
+    </layout>
+   </item>
+  </layout>
+ </widget>
+ <customwidgets>
+  <customwidget>
+   <class>ToolConfigView</class>
+   <extends>QWidget</extends>
+   <header>ToolConfigView.h</header>
+   <container>1</container>
+  </customwidget>
+  <customwidget>
+   <class>DualSlider</class>
+   <extends>QWidget</extends>
+   <header>DualSlider.h</header>
+   <container>1</container>
+  </customwidget>
+ </customwidgets>
+ <resources/>
+ <connections/>
+</ui>

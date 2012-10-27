@@ -9,6 +9,7 @@ local sourceDirs =
 	gui/misc
 	gui/misc/haiku
 	gui/tools
+	gui/tools/haiku
 	model
 	model/document
 	model/fills
@@ -111,9 +112,11 @@ Application WonderBrush :
 	IconOptionsControl.cpp
 
 	# gui/tools
-	BrushToolConfigView.cpp
 	TextToolConfigView.cpp
 	TransformToolConfigView.cpp
+
+	# gui/tools/haiku
+	BrushToolConfigView.cpp
 
 	# gui (WonderBrush specific)
 	InspectorView.cpp

@@ -31,6 +31,8 @@ QMAKE_CXXFLAGS += -iquote $$PWD/gui/qt
 QMAKE_CXXFLAGS += -iquote $$PWD/gui/scrollview
 QMAKE_CXXFLAGS += -iquote $$PWD/gui/scrollview/qt
 QMAKE_CXXFLAGS += -iquote $$PWD/gui/stateview
+QMAKE_CXXFLAGS += -iquote $$PWD/gui/tools
+QMAKE_CXXFLAGS += -iquote $$PWD/gui/tools/qt
 QMAKE_CXXFLAGS += -iquote $$PWD/model
 QMAKE_CXXFLAGS += -iquote $$PWD/model/document
 QMAKE_CXXFLAGS += -iquote $$PWD/model/fills
@@ -66,6 +68,7 @@ SOURCES += \
 	gui/qt/Window.cpp \
 	gui/stateview/StateView.cpp \
 	gui/stateview/ViewState.cpp \
+	gui/tools/qt/BrushToolConfigView.cpp \
 	model/property/CommonPropertyIDs.cpp \
 	model/BaseObject.cpp \
 	model/Selectable.cpp \
@@ -177,8 +180,8 @@ SOURCES += \
 	tools/DragStateViewState.cpp \
 	tools/Tool.cpp \
 	tools/TransformViewState.cpp \
-#	tools/brush/BrushTool.cpp \
-#	tools/brush/BrushToolState.cpp \
+	tools/brush/BrushTool.cpp \
+	tools/brush/BrushToolState.cpp \
 #	tools/brush/pick/PickTool.cpp \
 #	tools/brush/pick/PickToolState.cpp \
 #	tools/brush/transform/ChannelTransform.cpp \
@@ -200,9 +203,11 @@ HEADERS  += \
 	gui/misc/qt/IconOptionsControl.h \
 	gui/qt/CanvasView.h \
 	gui/qt/Window.h \
+	gui/icons/BrushIcon.h \
 	gui/icons/PathPropertyIcon.h \
 	gui/stateview/StateView.h \
 	gui/stateview/ViewState.h \
+	gui/tools/qt/BrushToolConfigView.h \
 	model/BaseObject.h \
 	model/Selectable.h \
 	model/Selection.h \
@@ -388,8 +393,8 @@ HEADERS  += \
 	tools/DragStateViewState.h \
 	tools/Tool.h \
 	tools/TransformViewState.h \
-#	tools/brush/BrushTool.h \
-#	tools/brush/BrushToolState.h \
+	tools/brush/BrushTool.h \
+	tools/brush/BrushToolState.h \
 #	tools/pick/PickTool.h \
 #	tools/pick/PickToolState.h \
 #	tools/text/TextTool.h \
@@ -400,7 +405,8 @@ HEADERS  += \
 #	tools/transform/TransformToolState.h
 
 FORMS += \
-	gui/qt/Window.ui
+	gui/qt/Window.ui \
+    gui/tools/qt/BrushToolConfigView.ui
 
 RESOURCES += \
     wonderbrush2.qrc
