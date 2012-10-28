@@ -488,7 +488,7 @@ Text::SetStyle(int32 textOffset, int32 length,
 	if (characterStyle == NULL)
 		return;
 
-	CharacterStyleRef styleRef(characterStyle);
+	CharacterStyleRef styleRef(characterStyle, true);
 
 	StyleRun styleRun(styleRef);
 	styleRun.SetLength(length);
@@ -499,6 +499,42 @@ Text::SetStyle(int32 textOffset, int32 length,
 	fStyleRuns->Remove(textOffset + length, length);
 
 	styleRef.Detach();
+
+	_UpdateLayout();
+}
+
+// SetFont
+void
+Text::SetFont(int32 textOffset, int32 length, const char* fontFilePath)
+{
+	if (textOffset < 0 || textOffset + length > fCharCount || length == 0)
+		return;
+
+	while (length > 0) {
+		// TODO: Make more efficient
+		const StyleRun* run = fStyleRuns->FindStyleRun(textOffset);
+
+		CharacterStyle* characterStyle = new(std::nothrow) CharacterStyle(
+			Font(fontFilePath, run->GetStyle()->GetFont().getSize()),
+			run->GetStyle()->GetStyle());
+
+		if (characterStyle == NULL)
+			return;
+
+		CharacterStyleRef styleRef(characterStyle, true);
+
+		StyleRun replaceRun(styleRef);
+		replaceRun.SetLength(1);
+
+		if (!fStyleRuns->Insert(textOffset, replaceRun))
+			return;
+
+		fStyleRuns->Remove(textOffset + 1, 1);
+		styleRef.Detach();
+
+		textOffset++;
+		length--;
+	}
 
 	_UpdateLayout();
 }
@@ -521,13 +557,16 @@ Text::SetSize(int32 textOffset, int32 length, double size)
 		if (characterStyle == NULL)
 			return;
 
-		CharacterStyleRef styleRef(characterStyle);
+		CharacterStyleRef styleRef(characterStyle, true);
 
 		StyleRun replaceRun(styleRef);
 		replaceRun.SetLength(1);
 
-		fStyleRuns->Insert(textOffset, replaceRun);
+		if (!fStyleRuns->Insert(textOffset, replaceRun))
+			return;
+
 		fStyleRuns->Remove(textOffset + 1, 1);
+		styleRef.Detach();
 
 		textOffset++;
 		length--;
