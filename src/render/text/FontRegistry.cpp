@@ -559,7 +559,7 @@ FontRegistry::_AddFont(const BEntry& entry)
 	}
 
 	if (!duplicate) {
-		fFontFiles.AddItem((void*)fontFile, index);
+		fFontFiles.AddItem(fontFile, index);
 	} else {
 		_DeleteFontFile(fontFile);
 	}
