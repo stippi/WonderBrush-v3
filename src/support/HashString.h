@@ -1,7 +1,8 @@
 /*
- * Copyright 2004-2007, Ingo Weinhold, bonefish@users.sf.net. All rights reserved.
- * Distributed under the terms of the MIT License.
+ * Copyright 2002-2007, Ingo Weinhold <ingo_weinhold@gmx.de>
+ * All rights reserved. Distributed under the terms of the MIT license.
  */
+
 #ifndef HASH_STRING_H
 #define HASH_STRING_H
 
@@ -26,43 +27,114 @@ string_hash(const char *name)
 	return h;
 }
 
+
 #ifdef __cplusplus
 
-namespace BPrivate {
 
 // HashString
 class HashString {
 public:
-	HashString();
-	HashString(const HashString &string);
-	HashString(const char *string, int32 length = -1);
-	~HashString();
+	inline						HashString();
+	inline						HashString(const HashString& other);
+	inline						HashString(const char* string, int32 length = -1);
+	inline						~HashString();
 
-	bool SetTo(const char *string, int32 maxLength = -1);
-	void Unset();
+			bool				SetTo(const char* string, int32 maxLength = -1);
+	inline	void				Unset()				{ SetTo(NULL, 0); }
 
-	void Truncate(int32 newLength);
+			bool				Truncate(int32 newLength);
 
-	const char *GetString() const;
-	int32 GetLength() const	{ return fLength; }
+	inline	const char*			GetString() const	{ return fData->data; }
+	inline	int32				GetLength() const	{ return fLength; }
 
-	uint32 GetHashCode() const	{ return string_hash(GetString()); }
+	inline	uint32				GetHashCode() const
+									{ return string_hash(GetString()); }
 
-	HashString &operator=(const HashString &string);
-	bool operator==(const HashString &string) const;
-	bool operator!=(const HashString &string) const { return !(*this == string); }
+	inline	HashString&				operator=(const HashString& other);
+	inline	HashString&				operator=(const char* other);
+			bool				operator==(const HashString& other) const;
+			bool				operator==(const char* other) const;
+	inline	bool				operator!=(const HashString& other) const
+									{ return !(*this == other); }
+	inline	bool				operator!=(const char* other) const
+									{ return !(*this == other); }
 
 private:
-	bool _SetTo(const char *string, int32 length);
+	struct Data {
+		vint32	refCount;
+		char	data[1];
+	};
+
+			void				_Unset();
 
 private:
-	int32	fLength;
-	char	*fString;
+	static	Data				sEmptyString;
+
+			Data*				fData;
+			int32				fLength;
 };
 
-}	// namespace BPrivate
 
-using BPrivate::HashString;
+// constructor
+inline
+HashString::HashString()
+	: fData(&sEmptyString),
+	  fLength(0)
+{
+	atomic_add(&fData->refCount, 1);
+}
+
+
+// copy constructor
+inline
+HashString::HashString(const HashString& other)
+	: fData(other.fData),
+	  fLength(other.fLength)
+{
+	atomic_add(&fData->refCount, 1);
+}
+
+
+// constructor
+inline
+HashString::HashString(const char* string, int32 length)
+	: fData(NULL),
+	  fLength(0)
+{
+	SetTo(string, length);
+}
+
+
+// destructor
+inline
+HashString::~HashString()
+{
+	_Unset();
+}
+
+
+// =
+HashString &
+HashString::operator=(const HashString& other)
+{
+	if (&other != this) {
+		fData = other.fData;
+		fLength = other.fLength;
+		atomic_add(&fData->refCount, 1);
+	}
+
+	return *this;
+}
+
+
+// =
+HashString &
+HashString::operator=(const char* other)
+{
+	SetTo(other);
+	return *this;
+}
+
 
 #endif	// __cplusplus
 
