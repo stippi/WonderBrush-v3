@@ -99,7 +99,7 @@ TextTool::SetOption(uint32 option, float value)
 			state->SetSize(value);
 			break;
 	}
-		
+
 }
 
 // SetOption
@@ -128,4 +128,20 @@ TextTool::Remove(int32 textOffset, int32 length)
 {
 	TextToolState* state = static_cast<TextToolState*>(fViewState);
 	state->Remove(textOffset, length);
+}
+
+// SetFont
+void
+TextTool::SetFont(const char* fontFilePath)
+{
+	TextToolState* state = static_cast<TextToolState*>(fViewState);
+	state->SetFont(fontFilePath);
+}
+
+// SetSize
+void
+TextTool::SetSize(float size)
+{
+	TextToolState* state = static_cast<TextToolState*>(fViewState);
+	state->SetSize(size);
 }

@@ -9,9 +9,11 @@
 #include "ToolConfigView.h"
 
 class BCheckBox;
+class BMenu;
 class BSlider;
 class BStringView;
 class BTextControl;
+class FontPopup;
 class NotifyingTextView;
 
 class TextToolConfigView : public ToolConfigView {
@@ -33,8 +35,13 @@ private:
 									float value) const;
 			float				_Value(BTextControl* control) const;
 
+			void				_PolulateFontMenu(BMenu* menu,
+									BHandler* target,
+									const char* markedFamily,
+									const char* markedStyle);
+
 private:
-			BStringView*		fSizeLabel;
+			FontPopup*			fFontPopup;
 
 			BSlider*			fSizeSlider;
 			BTextControl*		fSizeTextControl;
