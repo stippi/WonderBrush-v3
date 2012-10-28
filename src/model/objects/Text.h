@@ -57,6 +57,9 @@ public:
 									const char* fontFilePath, double size,
 									const StyleRef& style);
 
+			void				SetFont(int32 textOffset, int32 length,
+									const char* fontFilePath);
+
 			void				SetSize(int32 textOffset, int32 length,
 									double size);
 
