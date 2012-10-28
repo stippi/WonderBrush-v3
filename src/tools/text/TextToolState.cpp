@@ -1,3 +1,6 @@
+#ifndef _TEXTTOOLSTATE_CPP_
+#define _TEXTTOOLSTATE_CPP_
+
 /*
  * Copyright 2012 Stephan Aßmus <superstippi@gmx.de>
  * All rights reserved. Distributed under the terms of the MIT license.
@@ -40,7 +43,7 @@ public:
 	{
 		BPoint objectCurrent = current;
 		fParent->TransformCanvasToObject(&objectCurrent);
-		
+
 		BPoint leftTopOffset = objectCurrent - fOrigin;
 
 		fParent->OffsetTextBy(leftTopOffset);
@@ -83,12 +86,12 @@ public:
 	{
 		BPoint objectCurrent = current;
 		fParent->TransformCanvasToObject(&objectCurrent);
-		
+
 		objectCurrent += fOrigin;
-		
+
 		if (objectCurrent.x < 0)
 			objectCurrent.x = 0;
-		
+
 		fParent->SetWidth(objectCurrent.x);
 	}
 
@@ -257,13 +260,14 @@ TextToolState::TextToolState(StateView* view, Document* document,
 	, fInsertionLayer(NULL)
 	, fInsertionIndex(-1)
 	, fText(NULL)
-	
+
 	, fCaretOffset(0)
 	, fCaretAnchorX(0.0)
 	, fShowCaret(true)
 	, fCaretPulseRunner(NULL)
-	
+
 	, fStyle(new(std::nothrow) Style(), true)
+	, fFontFilePath("DejaVuSerif.ttf")
 	, fSize(12.0)
 {
 	// TODO: Find a way to change this later...
@@ -301,7 +305,7 @@ TextToolState::Init()
 	if (fCaretPulseRunner == NULL) {
 		BMessage pulseMessage(MSG_CARET_PULSE);
 		fCaretPulseRunner = new BMessageRunner(BMessenger(fView),
-			&pulseMessage, 1000000LL);
+			&pulseMessage, 500000LL);
 	}
 }
 
@@ -360,22 +364,22 @@ TextToolState::HandleKeyDown(const StateView::KeyEvent& event,
 				_LineDown(select);
 				break;
 			case B_LEFT_ARROW:
-				if (fCaretOffset != fSelectionAnchorOffset && !select) {
+				if (_HasSelection() && !select) {
 					_SetCaretOffset(
 						min_c(fCaretOffset, fSelectionAnchorOffset),
-						true, false
+						true, false, true
 					);
 				} else
-					_SetCaretOffset(fCaretOffset - 1, true, select);
+					_SetCaretOffset(fCaretOffset - 1, true, select, true);
 				break;
 			case B_RIGHT_ARROW:
-				if (fCaretOffset != fSelectionAnchorOffset && !select) {
+				if (_HasSelection() && !select) {
 					_SetCaretOffset(
 						max_c(fCaretOffset, fSelectionAnchorOffset),
-						true, false
+						true, false, true
 					);
 				} else
-					_SetCaretOffset(fCaretOffset + 1, true, select);
+					_SetCaretOffset(fCaretOffset + 1, true, select, true);
 				break;
 
 			case B_HOME:
@@ -431,7 +435,7 @@ TextToolState::HandleKeyDown(const StateView::KeyEvent& event,
 		}
 		return true;
 	}
-	
+
 	return DragStateViewState::HandleKeyDown(event, _command);
 }
 
@@ -451,7 +455,7 @@ TextToolState::Draw(BView* view, BRect updateRect)
 {
 	if (fText == NULL)
 		return;
-	
+
 	_DrawControls(view);
 	if (fSelectionAnchorOffset == fCaretOffset) {
 		if (fShowCaret)
@@ -497,7 +501,7 @@ TextToolState::DragStateFor(BPoint canvasWhere, float zoomLevel) const
 		&& fText->GetAffineParameters(NULL, NULL, NULL,
 			&scaleX, &scaleY, NULL, NULL)) {
 		float inset = 7.0 / zoomLevel;
-		
+
 		BPoint objectWhere = canvasWhere;
 		TransformCanvasToObject(&objectWhere);
 
@@ -521,13 +525,13 @@ TextToolState::DragStateFor(BPoint canvasWhere, float zoomLevel) const
 	// and try to find an object. If nothing is picked, unset on mouse down.
 	Object* pickedObject = NULL;
 	fDocument->RootLayer()->HitTest(canvasWhere, NULL, &pickedObject, true);
-	
+
 	Text* pickedText = dynamic_cast<Text*>(pickedObject);
 	if (pickedText != NULL) {
 		fPickTextState->SetText(pickedText);
 		return fPickTextState;
 	}
-	
+
 	return fCreateTextState;
 }
 
@@ -610,11 +614,11 @@ TextToolState::CreateText(BPoint canvasLocation)
 	}
 
 	text->SetWidth(0.0);
-	
+
 	BString initialText = fNextText;
 	if (initialText.Length() == 0)
 		initialText = "Text";
-	
+
 	text->SetText(initialText.String(), "DejaVuSerif.ttf", fSize, fStyle);
 	text->TranslateBy(canvasLocation);
 
@@ -634,9 +638,9 @@ TextToolState::CreateText(BPoint canvasLocation)
 	fInsertionIndex++;
 
 	SetText(text, true);
-	
+
 	// Our reference to this object was transferred to the Layer
-	
+
 	return true;
 }
 
@@ -646,19 +650,19 @@ TextToolState::SetText(Text* text, bool modifySelection)
 {
 	if (fText == text)
 		return;
-	
+
 	if (fText != NULL) {
 		fText->RemoveListener(this);
 		fText->RemoveReference();
 	}
 
 	fText = text;
-	
+
 	if (fText != NULL) {
 		fText->AddReference();
 		fText->AddListener(this);
 	}
-	
+
 	if (text != NULL) {
 		if (modifySelection)
 			fSelection->Select(Selectable(text), this);
@@ -704,12 +708,12 @@ TextToolState::Insert(int32 textOffset, const char* text,
 			fText->Remove(start, end - start);
 			textOffset = start;
 		}
-		
+
 		fText->Insert(textOffset, text, "DejaVuSerif.ttf", fSize, fStyle);
-		
+
 		if (setCaretOffset) {
 			_SetCaretOffset(textOffset + BString(text).CountChars(), true,
-				false);
+				false, false);
 		} else
 			UpdateBounds();
 	} else {
@@ -724,7 +728,7 @@ TextToolState::Remove(int32 textOffset, int32 length, bool setCaretOffset)
 	if (fText != NULL) {
 		fText->Remove(textOffset, length);
 		if (setCaretOffset) {
-			_SetCaretOffset(textOffset, true, false);
+			_SetCaretOffset(textOffset, true, false, true);
 		} else
 			UpdateBounds();
 	} else {
@@ -732,21 +736,19 @@ TextToolState::Remove(int32 textOffset, int32 length, bool setCaretOffset)
 	}
 }
 
+// SetFont
+void
+TextToolState::SetFont(const char* fontFilePath)
+{
+}
+
 // SetSize
 void
 TextToolState::SetSize(float size)
 {
 	fSize = size;
-}
-
-// SetSize
-void
-TextToolState::SetSize(float size, int32 textOffset, int32 length)
-{
-	fSize = size;
-	if (fText != NULL) {
-// TODO: Apply size to all fonts within range
-//		fText->SetFont(fText->getTextLayout().getFont().getName(), size);
+	if (_HasSelection()) {
+		fText->SetSize(_SelectionStart(), _SelectionLength(), size);
 		UpdateBounds();
 	}
 }
@@ -775,8 +777,8 @@ void
 TextToolState::SelectionChanged(int32 startOffset, int32 endOffset)
 {
 	if (fText != NULL) {
-		_SetCaretOffset(startOffset, false, false);
-		_SetCaretOffset(endOffset, true, true);
+		_SetCaretOffset(startOffset, false, false, false);
+		_SetCaretOffset(endOffset, true, true, true);
 	}
 }
 
@@ -786,15 +788,15 @@ TextToolState::SetCaret(const BPoint& location, bool select)
 {
 	if (fText == NULL)
 		return;
-	
+
 	bool rightOfChar = false;
 	int32 caretOffset = fText->getTextLayout().getOffset(location.x, location.y,
 		rightOfChar);
-	
+
 	if (rightOfChar)
 		caretOffset++;
 
-	_SetCaretOffset(caretOffset, true, select);
+	_SetCaretOffset(caretOffset, true, select, true);
 }
 
 // #pragma mark - private
@@ -809,7 +811,8 @@ TextToolState::_UpdateConfigView() const
 	BMessage message(MSG_LAYOUT_CHANGED);
 
 	if (fText != NULL) {
-		message.AddFloat("size", fText->getTextLayout().getFont().getSize());
+		message.AddFloat("size", fSize);
+		message.AddString("font", fFontFilePath);
 		message.AddString("text", fText->GetText());
 	} else {
 		message.AddString("text", "");
@@ -870,7 +873,7 @@ TextToolState::_DrawCaret(BView* view, int32 textOffset)
 	double y1;
 	double x2;
 	double y2;
-	
+
 	fText->getTextLayout().getTextBounds(textOffset, x1, y1, x2, y2);
 	x2 = x1 + 2;
 
@@ -924,9 +927,10 @@ void
 TextToolState::_LineStart(bool select)
 {
 	TextLayout& layout = fText->getTextLayout();
-	
+
 	int lineIndex = layout.getLineIndex(fCaretOffset);
-	_SetCaretOffset(layout.getFirstOffsetOnLine(lineIndex), true, select);
+	_SetCaretOffset(layout.getFirstOffsetOnLine(lineIndex), true, select,
+		true);
 }
 
 // _LineEnd
@@ -934,9 +938,10 @@ void
 TextToolState::_LineEnd(bool select)
 {
 	TextLayout& layout = fText->getTextLayout();
-	
+
 	int lineIndex = layout.getLineIndex(fCaretOffset);
-	_SetCaretOffset(layout.getLastOffsetOnLine(lineIndex), true, select);
+	_SetCaretOffset(layout.getLastOffsetOnLine(lineIndex), true, select,
+		true);
 }
 
 // _LineUp
@@ -944,7 +949,7 @@ void
 TextToolState::_LineUp(bool select)
 {
 	TextLayout& layout = fText->getTextLayout();
-	
+
 	int lineIndex = layout.getLineIndex(fCaretOffset);
 	_MoveToLine(layout, lineIndex - 1, select);
 }
@@ -954,7 +959,7 @@ void
 TextToolState::_LineDown(bool select)
 {
 	TextLayout& layout = fText->getTextLayout();
-	
+
 	int lineIndex = layout.getLineIndex(fCaretOffset);
 	_MoveToLine(layout, lineIndex + 1, select);
 }
@@ -965,13 +970,13 @@ TextToolState::_MoveToLine(TextLayout& layout, int32 lineIndex, bool select)
 {
 	if (lineIndex < 0 || lineIndex >= layout.getLineCount())
 		return;
-	
+
 	double x1;
 	double y1;
 	double x2;
 	double y2;
 	layout.getLineBounds(lineIndex , &x1, &y1, &x2, &y2);
-	
+
 	bool rightOfCenter;
 	int32 textOffset = layout.getOffset(fCaretAnchorX, (y1 + y2) / 2,
 		rightOfCenter);
@@ -979,13 +984,13 @@ TextToolState::_MoveToLine(TextLayout& layout, int32 lineIndex, bool select)
 	if (rightOfCenter)
 		textOffset++;
 
-	_SetCaretOffset(textOffset, false, select);
+	_SetCaretOffset(textOffset, false, select, true);
 }
 
 // _SetCaretOffset
 void
 TextToolState::_SetCaretOffset(int32 offset, bool updateAnchor,
-	bool lockSelectionAnchor)
+	bool lockSelectionAnchor, bool updateSelectionStyle)
 {
 	if (offset < 0)
 		offset = 0;
@@ -1002,17 +1007,20 @@ TextToolState::_SetCaretOffset(int32 offset, bool updateAnchor,
 
 	fCaretOffset = offset;
 	fShowCaret = true;
-	
+
 	if (updateAnchor) {
 		double x1;
 		double y1;
 		double x2;
 		double y2;
-		
+
 		fText->getTextLayout().getTextBounds(fCaretOffset, x1, y1, x2, y2);
 		fCaretAnchorX = x1;
 	}
-	
+
+	if (updateSelectionStyle)
+		_AdoptStyleAtOffset(fCaretOffset - 1);
+
 	UpdateBounds();
 }
 
@@ -1091,3 +1099,60 @@ TextToolState::_GetSelectionShape(TextLayout& layout, BShape& shape,
 		shape.Close();
 	}
 }
+
+// _HasSelection
+bool
+TextToolState::_HasSelection() const
+{
+	return fText != NULL && fCaretOffset != fSelectionAnchorOffset;
+}
+
+// _SelectionStart
+int32
+TextToolState::_SelectionStart() const
+{
+	return min_c(fCaretOffset, fSelectionAnchorOffset);
+}
+
+// _SelectionLength
+int32
+TextToolState::_SelectionLength() const
+{
+	return fabs(fCaretOffset - fSelectionAnchorOffset);
+}
+
+// _AdoptStyleAtOffset
+void
+TextToolState::_AdoptStyleAtOffset(int32 textOffset)
+{
+	if (fText == NULL)
+		return;
+
+	if (textOffset < 0)
+		textOffset = 0;
+
+	TextLayout& layout = fText->getTextLayout();
+
+	Font font(layout.getFont());
+	Color fgColor;
+	bool strikeOut;
+	Color strikeColor;
+	bool underline;
+	unsigned underlineStyle;
+	Color underlineColor;
+
+	if (!layout.getInfo(textOffset, font, fgColor, strikeOut,
+			strikeColor, underline, underlineStyle, underlineColor)) {
+		return;
+	}
+
+	if (fSize != font.getSize() || fFontFilePath != font.getName()) {
+		fSize = font.getSize();
+		fFontFilePath = font.getName();
+
+		_UpdateConfigView();
+	}
+}
+
+
+#endif	// _TEXTTOOLSTATE_CPP_

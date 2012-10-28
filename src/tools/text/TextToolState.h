@@ -78,10 +78,10 @@ public:
 									bool setCaretOffset = true);
 			void				Remove(int32 textOffset, int32 length,
 									bool setCaretOffset = true);
+
+			void				SetFont(const char* fontFilePath);
 			void				SetSize(float size);
-			void				SetSize(float size, int32 textOffset,
-									int32 length);
-			
+
 			void				SetWidth(float width);
 			float				Width() const;
 
@@ -92,7 +92,7 @@ public:
 
 private:
 			void				_UpdateConfigView() const;
-			
+
 			void				_DrawControls(BView* view);
 
 			void				_DrawCaret(BView* view, int32 textOffset);
@@ -110,11 +110,18 @@ private:
 
 			void				_SetCaretOffset(int32 offset,
 									bool updateAnchor,
-									bool lockSelectionAnchor);
+									bool lockSelectionAnchor,
+									bool updateSelectionStyle);
 
 			void				_GetSelectionShape(TextLayout& layout,
 									BShape& shape, int32 start,
 									int32 end) const;
+
+			bool				_HasSelection() const;
+			int32				_SelectionStart() const;
+			int32				_SelectionLength() const;
+
+			void				_AdoptStyleAtOffset(int32 textOffset);
 
 private:
 			class PickTextState;
@@ -150,6 +157,7 @@ private:
 			BMessageRunner*		fCaretPulseRunner;
 
 			StyleRef			fStyle;
+			BString				fFontFilePath;
 			double				fSize;
 };
 

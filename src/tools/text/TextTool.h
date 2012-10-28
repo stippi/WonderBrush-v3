@@ -34,6 +34,9 @@ public:
 			void				Insert(int32 textOffset, const char* text);
 			void				Remove(int32 textOffset, int32 length);
 
+			void				SetFont(const char* fontFilePath);
+			void				SetSize(float size);
+
 private:
 	virtual	ViewState*			MakeViewState(StateView* view,
 									Document* document, Selection* selection);

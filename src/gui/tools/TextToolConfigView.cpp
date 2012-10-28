@@ -16,10 +16,13 @@
 #include <TextControl.h>
 #include <TextView.h>
 
+#include "FontPopup.h"
+#include "FontRegistry.h"
 #include "TextTool.h"
 #include "TextToolState.h"
 
 enum {
+	MSG_FONT_SELECTED		= 'fnsl',
 	MSG_SIZE_SLIDER			= 'szsl',
 	MSG_SIZE_TEXT			= 'sztx',
 	MSG_SUBPIXELS			= 'sbpx',
@@ -74,7 +77,7 @@ protected:
 		int32 endOffset;
 		GetSelection(&startOffset, &endOffset);
 		_SelectionChanged(startOffset, endOffset);
-	}	
+	}
 
 	void _SelectionChanged(int startOffset, int endOffset)
 	{
@@ -85,7 +88,7 @@ protected:
 		message.AddInt32("start offset", startOffset);
 		message.AddInt32("end offset", endOffset);
 		fMessenger.SendMessage(&message);
-	}	
+	}
 
 	virtual void InsertText(const char* inText, int32 inLength, int32 inOffset,
 		const text_run_array* inRuns)
@@ -93,28 +96,28 @@ protected:
 		BTextView::InsertText(inText, inLength, inOffset, inRuns);
 		if (!fNotificationsEnabled)
 			return;
-		
+
 		BMessage message(MSG_INSERT);
 		message.AddString("text", inText);
 		message.AddInt32("offset", inOffset);
-		
+
 		fMessenger.SendMessage(&message);
-		
+
 		_UpdateSelection();
 	}
-	
+
 	virtual void DeleteText(int32 fromOffset, int32 toOffset)
 	{
 		BTextView::DeleteText(fromOffset, toOffset);
 		if (!fNotificationsEnabled)
 			return;
-		
+
 		BMessage message(MSG_REMOVE);
 		message.AddInt32("offset", fromOffset);
 		message.AddInt32("length", toOffset - fromOffset);
 
 		fMessenger.SendMessage(&message);
-		
+
 		_UpdateSelection();
 	}
 
@@ -132,15 +135,13 @@ TextToolConfigView::TextToolConfigView(::Tool* tool)
 	BGroupLayout* layout = new BGroupLayout(B_HORIZONTAL);
 	SetLayout(layout);
 
-	fSizeLabel = new BStringView("", "Size");
+	fFontPopup = new FontPopup("Font", true);
 
-	BAlignment labelAlignment(B_ALIGN_LEFT, B_ALIGN_MIDDLE);
-	fSizeLabel->SetExplicitAlignment(labelAlignment);
-
-	fSizeSlider = new BSlider("size slider", "", new BMessage(MSG_SIZE_SLIDER),
+	fSizeSlider = new BSlider("size slider", "Size",
+		new BMessage(MSG_SIZE_SLIDER),
 		1, 1024, B_HORIZONTAL, B_TRIANGLE_THUMB);
 	fSizeSlider->SetExplicitMinSize(BSize(80, B_SIZE_UNSET));
-		
+
 	fSizeTextControl = new BTextControl("size text y", "", "",
 		new BMessage(MSG_SIZE_TEXT));
 
@@ -154,7 +155,7 @@ TextToolConfigView::TextToolConfigView(::Tool* tool)
 
 	BGroupLayoutBuilder(layout)
 		.AddGroup(B_VERTICAL)
-			.Add(fSizeLabel)
+			.Add(fFontPopup)
 			.AddGroup(B_HORIZONTAL)
 				.Add(fSizeSlider)
 				.Add(fSizeTextControl)
@@ -183,6 +184,13 @@ TextToolConfigView::AttachedToWindow()
 	fSizeTextControl->SetTarget(this);
 	fSubpixels->SetTarget(this);
 	fTextView->SetTarget(this);
+
+	FontRegistry* fontRegistry = FontRegistry::Default();
+	if (fontRegistry->LockWithTimeout(3000) == B_OK) {
+		_PolulateFontMenu(fFontPopup->Menu(), this, NULL, NULL);
+		fontRegistry->Unlock();
+	}
+	fontRegistry->StartWatching(this, FONTS_CHANGED);
 }
 
 // MessageReceived
@@ -190,6 +198,14 @@ void
 TextToolConfigView::MessageReceived(BMessage* message)
 {
 	switch (message->what) {
+		case MSG_FONTS_CHANGED:
+			printf("MSG_FONTS_CHANGED\n");
+			break;
+
+		case MSG_FONT_SELECTED:
+			printf("MSG_FONT_SELECTED\n");
+			break;
+
 		case MSG_SIZE_SLIDER:
 			fTool->SetOption(TextTool::SIZE, fSizeSlider->Value());
 			break;
@@ -208,7 +224,7 @@ TextToolConfigView::MessageReceived(BMessage* message)
 			const char* text;
 			if (message->FindString("text", &text) != B_OK)
 				break;
-			
+
 			int32 textOffset;
 			if (message->FindInt32("offset", &textOffset) != B_OK)
 				break;
@@ -226,7 +242,7 @@ TextToolConfigView::MessageReceived(BMessage* message)
 			int32 length;
 			if (message->FindInt32("length", &length) != B_OK)
 				break;
-			
+
 			((TextTool*)fTool)->Remove(textOffset, length);
 			break;
 		}
@@ -264,7 +280,7 @@ TextToolConfigView::MessageReceived(BMessage* message)
 				fTextView->SetText(text);
 				fTextView->SetNotificationsEnabled(true);
 			}
-			
+
 			break;
 		}
 
@@ -323,4 +339,65 @@ TextToolConfigView::_Value(BTextControl* control) const
 {
 	return atof(control->Text());
 }
+
+// _PolulateFontMenu
+void
+TextToolConfigView::_PolulateFontMenu(BMenu* menu, BHandler* target,
+	const char* markedFamily, const char* markedStyle)
+{
+	if (menu == NULL)
+		return;
+
+	FontRegistry* manager = FontRegistry::Default();
+
+	if (!manager->Lock())
+		return;
+
+	while (menu->CountItems() > 0) {
+		delete menu->RemoveItem(0L);
+	}
+
+	BMenu* fontMenu = NULL;
+
+	font_family family;
+	font_style style;
+
+	int32 count = manager->CountFontFiles();
+	for (int32 i = 0; i < count; i++) {
+		if (!manager->GetFontAt(i, family, style))
+			break;
+
+		BMessage* message = new BMessage(MSG_FONT_SELECTED);
+		message->AddString("font family", family);
+		message->AddString("font style", style);
+
+		FontMenuItem* item = new FontMenuItem(style, family, style, message);
+		item->SetTarget(target);
+
+		bool markStyle = false;
+		if (!fontMenu
+			|| (fontMenu->Name()
+				&& strcmp(fontMenu->Name(), family) != 0)) {
+			// create new entry
+			fontMenu = new BMenu(family);
+			fontMenu->AddItem(item);
+			menu->AddItem(fontMenu);
+			// mark the menu if necessary
+			if (markedFamily && strcmp(markedFamily, family) == 0) {
+				if (BMenuItem* superItem = fontMenu->Superitem())
+					superItem->SetMarked(true);
+				markStyle = true;
+			}
+		} else {
+			// reuse old entry
+			fontMenu->AddItem(item);
+		}
+		// mark the item if necessary
+		if (markStyle && markedStyle && strcmp(markedStyle, style) == 0)
+			item->SetMarked(true);
+	}
+
+	manager->Unlock();
+}
+
 
