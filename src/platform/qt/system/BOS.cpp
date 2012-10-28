@@ -22,7 +22,8 @@ void
 debugger(const char *message)
 {
 	fprintf(stderr, "debugger() called: %s\n", message);
-	exit(1);
+	volatile int* crash = NULL;
+	*crash = 0;
 }
 
 
