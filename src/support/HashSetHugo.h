@@ -2,8 +2,8 @@
  * Copyright 2004-2009, Ingo Weinhold, ingo_weinhold@gmx.de.
  * Distributed under the terms of the MIT License.
  */
-#ifndef HASH_SET_H
-#define HASH_SET_H
+#ifndef HASH_SET_HUGO_H
+#define HASH_SET_HUGO_H
 
 #include "OpenHashTableHugo.h"
 
@@ -339,4 +339,4 @@ HashSet<Key>::_FindElement(const Key& key) const
 }
 
 
-#endif	// HASH_SET_H
+#endif	// HASH_SET_HUGO_H
