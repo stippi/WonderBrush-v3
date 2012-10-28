@@ -1,3 +1,13 @@
+/*
+ * Copyright 2001-2007, Haiku.
+ * Distributed under the terms of the MIT License.
+ *
+ * Authors:
+ *		Erik Jaesler (erik@cgsoftware.com)
+ *		Axel Dörfler, axeld@pinc-software.de
+ */
+
+
 #include "BHandler.h"
 
 #include <string.h>
@@ -5,6 +15,7 @@
 #include <new>
 
 #include <MessageUtils.h>
+#include <Looper.h>
 
 #include <QHash>
 #include <QMutex>
@@ -46,22 +57,12 @@ struct Manager {
 		QMutexLocker mutexLocker(&fMutex);
 		fHandlers.remove(handler->Token());
 		handler->SetToken(B_NULL_TOKEN);
-		handler->Proxy()->HandlerDeleted();
 	}
 
-	int32 GetHandlerToken(const BHandlerProxy* proxy)
+	BHandler* HandlerForToken(int32 token)
 	{
 		QMutexLocker mutexLocker(&fMutex);
-		if (proxy->Handler() == NULL)
-			return B_NULL_TOKEN;
-		return proxy->Handler()->Token();
-	}
-
-	BHandler::ProxyPointer ProxyForToken(int32 token)
-	{
-		QMutexLocker mutexLocker(&fMutex);
-		BHandler* handler = fHandlers.value(token, NULL);
-		return handler != NULL ? handler->Proxy() : BHandler::ProxyPointer();
+		return fHandlers.value(token, NULL);
 	}
 
 private:
@@ -89,47 +90,15 @@ private:
 }	// unnamed namespace
 
 
-// #pragma mark - BHandlerProxy
-
-
-BHandlerProxy::BHandlerProxy(BHandler* handler)
-	:
-	fHandler(handler)
-{
-}
-
-
-BHandlerProxy::~BHandlerProxy()
-{
-}
-
-
-int32
-BHandlerProxy::Token() const
-{
-	return Manager::GetManager()->GetHandlerToken(this);
-}
-
-
-void
-BHandlerProxy::customEvent(QEvent* event)
-{
-	if (fHandler != NULL && event->type()
-			== PlatformMessageEvent::EventType()) {
-		fHandler->MessageReceived(
-			&dynamic_cast<PlatformMessageEvent*>(event)->Message());
-	}
-}
-
-
 // #pragma mark - BHandler
 
 
 BHandler::BHandler(BMessage* archive)
 	:
 	fName(NULL),
-	fProxy(new(std::nothrow) BHandlerProxy(this)),
-	fToken(B_NULL_TOKEN)
+	fToken(B_NULL_TOKEN),
+	fLooper(NULL),
+	fNextHandler(NULL)
 {
 	debugger("BHandler unarchiving constructor unsupported");
 }
@@ -138,8 +107,9 @@ BHandler::BHandler(BMessage* archive)
 BHandler::BHandler(const char* name)
 	:
 	fName(NULL),
-	fProxy(new(std::nothrow) BHandlerProxy(this)),
-	fToken(B_NULL_TOKEN)
+	fToken(B_NULL_TOKEN),
+	fLooper(NULL),
+	fNextHandler(NULL)
 {
 	SetName(name);
 
@@ -153,6 +123,7 @@ BHandler::~BHandler()
 	free(fName);
 }
 
+
 void
 BHandler::SetName(const char* name)
 {
@@ -164,6 +135,36 @@ BHandler::SetName(const char* name)
 void
 BHandler::MessageReceived(BMessage* message)
 {
+}
+
+
+void
+BHandler::SetNextHandler(BHandler *handler)
+{
+	if (!fLooper) {
+		debugger("handler must belong to looper before setting NextHandler");
+		return;
+	}
+
+	if (!fLooper->IsLocked()) {
+		debugger(
+			"The handler's looper must be locked before setting NextHandler");
+		return;
+	}
+
+	if (handler && fLooper != handler->Looper()) {
+		debugger("The handler and its NextHandler must have the same looper");
+		return;
+	}
+
+	fNextHandler = handler;
+}
+
+
+BHandler *
+BHandler::NextHandler() const
+{
+	return fNextHandler;
 }
 
 
@@ -182,22 +183,9 @@ BHandler::IsWatched() const
 }
 
 
-/*static*/ BHandler::ProxyPointer
-BHandler::ProxyForToken(int32 token)
+BHandler*
+BHandler::HandlerForToken(int32 token)
 {
-	return Manager::GetManager()->ProxyForToken(token);
-}
-
-
-void
-BHandler::ObjectConstructed(QObject* object)
-{
-	fProxy->setParent(object);
-}
-
-
-void
-BHandler::ObjectAboutToBeDestroyed(QObject* /*object*/)
-{
-	fProxy->setParent(NULL);
+// TODO:...
+	return Manager::GetManager()->HandlerForToken(token);
 }

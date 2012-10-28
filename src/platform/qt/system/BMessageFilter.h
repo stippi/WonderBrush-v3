@@ -5,8 +5,8 @@
  * Authors:
  *		Erik Jaesler (erik@cgsoftware.com)
  */
-#ifndef PLATFORM_QT_B_MESSAGE_FILTER_H
-#define PLATFORM_QT_B_MESSAGE_FILTER_H
+#ifndef _MESSAGE_FILTER_H
+#define _MESSAGE_FILTER_H
 
 
 #include <Handler.h>
@@ -14,7 +14,6 @@
 
 class BMessage;
 class BMessageFilter;
-
 
 // filter_hook Return Codes and Protocol ---------------------------------------
 enum filter_result {
@@ -40,24 +39,47 @@ enum message_source {
 };
 
 
-class BMessageFilter
-{
-public:
-								BMessageFilter(uint32 what,
-									filter_hook func = NULL);
-								BMessageFilter(message_delivery delivery,
-									message_source source,
-									filter_hook func = NULL);
-								BMessageFilter(message_delivery delivery,
-									message_source source, uint32 what,
-									filter_hook func = NULL);
-								BMessageFilter(const BMessageFilter& filter);
-								BMessageFilter(const BMessageFilter* filter);
-	virtual						~BMessageFilter();
+// BMessageFilter Class --------------------------------------------------------
+class BMessageFilter {
+	public:
+							BMessageFilter(uint32 what,
+								filter_hook func = NULL);
+							BMessageFilter(message_delivery delivery,
+								message_source source, filter_hook func = NULL);
+							BMessageFilter(message_delivery delivery,
+								message_source source, uint32 what,
+								filter_hook func = NULL);
+							BMessageFilter(const BMessageFilter& filter);
+							BMessageFilter(const BMessageFilter* filter);
+		virtual				~BMessageFilter();
 
-	// Hook function; ignored if filter_hook is non-NULL
-	virtual	filter_result		Filter(BMessage* message, BHandler** _target);
+		BMessageFilter&		operator=(const BMessageFilter& from);
+
+		// Hook function; ignored if filter_hook is non-NULL
+		virtual	filter_result Filter(BMessage* message, BHandler** _target);
+
+		message_delivery	MessageDelivery() const;
+		message_source		MessageSource() const;
+		uint32				Command() const;
+		bool				FiltersAnyCommand() const;
+		BLooper*			Looper() const;
+
+	private:
+		friend class BLooper;
+		friend class BHandler;
+
+		virtual	void		_ReservedMessageFilter1();
+		virtual	void		_ReservedMessageFilter2();
+
+		void				SetLooper(BLooper* owner);
+		filter_hook			FilterFunction() const;
+		bool				fFiltersAny;
+		uint32				fWhat;
+		message_delivery	fDelivery;
+		message_source		fSource;
+		BLooper				*fLooper;
+		filter_hook			fFilterFunction;
+		uint32				_reserved[3];
 };
 
-
-#endif // PLATFORM_QT_B_MESSAGE_FILTER_H
+#endif	// _MESSAGE_FILTER_H

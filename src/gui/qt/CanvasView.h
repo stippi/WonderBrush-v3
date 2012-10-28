@@ -38,6 +38,7 @@ public:
 									RenderManager* manager);
 
 	virtual	void				MessageReceived(BMessage* message);
+	virtual	void				AttachedToWindow();
 
 	virtual	void				ConvertFromCanvas(BPoint* point) const;
 	virtual	void				ConvertToCanvas(BPoint* point) const;

@@ -1875,8 +1875,7 @@ status_t
 BMessage::AddMessenger(const char *name, BMessenger messenger)
 {
 	// NOTE: Not compatible with Haiku!
-	int32 token = messenger.HandlerToken();
-	return AddData(name, B_MESSENGER_TYPE, &token, sizeof(token), true);
+	return AddData(name, B_MESSENGER_TYPE, &messenger, sizeof(messenger), true);
 }
 
 
@@ -2057,14 +2056,10 @@ BMessage::FindMessenger(const char *name, int32 index, BMessenger *messenger)
 	status_t error = FindData(name, B_MESSENGER_TYPE, index,
 		(const void **)&data, &size);
 
-	int32 token;
-	if (error != B_OK || size != sizeof(token)) {
+	if (error == B_OK)
+		memcpy(messenger, data, sizeof(BMessenger));
+	else
 		*messenger = BMessenger();
-		return error;
-	}
-
-	memcpy(&token, data, sizeof(token));
-	*messenger = BMessenger(token);
 
 	return error;
 }
@@ -2200,16 +2195,16 @@ BMessage::ReplacePointer(const char *name, int32 index, const void *pointer)
 status_t
 BMessage::ReplaceMessenger(const char *name, BMessenger messenger)
 {
-	int32 token = messenger.HandlerToken();
-	return ReplaceData(name, B_MESSENGER_TYPE, 0, &token, sizeof(token));
+	return ReplaceData(name, B_MESSENGER_TYPE, 0, &messenger,
+		sizeof(BMessenger));
 }
 
 
 status_t
 BMessage::ReplaceMessenger(const char *name, int32 index, BMessenger messenger)
 {
-	int32 token = messenger.HandlerToken();
-	return ReplaceData(name, B_MESSENGER_TYPE, index, &token, sizeof(token));
+	return ReplaceData(name, B_MESSENGER_TYPE, index, &messenger,
+		sizeof(BMessenger));
 }
 
 

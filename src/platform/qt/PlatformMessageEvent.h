@@ -11,6 +11,7 @@ class PlatformMessageEvent : public QEvent
 {
 public:
 	explicit					PlatformMessageEvent(const BMessage& message,
+									int32 handlerToken, int32 replyLooperToken,
 									int32 replyHandlerToken);
 
 			const BMessage&		Message() const
@@ -22,7 +23,6 @@ public:
 
 private:
 			BMessage			fMessage;
-			int32				fReplyHandlerToken;
 };
 
 

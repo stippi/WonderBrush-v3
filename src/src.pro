@@ -133,6 +133,7 @@ SOURCES += \
 	platform/qt/system/BHandler.cpp \
 	platform/qt/system/BList.cpp \
 	platform/qt/system/BLocker.cpp \
+	platform/qt/system/BLooper.cpp \
 	platform/qt/system/BMessage.cpp \
 	platform/qt/system/BMessageAdapter.cpp \
 	platform/qt/system/BMessageFilter.cpp \
@@ -283,6 +284,7 @@ HEADERS  += \
 	platform/qt/system/BInvoker.h \
 	platform/qt/system/BList.h \
 	platform/qt/system/BLocker.h \
+	platform/qt/system/BLooper.h \
 	platform/qt/system/BMessage.h \
 	platform/qt/system/BMessageAdapter.h \
 	platform/qt/system/BMessageFilter.h \
@@ -331,6 +333,7 @@ HEADERS  += \
 	platform/qt/system/include/Invoker.h \
 	platform/qt/system/include/List.h \
 	platform/qt/system/include/Locker.h \
+	platform/qt/system/include/Looper.h \
 	platform/qt/system/include/Message.h \
 	platform/qt/system/include/MessageAdapter.h \
 	platform/qt/system/include/MessageFilter.h \

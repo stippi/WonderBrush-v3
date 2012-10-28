@@ -10,6 +10,8 @@
 
 #include <Message.h>
 
+#include <MessageUtils.h>
+
 
 #define MESSAGE_BODY_HASH_TABLE_SIZE	5
 #define MAX_DATA_PREALLOCATION			40960
@@ -89,6 +91,18 @@ class BMessage::Private {
 			:
 			fMessage(&msg)
 		{
+		}
+
+		int32
+		GetTarget()
+		{
+			return fMessage->fHeader->target;
+		}
+
+		bool
+		UsePreferredTarget()
+		{
+			return fMessage->fHeader->target == B_PREFERRED_TOKEN;
 		}
 
 		void

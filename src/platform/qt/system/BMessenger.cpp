@@ -1,20 +1,30 @@
+/*
+ * Copyright 2001-2011, Haiku.
+ * Distributed under the terms of the MIT License.
+ *
+ * Authors:
+ *		Ingo Weinhold (bonefish@users.sf.net)
+ */
+
 #include <Messenger.h>
 
 #include <new>
 
+#include <Looper.h>
+#include <MessageUtils.h>
+
 #include <QCoreApplication>
 #include <QEventLoop>
 
-#include <MessageUtils.h>
-
+#include "AutoLocker.h"
 #include "PlatformMessageEvent.h"
 
 
-struct BMessenger::SynchronousReplyHandler : public QObject, public BHandler {
+struct BMessenger::SynchronousReplyHandler : public QObject, public BLooper {
 	SynchronousReplyHandler(BMessage* reply)
 		:
 		QObject(NULL),
-		BHandler(),
+		BLooper(),
 		fEventLoop(),
 		fReply(reply),
 		fTimer(0)
@@ -83,25 +93,54 @@ private:
 
 BMessenger::BMessenger()
 	:
-	fHandlerProxy()
+	fLooperToken(B_NULL_TOKEN),
+	fHandlerToken(B_NULL_TOKEN)
 {
 }
 
 
 BMessenger::BMessenger(int32 handlerToken)
 	:
-	fHandlerProxy(BHandler::ProxyForToken(handlerToken))
+	fLooperToken(B_NULL_TOKEN),
+	fHandlerToken(B_NULL_TOKEN)
 {
 }
 
 
-BMessenger::BMessenger(const BHandler* handler, const BLooper* looper)
+BMessenger::BMessenger(const BHandler* handler, const BLooper* looper,
+	status_t* _result)
 	:
-	fHandlerProxy()
+	fLooperToken(B_NULL_TOKEN),
+	fHandlerToken(B_NULL_TOKEN)
 {
-// TODO: looper is ignored ATM!
-	if (handler != NULL)
-		fHandlerProxy = handler->Proxy();
+	status_t error = (handler || looper ? B_OK : B_BAD_VALUE);
+	if (error == B_OK) {
+		if (handler) {
+			// BHandler is given, check/retrieve the looper.
+			if (looper) {
+				if (handler->Looper() != looper)
+					error = B_MISMATCHED_VALUES;
+			} else {
+				looper = handler->Looper();
+				if (looper == NULL)
+					error = B_MISMATCHED_VALUES;
+			}
+		}
+
+		// set port, token,...
+		if (error == B_OK) {
+			BLooper::Manager* looperManager = BLooper::Manager::GetManager();
+			AutoLocker<BLooper::Manager> looperManagerLocker(looperManager);
+			if (looperManager->IsLooperValid(looper)) {
+				fLooperToken = looper->Token() ;
+				fHandlerToken = handler != NULL
+					? handler->Token() : B_PREFERRED_TOKEN;
+			} else
+				error = B_BAD_VALUE;
+		}
+	}
+	if (_result)
+		*_result = error;
 }
 
 
@@ -113,20 +152,29 @@ BMessenger::~BMessenger()
 bool
 BMessenger::IsValid() const
 {
-	return fHandlerProxy.toStrongRef() != NULL;
+	if (fHandlerToken == B_NULL_TOKEN)
+		return false;
+
+	BLooper::Manager* looperManager = BLooper::Manager::GetManager();
+	AutoLocker<BLooper::Manager> looperManagerLocker(looperManager);
+	return looperManager->LooperForToken(fLooperToken) != NULL;
 }
 
 
 BHandler*
 BMessenger::Target(BLooper** _looper) const
 {
-// TODO: That isn't thread safe!
-	BHandler::ProxyPointer proxy = fHandlerProxy.toStrongRef();
-	BHandler* handler = proxy != NULL ? proxy->Handler() : NULL;
-	if (_looper != NULL) {
-// TODO: Support looper!
+	BHandler* handler = NULL;
+	if (fHandlerToken > B_NULL_TOKEN || fHandlerToken == B_PREFERRED_TOKEN) {
+		handler = BHandler::HandlerForToken(fHandlerToken);
+		if (_looper != NULL) {
+			BLooper::Manager* looperManager = BLooper::Manager::GetManager();
+			AutoLocker<BLooper::Manager> looperManagerLocker(looperManager);
+			*_looper = looperManager->LooperForToken(fLooperToken);
+		}
+	} else if (_looper)
 		*_looper = NULL;
-	}
+
 	return handler;
 }
 
@@ -151,16 +199,27 @@ status_t
 BMessenger::SendMessage(BMessage* message, BMessenger replyTo,
 	bigtime_t /*timeout*/) const
 {
-	BHandler::ProxyPointer handlerProxy = fHandlerProxy.toStrongRef();
-	if (handlerProxy == NULL)
+	// get the looper's message target
+	BLooper::Manager* looperManager = BLooper::Manager::GetManager();
+	AutoLocker<BLooper::Manager> looperManagerLocker(looperManager);
+	BLooper* looper = looperManager->LooperForToken(fLooperToken);
+	if (looper == NULL)
 		return B_BAD_HANDLER;
 
+	BLooper::MessageTarget* messageTarget = looper->GetMessageTarget();
+	if (messageTarget == NULL)
+		return B_BAD_HANDLER;
+	Reference<BLooper::MessageTarget> messageTargetReference(messageTarget);
+
+	looperManagerLocker.Unlock();
+
+	// send the message via a Qt event
 	PlatformMessageEvent* event = new(std::nothrow) PlatformMessageEvent(
-		*message, replyTo.HandlerToken());
+		*message, fHandlerToken, replyTo.fLooperToken, replyTo.fHandlerToken);
 	if (event == NULL)
 		return B_NO_MEMORY;
 
-	QCoreApplication::postEvent(handlerProxy.data(), event);
+	QCoreApplication::postEvent(messageTarget, event);
 
 	return B_OK;
 }
@@ -185,14 +244,4 @@ BMessenger::SendMessage(BMessage* message, BMessage* reply,
 		return error;
 
 	return replyHandler.WaitForReply(replyTimeout) ? B_OK : B_TIMED_OUT;
-}
-
-
-int32
-BMessenger::HandlerToken() const
-{
-	BHandler::ProxyPointer handlerProxy = fHandlerProxy.toStrongRef();
-	if (handlerProxy == NULL)
-		return B_NULL_TOKEN;
-	return handlerProxy->Token();
 }

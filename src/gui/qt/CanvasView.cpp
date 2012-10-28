@@ -47,28 +47,6 @@ CanvasView::Init(Document* document, RenderManager* manager)
 {
 	fDocument = document;
 	fRenderManager = manager;
-
-//	StateView::AttachedToWindow();
-
-	BMessenger* bitmapListener = new(std::nothrow) BMessenger(this);
-	if (bitmapListener == NULL
-		|| !fRenderManager->AddBitmapListener(bitmapListener)) {
-		delete bitmapListener;
-		// TODO: Bail out, throw exception or something...
-	}
-
-	// init data rect for scrolling and center bitmap in the view
-	BRect dataRect = _LayoutCanvas();
-	SetDataRect(dataRect);
-	BRect bounds(BRect::FromQRect(rect()));
-	BPoint dataRectCenter((dataRect.left + dataRect.right) / 2,
-		(dataRect.top + dataRect.bottom) / 2);
-	BPoint boundsCenter((bounds.left + bounds.right) / 2,
-		(bounds.top + bounds.bottom) / 2);
-	BPoint offset = ScrollOffset();
-	offset.x = roundf(offset.x + dataRectCenter.x - boundsCenter.x);
-	offset.y = roundf(offset.y + dataRectCenter.y - boundsCenter.y);
-	SetScrollOffset(offset);
 }
 
 
@@ -151,9 +129,36 @@ CanvasView::MessageReceived(BMessage* message)
 		}
 
 		default:
-//			StateView::MessageReceived(message);
+			StateView::MessageReceived(message);
 			break;
 	}
+}
+
+
+void
+CanvasView::AttachedToWindow()
+{
+	StateView::AttachedToWindow();
+
+	BMessenger* bitmapListener = new(std::nothrow) BMessenger(this);
+	if (bitmapListener == NULL
+		|| !fRenderManager->AddBitmapListener(bitmapListener)) {
+		delete bitmapListener;
+		// TODO: Bail out, throw exception or something...
+	}
+
+	// init data rect for scrolling and center bitmap in the view
+	BRect dataRect = _LayoutCanvas();
+	SetDataRect(dataRect);
+	BRect bounds(BRect::FromQRect(rect()));
+	BPoint dataRectCenter((dataRect.left + dataRect.right) / 2,
+		(dataRect.top + dataRect.bottom) / 2);
+	BPoint boundsCenter((bounds.left + bounds.right) / 2,
+		(bounds.top + bounds.bottom) / 2);
+	BPoint offset = ScrollOffset();
+	offset.x = roundf(offset.x + dataRectCenter.x - boundsCenter.x);
+	offset.y = roundf(offset.y + dataRectCenter.y - boundsCenter.y);
+	SetScrollOffset(offset);
 }
 
 

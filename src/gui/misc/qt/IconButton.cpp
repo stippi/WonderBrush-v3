@@ -22,7 +22,8 @@
 IconButton::IconButton(const char* name, uint32 id, const char* label,
 	BMessage* message, BHandler* target)
 	:
-	PlatformWidgetHandler<QToolButton>(),
+	QToolButton(),
+	BHandler(name),
 	BInvoker(message, target),
 	fID(id),
 	fNormalBitmap(NULL),

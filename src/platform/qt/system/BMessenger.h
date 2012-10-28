@@ -18,7 +18,8 @@ public:
 								BMessenger(int32 handlerToken);
 									// conceptually package private
 								BMessenger(const BHandler* handler,
-									const BLooper* looper = NULL);
+									const BLooper* looper = NULL,
+									status_t* _result = NULL);
 								~BMessenger();
 
 			bool				IsValid() const;
@@ -45,13 +46,17 @@ public:
 									bigtime_t replyTimeout = B_INFINITE_TIMEOUT)
 										const;
 
-			int32				HandlerToken() const;
+			int32				LooperToken() const
+									{ return fLooperToken; }
+			int32				HandlerToken() const
+									{ return fHandlerToken; }
 
 private:
 			struct SynchronousReplyHandler;
 
 private:
-			QWeakPointer<BHandlerProxy> fHandlerProxy;
+			int32				fLooperToken;
+			int32				fHandlerToken;
 };
 
 

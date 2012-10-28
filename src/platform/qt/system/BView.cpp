@@ -1,39 +1,40 @@
 #include "BView.h"
 
 #include <Region.h>
+#include <Window.h>
+
+#include <QEvent>
 
 
 BView::BView(BMessage* archive)
 	:
-	PlatformWidgetHandler<QWidget>(archive)
+	QWidget(NULL),
+	BHandler(archive),
+	fWindow(NULL)
 {
 }
 
 
 BView::BView(const char* name, uint32 flags)
 	:
-	PlatformWidgetHandler<QWidget>(name)
+	QWidget(NULL),
+	BHandler(name),
+	fWindow(NULL)
 {
 }
 
 
 BView::BView(BRect frame, const char* name, uint32 resizeMask, uint32 flags)
 	:
-	PlatformWidgetHandler<QWidget>(name)
+	QWidget(NULL),
+	BHandler(name),
+	fWindow(NULL)
 {
 }
 
 
 BView::~BView()
 {
-}
-
-
-BWindow*
-BView::Window() const
-{
-// TODO:...
-	return NULL;
 }
 
 
@@ -190,4 +191,38 @@ BView::KeyDown(const char* bytes, int32 numBytes)
 void
 BView::KeyUp(const char* bytes, int32 numBytes)
 {
+}
+
+
+void
+BView::_AttachToWindow(BWindow* window)
+{
+	fWindow = window;
+	fWindow->AddHandler(this);
+
+	AttachedToWindow();
+}
+
+
+void
+BView::_DetachFromWindow()
+{
+	DetachedFromWindow();
+}
+
+
+void
+BView::_AllAttachedToWindow()
+{
+	AllAttached();
+}
+
+
+void
+BView::_AllDetachedFromWindow()
+{
+	AllDetached();
+
+	fWindow->RemoveHandler(this);
+	fWindow = NULL;
 }

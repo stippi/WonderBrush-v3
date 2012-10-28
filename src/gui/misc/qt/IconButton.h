@@ -13,8 +13,7 @@
 class BBitmap;
 
 
-class IconButton : public PlatformWidgetHandler<QToolButton>, public BInvoker
-{
+class IconButton : public QToolButton, public BHandler, public BInvoker {
 	Q_OBJECT
 
 public:

@@ -2,6 +2,8 @@
 #define BWINDOW_H
 
 
+#include <Looper.h>
+
 #include <QMainWindow>
 
 
@@ -9,16 +11,19 @@ class BMessage;
 class BMessageFilter;
 
 
-class BWindow : public QMainWindow
-{
+class BWindow : public QMainWindow, public BLooper {
+	Q_OBJECT
+
 public:
 								BWindow(QWidget* parent = NULL);
+	virtual						~BWindow();
 
-	// TODO: The following is actually BLooper functionality!
-			BMessage*			CurrentMessage() const;
+private:
+			struct ViewAncestryTracker;
 
-	virtual	void			AddCommonFilter(BMessageFilter* filter);
-	virtual	bool			RemoveCommonFilter(BMessageFilter* filter);
+private:
+			void				_WidgetAdded(QWidget* widget);
+			void				_WidgetRemoved(QWidget* widget);
 };
 
 

@@ -66,8 +66,7 @@ const uint32 B_SUPPORTS_LAYOUT			= 0x00100000UL;	/* 21 */
 const uint32 B_INVALIDATE_AFTER_LAYOUT	= 0x00080000UL;	/* 20 */
 
 
-class BView : public PlatformWidgetHandler<QWidget>
-{
+class BView : public QWidget, public BHandler {
 public:
 								BView(BMessage* archive);
 								BView(const char* name, uint32 flags);
@@ -75,7 +74,8 @@ public:
 									uint32 resizeMask, uint32 flags);
 	virtual						~BView();
 
-			BWindow*			Window() const;
+			BWindow*			Window() const
+									{ return fWindow; }
 
 			BRect				Bounds() const;
 
@@ -121,6 +121,18 @@ public:
 
 	virtual	void				KeyDown(const char* bytes, int32 numBytes);
 	virtual	void				KeyUp(const char* bytes, int32 numBytes);
+
+private:
+			friend class BWindow;
+
+private:
+			void				_AttachToWindow(BWindow* window);
+			void				_DetachFromWindow();
+			void				_AllAttachedToWindow();
+			void				_AllDetachedFromWindow();
+
+private:
+			BWindow*			fWindow;
 };
 
 
