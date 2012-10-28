@@ -203,8 +203,27 @@ TextToolConfigView::MessageReceived(BMessage* message)
 			break;
 
 		case MSG_FONT_SELECTED:
-			printf("MSG_FONT_SELECTED\n");
+		{
+			const char* family;
+			if (message->FindString("font family", &family) != B_OK)
+				break;
+
+			const char* style;
+			if (message->FindString("font style", &style) != B_OK)
+				break;
+
+			FontRegistry* registry = FontRegistry::Default();
+			if (registry->Lock()) {
+				const char* fontFilePath = registry->FontFileFor(
+					family,
+					style
+				);
+				if (fontFilePath != NULL)
+					((TextTool*)fTool)->SetFont(fontFilePath);
+				registry->Unlock();
+			}
 			break;
+		}
 
 		case MSG_SIZE_SLIDER:
 			fTool->SetOption(TextTool::SIZE, fSizeSlider->Value());

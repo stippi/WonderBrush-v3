@@ -740,6 +740,11 @@ TextToolState::Remove(int32 textOffset, int32 length, bool setCaretOffset)
 void
 TextToolState::SetFont(const char* fontFilePath)
 {
+	fFontFilePath = fontFilePath;
+	if (_HasSelection()) {
+		fText->SetFont(_SelectionStart(), _SelectionLength(), fontFilePath);
+		UpdateBounds();
+	}
 }
 
 // SetSize
