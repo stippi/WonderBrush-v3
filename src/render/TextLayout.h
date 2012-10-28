@@ -149,6 +149,53 @@ public:
 			*advanceX = 3.0;
 	}
 
+	inline bool getInfo(int index, Font& font, Color& fgColor,
+		bool& strikeOut, Color& strikeColor,
+		bool& underline, unsigned& underlineStyle, Color& underlineColor) const
+	{
+		if (index < 0 || index >= (int)fGlyphInfoCount)
+			return false;
+
+		StyleRun* style = fGlyphInfoBuffer[index].styleRun;
+		if (style != NULL) {
+			font = style->font;
+			if (style->fgRed >= 0) {
+				fgColor.r = style->fgRed;
+				fgColor.g = style->fgGreen;
+				fgColor.b = style->fgBlue;
+			} else {
+				fgColor.r = 0;
+				fgColor.g = 0;
+				fgColor.b = 0;
+			}
+			fgColor.a = 255;
+			if (style->strikeOut && style->strikeRed >= 0) {
+				strikeOut = true;
+				strikeColor.r = style->strikeRed;
+				strikeColor.g = style->strikeGreen;
+				strikeColor.b = style->strikeBlue;
+				strikeColor.a = 255;
+			}
+			if (style->underline && style->underlineRed >= 0) {
+				underline = true;
+				underlineStyle = style->underlineStyle;
+				underlineColor.r = style->underlineRed;
+				underlineColor.g = style->underlineGreen;
+				underlineColor.b = style->underlineBlue;
+				underlineColor.a = 255;
+			}
+		} else {
+			font = fFont;
+			fgColor.r = 0;
+			fgColor.g = 0;
+			fgColor.b = 0;
+			fgColor.a = 255;
+			strikeOut = false;
+			underline = false;
+		}
+		return true;
+	}
+
 	inline void getInfo(int index, const agg::glyph_cache** glyph, double* x,
 		double* y, double* height, Color& fgColor, bool& strikeOut,
 		Color& strikeColor, bool& underline, unsigned& underlineStyle,
@@ -251,7 +298,7 @@ public:
 		double* x2, double* y2);
 
 	int getLineOffsets(int offsets[], unsigned count);
-	
+
 	int getFirstOffsetOnLine(int lineIndex);
 	int getLastOffsetOnLine(int lineIndex);
 
