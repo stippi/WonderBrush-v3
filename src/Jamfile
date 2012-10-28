@@ -109,8 +109,10 @@ Application WonderBrush :
 
 	# gui/misc/<platform>
 	DualSlider.cpp
+	FontPopup.cpp
 	IconButton.cpp
 	IconOptionsControl.cpp
+	LabelPopup.cpp
 	NavigatorViewPlatformDelegate.cpp
 
 	# gui/tools
