@@ -1,9 +1,9 @@
 /*
- * Copyright 2006-2009, Stephan Aßmus <superstippi@gmx.de>
+ * Copyright 2006-2012, Stephan Aßmus <superstippi@gmx.de>
  * All rights reserved. Distributed under the terms of the MIT license.
  */
 
-#include "FontManager.h"
+#include "FontRegistry.h"
 
 #include <malloc.h>
 #include <stdio.h>
@@ -21,13 +21,13 @@
 #include <String.h>
 #include <UTF8.h>
 
-#include "common.h"
+//#include "common.h"
 
 //#include "FontPopup.h"
 
 // static default instance
-FontManager*
-FontManager::fDefaultManager = NULL;
+FontRegistry*
+FontRegistry::sDefaultRegistry = NULL;
 
 static const char* threadName = "font scanner";
 
@@ -36,7 +36,7 @@ enum {
 };
 
 // constructor
-FontManager::FontManager()
+FontRegistry::FontRegistry()
 	: BLooper(threadName, B_LOW_PRIORITY),
 	  fLibrary(NULL),
 	  fFontFiles(1024)
@@ -51,19 +51,19 @@ FontManager::FontManager()
 		this);
 	if (fontScanner >= B_OK)
 		resume_thread(fontScanner);
-	
+
 	Run();
 }
 
 // destructor
-FontManager::~FontManager()
+FontRegistry::~FontRegistry()
 {
 	_MakeEmpty();
 }
 
 // MessageReceived
 void
-FontManager::MessageReceived(BMessage* message)
+FontRegistry::MessageReceived(BMessage* message)
 {
 	switch (message->what) {
 		case MSG_UPDATE: {
@@ -79,32 +79,32 @@ FontManager::MessageReceived(BMessage* message)
 
 // CreateDefault
 void
-FontManager::CreateDefault()
+FontRegistry::CreateDefault()
 {
-	if (!fDefaultManager)
-		fDefaultManager = new FontManager();
+	if (sDefaultRegistry == NULL)
+		sDefaultRegistry = new FontRegistry();
 }
 
 // DeleteDefault
 void
-FontManager::DeleteDefault()
+FontRegistry::DeleteDefault()
 {
-	fDefaultManager->Lock();
-	fDefaultManager->Quit();
-	fDefaultManager = NULL;
+	sDefaultRegistry->Lock();
+	sDefaultRegistry->Quit();
+	sDefaultRegistry = NULL;
 }
 
 // Default
-FontManager*
-FontManager::Default()
+FontRegistry*
+FontRegistry::Default()
 {
 	CreateDefault();
-	return fDefaultManager;
+	return sDefaultRegistry;
 }
 
 // FontFileAt
 const char*
-FontManager::FontFileAt(int32 index) const
+FontRegistry::FontFileAt(int32 index) const
 {
 	if (font_file* ff = (font_file*)fFontFiles.ItemAt(index)) {
 		return ff->path.String();
@@ -114,7 +114,7 @@ FontManager::FontFileAt(int32 index) const
 
 // FontFileFor
 const char*
-FontManager::FontFileFor(const char* family, const char* style) const
+FontRegistry::FontFileFor(const char* family, const char* style) const
 {
 	if (!family || !style)
 		return NULL;
@@ -127,19 +127,19 @@ FontManager::FontFileFor(const char* family, const char* style) const
 			return ff->path.String();
 	}
 
-	BString missing(family);
-	missing << '/' << style;
-	if (!fMissingFontFiles.Contains(missing.String())) {
-		print_error("no font file path for %s/%s\n", family, style);
-		fMissingFontFiles.Add(missing.String());
-	}
+//	BString missing(family);
+//	missing << '/' << style;
+//	if (!fMissingFontFiles.Contains(missing.String())) {
+//		fprintf(stderr, "No font file path for %s/%s\n", family, style);
+//		fMissingFontFiles.Add(missing.String());
+//	}
 
 	return NULL;
 }
 
 // IndexFor
 int32
-FontManager::IndexFor(const char* family, const char* style) const
+FontRegistry::IndexFor(const char* family, const char* style) const
 {
 	if (!family || !style)
 		return -1;
@@ -155,7 +155,7 @@ FontManager::IndexFor(const char* family, const char* style) const
 
 // FamilyFor
 const char*
-FontManager::FamilyFor(const char* fontFile) const
+FontRegistry::FamilyFor(const char* fontFile) const
 {
 	if (font_file* ff = _FontFileFor(fontFile))
 		return ff->family_name;
@@ -164,7 +164,7 @@ FontManager::FamilyFor(const char* fontFile) const
 
 // StyleFor
 const char*
-FontManager::StyleFor(const char* fontFile) const
+FontRegistry::StyleFor(const char* fontFile) const
 {
 	if (font_file* ff = _FontFileFor(fontFile))
 		return ff->style_name;
@@ -173,7 +173,7 @@ FontManager::StyleFor(const char* fontFile) const
 
 // FullFamilyFor
 const char*
-FontManager::FullFamilyFor(const char* fontFile) const
+FontRegistry::FullFamilyFor(const char* fontFile) const
 {
 	if (font_file* ff = _FontFileFor(fontFile))
 		return ff->full_family_name;
@@ -182,7 +182,7 @@ FontManager::FullFamilyFor(const char* fontFile) const
 
 // PostScriptNameFor
 const char*
-FontManager::PostScriptNameFor(const char* fontFile) const
+FontRegistry::PostScriptNameFor(const char* fontFile) const
 {
 	if (font_file* ff = _FontFileFor(fontFile))
 		return ff->ps_name;
@@ -191,14 +191,14 @@ FontManager::PostScriptNameFor(const char* fontFile) const
 
 // CountFontFiles
 int32
-FontManager::CountFontFiles() const
+FontRegistry::CountFontFiles() const
 {
 	return fFontFiles.CountItems();
 }
 
 // GetFontAt
 bool
-FontManager::GetFontAt(int32 index, char* family, char* style) const
+FontRegistry::GetFontAt(int32 index, char* family, char* style) const
 {
 	font_file* file = (font_file*)fFontFiles.ItemAt(index);
 	if (!file)
@@ -221,7 +221,7 @@ FontManager::GetFontAt(int32 index, char* family, char* style) const
 
 //// PopulateMenu
 //void
-//FontManager::PopulateMenu(BMenu* menu, bool subMenus,
+//FontRegistry::PopulateMenu(BMenu* menu, bool subMenus,
 //	const char* markedFamily, const char* markedStyle)
 //{
 //	if (!menu || !markedFamily || !markedStyle || !Lock())
@@ -294,7 +294,7 @@ FontManager::GetFontAt(int32 index, char* family, char* style) const
 
 // _MakeEmpty
 void
-FontManager::_MakeEmpty()
+FontRegistry::_MakeEmpty()
 {
 	int32 i = fFontFiles.CountItems() - 1;
 	while (i >= 0) {
@@ -308,7 +308,7 @@ FontManager::_MakeEmpty()
 
 // _DeleteFontFile
 void
-FontManager::_DeleteFontFile(font_file* ff) const
+FontRegistry::_DeleteFontFile(font_file* ff) const
 {
 	free(ff->family_name);
 	free(ff->style_name);
@@ -319,25 +319,25 @@ FontManager::_DeleteFontFile(font_file* ff) const
 
 // _UpdateThreadEntry
 int32
-FontManager::_UpdateThreadEntry(void* cookie)
+FontRegistry::_UpdateThreadEntry(void* cookie)
 {
-	FontManager* fm = (FontManager*)cookie;
+	FontRegistry* fm = (FontRegistry*)cookie;
 	if (fm && fm->Lock()) {
 //bigtime_t now = system_time();
 		// update from system, common and user fonts folders
 		BPath path;
-		if (find_directory(B_BEOS_FONTS_DIRECTORY, &path) >= B_OK) {
+		if (find_directory(B_SYSTEM_FONTS_DIRECTORY, &path) == B_OK) {
 			BDirectory fontFolder(path.Path());
 			fm->_Update(&fontFolder);
 		}
-		if (find_directory(B_COMMON_FONTS_DIRECTORY, &path) >= B_OK) {
+		if (find_directory(B_COMMON_FONTS_DIRECTORY, &path) == B_OK) {
 			BDirectory fontFolder(path.Path());
 			fm->_Update(&fontFolder);
 		}
-/*			if (find_directory(B_USER_FONTS_DIRECTORY, &path) >= B_OK) {
+		if (find_directory(B_USER_FONTS_DIRECTORY, &path) == B_OK) {
 			BDirectory fontFolder(path.Path());
-			_Update(&fontFolder);
-		}*/
+			fm->_Update(&fontFolder);
+		}
 /*printf("scanning fonts: %lld µsecs\n", system_time() - now);
 for (int32 i = 0; font_file* ff = (font_file*)fFontFiles.ItemAt(i); i++) {
 	printf("fond %ld: \"%s, %s\"\n", i, ff->family_name, ff->style_name);
@@ -349,7 +349,7 @@ for (int32 i = 0; font_file* ff = (font_file*)fFontFiles.ItemAt(i); i++) {
 
 //_Update
 void
-FontManager::_Update(BDirectory* fontFolder)
+FontRegistry::_Update(BDirectory* fontFolder)
 {
 	fontFolder->Rewind();
 	// scan the entire folder for font files
@@ -370,7 +370,7 @@ FontManager::_Update(BDirectory* fontFolder)
 
 // _ExtractFontNames
 void
-FontManager::_ExtractFontNames(FT_Face face, font_file* fontFile,
+FontRegistry::_ExtractFontNames(FT_Face face, font_file* fontFile,
 	int32 nameCount) const
 {
 	FT_SfntName fontName;
@@ -393,7 +393,7 @@ FontManager::_ExtractFontNames(FT_Face face, font_file* fontFile,
 							memcpy(fontFile->full_family_name, fontName.string,
 								fontName.string_len);
 							fontFile->full_family_name[fontName.string_len] = 0;
-							
+
 							if (fontFile->family_name)
 								free(fontFile->family_name);
 							fontFile->family_name
@@ -475,7 +475,7 @@ next_token(const char* string, BString& token)
 
 // _ImproveStyleNameFromPostScriptName
 void
-FontManager::_ImproveStyleNameFromPostScriptName(font_file* fontFile) const
+FontRegistry::_ImproveStyleNameFromPostScriptName(font_file* fontFile) const
 {
 //printf("A-Z: %d-%d, a-z: %d-%d\n", 'A', 'Z', 'a', 'z');
 
@@ -508,7 +508,7 @@ FontManager::_ImproveStyleNameFromPostScriptName(font_file* fontFile) const
 
 // _AddFont
 void
-FontManager::_AddFont(const BEntry& entry)
+FontRegistry::_AddFont(const BEntry& entry)
 {
 	// see if this is a usable font file
 	BPath path;
@@ -549,7 +549,7 @@ FontManager::_AddFont(const BEntry& entry)
 				   && strcasecmp(fontFile->style_name, ff->style_name) >= 0) {
 				if (strcasecmp(fontFile->style_name, ff->style_name) == 0) {
 					duplicate = true;
-					break;		
+					break;
 				} else
 				   index++;
 			}
@@ -569,8 +569,8 @@ FontManager::_AddFont(const BEntry& entry)
 
 
 // _FontFileFor
-FontManager::font_file*
-FontManager::_FontFileFor(const char* path) const
+FontRegistry::font_file*
+FontRegistry::_FontFileFor(const char* path) const
 {
 	if (!path)
 		return NULL;

@@ -192,7 +192,7 @@ Application WonderBrush :
 #	Font.cpp
 #	FontCache.cpp
 #	FontCacheEntry.cpp
-#	FontManager.cpp
+	FontRegistry.cpp
 
 	# support
 	AbstractLOAdapter.cpp
@@ -201,6 +201,7 @@ Application WonderBrush :
 	CommandStack.cpp
 	CompoundCommand.cpp
 	Debug.cpp
+	HashString.cpp
 	Listener.cpp
 	ListenerAdapter.cpp
 	Notifier.cpp
@@ -255,6 +256,7 @@ Application WonderBrush :
 
 		libagg.a
 
+		textencoding
 		tracker
 		$(STDC++LIB)
 		$(SUPC++LIB)

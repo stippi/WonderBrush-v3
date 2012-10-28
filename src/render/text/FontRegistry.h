@@ -1,10 +1,10 @@
 /*
- * Copyright 2006-2009, Stephan Aßmus <superstippi@gmx.de>
+ * Copyright 2006-2012, Stephan Aßmus <superstippi@gmx.de>
  * All rights reserved. Distributed under the terms of the MIT license.
  */
 
-#ifndef FT_FONT_MANAGER_H
-#define FT_FONT_MANAGER_H
+#ifndef FONT_REGISTRY_H
+#define FONT_REGISTRY_H
 
 #include <ft2build.h>
 #include FT_FREETYPE_H
@@ -13,9 +13,6 @@
 #include <Entry.h>
 #include <Looper.h>
 #include <String.h>
-
-#include "HashSet.h"
-#include "HashString.h"
 
 class BDirectory;
 class BMenu;
@@ -28,25 +25,25 @@ enum {
 	FONTS_CHANGED		= 0x01,
 };
 
-class FontManager : public BLooper {
+class FontRegistry : public BLooper {
 public:
-								FontManager();
-	virtual						~FontManager();
+								FontRegistry();
+	virtual						~FontRegistry();
 
 								// BLooper
 	virtual	void				MessageReceived(BMessage* message);
 
-								// FontManager
+								// FontRegistry
 	static	void				CreateDefault();
 	static	void				DeleteDefault();
-	static	FontManager*		Default();
+	static	FontRegistry*		Default();
 
 								// lock the object!
 	virtual	const char*			FontFileAt(int32 index) const;
 	virtual	const char*			FontFileFor(const char* family,
-											const char* style) const;
+									const char* style) const;
 	virtual	int32				IndexFor(const char* family,
-										 const char* style) const;
+									const char* style) const;
 
 	virtual	const char*			FamilyFor(const char* fontFile) const;
 	virtual	const char*			StyleFor(const char* fontFile) const;
@@ -56,7 +53,7 @@ public:
 
 	virtual	int32				CountFontFiles() const;
 			bool				GetFontAt(int32 index,
-										  char* family, char* style) const;
+									char* family, char* style) const;
 
 //	virtual	void				PopulateMenu(BMenu* menu, bool subMenus,
 //											 const char* markedFamily,
@@ -88,12 +85,10 @@ private:
 
 			font_file*			_FontFileFor(const char* ref) const;
 
+private:
 			FT_Library			fLibrary;			// the FreeType library
-
 			BList				fFontFiles;
-	mutable	HashSet<HashString>	fMissingFontFiles;
-
-	static	FontManager*		fDefaultManager;
+	static	FontRegistry*		sDefaultRegistry;
 };
 
-#endif // FT_FONT_MANAGER_H
+#endif // FONT_REGISTRY_H
