@@ -11,6 +11,8 @@
 #include <FindDirectory.h>
 #include <Path.h>
 
+#include "FontCache.h"
+#include "FontRegistry.h"
 
 enum {
 	MSG_NEW_WINDOW	= 'nwnd',
@@ -31,6 +33,24 @@ public:
 		BApplication("application/x-vnd.Yellowbites.WonderBrush2"),
 		BaseClass(bounds)
 	{
+		FontRegistry* registry = FontRegistry::Default();
+		if (registry->Lock()) {
+			// Use font files from system, common and user fonts folders
+			BPath path;
+			if (find_directory(B_SYSTEM_FONTS_DIRECTORY, &path) == B_OK)
+				registry->AddFontDirectory(path.Path());
+			if (find_directory(B_COMMON_FONTS_DIRECTORY, &path) == B_OK)
+				registry->AddFontDirectory(path.Path());
+			if (find_directory(B_USER_FONTS_DIRECTORY, &path) == B_OK)
+				registry->AddFontDirectory(path.Path());
+
+			const BString& dataFontFolder
+				= FontCache::getInstance()->getFontFolder();
+			registry->AddFontDirectory(dataFontFolder.String());
+
+			registry->Scan();
+			registry->Unlock();
+		}
 	}
 
 	virtual void MessageReceived(BMessage* message)
