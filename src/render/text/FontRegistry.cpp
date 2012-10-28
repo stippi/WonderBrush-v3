@@ -5,6 +5,8 @@
 
 #include "FontRegistry.h"
 
+#include <new>
+
 #include <malloc.h>
 #include <stdio.h>
 #include <string.h>
@@ -13,7 +15,6 @@
 #include FT_SFNT_NAMES_H
 #include <freetype/ttnameid.h>
 
-#include <FindDirectory.h>
 #include <Directory.h>
 //#include <Menu.h>
 //#include <MenuItem.h>
@@ -37,20 +38,15 @@ enum {
 
 // constructor
 FontRegistry::FontRegistry()
-	: BLooper(threadName, B_LOW_PRIORITY),
-	  fLibrary(NULL),
-	  fFontFiles(1024)
+	: BLooper(threadName, B_LOW_PRIORITY)
+	, fLibrary(NULL)
+	, fFontDirectories(4)
+	, fFontFiles(1024)
 {
 	// initialize engine
 	FT_Error error = FT_Init_FreeType(&fLibrary);
 	if (error)
 		fprintf(stderr, "Could not initialise FreeType library\n");
-
-	// start thread to scan font files
-	thread_id fontScanner = spawn_thread(_UpdateThreadEntry, threadName, B_LOW_PRIORITY,
-		this);
-	if (fontScanner >= B_OK)
-		resume_thread(fontScanner);
 
 	Run();
 }
@@ -59,6 +55,9 @@ FontRegistry::FontRegistry()
 FontRegistry::~FontRegistry()
 {
 	_MakeEmpty();
+
+	for (int32 i = 0; i < fFontDirectories.CountItems(); i++)
+		delete (BString*)fFontDirectories.ItemAtFast(i);
 }
 
 // MessageReceived
@@ -100,6 +99,33 @@ FontRegistry::Default()
 {
 	CreateDefault();
 	return sDefaultRegistry;
+}
+
+// AddFontDirectory
+bool
+FontRegistry::AddFontDirectory(const char* path)
+{
+	if (path == NULL)
+		return false;
+
+	BString* pathString = new(std::nothrow) BString(path);
+	if (pathString == NULL || pathString->Length() == 0
+		|| !fFontDirectories.AddItem(pathString)) {
+		delete pathString;
+		return false;
+	}
+	return true;
+}
+
+// Scan
+void
+FontRegistry::Scan()
+{
+	// start thread to scan font files
+	thread_id fontScanner = spawn_thread(_UpdateThreadEntry, threadName,
+		B_LOW_PRIORITY, this);
+	if (fontScanner >= 0)
+		resume_thread(fontScanner);
 }
 
 // FontFileAt
@@ -321,28 +347,19 @@ FontRegistry::_DeleteFontFile(font_file* ff) const
 int32
 FontRegistry::_UpdateThreadEntry(void* cookie)
 {
-	FontRegistry* fm = (FontRegistry*)cookie;
-	if (fm && fm->Lock()) {
+	FontRegistry* registry = (FontRegistry*)cookie;
+	if (registry != NULL && registry->Lock()) {
 //bigtime_t now = system_time();
-		// update from system, common and user fonts folders
-		BPath path;
-		if (find_directory(B_SYSTEM_FONTS_DIRECTORY, &path) == B_OK) {
-			BDirectory fontFolder(path.Path());
-			fm->_Update(&fontFolder);
-		}
-		if (find_directory(B_COMMON_FONTS_DIRECTORY, &path) == B_OK) {
-			BDirectory fontFolder(path.Path());
-			fm->_Update(&fontFolder);
-		}
-		if (find_directory(B_USER_FONTS_DIRECTORY, &path) == B_OK) {
-			BDirectory fontFolder(path.Path());
-			fm->_Update(&fontFolder);
+		for (int32 i = 0; i < registry->fFontDirectories.CountItems(); i++) {
+			BString* path = (BString*)registry->fFontDirectories.ItemAtFast(i);
+			BDirectory fontFolder(path->String());
+			registry->_Update(&fontFolder);
 		}
 /*printf("scanning fonts: %lld µsecs\n", system_time() - now);
 for (int32 i = 0; font_file* ff = (font_file*)fFontFiles.ItemAt(i); i++) {
 	printf("fond %ld: \"%s, %s\"\n", i, ff->family_name, ff->style_name);
 }*/
-		fm->Unlock();
+		registry->Unlock();
 	}
 	return 0;
 }

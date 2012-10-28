@@ -38,6 +38,10 @@ public:
 	static	void				DeleteDefault();
 	static	FontRegistry*		Default();
 
+
+			bool				AddFontDirectory(const char* path);
+			void				Scan();
+
 								// lock the object!
 	virtual	const char*			FontFileAt(int32 index) const;
 	virtual	const char*			FontFileFor(const char* family,
@@ -87,6 +91,7 @@ private:
 
 private:
 			FT_Library			fLibrary;			// the FreeType library
+			BList				fFontDirectories;
 			BList				fFontFiles;
 	static	FontRegistry*		sDefaultRegistry;
 };
