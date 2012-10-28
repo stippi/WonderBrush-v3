@@ -40,7 +40,7 @@ public:
 			void				SetText(const char* utf8String,
 									const char* fontFilePath, double size,
 									const StyleRef& style);
-			
+
 			const char*			GetText() const;
 
 			int32				GetCharCount() const;
@@ -51,11 +51,14 @@ public:
 									const StyleRef& style);
 
 			void				Remove(int32 textOffset, int32 length);
-			
+
 			void				SetStyle(int32 textOffset, int32 length,
 									const char* utf8String,
 									const char* fontFilePath, double size,
 									const StyleRef& style);
+
+			void				SetSize(int32 textOffset, int32 length,
+									double size);
 
 			const TextLayout&	getTextLayout() const;
 			TextLayout&			getTextLayout();

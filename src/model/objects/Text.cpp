@@ -30,7 +30,7 @@ public:
 	{
 		return fStyle;
 	}
-	
+
 	bool operator==(const CharacterStyle& other) const
 	{
 		return fFont == other.fFont && *(fStyle.Get()) == *(other.fStyle.Get());
@@ -40,7 +40,7 @@ public:
 	{
 		return *this != other;
 	}
-	
+
 private:
 	Font				fFont;
 	StyleRef			fStyle;
@@ -118,13 +118,13 @@ public:
 				return true;
 			}
 		}
-		
+
 		StyleRun* inserted = new(std::nothrow) StyleRun(runToAppend);
 		if (inserted == NULL || !fRuns.AddItem(inserted)) {
 			delete inserted;
 			return false;
 		}
-		
+
 		return true;
 	}
 
@@ -154,7 +154,7 @@ public:
 				}
 				return true;
 			}
-			
+
 			if (startOffset + run->GetLength() > textOffset) {
 				// Insert here
 				if (run->IsSameStyle(runToInsert)) {
@@ -182,10 +182,10 @@ public:
 				remaining->SetLength(previousLength - newLength);
 				return true;
 			}
-			
+
 			startOffset += run->GetLength();
 		}
-		
+
 		return Append(runToInsert);
 	}
 
@@ -205,15 +205,15 @@ public:
 			StyleRun* run = (StyleRun*)fRuns.ItemAtFast(i);
 			if (startOffset == textOffset
 				|| startOffset + run->GetLength() > textOffset) {
-					
+
 				int32 newRunLength = 0;
 				if (startOffset < textOffset)
 					newRunLength += textOffset - startOffset;
-				
+
 				if (textOffset + length < startOffset + run->GetLength())
 					newRunLength += (startOffset + run->GetLength())
 						- (textOffset + length);
-					
+
 				if (newRunLength == 0) {
 					length -= run->GetLength();
 					// Remove this run altogether
@@ -223,19 +223,19 @@ public:
 					removedRuns = true;
 					continue;
 				}
-				
+
 				length -= run->GetLength() - newRunLength;
 				run->SetLength(newRunLength);
 				if (length < 0)
 					debugger("Removed too much in StyleRunList::Remove()");
-				
+
 				if (length == 0)
 					break;
 			}
-			
+
 			startOffset += run->GetLength();
 		}
-		
+
 		if (removedRuns) {
 			// Removing runs may have caused equal runs to attach
 			_MergeEqualRuns();
@@ -246,7 +246,7 @@ public:
 	{
 		if (textOffset < 0)
 			return NULL;
-		
+
 		int32 startOffset = 0;
 		int32 styleCount = fRuns.CountItems();
 		for (int32 i = 0; i < styleCount; i++) {
@@ -255,7 +255,7 @@ public:
 			if (startOffset > textOffset)
 				return run;
 		}
-		
+
 		return (StyleRun*)fRuns.LastItem();
 	}
 
@@ -270,7 +270,7 @@ public:
 	}
 
 private:
-	
+
 	void _MergeEqualRuns()
 	{
 		for (int32 i = 0; i < fRuns.CountItems() - 1; i++) {
@@ -394,9 +394,9 @@ Text::SetText(const char* utf8String, const char* fontFilePath, double size,
 	::Style* style = new(std::nothrow) ::Style();
 	if (style == NULL)
 		return;
-	
+
 	style->SetFillPaint(Paint(color));
-	
+
 	StyleRef styleRef(style, true);
 	SetText(utf8String, fontFilePath, size, styleRef);
 }
@@ -431,9 +431,9 @@ void
 Text::Insert(int32 textOffset, const char* utf8String,
 	const char* fontFilePath, double size, const StyleRef& style)
 {
-	if (textOffset < 0 || textOffset > fText.CountChars())
+	if (textOffset < 0 || textOffset > fCharCount)
 		return;
-	
+
 	CharacterStyle* characterStyle = new(std::nothrow) CharacterStyle(
 		Font(fontFilePath, size), style);
 
@@ -463,7 +463,7 @@ Text::Insert(int32 textOffset, const char* utf8String,
 void
 Text::Remove(int32 textOffset, int32 length)
 {
-	if (textOffset < 0 || textOffset + length > fText.CountChars())
+	if (textOffset < 0 || textOffset + length > fCharCount)
 		return;
 
 	fText.RemoveChars(textOffset, length);
@@ -479,7 +479,7 @@ Text::SetStyle(int32 textOffset, int32 length,
 	const char* utf8String, const char* fontFilePath, double size,
 	const StyleRef& style)
 {
-	if (textOffset < 0 || textOffset + length > fText.CountChars())
+	if (textOffset < 0 || textOffset + length > fCharCount || length == 0)
 		return;
 
 	CharacterStyle* characterStyle = new(std::nothrow) CharacterStyle(
@@ -499,6 +499,39 @@ Text::SetStyle(int32 textOffset, int32 length,
 	fStyleRuns->Remove(textOffset + length, length);
 
 	styleRef.Detach();
+
+	_UpdateLayout();
+}
+
+// SetSize
+void
+Text::SetSize(int32 textOffset, int32 length, double size)
+{
+	if (textOffset < 0 || textOffset + length > fCharCount || length == 0)
+		return;
+
+	while (length > 0) {
+		// TODO: Make more efficient
+		const StyleRun* run = fStyleRuns->FindStyleRun(textOffset);
+
+		CharacterStyle* characterStyle = new(std::nothrow) CharacterStyle(
+			Font(run->GetStyle()->GetFont().getName(), size),
+			run->GetStyle()->GetStyle());
+
+		if (characterStyle == NULL)
+			return;
+
+		CharacterStyleRef styleRef(characterStyle);
+
+		StyleRun replaceRun(styleRef);
+		replaceRun.SetLength(1);
+
+		fStyleRuns->Insert(textOffset, replaceRun);
+		fStyleRuns->Remove(textOffset + 1, 1);
+
+		textOffset++;
+		length--;
+	}
 
 	_UpdateLayout();
 }
@@ -526,18 +559,18 @@ Text::_UpdateLayout()
 //	printf("_UpdateLayout() (%p)\n", &fTextLayout);
 
 	fTextLayout.clearStyleRuns();
-	
+
 	int32 start = 0;
 	for (int32 i = 0; i < fStyleRuns->CountRuns(); i++) {
 		const StyleRun* run = fStyleRuns->StyleRunAt(i);
-		
+
 		const CharacterStyleRef& characterStyle = run->GetStyle();
-		
+
 		const Font& font = characterStyle.Get()->GetFont();
 		const StyleRef& style = characterStyle.Get()->GetStyle();
 		Paint* paint = style.Get()->FillPaint();
 		rgb_color color = paint->Color();
-		
+
 //		printf("  run (%d, %d, %d), length: %ld\n",
 //			color.red, color.green, color.blue,
 //			run->GetLength());
@@ -550,15 +583,15 @@ Text::_UpdateLayout()
 			false, 0, 0, 0,
 			false, 0, 0, 0, 0
 		);
-		
+
 		start += run->GetLength();
 	}
-	
+
 //	printf("  chars: %ld, total run length: %ld\n",
 //		fText.CountChars(), start);
 	if (fText.CountChars() != start)
 		debugger("Text::_UpdateLayout() - StyleRunList invalid!");
-	
+
 	fTextLayout.setText(fText.String());
 
 	NotifyAndUpdate();
