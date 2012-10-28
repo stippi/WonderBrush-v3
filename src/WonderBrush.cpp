@@ -13,6 +13,7 @@
 #include "Document.h"
 #include "Filter.h"
 #include "FontCache.h"
+#include "FontRegistry.h"
 #include "Image.h"
 #include "Layer.h"
 #include "Rect.h"
@@ -32,6 +33,9 @@ WonderBrushBase::WonderBrushBase(BRect bounds)
 	fWindowFrame(bounds.OffsetToCopy(50, 50)),
 	fWindowCount(0)
 {
+	// Init FontManager
+	FontRegistry::CreateDefault();
+
 	// create dummy contents for document
 	fDocument->RootLayer()->AddObject(new Rect(BRect(50, 100, 110, 130),
 		(rgb_color){ 255, 120, 0, 120 }));
