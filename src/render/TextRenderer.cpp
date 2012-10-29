@@ -280,7 +280,7 @@ TextRenderer::drawText(RendererType& renderer,
 	double scale = subpixelScale * scaleX;
 
 	double x = layout->getFirstLineInset() * scale;
-	const double width = layout->getWidth();
+//	const double width = layout->getWidth();
 
 	fRasterizer.clip_box(0, 0, fBuffer.width() * subpixelScale,
 		fBuffer.height());
@@ -291,7 +291,7 @@ TextRenderer::drawText(RendererType& renderer,
 //		selectionEnd, count);
 //	fflush(stdout);
 
-	unsigned lineIndex = 0;
+//	unsigned lineIndex = 0;
 	double advanceX = 0.0;
 #if 0
 	double lineTop = 0.0;
