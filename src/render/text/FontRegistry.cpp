@@ -357,9 +357,10 @@ FontRegistry::_UpdateThreadEntry(void* cookie)
 		}
 /*printf("scanning fonts: %lld µsecs\n", system_time() - now);
 for (int32 i = 0; font_file* ff = (font_file*)fFontFiles.ItemAt(i); i++) {
-	printf("fond %ld: \"%s, %s\"\n", i, ff->family_name, ff->style_name);
+	printf("font %ld: \"%s, %s\"\n", i, ff->family_name, ff->style_name);
 }*/
 		registry->Unlock();
+		registry->PostMessage(MSG_UPDATE, registry);
 	}
 	return 0;
 }
@@ -589,7 +590,7 @@ FontRegistry::_AddFont(const BEntry& entry)
 FontRegistry::font_file*
 FontRegistry::_FontFileFor(const char* path) const
 {
-	if (!path)
+	if (path == NULL)
 		return NULL;
 
 	int32 count = fFontFiles.CountItems();
