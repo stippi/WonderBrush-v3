@@ -4654,12 +4654,12 @@ namespace cimg_library {
 	  const unsigned int M = 248;
 	  if (cimg::X11attr().byte_order) for (unsigned int xy=0; xy<xymax; xy++) {
 	    const unsigned char G = (unsigned char)*(data2++)>>2;
-	    *(ptrd++) = (unsigned char)*(data1++)&M | (G>>3);
+		*(ptrd++) = ((unsigned char)*(data1++)&M) | (G>>3);
 	    *(ptrd++) = (G<<5) | ((unsigned char)*(data3++)>>3);
 	  } else for (unsigned int xy=0; xy<xymax; xy++) {
 	    const unsigned char G = (unsigned char)*(data2++)>>2;
 	    *(ptrd++) = (G<<5) | ((unsigned char)*(data3++)>>3);
-	    *(ptrd++) = (unsigned char)*(data1++)&M | (G>>3);
+		*(ptrd++) = ((unsigned char)*(data1++)&M) | (G>>3);
 	  }
 	  if (ndata!=data) { _render_resize(ndata,img.width,img.height,(unsigned short*)data,width,height); delete[] ndata; } 
 	} break;
@@ -4716,12 +4716,12 @@ namespace cimg_library {
 	  const unsigned int M = 248;
 	  if (cimg::X11attr().byte_order) for (unsigned int xy=0; xy<xymax; xy++) {
 	    const unsigned char G = (unsigned char)(255*(*(data2++)-nmin)/mm)>>2;
-	    *(ptrd++) = (unsigned char)(255*(*(data1++)-nmin)/mm)&M | (G>>3);
+		*(ptrd++) = ((unsigned char)(255*(*(data1++)-nmin)/mm)&M) | (G>>3);
 	    *(ptrd++) = (G<<5) | ((unsigned char)(255*(*(data3++)-nmin)/mm)>>3);
 	  } else for (unsigned int xy=0; xy<xymax; xy++) {
 	    const unsigned char G = (unsigned char)(255*(*(data2++)-nmin)/mm)>>2;
 	    *(ptrd++) = (G<<5) | ((unsigned char)(255*(*(data3++)-nmin)/mm)>>3);
-	    *(ptrd++) = (unsigned char)(255*(*(data1++)-nmin)/mm)&M | (G>>3);
+		*(ptrd++) = ((unsigned char)(255*(*(data1++)-nmin)/mm)&M) | (G>>3);
 	  }
 	  if (ndata!=data) { _render_resize(ndata,img.width,img.height,(unsigned short*)data,width,height); delete[] ndata; } 
 	} break;
