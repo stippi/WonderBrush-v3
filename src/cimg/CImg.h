@@ -3367,9 +3367,8 @@ namespace cimg_library {
       }
       if (name) {
         if (argc>0) {
-	  int k=0,i;
+	  int k=0;
           while (k<argc && cimg::strcmp(argv[k],name)) k++;
-          i=k;
           res=(k++==argc?defaut:(k==argc?argv[--k]:argv[k]));
         } else res = defaut;
         if (visu && usage) std::fprintf(stderr,"    %s%-8s%s = %-12s : %s%s%s\n",
@@ -4749,7 +4748,7 @@ namespace cimg_library {
     }
 
     static int _assign_lowlevel_xshm(Display *dpy, XErrorEvent *error) {      
-      dpy = 0; error = 0;
+	  (void)dpy; (void)error;
       cimg::X11attr().shm_enabled = false;
       return 0;
     }
@@ -4971,7 +4970,7 @@ namespace cimg_library {
     }
     
     template<typename T> void _resize(T foo, const unsigned int ndimx, const unsigned int ndimy, const bool redraw) {
-      foo = 0;
+	  (void)foo;
 #ifdef cimg_use_xshm
       if (shminfo) {
 	XShmSegmentInfo *nshminfo = new XShmSegmentInfo;
@@ -5178,7 +5177,7 @@ namespace cimg_library {
     }
     
     static void* _events_thread(void *arg) {
-      arg = 0;
+	  (void)arg;
       XEvent event;
       pthread_setcanceltype(PTHREAD_CANCEL_DEFERRED,0);
       pthread_setcancelstate(PTHREAD_CANCEL_ENABLE,0);
