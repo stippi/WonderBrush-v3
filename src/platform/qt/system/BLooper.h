@@ -38,6 +38,15 @@ public:
 										= B_LOOPER_PORT_DEFAULT_CAPACITY);
 	virtual						~BLooper();
 
+	// Message transmission
+			status_t			PostMessage(uint32 command);
+			status_t			PostMessage(BMessage* message);
+			status_t			PostMessage(uint32 command, BHandler* handler,
+									BHandler* replyTo = NULL);
+			status_t			PostMessage(BMessage* message,
+									BHandler* handler,
+									BHandler* replyTo = NULL);
+
 	virtual	void				DispatchMessage(BMessage* message,
 									BHandler* handler);
 

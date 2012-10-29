@@ -17,6 +17,7 @@
 #include <List.h>
 #include <Locker.h>
 #include <MessageFilter.h>
+#include <Messenger.h>
 
 #include <MessagePrivate.h>
 
@@ -144,6 +145,34 @@ BLooper::~BLooper()
 		fLock->Unlock();
 		fLock->RemoveReference();
 	}
+}
+
+
+status_t
+BLooper::PostMessage(uint32 command)
+{
+	return BMessenger(NULL, this).SendMessage(command);
+}
+
+
+status_t
+BLooper::PostMessage(BMessage* message)
+{
+	return BMessenger(NULL, this).SendMessage(message);
+}
+
+
+status_t
+BLooper::PostMessage(uint32 command, BHandler* handler, BHandler* replyTo)
+{
+	return BMessenger(handler, this).SendMessage(command, replyTo);
+}
+
+
+status_t
+BLooper::PostMessage(BMessage* message, BHandler* handler, BHandler* replyTo)
+{
+	return BMessenger(handler, this).SendMessage(message, replyTo);
 }
 
 
