@@ -264,7 +264,7 @@ public:
 		return (StyleRun*)fRuns.ItemAt(index);
 	}
 
-	const int32 CountRuns() const
+	int32 CountRuns() const
 	{
 		return fRuns.CountItems();
 	}
