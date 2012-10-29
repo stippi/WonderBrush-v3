@@ -1,7 +1,8 @@
 #include "support.h"
 
 #include <Application.h>
-#include <BResources.h>
+#include <Resources.h>
+#include <Roster.h>
 
 
 int32
@@ -21,6 +22,5 @@ get_app_resources(BResources& resources)
 	if (status != B_OK)
 		return status;
 
-	BResources resources(&info.ref);
-	return resources.InitCheck();
+	return resources.SetTo(&info.ref);
 }

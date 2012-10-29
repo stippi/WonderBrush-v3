@@ -1,5 +1,7 @@
 SubDir TOP src gui scrollview ;
 
+SEARCH_SOURCE += [ FDirName $(SUBDIR) haiku ] ;
+
 # <pe-inc>
 SubDirHdrs $(TOP) src gui scrollview ;
 # </pe-inc>

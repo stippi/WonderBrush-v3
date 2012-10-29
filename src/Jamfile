@@ -5,11 +5,11 @@ local sourceDirs =
 #	alm
 	commands
 	gui
-	gui/haiku
+	gui/$(WONDERBRUSH_PLATFORM)
 	gui/misc
-	gui/misc/haiku
+	gui/misc/$(WONDERBRUSH_PLATFORM)
 	gui/tools
-	gui/tools/haiku
+	gui/tools/$(WONDERBRUSH_PLATFORM)
 	model
 	model/document
 	model/fills
@@ -60,6 +60,7 @@ SubDirHdrs [ FDirName $(TOP) src gui propertylistview ] ;
 SubDirHdrs [ FDirName $(TOP) src gui propertylistview
 	specific_properties ] ;
 SubDirHdrs [ FDirName $(TOP) src gui scrollview ] ;
+SubDirHdrs [ FDirName $(TOP) src gui scrollview haiku ] ;
 SubDirHdrs [ FDirName $(TOP) src gui stateview ] ;
 SubDirHdrs [ FDirName $(TOP) src model ] ;
 SubDirHdrs [ FDirName $(TOP) src model document ] ;
@@ -106,7 +107,7 @@ Application WonderBrush :
 	SwatchView.cpp
 	TextViewPopup.cpp
 
-	# gui/misc/haiku
+	# gui/misc/<platform>
 	DualSlider.cpp
 	IconButton.cpp
 	IconOptionsControl.cpp
@@ -115,7 +116,7 @@ Application WonderBrush :
 	TextToolConfigView.cpp
 	TransformToolConfigView.cpp
 
-	# gui/tools/haiku
+	# gui/tools/<platform>
 	BrushToolConfigView.cpp
 
 	# gui (WonderBrush specific)
@@ -124,7 +125,7 @@ Application WonderBrush :
 	ResourceTreeView.cpp
 	ToolConfigView.cpp
 
-	# gui/haiku
+	# gui/<platform>
 	CanvasView.cpp
 	Window.cpp
 

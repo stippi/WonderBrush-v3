@@ -6,6 +6,7 @@ SubDirHdrs $(TOP) src gui misc ;
 SubDirHdrs $(TOP) src gui propertylistview ;
 SubDirHdrs $(TOP) src gui propertylistview specific_properties ;
 SubDirHdrs $(TOP) src gui scrollview ;
+SubDirHdrs $(TOP) src gui scrollview $(WONDERBRUSH_PLATFORM) ;
 SubDirHdrs $(TOP) src model property ;
 SubDirHdrs $(TOP) src model property specific_properties ;
 SubDirHdrs $(TOP) src support ;
