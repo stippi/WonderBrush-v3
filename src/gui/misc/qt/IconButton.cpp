@@ -99,43 +99,27 @@ IconButton::SetPressed(bool pressed)
 status_t
 IconButton::SetIcon(int32 resourceID, int32 size)
 {
-qDebug("IconButton::SetIcon()");
 	BResources resources;
 	status_t status = get_app_resources(resources);
 	if (status != B_OK)
-{
-qDebug("  -> failed to get app resources");
 		return status;
-}
-qDebug("  got app resources");
 
 	size_t dataSize;
 	const void* data = resources.LoadResource(B_VECTOR_ICON_TYPE, resourceID,
 		&dataSize);
 	if (data != NULL) {
-qDebug("  got icon resource (%zd bytes)", dataSize);
 		BBitmap bitmap(BRect(0, 0, size - 1, size - 1),
 			B_BITMAP_NO_SERVER_LINK, B_RGBA32);
 		status = bitmap.InitCheck();
 		if (status != B_OK)
-{
-qDebug("  -> failed to create bitmap");
 			return status;
-}
 
 		status = BIconUtils::GetVectorIcon(reinterpret_cast<const uint8*>(data),
 			dataSize, &bitmap);
 		if (status != B_OK)
-{
-qDebug("  -> failed to get vector icon");
 			return status;
-}
 		return SetIcon(&bitmap);
 	}
-else
-{
-qDebug("  -> failed to get icon resource");
-}
 	return B_ERROR;
 }
 
@@ -360,7 +344,6 @@ IconButton::_UpdateIcon()
 		icon = isChecked() ? fClickedIcon : fNormalIcon;
 	else
 		icon = isChecked() ? fDisabledClickedIcon : fDisabledIcon;
-qDebug("%p->IconButton::_UpdateIcon() -> icon: %p", this, icon);
 
 	if (icon != NULL)
 		setIcon(*icon);

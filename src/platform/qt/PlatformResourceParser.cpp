@@ -317,7 +317,6 @@ PlatformResourceParser::ParseAppResources(BResources& resources)
 	QFile rdefFile(QString::fromUtf8(":/resources/rdef"));
 	if (!rdefFile.open(QFile::ReadOnly))
 		return B_ENTRY_NOT_FOUND;
-qDebug("successfully opened rdef");
 
 	Tokenizer tokenizer(rdefFile);
 	fTokenizer = &tokenizer;
@@ -346,7 +345,6 @@ PlatformResourceParser::_Parse()
 void
 PlatformResourceParser::_ParseResource()
 {
-qDebug("resource");
 	fTokenizer->ExpectToken(kTokenResource);
 	Token token = fTokenizer->NextToken();
 	if (token == kTokenOpeningParenthesis) {
@@ -379,7 +377,6 @@ qDebug("resource");
 
 			fResources->AddResource(type, resourceId.fString.toInt(),
 				resourceData, resourceName.fString);
-qDebug("  -> %s \"%s\", %d bytes", resourceId.fString.data(), resourceName.fString.data(), resourceData.size());
 		}
 	} else
 		fTokenizer->PutToken(token);

@@ -27,7 +27,6 @@ IconOptionsControl::IconOptionsControl(const char* name, const char* label,
 void
 IconOptionsControl::AddOption(IconButton* icon)
 {
-qDebug("IconOptionsControl::AddOption(%p)", icon);
 	if (icon == NULL)
 		return;
 
@@ -42,7 +41,6 @@ qDebug("IconOptionsControl::AddOption(%p)", icon);
 void
 IconOptionsControl::MessageReceived(BMessage* message)
 {
-qDebug("IconOptionsControl::MessageReceived()");
 	// catch a message from the attached IconButtons to
 	// handle switching the pressed icon
 	BHandler* source;
