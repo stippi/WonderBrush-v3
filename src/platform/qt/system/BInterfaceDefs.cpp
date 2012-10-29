@@ -1,11 +1,14 @@
 #include <InterfaceDefs.h>
 
+#include <View.h>
+
+#include <QApplication>
+
 
 uint32
 modifiers()
 {
-// TODO:...
-	return 0;
+	return BView::FromQtModifiers(QApplication::keyboardModifiers());
 }
 
 

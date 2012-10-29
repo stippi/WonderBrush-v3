@@ -24,6 +24,7 @@
 
 class BMessageFilter;
 class BList;
+class BView;
 
 
 class BLooper : public BHandler {
@@ -82,6 +83,8 @@ protected:
 
 private:
 			struct LooperLock;
+
+			friend class BView;
 
 private:
 			void				_InitData(const char* name, int32 priority);

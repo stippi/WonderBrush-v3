@@ -122,6 +122,14 @@ public:
 	virtual	void				KeyDown(const char* bytes, int32 numBytes);
 	virtual	void				KeyUp(const char* bytes, int32 numBytes);
 
+	static	int32				FromQtModifiers(
+									Qt::KeyboardModifiers qtModifiers);
+
+protected:
+	virtual	void				mousePressEvent(QMouseEvent* event);
+	virtual	void				mouseReleaseEvent(QMouseEvent* event);
+	virtual	void				mouseMoveEvent(QMouseEvent* event);
+
 private:
 			friend class BWindow;
 
@@ -130,6 +138,11 @@ private:
 			void				_DetachFromWindow();
 			void				_AllAttachedToWindow();
 			void				_AllDetachedFromWindow();
+
+			void				_TranslateMouseEvent(QMouseEvent& event,
+									BMessage& message);
+
+			void				_DeliverMessage(BMessage* message);
 
 private:
 			BWindow*			fWindow;

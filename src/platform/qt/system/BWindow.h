@@ -18,6 +18,9 @@ public:
 								BWindow(QWidget* parent = NULL);
 	virtual						~BWindow();
 
+	virtual	void				DispatchMessage(BMessage* message,
+									BHandler* handler);
+
 private:
 			struct ViewAncestryTracker;
 
