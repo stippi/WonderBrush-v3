@@ -159,7 +159,7 @@ public:
 
 	inline ObjectType* LastObject() const
 	{
-		return ObjectAtFast(fCount - 1);
+		return ObjectAt(fCount - 1);
 	}
 
 private:
