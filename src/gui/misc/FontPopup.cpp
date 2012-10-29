@@ -22,7 +22,7 @@ class FontPopUpMenu : public BPopUpMenu {
 public:
 	FontPopUpMenu(const char *title, bool radioMode = true,
 		bool autoRename = true, menu_layout layout = B_ITEMS_IN_COLUMN)
-	: BPopUpMenu(title, radioMode, autoRename, layout)
+		: BPopUpMenu(title, radioMode, autoRename, layout)
 	{
 	}
 
@@ -125,10 +125,9 @@ FontMenuItem::GetFamilyAndStyle(font_family* family,
 // #pragma mark - FontPopup
 
 // constructor
-FontPopup::FontPopup(const char* label, bool subMenus, bool fixedSize,
-		bool asLabel)
+FontPopup::FontPopup(const char* label, bool subMenus, bool asLabel)
 	: LabelPopup(label, new FontPopUpMenu("scanning"B_UTF8_ELLIPSIS),
-			fixedSize, asLabel)
+		asLabel)
 	, fSubMenus(subMenus)
 {
 	// we control the label and radio feature ourselves

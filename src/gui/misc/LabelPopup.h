@@ -12,14 +12,11 @@
 class LabelPopup : public BMenuField {
 public:
 								LabelPopup(const char* label,
-									BMenu* menu = NULL, bool fixedSize = true,
-									bool asLabel = false);
+									BMenu* menu = NULL, bool asLabel = false);
 	virtual						~LabelPopup();
 
 	// LabelPopup
 	virtual	void				RefreshItemLabel();
-
-private:
 };
 
 #endif // LABEL_POPUP_H
