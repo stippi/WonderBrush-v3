@@ -16,10 +16,8 @@
 #define DIVIDER_DIST 3.0
 
 // constructor
-LabelPopup::LabelPopup(const char* label, BMenu* menu, bool fixedSize,
-		bool asLabel)
-	:
-	BMenuField(label, label, menu ? menu : new BPopUpMenu("popup"), 0)
+LabelPopup::LabelPopup(const char* label, BMenu* menu, bool asLabel)
+	: BMenuField(label, menu != NULL ? menu : new BPopUpMenu("popup"))
 {
 	if (Menu()) {
 		Menu()->SetRadioMode(true);
@@ -27,10 +25,6 @@ LabelPopup::LabelPopup(const char* label, BMenu* menu, bool fixedSize,
 	}
 	const BFont* labelFont = asLabel ? be_bold_font : be_plain_font;
 	SetFont(labelFont);
-
-	if (fixedSize) {
-		// TODO: Mess with explicite max size...
-	}
 }
 
 // destructor

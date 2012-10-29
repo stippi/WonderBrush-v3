@@ -37,7 +37,6 @@ private:
 class FontPopup : public LabelPopup {
 public:
 								FontPopup(const char* label, bool subMenus,
-									bool fixedSize = true,
 									bool asLabel = false);
 
 	virtual	void				MessageReceived(BMessage* message);
