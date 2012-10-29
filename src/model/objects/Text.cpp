@@ -103,7 +103,7 @@ public:
 
 	void MakeEmpty()
 	{
-		for (int32 i = fRuns.CountItems(); i >= 0; i--)
+		for (int32 i = fRuns.CountItems() - 1; i >= 0; i--)
 			delete (StyleRun*)fRuns.ItemAtFast(i);
 		fRuns.MakeEmpty();
 	}
