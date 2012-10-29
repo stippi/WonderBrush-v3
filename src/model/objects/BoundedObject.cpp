@@ -22,6 +22,7 @@ BoundedObject::TransformationChanged()
 {
 	// Override the Object version, which invalidates the whole parent.
 	// (That's actually valid for unbounded objects, such as filters.)
+	NotifyListeners();
 	UpdateChangeCounter();
 	UpdateBounds();
 }

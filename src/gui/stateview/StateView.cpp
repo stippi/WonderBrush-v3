@@ -535,9 +535,6 @@ StateView::HandleKeyDown(const KeyEvent& event, BHandler* originalTarget)
 	if (fLocker != NULL && !locker.IsLocked())
 		return false;
 
-	if (_HandleKeyDown(event, originalTarget))
-		return true;
-
 	if (fCurrentState != NULL) {
 		Command* command = NULL;
 		if (fCurrentState->HandleKeyDown(event, &command)) {
@@ -545,7 +542,7 @@ StateView::HandleKeyDown(const KeyEvent& event, BHandler* originalTarget)
 			return true;
 		}
 	}
-	return false;
+	return _HandleKeyDown(event, originalTarget);
 }
 
 // HandleKeyUp
@@ -556,9 +553,6 @@ StateView::HandleKeyUp(const KeyEvent& event, BHandler* originalTarget)
 	if (fLocker != NULL && !locker.IsLocked())
 		return false;
 
-	if (_HandleKeyUp(event, originalTarget))
-		return true;
-
 	if (fCurrentState != NULL) {
 		Command* command = NULL;
 		if (fCurrentState->HandleKeyUp(event, &command)) {
@@ -566,7 +560,8 @@ StateView::HandleKeyUp(const KeyEvent& event, BHandler* originalTarget)
 			return true;
 		}
 	}
-	return false;
+
+	return _HandleKeyUp(event, originalTarget);
 }
 
 // StateForDragMessage

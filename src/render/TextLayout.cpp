@@ -412,6 +412,10 @@ TextLayout::addStyleRun(int start, const char* fontPath,
 	bool underline, unsigned underlineStyle,
 	int underlineRed, int underlineGreen, int underlineBlue)
 {
+//printf("TextLayout::addStyleRun(%d, font('%s', %.1f, %u), "
+//	"color(%d, %d, %d)) (index: %u)\n",
+//	start, fontPath, fontSize, fontStyle, fgRed, fgGreen, fgBlue,
+//	fStyleRunCount);
 	// Enlarge buffer if necessary
 	if (fStyleRunCount == fStyleRunBufferSize) {
 		int size = fStyleRunBufferSize + 64;
@@ -629,6 +633,36 @@ TextLayout::getLineOffsets(int offsets[], unsigned count)
 		offsets[i] = fLineInfoBuffer[i].startOffset;
 
 	return i;
+}
+
+
+int
+TextLayout::getFirstOffsetOnLine(int lineIndex)
+{
+	validateLayout();
+	
+	if (lineIndex < 0)
+		return 0;
+	
+	if (lineIndex >= (int)fLineInfoCount)
+		return fGlyphInfoCount;
+
+	return fLineInfoBuffer[lineIndex].startOffset;
+}
+
+
+int
+TextLayout::getLastOffsetOnLine(int lineIndex)
+{
+	validateLayout();
+
+	if (lineIndex < 0)
+		return 0;
+	
+	if (lineIndex >= (int)fLineInfoCount - 1)
+		return fGlyphInfoCount;
+
+	return fLineInfoBuffer[lineIndex + 1].startOffset - 1;
 }
 
 
@@ -895,6 +929,38 @@ TextLayout::getNextOffset(int offset, unsigned movement)
 }
 
 
+void
+TextLayout::getTextBounds(int textOffset, double& x1, double& y1,
+	double& x2, double& y2)
+{
+	validateLayout();
+	
+	if (textOffset < 0) {
+		x1 = 0.0;
+		y1 = 0.0;
+		x2 = 0.0;
+		y2 = 0.0;
+	} else if (textOffset >= (int) fGlyphInfoCount) {
+		if (fGlyphInfoCount == 0) {
+			getLineBounds(0, &x1, &y1, &x2, &y2);
+		} else {
+			getGlyphBoundingBox(fGlyphInfoCount - 1, &x1, &y1, &x2, &y2);
+			x1 = x2;
+
+			const double scale = getScaleX();
+			x1 /= scale;
+			x2 /= scale;
+		}
+	} else {
+		getGlyphBoundingBox(textOffset, &x1, &y1, &x2, &y2);
+
+		const double scale = getScaleX();
+		x1 /= scale;
+		x2 /= scale;
+	}
+}
+
+
 bool
 TextLayout::init(const char* text, FontEngine& fontEngine,
 	FontManager& fontManager, bool hinting, double scaleX,
@@ -910,7 +976,7 @@ TextLayout::init(const char* text, FontEngine& fontEngine,
     double height = fFont.getSize();
 
 	if (!fontEngine.load_font(resolvedFontPath.String(), 0,
-		agg::glyph_ren_outline, height, height)) {
+		agg::glyph_ren_outline, height * scaleX * subpixelScale, height)) {
 		fprintf(stderr, "Error loading font: '%s'\n",
 			resolvedFontPath.String());
 	}
@@ -918,7 +984,6 @@ TextLayout::init(const char* text, FontEngine& fontEngine,
 	fAscent = fontEngine.ascender();
 	fDescent = fontEngine.descender();
 
-    fontEngine.width(height * scaleX * subpixelScale);
     fontEngine.hinting(hinting);
 
 	const char* p = text;
@@ -939,9 +1004,12 @@ TextLayout::init(const char* text, FontEngine& fontEngine,
 				resolvedFontPath = FontCache::getInstance()
 					->resolveFont(nextStyleRun->font.getName());
 
-				fontEngine.load_font(resolvedFontPath.String(), 0,
-					agg::glyph_ren_outline, height, height);
-				fontEngine.width(height * scaleX * subpixelScale);
+				if (!fontEngine.load_font(resolvedFontPath.String(), 0,
+					agg::glyph_ren_outline, height * scaleX * subpixelScale,
+					height)) {
+					fprintf(stderr, "Error loading font: '%s'\n",
+						resolvedFontPath.String());
+				}
 
 				// Init these two after having loaded the font in the engine.
 				// But only do so if the StyleRun does not provide it's own
@@ -988,6 +1056,8 @@ TextLayout::layout(FontEngine& fontEngine, FontManager& fontManager,
 
 	if (fGlyphInfoCount == 0)
 		return;
+
+	AutoWriteLocker _(FontCache::getInstance());
 
 	const double width = fWidth * scaleX * subpixelScale;
 	const double additionalGlyphSpacing = fGlyphSpacing * scaleX
@@ -1175,9 +1245,12 @@ TextLayout::layout(FontEngine& fontEngine, FontManager& fontManager,
 						BString resolvedFontPath = FontCache::getInstance()
 							->resolveFont(lastLoadedStyleRun->font.getName());
 
-						fontEngine.load_font(resolvedFontPath.String(),
-							0, agg::glyph_ren_outline, size, size);
-						fontEngine.width(size * scaleX * subpixelScale);
+						if (!fontEngine.load_font(resolvedFontPath.String(), 0,
+							agg::glyph_ren_outline,
+							size * scaleX * subpixelScale, size)) {
+							fprintf(stderr, "Error loading font: '%s'\n",
+								resolvedFontPath.String());
+						}
 					}
 
 					fontEngine.add_kerning(

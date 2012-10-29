@@ -251,6 +251,9 @@ public:
 		double* x2, double* y2);
 
 	int getLineOffsets(int offsets[], unsigned count);
+	
+	int getFirstOffsetOnLine(int lineIndex);
+	int getLastOffsetOnLine(int lineIndex);
 
 	unsigned getOffset(double x, double y, bool& rightOfCenter);
 
@@ -258,6 +261,9 @@ public:
 
 	int getPreviousOffset(int offset, unsigned movement);
 	int getNextOffset(int offset, unsigned movement);
+
+	void getTextBounds(int textOffset, double& x1, double& y1,
+		double& x2, double& y2);
 
 private:
 	bool init(const char* text, FontEngine& fontEngine,

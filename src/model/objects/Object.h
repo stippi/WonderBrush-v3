@@ -51,6 +51,7 @@ protected:
 	// BaseObject interface
 	virtual void				NotifyListeners();
 
+	// Transformable interface
 	virtual	void				TransformationChanged();
 
 private:

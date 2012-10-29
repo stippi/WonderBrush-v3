@@ -617,12 +617,17 @@ RenderManager::_IncludeDirtyArea(const Layer* layer, BRect area)
 void
 RenderManager::_QueueRedraw(const Layer* layer, BRect area)
 {
-	if (!fRenderQueueLock.Lock())
+	if (!fRenderQueueLock.Lock()) {
+		fprintf(stderr, "RenderManager::_QueueRedraw() - "
+			"locking fRenderQueueLock failed!\n");
 		return;
+	}
 //printf("RenderManager::_QueueRedraw(%p, (%f, %f, %f, %f))\n", layer, area.left, area.top, area.right, area.bottom);
 
 	if (_IncludeDirtyArea(layer, area) != B_OK) {
 		fRenderQueueLock.Unlock();
+		fprintf(stderr, "RenderManager::_QueueRedraw() - "
+			"_IncludeDirtyArea() failed!\n");
 		return;
 	}
 

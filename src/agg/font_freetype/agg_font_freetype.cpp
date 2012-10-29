@@ -613,10 +613,14 @@ namespace agg
                                               const char* font_mem,
                                               const long font_mem_size)
     {
-        m_width = int(width * 64.0);
-        m_height = int(width * 64.0);
-        return load_font(font_name, face_index, ren_type, font_mem,
-       		font_mem_size);
+        if(load_font(font_name, face_index, ren_type, font_mem, font_mem_size))
+        {
+            m_width = int(width * 64.0);
+            m_height = int(height * 64.0);
+            update_char_size();
+            return true;
+        }
+        return false;
     }
 
     //------------------------------------------------------------------------
@@ -642,8 +646,6 @@ namespace agg
             {
                 if(m_num_faces >= m_max_faces)
                 {
-printf("deleting first face name\n");
-fflush(stdout);
 					free(m_face_names[0]);
                     FT_Done_Face(m_faces[0]);
                     memcpy(m_faces, 
@@ -673,7 +675,7 @@ fflush(stdout);
 
                 if(m_last_error == 0)
                 {
-                    m_face_names[m_num_faces] = new char [strlen(font_name) + 1];
+                    m_face_names[m_num_faces] = (char*) malloc(strlen(font_name) + 1);
                     strcpy(m_face_names[m_num_faces], font_name);
                     m_cur_face = m_faces[m_num_faces];
                     m_name     = m_face_names[m_num_faces];

@@ -42,7 +42,6 @@ TextSnapshot::Sync()
 {
 	if (StyleableSnapshot::Sync()) {
 		fTextLayout = fOriginal->getTextLayout();
-		fTextLayout.layout();
 		return true;
 	}
 	return false;

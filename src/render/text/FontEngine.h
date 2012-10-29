@@ -53,7 +53,7 @@ enum glyph_data_type {
 
 
 class FontEngine {
- public:
+public:
 	typedef agg::serialized_scanlines_adaptor_aa<uint8>		Gray8Adapter;
 	typedef agg::serialized_scanlines_adaptor_bin			MonoAdapter;
 	typedef agg::scanline_storage_aa8						ScanlineStorageAA;
@@ -98,7 +98,7 @@ class FontEngine {
 			bool				GetKerning(unsigned first, unsigned second,
 									double* x, double* y);
 
- private:
+private:
 								FontEngine(const FontEngine&);
 			const FontEngine&	operator=(const FontEngine&);
 

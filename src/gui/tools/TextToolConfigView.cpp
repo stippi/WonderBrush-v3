@@ -23,7 +23,12 @@ enum {
 	MSG_SIZE_SLIDER			= 'szsl',
 	MSG_SIZE_TEXT			= 'sztx',
 	MSG_SUBPIXELS			= 'sbpx',
-	MSG_TEXT_CHANGED		= 'txch',
+
+	MSG_INSERT				= 'isrt',
+	MSG_REMOVE				= 'rmov',
+
+	MSG_SELECTION_CHANGED	= 'slch',
+	MSG_SHOW_TEXT_OFFSET	= 'shwo',
 };
 
 // NotifyingTextView
@@ -31,6 +36,7 @@ class NotifyingTextView : public BTextView {
 public:
 	NotifyingTextView(const char* name)
 		: BTextView(name)
+		, fNotificationsEnabled(true)
 	{
 	}
 
@@ -39,22 +45,82 @@ public:
 		fMessenger = BMessenger(target);
 	}
 
+	virtual void Select(int32 startOffset, int32 endOffset)
+	{
+		BTextView::Select(startOffset, endOffset);
+		_SelectionChanged(startOffset, endOffset);
+	}
+
+	virtual void ScrollToOffset(int32 inOffset)
+	{
+		BTextView::ScrollToOffset(inOffset);
+		if (!fNotificationsEnabled)
+			return;
+
+		BMessage message(MSG_SHOW_TEXT_OFFSET);
+		message.AddInt32("offset", inOffset);
+		fMessenger.SendMessage(&message);
+	}
+
+	void SetNotificationsEnabled(bool enabled)
+	{
+		fNotificationsEnabled = enabled;
+	}
+
 protected:
+	void _UpdateSelection()
+	{
+		int32 startOffset;
+		int32 endOffset;
+		GetSelection(&startOffset, &endOffset);
+		_SelectionChanged(startOffset, endOffset);
+	}	
+
+	void _SelectionChanged(int startOffset, int endOffset)
+	{
+		if (!fNotificationsEnabled)
+			return;
+
+		BMessage message(MSG_SELECTION_CHANGED);
+		message.AddInt32("start offset", startOffset);
+		message.AddInt32("end offset", endOffset);
+		fMessenger.SendMessage(&message);
+	}	
+
 	virtual void InsertText(const char* inText, int32 inLength, int32 inOffset,
 		const text_run_array* inRuns)
 	{
 		BTextView::InsertText(inText, inLength, inOffset, inRuns);
-		fMessenger.SendMessage(MSG_TEXT_CHANGED);
+		if (!fNotificationsEnabled)
+			return;
+		
+		BMessage message(MSG_INSERT);
+		message.AddString("text", inText);
+		message.AddInt32("offset", inOffset);
+		
+		fMessenger.SendMessage(&message);
+		
+		_UpdateSelection();
 	}
 	
 	virtual void DeleteText(int32 fromOffset, int32 toOffset)
 	{
 		BTextView::DeleteText(fromOffset, toOffset);
-		fMessenger.SendMessage(MSG_TEXT_CHANGED);
+		if (!fNotificationsEnabled)
+			return;
+		
+		BMessage message(MSG_REMOVE);
+		message.AddInt32("offset", fromOffset);
+		message.AddInt32("length", toOffset - fromOffset);
+
+		fMessenger.SendMessage(&message);
+		
+		_UpdateSelection();
 	}
 
 private:
 	BMessenger	fMessenger;
+	bool		fNotificationsEnabled;
 };
 
 // #pragma mark - TextToolConfigView
@@ -137,9 +203,52 @@ TextToolConfigView::MessageReceived(BMessage* message)
 				fSubpixels->Value() == B_CONTROL_ON);
 			break;
 
-		case MSG_TEXT_CHANGED:
-			fTool->SetOption(TextTool::TEXT, fTextView->Text());
+		case MSG_INSERT:
+		{
+			const char* text;
+			if (message->FindString("text", &text) != B_OK)
+				break;
+			
+			int32 textOffset;
+			if (message->FindInt32("offset", &textOffset) != B_OK)
+				break;
+
+			((TextTool*)fTool)->Insert(textOffset, text);
 			break;
+		}
+
+		case MSG_REMOVE:
+		{
+			int32 textOffset;
+			if (message->FindInt32("offset", &textOffset) != B_OK)
+				break;
+
+			int32 length;
+			if (message->FindInt32("length", &length) != B_OK)
+				break;
+			
+			((TextTool*)fTool)->Remove(textOffset, length);
+			break;
+		}
+
+		case MSG_SELECTION_CHANGED:
+		{
+			int32 startOffset;
+			int32 endOffset;
+			if (message->FindInt32("start offset", &startOffset) == B_OK
+				&& message->FindInt32("end offset", &endOffset) == B_OK) {
+				dynamic_cast<TextToolState*>(fTool->ToolViewState())
+					->SelectionChanged(startOffset, endOffset);
+			}
+			break;
+		}
+
+		case MSG_SHOW_TEXT_OFFSET:
+		{
+			// TODO: Make the ViewState scroll the canvas to show the
+			// text offset.
+			break;
+		}
 
 		case MSG_LAYOUT_CHANGED:
 		{
@@ -151,7 +260,9 @@ TextToolConfigView::MessageReceived(BMessage* message)
 
 			const char* text;
 			if (message->FindString("text", &text) == B_OK) {
+				fTextView->SetNotificationsEnabled(false);
 				fTextView->SetText(text);
+				fTextView->SetNotificationsEnabled(true);
 			}
 			
 			break;

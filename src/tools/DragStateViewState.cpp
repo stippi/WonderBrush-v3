@@ -132,3 +132,11 @@ DragStateViewState::SetDragState(DragState* state)
 	}
 }
 
+// UpdateDragState
+void
+DragStateViewState::UpdateDragState()
+{
+	if (fMouseInfo != NULL)
+		MouseMoved(*fMouseInfo);
+}
+

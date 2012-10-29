@@ -23,83 +23,6 @@
 #include "support.h"
 
 
-enum {
-	MSG_OBJECT_AREA_CHANGED		= 'oacd',
-	MSG_OBJECT_DELETED			= 'odlt',
-};
-
-// constructor
-TransformToolState::RectLOAdapater::RectLOAdapater(BHandler* handler)
-	: RectListener()
-	, AbstractLOAdapter(handler)
-{
-}
-
-// destructor
-TransformToolState::RectLOAdapater::~RectLOAdapater()
-{
-}
-
-// AreaChanged
-void
-TransformToolState::RectLOAdapater::AreaChanged(Rect* rect, const BRect& oldArea,
-	const BRect& newArea)
-{
-	BMessage message(MSG_OBJECT_AREA_CHANGED);
-	message.AddPointer("object", rect);
-	message.AddRect("area", newArea);
-
-	DeliverMessage(message);
-}
-
-// Deleted
-void
-TransformToolState::RectLOAdapater::Deleted(Rect* rect)
-{
-	BMessage message(MSG_OBJECT_DELETED);
-	message.AddPointer("object", rect);
-
-	DeliverMessage(message);
-}
-
-// #pragma mark -
-
-// constructor
-TransformToolState::ShapeLOAdapater::ShapeLOAdapater(BHandler* handler)
-	: ShapeListener()
-	, AbstractLOAdapter(handler)
-{
-}
-
-// destructor
-TransformToolState::ShapeLOAdapater::~ShapeLOAdapater()
-{
-}
-
-// AreaChanged
-void
-TransformToolState::ShapeLOAdapater::AreaChanged(Shape* shape, const BRect& oldArea,
-	const BRect& newArea)
-{
-	BMessage message(MSG_OBJECT_AREA_CHANGED);
-	message.AddPointer("object", shape);
-	message.AddRect("area", newArea);
-
-	DeliverMessage(message);
-}
-
-// Deleted
-void
-TransformToolState::ShapeLOAdapater::Deleted(Shape* shape)
-{
-	BMessage message(MSG_OBJECT_DELETED);
-	message.AddPointer("object", shape);
-
-	DeliverMessage(message);
-}
-
-// #pragma mark -
-
 class TransformToolState::DragPivotState
 	: public DragStateViewState::DragState {
 public:
@@ -669,8 +592,7 @@ TransformToolState::TransformToolState(StateView* view, const BRect& box,
 	, fSelection(selection)
 	, fObject(NULL)
 
-	, fRectLOAdapter(view)
-	, fShapeLOAdapter(view)
+	, fIgnoreObjectEvents(false)
 {
 	fSelection->AddListener(this);
 }
@@ -678,6 +600,7 @@ TransformToolState::TransformToolState(StateView* view, const BRect& box,
 // destructor
 TransformToolState::~TransformToolState()
 {
+	SetObject(NULL);
 	fSelection->RemoveListener(this);
 
 	delete fPickObjectState;
@@ -701,23 +624,6 @@ TransformToolState::MessageReceived(BMessage* message, Command** _command)
 	bool handled = true;
 
 	switch (message->what) {
-//		case MSG_OBJECT_AREA_CHANGED: {
-//			Object* object;
-//			BRect area;
-//			if (message->FindPointer("object", (void**)&object) == B_OK
-//				&& message->FindRect("area", &area) == B_OK)
-//				if (object == fObject && !IsDragging())
-//					SetBox(area);
-//			break;
-//		}
-		case MSG_OBJECT_DELETED: {
-			Object* object;
-			if (message->FindPointer("object", (void**)&object) == B_OK)
-				if (object == fObject)
-					SetObject(NULL);
-			break;
-		}
-
 		default:
 			handled = ViewState::MessageReceived(message, _command);
 	}
@@ -1144,55 +1050,80 @@ TransformToolState::ObjectDeselected(const Selectable& selectable,
 
 // #pragma mark -
 
+// ObjectChanged
+void
+TransformToolState::ObjectChanged(const Notifier* object)
+{
+	if (fIgnoreObjectEvents)
+		return;
+	
+	if (fObject != NULL && object == fObject) {
+		AdoptObject();
+	}
+}
+
+// #pragma mark -
+
 // SetObject
 void
 TransformToolState::SetObject(Object* object, bool modifySelection)
 {
-	BRect box;
-	BoundedObject* boundedObject = dynamic_cast<BoundedObject*>(object);
-	if (boundedObject != NULL)
-		box = boundedObject->Bounds();
-	else {
-		// TODO: If the transformed object is not a BoundedObject, we
-		// could also display ourselfs differently, for example with
-		// arrows like in Maya.
-		box = BRect(0, 0, 100, 100);
+	if (fObject == object)
+		return;
+	
+	if (fObject != NULL) {
+		fObject->RemoveListener(this);
+		fObject->RemoveReference();
 	}
+	
+	fObject = object;
+	
+	if (fObject != NULL) {
+		fObject->AddReference();
+		fObject->AddListener(this);
 
-	fParentGlobalTransformation.Reset();
-
-	if (object != NULL) {
 		if (modifySelection)
-			fSelection->Select(Selectable(boundedObject), this);
-		SetObjectToCanvasTransformation(object->Transformation());
-		if (Object* parent = object->Parent())
-			fParentGlobalTransformation = parent->Transformation();
+			fSelection->Select(Selectable(fObject), this);
 	} else {
-		box = BRect();
 		if (modifySelection)
 			fSelection->DeselectAll(this);
-		SetObjectToCanvasTransformation(Transformable());
 	}
 
-	SetTransformable(object);
+	AdoptObject();
+}
+
+// AdoptObject
+void
+TransformToolState::AdoptObject()
+{
+	BRect box;
+
+	if (fObject != NULL) {
+		BoundedObject* boundedObject = dynamic_cast<BoundedObject*>(fObject);
+		if (boundedObject != NULL)
+			box = boundedObject->Bounds();
+		else {
+			// TODO: If the transformed object is not a BoundedObject, we
+			// could also display ourselfs differently, for example with
+			// arrows like in Maya.
+			box = BRect(0, 0, 100, 100);
+		}
+	
+		fOriginalTransformation = *fObject;
+		fParentGlobalTransformation.Reset();
+	
+		SetObjectToCanvasTransformation(fObject->Transformation());
+		Object* parent = fObject->Parent();
+		if (parent != NULL)
+			fParentGlobalTransformation = parent->Transformation();
+	} else {
+		SetObjectToCanvasTransformation(Transformable());
+		box = BRect();
+	}
+
 	SetBox(box);
 }
 
-// SetTransformablee
-void
-TransformToolState::SetTransformable(Transformable* object)
-{
-	_UnregisterObject(fObject);
-
-	fObject = object;
-
-	_RegisterObject(fObject);
-
-	if (fObject != NULL) {
-		// TODO: More setup (listener...)
-		fOriginalTransformation = *fObject;
-	}
-}
 
 // SetBox
 void
@@ -1384,7 +1315,10 @@ TransformToolState::UpdateAdditionalTransformation()
 		newTransformation.Multiply(fParentGlobalTransformation);
 		newTransformation.Multiply(additionalTransform);
 		newTransformation.MultiplyInverse(fParentGlobalTransformation);
+		
+		fIgnoreObjectEvents = true;
 		fObject->SetTransformable(newTransformation);
+		fIgnoreObjectEvents = false;
 
 		fDocument->WriteUnlock();
 	}
@@ -1402,39 +1336,5 @@ TransformToolState::UpdateAdditionalTransformation()
 	}
 
 	return transform;
-}
-
-// #pragma mark -
-
-// _RegisterObject
-void
-TransformToolState::_RegisterObject(Transformable* object)
-{
-	Shape* shape = dynamic_cast<Shape*>(object);
-	Rect* rect = dynamic_cast<Rect*>(object);
-
-	if (shape != NULL) {
-		shape->AddReference();
-		shape->AddListener(&fShapeLOAdapter);
-	} else if (rect != NULL) {
-		rect->AddReference();
-		rect->AddListener(&fRectLOAdapter);
-	}
-}
-
-// _UnregisterObject
-void
-TransformToolState::_UnregisterObject(Transformable* object)
-{
-	Shape* shape = dynamic_cast<Shape*>(object);
-	Rect* rect = dynamic_cast<Rect*>(object);
-
-	if (shape != NULL) {
-		shape->RemoveListener(&fShapeLOAdapter);
-		shape->RemoveReference();
-	} else if (rect != NULL) {
-		rect->RemoveListener(&fRectLOAdapter);
-		rect->RemoveReference();
-	}
 }
 

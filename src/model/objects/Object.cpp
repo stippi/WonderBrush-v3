@@ -1,8 +1,10 @@
 /*
- * Copyright 2007 - 2009, Stephan Aßmus <superstippi@gmx.de>.
+ * Copyright 2007 - 2012, Stephan Aßmus <superstippi@gmx.de>.
  * All rights reserved.
  */
 #include "Object.h"
+
+#include <stdio.h>
 
 #include "Layer.h"
 
@@ -128,6 +130,7 @@ Object::NotifyListeners()
 void
 Object::TransformationChanged()
 {
+	NotifyListeners();
 	UpdateChangeCounter();
 	InvalidateParent();
 }

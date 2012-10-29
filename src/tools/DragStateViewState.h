@@ -52,6 +52,8 @@ public:
 			bool				IsDragging() const
 									{ return fDragging; }
 
+			void				UpdateDragState();
+
 private:
 			DragState*			fCurrentState;
 			bool				fDragging;

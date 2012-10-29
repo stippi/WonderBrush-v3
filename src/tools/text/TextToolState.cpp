@@ -6,6 +6,7 @@
 #include "TextToolState.h"
 
 #include <Cursor.h>
+#include <MessageRunner.h>
 #include <Shape.h>
 
 #include <new>
@@ -18,6 +19,7 @@
 #include "ObjectAddedCommand.h"
 #include "support.h"
 #include "Text.h"
+#include "ui_defines.h"
 
 // DragLeftTopState
 class TextToolState::DragLeftTopState : public DragStateViewState::DragState {
@@ -73,7 +75,8 @@ public:
 	virtual void SetOrigin(BPoint origin)
 	{
 		fParent->TransformCanvasToObject(&origin);
-		DragState::SetOrigin(origin);
+		BPoint widthOffset(fParent->Width(), 0);
+		DragState::SetOrigin(widthOffset - origin);
 	}
 
 	virtual void DragTo(BPoint current, uint32 modifiers)
@@ -81,17 +84,17 @@ public:
 		BPoint objectCurrent = current;
 		fParent->TransformCanvasToObject(&objectCurrent);
 		
-//		BPoint leftTopOffset = objectCurrent - fOrigin;
-
-//		fParent->SetWidth(leftTopOffset);
-
-		fOrigin = current;
-		fParent->TransformCanvasToObject(&fOrigin);
+		objectCurrent += fOrigin;
+		
+		if (objectCurrent.x < 0)
+			objectCurrent.x = 0;
+		
+		fParent->SetWidth(objectCurrent.x);
 	}
 
 	virtual BCursor ViewCursor(BPoint current) const
 	{
-		return BCursor(B_CURSOR_ID_MOVE);
+		return BCursor(B_CURSOR_ID_RESIZE_EAST_WEST);
 	}
 
 	virtual const char* CommandName() const
@@ -103,6 +106,44 @@ private:
 	TextToolState*		fParent;
 };
 
+// DragCaretState
+class TextToolState::DragCaretState : public DragStateViewState::DragState {
+public:
+	DragCaretState(TextToolState* parent)
+		: DragState(parent)
+		, fParent(parent)
+	{
+	}
+
+	virtual void SetOrigin(BPoint origin)
+	{
+		fParent->TransformCanvasToObject(&origin);
+		DragState::SetOrigin(origin);
+
+		bool select = (fParent->Modifiers() & B_SHIFT_KEY) != 0;
+		fParent->SetCaret(origin, select);
+	}
+
+	virtual void DragTo(BPoint current, uint32 modifiers)
+	{
+		fParent->TransformCanvasToObject(&current);
+
+		fParent->SetCaret(current, true);
+	}
+
+	virtual BCursor ViewCursor(BPoint current) const
+	{
+		return BCursor(B_CURSOR_ID_I_BEAM);
+	}
+
+	virtual const char* CommandName() const
+	{
+		return "Select text";
+	}
+
+private:
+	TextToolState*		fParent;
+};
 
 // PickTextState
 class TextToolState::PickTextState : public DragStateViewState::DragState {
@@ -122,8 +163,8 @@ public:
 		if (fText == NULL)
 			return;
 
-		fParent->SetDragState(fParent->fDragLeftTopState);
-		fParent->fDragLeftTopState->SetOrigin(origin);
+		fParent->SetDragState(fParent->fDragCaretState);
+		fParent->fDragCaretState->SetOrigin(origin);
 	}
 
 	virtual void DragTo(BPoint current, uint32 modifiers)
@@ -177,7 +218,7 @@ public:
 
 	virtual BCursor ViewCursor(BPoint current) const
 	{
-		return BCursor(B_CURSOR_I_BEAM);
+		return BCursor(B_CURSOR_ID_SYSTEM_DEFAULT);
 	}
 
 	virtual const char* CommandName() const
@@ -193,15 +234,20 @@ private:
 // #pragma mark -
 
 
+enum {
+	MSG_CARET_PULSE				= 'plse',
+};
+
 // constructor
 TextToolState::TextToolState(StateView* view, Document* document,
 		Selection* selection, const BMessenger& configView)
 	: DragStateViewState(view)
 
-	, fPickTextState(new (std::nothrow) PickTextState(this))
-	, fCreateTextState(new (std::nothrow) CreateTextState(this))
-	, fDragLeftTopState(new (std::nothrow) DragLeftTopState(this))
-	, fDragWidthState(new (std::nothrow) DragWidthState(this))
+	, fPickTextState(new(std::nothrow) PickTextState(this))
+	, fCreateTextState(new(std::nothrow) CreateTextState(this))
+	, fDragLeftTopState(new(std::nothrow) DragLeftTopState(this))
+	, fDragWidthState(new(std::nothrow) DragWidthState(this))
+	, fDragCaretState(new(std::nothrow) DragCaretState(this))
 
 	, fDocument(document)
 	, fSelection(selection)
@@ -211,25 +257,62 @@ TextToolState::TextToolState(StateView* view, Document* document,
 	, fInsertionLayer(NULL)
 	, fInsertionIndex(-1)
 	, fText(NULL)
+	
+	, fCaretOffset(0)
+	, fCaretAnchorX(0.0)
+	, fShowCaret(true)
+	, fCaretPulseRunner(NULL)
+	
+	, fStyle(new(std::nothrow) Style(), true)
+	, fSize(12.0)
 {
 	// TODO: Find a way to change this later...
 	SetInsertionInfo(fDocument->RootLayer(),
 		fDocument->RootLayer()->CountObjects());
 
 	fSelection->AddListener(this);
+
+	fStyle.Get()->SetFillPaint(Paint(kBlack));
 }
 
 // destructor
 TextToolState::~TextToolState()
 {
+	SetText(NULL);
 	fSelection->RemoveListener(this);
 
 	delete fPickTextState;
-	delete fPickTextState;
+	delete fCreateTextState;
 	delete fDragLeftTopState;
 	delete fDragWidthState;
+	delete fDragCaretState;
 
 	SetInsertionInfo(NULL, -1);
+
+	delete fCaretPulseRunner;
+}
+
+// Init
+void
+TextToolState::Init()
+{
+	DragStateViewState::Init();
+
+	if (fCaretPulseRunner == NULL) {
+		BMessage pulseMessage(MSG_CARET_PULSE);
+		fCaretPulseRunner = new BMessageRunner(BMessenger(fView),
+			&pulseMessage, 1000000LL);
+	}
+}
+
+// Cleanup
+void
+TextToolState::Cleanup()
+{
+	delete fCaretPulseRunner;
+	fCaretPulseRunner = NULL;
+
+	DragStateViewState::Cleanup();
 }
 
 // MessageReceived
@@ -239,7 +322,10 @@ TextToolState::MessageReceived(BMessage* message, Command** _command)
 	bool handled = true;
 
 	switch (message->what) {
-		
+		case MSG_CARET_PULSE:
+			fShowCaret = !fShowCaret;
+			UpdateBounds();
+			break;
 		default:
 			handled = TransformViewState::MessageReceived(message, _command);
 	}
@@ -247,17 +333,149 @@ TextToolState::MessageReceived(BMessage* message, Command** _command)
 	return handled;
 }
 
+// #pragma mark -
+
+// ModifiersChanged
+void
+TextToolState::ModifiersChanged(uint32 modifiers)
+{
+	DragStateViewState::ModifiersChanged(modifiers);
+}
+
+// HandleKeyDown
+bool
+TextToolState::HandleKeyDown(const StateView::KeyEvent& event,
+	Command** _command)
+{
+	if (fText != NULL) {
+		*_command = NULL;
+
+		bool select = (event.modifiers & B_SHIFT_KEY) != 0;
+
+		switch (event.key) {
+			case B_UP_ARROW:
+				_LineUp(select);
+				break;
+			case B_DOWN_ARROW:
+				_LineDown(select);
+				break;
+			case B_LEFT_ARROW:
+				if (fCaretOffset != fSelectionAnchorOffset && !select) {
+					_SetCaretOffset(
+						min_c(fCaretOffset, fSelectionAnchorOffset),
+						true, false
+					);
+				} else
+					_SetCaretOffset(fCaretOffset - 1, true, select);
+				break;
+			case B_RIGHT_ARROW:
+				if (fCaretOffset != fSelectionAnchorOffset && !select) {
+					_SetCaretOffset(
+						max_c(fCaretOffset, fSelectionAnchorOffset),
+						true, false
+					);
+				} else
+					_SetCaretOffset(fCaretOffset + 1, true, select);
+				break;
+
+			case B_HOME:
+				//_SetCaretOffset(0, true);
+				_LineStart(select);
+				break;
+			case B_END:
+				//_SetCaretOffset(fText->GetCharCount(), true);
+				_LineEnd(select);
+				break;
+
+			case B_ENTER:
+				Insert(fCaretOffset, "\n");
+				break;
+			case B_SPACE:
+				Insert(fCaretOffset, " ");
+				break;
+			case B_TAB:
+				Insert(fCaretOffset, " ");
+				break;
+
+			case B_ESCAPE:
+				SetText(NULL, true);
+				break;
+
+			case B_BACKSPACE:
+				if (fCaretOffset > 0)
+					Remove(fCaretOffset - 1, 1);
+				break;
+			case B_DELETE:
+				if (fCaretOffset < fText->GetCharCount())
+					Remove(fCaretOffset, 1);
+				break;
+			case B_INSERT:
+				// TODO: Toggle insert mode
+				break;
+
+			case B_PAGE_UP:
+			case B_PAGE_DOWN:
+			case B_SUBSTITUTE:
+			case B_FUNCTION_KEY:
+			case B_KATAKANA_HIRAGANA:
+			case B_HANKAKU_ZENKAKU:
+				break;
+
+			default:
+				if (event.bytes != NULL && event.length > 0) {
+					// Handle null-termintating the string
+					BString text(event.bytes, event.length);
+					Insert(fCaretOffset, text.String());
+				}
+				break;
+		}
+		return true;
+	}
+	
+	return DragStateViewState::HandleKeyDown(event, _command);
+}
+
+// HandleKeyUp
+bool
+TextToolState::HandleKeyUp(const StateView::KeyEvent& event,
+	Command** _command)
+{
+	return DragStateViewState::HandleKeyUp(event, _command);
+}
+
+// #pragma mark -
+
 // Draw
 void
 TextToolState::Draw(BView* view, BRect updateRect)
 {
+	if (fText == NULL)
+		return;
+	
+	_DrawControls(view);
+	if (fSelectionAnchorOffset == fCaretOffset) {
+		if (fShowCaret)
+			_DrawCaret(view, fCaretOffset);
+	} else {
+		if (fSelectionAnchorOffset < fCaretOffset)
+			_DrawSelection(view, fSelectionAnchorOffset, fCaretOffset);
+		else
+			_DrawSelection(view, fCaretOffset, fSelectionAnchorOffset);
+	}
 }
 
 // Bounds
 BRect
 TextToolState::Bounds() const
 {
-	return BRect(0, 0, -1, -1);
+	if (fText == NULL)
+		return BRect(0, 0, -1, -1);
+
+	BRect bounds = fText->Bounds();
+	bounds.right = fText->Width();
+	bounds.InsetBy(-15, -15);
+	TransformObjectToCanvas(&bounds);
+	return bounds;
 }
 
 // #pragma mark -
@@ -273,14 +491,30 @@ TextToolState::StartTransaction(const char* commandName)
 TextToolState::DragState*
 TextToolState::DragStateFor(BPoint canvasWhere, float zoomLevel) const
 {
-	if (fText != NULL) {
-//		float inset = 7.0 / zoomLevel;
+	double scaleX;
+	double scaleY;
+	if (fText != NULL
+		&& fText->GetAffineParameters(NULL, NULL, NULL,
+			&scaleX, &scaleY, NULL, NULL)) {
+		float inset = 7.0 / zoomLevel;
 		
-		BPoint where = canvasWhere;
-		TransformCanvasToObject(&where);
+		BPoint objectWhere = canvasWhere;
+		TransformCanvasToObject(&objectWhere);
 
-		if (fText->Bounds().Contains(where))
+		BPoint widthOffset(fText->Width(), -10.0f / scaleY);
+		if (point_point_distance(objectWhere, widthOffset) < inset)
+			return fDragWidthState;
+
+		BPoint leftTop(0.0, -10.0f / scaleY);
+		if (point_point_distance(objectWhere, leftTop) < inset)
 			return fDragLeftTopState;
+
+		BRect bounds = fText->Bounds();
+		bounds.top -= 10.0f / scaleY;
+		bounds.InsetBy(-inset, -inset);
+
+		if (bounds.Contains(objectWhere))
+			return fDragCaretState;
 	}
 
 	// If there is still no state, switch to the PickObjectsState
@@ -330,6 +564,20 @@ TextToolState::ObjectDeselected(const Selectable& selectable,
 
 // #pragma mark -
 
+// ObjectChanged
+void
+TextToolState::ObjectChanged(const Notifier* object)
+{
+	if (fText != NULL && object == fText) {
+		SetObjectToCanvasTransformation(fText->Transformation());
+		UpdateBounds();
+		UpdateDragState();
+		_UpdateConfigView();
+	}
+}
+
+// #pragma mark -
+
 // SetInsertionInfo
 void
 TextToolState::SetInsertionInfo(Layer* layer, int32 index)
@@ -354,16 +602,20 @@ TextToolState::CreateText(BPoint canvasLocation)
 		return false;
 	}
 
-	Text* text = new(std::nothrow) Text((rgb_color){ 0, 0, 0, 255 });
+	Text* text = new(std::nothrow) Text(kBlack);
 	if (text == NULL) {
 		fprintf(stderr, "TextToolState::CreateText(): Failed to allocate "
 			"Text. Out of memory\n");
 		return false;
 	}
 
-	text->SetFont("DejaVuSerif.ttf", 12.0);
-	text->SetWidth(200.0);
-	text->SetText("Text");
+	text->SetWidth(0.0);
+	
+	BString initialText = fNextText;
+	if (initialText.Length() == 0)
+		initialText = "Text";
+	
+	text->SetText(initialText.String(), "DejaVuSerif.ttf", fSize, fStyle);
 	text->TranslateBy(canvasLocation);
 
 	if (fInsertionIndex < 0)
@@ -395,13 +647,17 @@ TextToolState::SetText(Text* text, bool modifySelection)
 	if (fText == text)
 		return;
 	
-	if (fText != NULL)
+	if (fText != NULL) {
+		fText->RemoveListener(this);
 		fText->RemoveReference();
+	}
 
 	fText = text;
 	
-	if (fText != NULL)
+	if (fText != NULL) {
 		fText->AddReference();
+		fText->AddListener(this);
+	}
 	
 	if (text != NULL) {
 		if (modifySelection)
@@ -413,6 +669,10 @@ TextToolState::SetText(Text* text, bool modifySelection)
 		SetObjectToCanvasTransformation(Transformable());
 	}
 
+	fNextText = "";
+	fCaretOffset = 0;
+	fCaretAnchorX = 0.0;
+
 	_UpdateConfigView();
 }
 
@@ -420,30 +680,124 @@ TextToolState::SetText(Text* text, bool modifySelection)
 void
 TextToolState::OffsetTextBy(BPoint offset)
 {
-	if (fText == NULL)
-		return;
-	
-	// TODO: Not correct...
-	//fText->InverseTransform(&offset);
-	fText->TranslateBy(offset);
-	SetObjectToCanvasTransformation(fText->Transformation());
+	if (fText != NULL) {
+		// TODO: Not correct...
+		fText->TranslateBy(offset);
+		SetObjectToCanvasTransformation(fText->Transformation());
+		UpdateBounds();
+	}
 }
 
-// SetString
+// Insert
 void
-TextToolState::SetString(const char* text)
+TextToolState::Insert(int32 textOffset, const char* text,
+	bool setCaretOffset)
 {
-	if (fText != NULL)
-		fText->SetText(text);
+	if (fText != NULL) {
+		if (setCaretOffset && fSelectionAnchorOffset != fCaretOffset) {
+			int start = fSelectionAnchorOffset;
+			int end = fCaretOffset;
+			if (start > end) {
+				start = fCaretOffset;
+				end = fSelectionAnchorOffset;
+			}
+			fText->Remove(start, end - start);
+			textOffset = start;
+		}
+		
+		fText->Insert(textOffset, text, "DejaVuSerif.ttf", fSize, fStyle);
+		
+		if (setCaretOffset) {
+			_SetCaretOffset(textOffset + BString(text).CountChars(), true,
+				false);
+		} else
+			UpdateBounds();
+	} else {
+		fNextText.InsertChars(text, textOffset);
+	}
+}
+
+// Remove
+void
+TextToolState::Remove(int32 textOffset, int32 length, bool setCaretOffset)
+{
+	if (fText != NULL) {
+		fText->Remove(textOffset, length);
+		if (setCaretOffset) {
+			_SetCaretOffset(textOffset, true, false);
+		} else
+			UpdateBounds();
+	} else {
+		fNextText.RemoveChars(textOffset, length);
+	}
 }
 
 // SetSize
 void
 TextToolState::SetSize(float size)
 {
-	if (fText != NULL)
-		fText->SetFont(fText->getTextLayout().getFont().getName(), size);
+	fSize = size;
 }
+
+// SetSize
+void
+TextToolState::SetSize(float size, int32 textOffset, int32 length)
+{
+	fSize = size;
+	if (fText != NULL) {
+// TODO: Apply size to all fonts within range
+//		fText->SetFont(fText->getTextLayout().getFont().getName(), size);
+		UpdateBounds();
+	}
+}
+
+// SetWidth
+void
+TextToolState::SetWidth(float width)
+{
+	if (fText != NULL) {
+		fText->SetWidth(width);
+		UpdateBounds();
+	}
+}
+
+// Width
+float
+TextToolState::Width() const
+{
+	if (fText != NULL)
+		return fText->Width();
+	return 0.0f;
+}
+
+// SelectionChanged
+void
+TextToolState::SelectionChanged(int32 startOffset, int32 endOffset)
+{
+	if (fText != NULL) {
+		_SetCaretOffset(startOffset, false, false);
+		_SetCaretOffset(endOffset, true, true);
+	}
+}
+
+// SetCaret
+void
+TextToolState::SetCaret(const BPoint& location, bool select)
+{
+	if (fText == NULL)
+		return;
+	
+	bool rightOfChar = false;
+	int32 caretOffset = fText->getTextLayout().getOffset(location.x, location.y,
+		rightOfChar);
+	
+	if (rightOfChar)
+		caretOffset++;
+
+	_SetCaretOffset(caretOffset, true, select);
+}
+
+// #pragma mark - private
 
 // _UpdateConfigView
 void
@@ -462,4 +816,278 @@ TextToolState::_UpdateConfigView() const
 	}
 
 	fConfigViewMessenger.SendMessage(&message);
+}
+
+// _DrawControls
+void
+TextToolState::_DrawControls(BView* view)
+{
+	double scaleX;
+	double scaleY;
+	if (!EffectiveTransformation().GetAffineParameters(NULL, NULL, NULL,
+		&scaleX, &scaleY, NULL, NULL)) {
+		return;
+	}
+
+	scaleX *= fView->ZoomLevel();
+	scaleY *= fView->ZoomLevel();
+
+	BPoint origin(0.0f, -10.0f / scaleY);
+	TransformObjectToView(&origin, true);
+
+	BPoint widthOffset(fText->Width(), -10.0f / scaleY);
+	TransformObjectToView(&widthOffset, true);
+
+	view->SetHighColor(0, 0, 0, 200);
+	view->SetPenSize(3.0);
+	view->StrokeLine(origin, widthOffset);
+	view->SetHighColor(255, 255, 255, 200);
+	view->SetPenSize(1.0);
+	view->StrokeLine(origin, widthOffset);
+
+	float size = 3;
+	view->SetHighColor(255, 255, 255, 200);
+	view->FillEllipse(BRect(origin.x - size, origin.y - size,
+		origin.x + size + 0.5, origin.y + size + 0.5));
+	view->SetHighColor(0, 0, 0, 200);
+	view->StrokeEllipse(BRect(origin.x - size, origin.y - size,
+		origin.x + size + 1, origin.y + size + 1));
+
+	size = 2;
+	view->SetHighColor(255, 255, 255, 200);
+	view->FillRect(BRect(widthOffset.x - size, widthOffset.y - size,
+		widthOffset.x + size + 0.5, widthOffset.y + size + 0.5));
+	view->SetHighColor(0, 0, 0, 200);
+	view->StrokeRect(BRect(widthOffset.x - size, widthOffset.y - size,
+		widthOffset.x + size + 1, widthOffset.y + size + 1));
+}
+
+// _DrawCaret
+void
+TextToolState::_DrawCaret(BView* view, int32 textOffset)
+{
+	double x1;
+	double y1;
+	double x2;
+	double y2;
+	
+	fText->getTextLayout().getTextBounds(textOffset, x1, y1, x2, y2);
+	x2 = x1 + 2;
+
+	BPoint lt(x1, y1);
+	BPoint rt(x2, y1);
+	BPoint lb(x1, y2);
+	BPoint rb(x2, y2);
+
+	TransformObjectToView(&lt, false);
+	TransformObjectToView(&rt, false);
+	TransformObjectToView(&lb, false);
+	TransformObjectToView(&rb, false);
+
+	BShape shape;
+	shape.MoveTo(lt);
+	shape.LineTo(rt);
+	shape.LineTo(rb);
+	shape.LineTo(lb);
+	shape.Close();
+
+	_DrawInvertedShape(view, shape);
+}
+
+// _DrawSelection
+void
+TextToolState::_DrawSelection(BView* view, int32 startOffset, int32 endOffset)
+{
+	BShape shape;
+	_GetSelectionShape(fText->getTextLayout(), shape, startOffset, endOffset);
+	_DrawInvertedShape(view, shape);
+}
+
+// _DrawInvertedShape
+void
+TextToolState::_DrawInvertedShape(BView* view, BShape& shape)
+{
+	view->PushState();
+	uint32 flags = view->Flags();
+	view->SetFlags(flags | B_SUBPIXEL_PRECISE);
+	view->SetDrawingMode(B_OP_INVERT);
+	view->MovePenTo(B_ORIGIN);
+	view->FillShape(&shape);
+	view->SetFlags(flags);
+	view->PopState();
+}
+
+// #pragma mark -
+
+// _LineStart
+void
+TextToolState::_LineStart(bool select)
+{
+	TextLayout& layout = fText->getTextLayout();
+	
+	int lineIndex = layout.getLineIndex(fCaretOffset);
+	_SetCaretOffset(layout.getFirstOffsetOnLine(lineIndex), true, select);
+}
+
+// _LineEnd
+void
+TextToolState::_LineEnd(bool select)
+{
+	TextLayout& layout = fText->getTextLayout();
+	
+	int lineIndex = layout.getLineIndex(fCaretOffset);
+	_SetCaretOffset(layout.getLastOffsetOnLine(lineIndex), true, select);
+}
+
+// _LineUp
+void
+TextToolState::_LineUp(bool select)
+{
+	TextLayout& layout = fText->getTextLayout();
+	
+	int lineIndex = layout.getLineIndex(fCaretOffset);
+	_MoveToLine(layout, lineIndex - 1, select);
+}
+
+// _LineDown
+void
+TextToolState::_LineDown(bool select)
+{
+	TextLayout& layout = fText->getTextLayout();
+	
+	int lineIndex = layout.getLineIndex(fCaretOffset);
+	_MoveToLine(layout, lineIndex + 1, select);
+}
+
+// _MoveToLine
+void
+TextToolState::_MoveToLine(TextLayout& layout, int32 lineIndex, bool select)
+{
+	if (lineIndex < 0 || lineIndex >= layout.getLineCount())
+		return;
+	
+	double x1;
+	double y1;
+	double x2;
+	double y2;
+	layout.getLineBounds(lineIndex , &x1, &y1, &x2, &y2);
+	
+	bool rightOfCenter;
+	int32 textOffset = layout.getOffset(fCaretAnchorX, (y1 + y2) / 2,
+		rightOfCenter);
+
+	if (rightOfCenter)
+		textOffset++;
+
+	_SetCaretOffset(textOffset, false, select);
+}
+
+// _SetCaretOffset
+void
+TextToolState::_SetCaretOffset(int32 offset, bool updateAnchor,
+	bool lockSelectionAnchor)
+{
+	if (offset < 0)
+		offset = 0;
+	if (offset > fText->GetCharCount())
+		offset = fText->GetCharCount();
+
+	if (offset == fCaretOffset && (lockSelectionAnchor
+			|| offset == fSelectionAnchorOffset)) {
+		return;
+	}
+
+	if (!lockSelectionAnchor)
+		fSelectionAnchorOffset = offset;
+
+	fCaretOffset = offset;
+	fShowCaret = true;
+	
+	if (updateAnchor) {
+		double x1;
+		double y1;
+		double x2;
+		double y2;
+		
+		fText->getTextLayout().getTextBounds(fCaretOffset, x1, y1, x2, y2);
+		fCaretAnchorX = x1;
+	}
+	
+	UpdateBounds();
+}
+
+// _GetSelectionShape
+void
+TextToolState::_GetSelectionShape(TextLayout& layout, BShape& shape,
+	int32 start, int32 end) const
+{
+	double startX1;
+	double startY1;
+	double startX2;
+	double startY2;
+	layout.getTextBounds(start, startX1, startY1, startX2, startY2);
+
+	double endX1;
+	double endY1;
+	double endX2;
+	double endY2;
+	layout.getTextBounds(end, endX1, endY1, endX2, endY2);
+
+	int32 startLineIndex = layout.getLineIndex(start);
+	int32 endLineIndex = layout.getLineIndex(end);
+
+	if (startLineIndex == endLineIndex) {
+		// Selection on one line
+		BPoint lt(startX1, startY1);
+		BPoint rt(endX1, endY1);
+		BPoint rb(endX1, endY2);
+		BPoint lb(startX1, startY2);
+
+		TransformObjectToView(&lt, false);
+		TransformObjectToView(&rt, false);
+		TransformObjectToView(&rb, false);
+		TransformObjectToView(&lb, false);
+
+		shape.MoveTo(lt);
+		shape.LineTo(rt);
+		shape.LineTo(rb);
+		shape.LineTo(lb);
+		shape.Close();
+	} else {
+		// Selection over multiple lines
+		BPoint p;
+		p = BPoint(startX1, startY1);
+		TransformObjectToView(&p, false);
+		shape.MoveTo(p);
+
+		p = BPoint(layout.getWidth(), startY1);
+		TransformObjectToView(&p, false);
+		shape.LineTo(p);
+
+		p = BPoint(layout.getWidth(), endY1);
+		TransformObjectToView(&p, false);
+		shape.LineTo(p);
+
+		p = BPoint(endX1, endY1);
+		TransformObjectToView(&p, false);
+		shape.LineTo(p);
+
+		p = BPoint(endX1, endY2);
+		TransformObjectToView(&p, false);
+		shape.LineTo(p);
+
+		p = BPoint(0, endY2);
+		TransformObjectToView(&p, false);
+		shape.LineTo(p);
+
+		p = BPoint(0, startY2);
+		TransformObjectToView(&p, false);
+		shape.LineTo(p);
+
+		p = BPoint(startX1, startY2);
+		TransformObjectToView(&p, false);
+		shape.LineTo(p);
+
+		shape.Close();
+	}
 }

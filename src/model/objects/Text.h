@@ -27,22 +27,53 @@ public:
 	virtual	BRect				Bounds();
 
 	// Text
-			void				SetFont(const char* fontFilePath, double size);
-	
 			void				SetWidth(double width);
 			double				Width();
 
 			void				SetAlignment(uint32 alignment);
 			void				SetJustify(bool justify);
 
-			void				SetText(const char* utf8String);
+			void				SetText(const char* utf8String,
+									const char* fontFilePath, double size,
+									rgb_color color);
+
+			void				SetText(const char* utf8String,
+									const char* fontFilePath, double size,
+									const StyleRef& style);
+			
 			const char*			GetText() const;
 
+			int32				GetCharCount() const;
+
+			void				Insert(int32 textOffset,
+									const char* utf8String,
+									const char* fontFilePath, double size,
+									const StyleRef& style);
+
+			void				Remove(int32 textOffset, int32 length);
+			
+			void				SetStyle(int32 textOffset, int32 length,
+									const char* utf8String,
+									const char* fontFilePath, double size,
+									const StyleRef& style);
+
 			const TextLayout&	getTextLayout() const;
+			TextLayout&			getTextLayout();
+
+private:
+			class CharacterStyle;
+			typedef Reference<Text::CharacterStyle>		CharacterStyleRef;
+
+			class StyleRun;
+			class StyleRunList;
+
+			void				_UpdateLayout();
 
 private:
 			BString				fText;
+			int32				fCharCount;
 			TextLayout			fTextLayout;
+			StyleRunList*		fStyleRuns;
 };
 
 #endif // TEXT_H
