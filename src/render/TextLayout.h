@@ -126,8 +126,7 @@ public:
 	}
 
 	void clearStyleRuns();
-	bool addStyleRun(int start, const char* fontPath,
-		double fontSize, unsigned fontStyle,
+	bool addStyleRun(int start, const Font& font,
 		double metricsAscent, double metricsDescent, double metricsWidth,
 		int fgRed, int fgGreen, int fgBlue,
 		int bgRed, int bgGreen, int bgBlue,

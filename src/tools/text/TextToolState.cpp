@@ -17,6 +17,7 @@
 #include <agg_math.h>
 
 #include "CommandStack.h"
+#include "FontCache.h"
 #include "Document.h"
 #include "Layer.h"
 #include "ObjectAddedCommand.h"
@@ -267,7 +268,8 @@ TextToolState::TextToolState(StateView* view, Document* document,
 	, fCaretPulseRunner(NULL)
 
 	, fStyle(new(std::nothrow) Style(), true)
-	, fFontFilePath("DejaVuSerif.ttf")
+	, fFontFamily("DejaVu Serif")
+	, fFontStyle("Book")
 	, fSize(12.0)
 {
 	// TODO: Find a way to change this later...
@@ -619,7 +621,8 @@ TextToolState::CreateText(BPoint canvasLocation)
 	if (initialText.Length() == 0)
 		initialText = "Text";
 
-	text->SetText(initialText.String(), "DejaVuSerif.ttf", fSize, fStyle);
+	text->SetText(initialText.String(), Font(fFontFamily, fFontStyle, fSize),
+		fStyle);
 	text->TranslateBy(canvasLocation);
 
 	if (fInsertionIndex < 0)
@@ -640,6 +643,10 @@ TextToolState::CreateText(BPoint canvasLocation)
 	SetText(text, true);
 
 	// Our reference to this object was transferred to the Layer
+
+	View()->PerformCommand(new(std::nothrow) ObjectAddedCommand(text,
+		fSelection));
+
 
 	return true;
 }
@@ -709,7 +716,8 @@ TextToolState::Insert(int32 textOffset, const char* text,
 			textOffset = start;
 		}
 
-		fText->Insert(textOffset, text, "DejaVuSerif.ttf", fSize, fStyle);
+		fText->Insert(textOffset, text, Font(fFontFamily, fFontStyle, fSize),
+			fStyle);
 
 		if (setCaretOffset) {
 			_SetCaretOffset(textOffset + BString(text).CountChars(), true,
@@ -738,11 +746,13 @@ TextToolState::Remove(int32 textOffset, int32 length, bool setCaretOffset)
 
 // SetFont
 void
-TextToolState::SetFont(const char* fontFilePath)
+TextToolState::SetFont(const char* family, const char* style)
 {
-	fFontFilePath = fontFilePath;
+	fFontFamily = family;
+	fFontStyle = style;
 	if (_HasSelection()) {
-		fText->SetFont(_SelectionStart(), _SelectionLength(), fontFilePath);
+		fText->SetFont(_SelectionStart(), _SelectionLength(),
+			family, style);
 		UpdateBounds();
 	}
 }
@@ -816,8 +826,9 @@ TextToolState::_UpdateConfigView() const
 	BMessage message(MSG_LAYOUT_CHANGED);
 
 	if (fText != NULL) {
+		message.AddString("family", fFontFamily);
+		message.AddString("style", fFontStyle);
 		message.AddFloat("size", fSize);
-		message.AddString("font", fFontFilePath);
 		message.AddString("text", fText->GetText());
 	} else {
 		message.AddString("text", "");
@@ -1151,9 +1162,11 @@ TextToolState::_AdoptStyleAtOffset(int32 textOffset)
 		return;
 	}
 
-	if (fSize != font.getSize() || fFontFilePath != font.getName()) {
+	if (fSize != font.getSize() || fFontFamily != font.getFamily()
+		|| fFontStyle != font.getStyle()) {
 		fSize = font.getSize();
-		fFontFilePath = font.getName();
+		fFontFamily = font.getFamily();
+		fFontStyle = font.getStyle();
 
 		_UpdateConfigView();
 	}

@@ -77,7 +77,7 @@ WonderBrushBase::WonderBrushBase(BRect bounds)
 	text->SetWidth(200.0);
 	text->SetJustify(true);
 	text->SetText("This is a test of the new text layouting features.",
-		"DejaVuSerif.ttf", 24.0, (rgb_color) { 0, 0, 0, 255 });
+		Font("DejaVu Serif", "Book", 24.0), (rgb_color) { 0, 0, 0, 255 });
 	fDocument->RootLayer()->AddObject(text);
 
 	Rect* transformedRect = new Rect(BRect(150, 200, 210, 330),
@@ -234,6 +234,30 @@ WonderBrush::RestoreSettings()
 		fWindowFrame.OffsetBy(-30, -30);
 }
 
+// NotifyFontsLoaded
+void
+WonderBrush::NotifyFontsLoaded()
+{
+	_NotifyFontsLoaded(fDocument->RootLayer());
+}
+
+// _NotifyFontsLoaded
+void
+WonderBrush::_NotifyFontsLoaded(Layer* layer)
+{
+	for (int32 i = layer->CountObjects() - 1; i >= 0; i--) {
+		Object* object = layer->ObjectAtFast(i);
+		Layer* subLayer = dynamic_cast<Layer*>(object);
+		if (subLayer != NULL) {
+			_NotifyFontsLoaded(subLayer);
+			continue;
+		}
+		Text* text = dynamic_cast<Text*>(object);
+		if (text != NULL)
+			text->UpdateLayout();
+	}
+}
+
 
 // #pragma mark -
 
@@ -245,7 +269,12 @@ main(int argc, char* argv[])
 	for (int i = 1; i < argc; i++) {
 		if (strcmp(argv[i], "--fonts") == 0 && i < argc - 1) {
 			printf("Using font folder: '%s'\n", argv[i + 1]);
-			FontCache::getInstance()->setFontFolder(argv[i + 1]);
+
+			FontRegistry* registry = FontRegistry::Default();
+			if (registry->Lock()) {
+				registry->AddFontDirectory(argv[i + 1]);
+				registry->Unlock();
+			}
 			break;
 		}
 	}

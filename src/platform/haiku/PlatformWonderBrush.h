@@ -27,35 +27,27 @@ public:
 	using BaseClass::WindowQuit;
 	using BaseClass::StoreSettings;
 	using BaseClass::RestoreSettings;
+	using BaseClass::NotifyFontsLoaded;
 
 	PlatformWonderBrush(int argc, char** argv, BRect bounds)
 		:
 		BApplication("application/x-vnd.Yellowbites.WonderBrush2"),
 		BaseClass(bounds)
 	{
-		FontRegistry* registry = FontRegistry::Default();
-		if (registry->Lock()) {
-			// Use font files from system, common and user fonts folders
-			BPath path;
-			if (find_directory(B_SYSTEM_FONTS_DIRECTORY, &path) == B_OK)
-				registry->AddFontDirectory(path.Path());
-			if (find_directory(B_COMMON_FONTS_DIRECTORY, &path) == B_OK)
-				registry->AddFontDirectory(path.Path());
-			if (find_directory(B_USER_FONTS_DIRECTORY, &path) == B_OK)
-				registry->AddFontDirectory(path.Path());
-
-			const BString& dataFontFolder
-				= FontCache::getInstance()->getFontFolder();
-			registry->AddFontDirectory(dataFontFolder.String());
-
-			registry->Scan();
-			registry->Unlock();
-		}
 	}
 
 	virtual void MessageReceived(BMessage* message)
 	{
 		switch (message->what) {
+			case B_OBSERVER_NOTICE_CHANGE:
+			{
+				int32 what;
+				if (message->FindInt32(B_OBSERVE_ORIGINAL_WHAT, &what) == B_OK
+					&& what == MSG_FONTS_CHANGED) {
+					NotifyFontsLoaded();
+				}
+				break;
+			}
 			case MSG_NEW_WINDOW:
 				NewWindow();
 				break;
@@ -74,6 +66,21 @@ public:
 
 	virtual void ReadyToRun()
 	{
+		FontRegistry* registry = FontRegistry::Default();
+		if (registry->Lock()) {
+			// Use font files from system, common and user fonts folders
+			BPath path;
+			if (find_directory(B_SYSTEM_FONTS_DIRECTORY, &path) == B_OK)
+				registry->AddFontDirectory(path.Path());
+			if (find_directory(B_COMMON_FONTS_DIRECTORY, &path) == B_OK)
+				registry->AddFontDirectory(path.Path());
+			if (find_directory(B_USER_FONTS_DIRECTORY, &path) == B_OK)
+				registry->AddFontDirectory(path.Path());
+
+			registry->StartWatchingAll(this);
+			registry->Scan();
+			registry->Unlock();
+		}
 		RestoreSettings();
 		NewWindow();
 	}

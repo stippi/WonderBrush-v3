@@ -7,35 +7,33 @@
 #include <stdio.h>
 #include <string.h>
 
+#include "FontRegistry.h"
 
-Font::Font(const char* name, double size)
-	:
-	fSize(size),
-	fStyle(kNormal),
-	fScriptLevel(NORMAL)
+
+Font::Font(const char* family, double size)
+	: fFamily(family)
+	, fSize(size)
+	, fScriptLevel(NORMAL)
 {
-	snprintf(fName, sizeof(fName), "%s", name);
 }
 
 
-Font::Font(const char* name, double size, unsigned style)
-	:
-	fSize(size),
-	fStyle(style),
-	fScriptLevel(NORMAL)
+Font::Font(const char* family, const char* style, double size)
+	: fFamily(family)
+	, fStyle(style)
+	, fSize(size)
+	, fScriptLevel(NORMAL)
 {
-	snprintf(fName, sizeof(fName), "%s", name);
 }
 
 
-Font::Font(const char* name, double size, unsigned style,
+Font::Font(const char* family, const char* style, double size,
 		ScriptLevel scriptLevel)
-	:
-	fSize(size),
-	fStyle(style),
-	fScriptLevel(scriptLevel)
+	: fFamily(family)
+	, fStyle(style)
+	, fSize(size)
+	, fScriptLevel(scriptLevel)
 {
-	snprintf(fName, sizeof(fName), "%s", name);
 }
 
 
@@ -53,9 +51,8 @@ Font::~Font()
 bool
 Font::operator==(const Font& other) const
 {
-	return fSize == other.fSize && fStyle == other.fStyle
-		&& fScriptLevel == other.fScriptLevel
-		&& strcmp(fName, other.fName) == 0;
+	return fSize == other.fSize && fScriptLevel == other.fScriptLevel
+		&& fFamily == other.fFamily && fStyle == other.fStyle;
 }
 
 
@@ -69,11 +66,32 @@ Font::operator!=(const Font& other) const
 Font&
 Font::operator=(const Font& other)
 {
-	memcpy(fName, other.fName, sizeof(fName));
-	fSize = other.fSize;
+	fFamily = other.fFamily;
 	fStyle = other.fStyle;
+	fFontFilePath = other.fFontFilePath;
+	fSize = other.fSize;
 	fScriptLevel = other.fScriptLevel;
 
 	return *this;
+}
+
+
+const char*
+Font::getFontFilePath() const
+{
+	if (fFontFilePath.Length() > 0)
+		return fFontFilePath.String();
+
+	FontRegistry* registry = FontRegistry::Default();
+	if (registry->Lock()) {
+		fFontFilePath = registry->FontFileFor(fFamily, fStyle);
+		if (fFontFilePath.Length() == 0) {
+			fprintf(stderr, "Error matching font '%s'/'%s'\n",
+				fFamily.String(), fStyle.String());
+		}
+		registry->Unlock();
+	}
+
+	return fFontFilePath.String();
 }
 

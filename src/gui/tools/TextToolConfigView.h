@@ -28,6 +28,7 @@ public:
 
 	// BView interface
 	virtual	void				AttachedToWindow();
+	virtual	void				DetachedFromWindow();
 	virtual	void				MessageReceived(BMessage* message);
 
 private:
@@ -35,14 +36,18 @@ private:
 									float value) const;
 			float				_Value(BTextControl* control) const;
 
-			void				_PolulateFontMenu(BMenu* menu,
+			void				_PopulateFontMenu(BMenu* menu,
 									BHandler* target,
 									const char* markedFamily,
 									const char* markedStyle);
 
+			double				_FromLinearSize(double value) const;
+			double				_ToLinearSize(double value) const;
+
 private:
 			FontPopup*			fFontPopup;
 
+			BStringView*		fSizeLabel;
 			BSlider*			fSizeSlider;
 			BTextControl*		fSizeTextControl;
 

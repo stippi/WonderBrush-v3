@@ -5,21 +5,19 @@
 #ifndef FONT_H
 #define FONT_H
 
+#include <String.h>
+
 class Font {
 public:
-	static const unsigned kNormal		= 0x00;
-	static const unsigned kBold			= 0x01;
-	static const unsigned kItalic		= 0x02;
-
 	enum ScriptLevel {
 		NORMAL = 0, SUBSCRIPT, SUPERSCRIPT, LOW_SUPERSCRIPT, HIGH_SUBSCRIPT
 	};
 
 public:
-	Font(const char* name, double size);
-	Font(const char* name, double size, unsigned style);
-	Font(const char* name, double size, unsigned style,
-			ScriptLevel scriptLevel);
+	Font(const char* family, double size);
+	Font(const char* family, const char* style, double size);
+	Font(const char* family, const char* style, double size,
+		ScriptLevel scriptLevel);
 	Font(const Font& other);
 	virtual ~Font();
 
@@ -28,9 +26,14 @@ public:
 
 	Font& operator=(const Font& other);
 
-	inline const char* getName() const
+	inline const char* getFamily() const
 	{
-		return fName;
+		return fFamily;
+	}
+
+	inline const char* getStyle() const
+	{
+		return fStyle;
 	}
 
 	inline double getSize() const
@@ -38,21 +41,19 @@ public:
 		return fSize;
 	}
 
-	inline unsigned getStyle() const
-	{
-		return fStyle;
-	}
-
 	inline ScriptLevel getScriptLevel() const
 	{
 		return fScriptLevel;
 	}
 
+	const char* getFontFilePath() const;
+
 private:
-	char			fName[256];
-	double			fSize;
-	unsigned		fStyle;
-	ScriptLevel		fScriptLevel;
+	BString				fFamily;
+	BString				fStyle;
+	mutable BString		fFontFilePath;
+	double				fSize;
+	ScriptLevel			fScriptLevel;
 };
 
 #endif // FONT_H

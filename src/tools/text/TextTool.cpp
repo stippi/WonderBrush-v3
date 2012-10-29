@@ -132,10 +132,10 @@ TextTool::Remove(int32 textOffset, int32 length)
 
 // SetFont
 void
-TextTool::SetFont(const char* fontFilePath)
+TextTool::SetFont(const char* family, const char* style)
 {
 	TextToolState* state = static_cast<TextToolState*>(fViewState);
-	state->SetFont(fontFilePath);
+	state->SetFont(family, style);
 }
 
 // SetSize

@@ -34,7 +34,7 @@ public:
 			void				Insert(int32 textOffset, const char* text);
 			void				Remove(int32 textOffset, int32 length);
 
-			void				SetFont(const char* fontFilePath);
+			void				SetFont(const char* family, const char* style);
 			void				SetSize(float size);
 
 private:

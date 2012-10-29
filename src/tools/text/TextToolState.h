@@ -79,7 +79,7 @@ public:
 			void				Remove(int32 textOffset, int32 length,
 									bool setCaretOffset = true);
 
-			void				SetFont(const char* fontFilePath);
+			void				SetFont(const char* family, const char* style);
 			void				SetSize(float size);
 
 			void				SetWidth(float width);
@@ -157,7 +157,8 @@ private:
 			BMessageRunner*		fCaretPulseRunner;
 
 			StyleRef			fStyle;
-			BString				fFontFilePath;
+			BString				fFontFamily;
+			BString				fFontStyle;
 			double				fSize;
 };
 

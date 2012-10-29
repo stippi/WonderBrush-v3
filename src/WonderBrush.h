@@ -25,6 +25,8 @@ protected:
 	virtual	void				StoreSettings() = 0;
 	virtual	void				RestoreSettings() = 0;
 
+	virtual void				NotifyFontsLoaded() = 0;
+
 protected:
 			BMessage			fSettings;
 
@@ -47,6 +49,11 @@ protected:
 
 	virtual	void				StoreSettings();
 	virtual	void				RestoreSettings();
+
+	virtual void				NotifyFontsLoaded();
+
+private:
+			void				_NotifyFontsLoaded(Layer* layer);
 };
 
 #endif // WONDER_BRUSH_H
