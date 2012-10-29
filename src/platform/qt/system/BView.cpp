@@ -1,6 +1,7 @@
 #include "BView.h"
 
 #include <Region.h>
+#include <Screen.h>
 #include <Window.h>
 
 #include <MessagePrivate.h>
@@ -261,6 +262,37 @@ BView::mouseMoveEvent(QMouseEvent* event)
 
 
 void
+BView::tabletEvent(QTabletEvent* event)
+{
+	uint32 messageWhat = 0;
+	switch (event->type()) {
+		case QEvent::TabletMove:
+			messageWhat = B_MOUSE_MOVED;
+			break;
+		case QEvent::TabletPress:
+			messageWhat = B_MOUSE_DOWN;
+			break;
+		case QEvent::TabletRelease:
+			messageWhat = B_MOUSE_UP;
+			break;
+		default:
+			break;
+	}
+
+	if (Looper() != NULL && messageWhat != 0) {
+		BMessage message(messageWhat);
+		_TranslateTabletEvent(*event, message);
+		_DeliverMessage(&message);
+		event->accept();
+			// need to accept() explicitly according to docs
+		return;
+	}
+
+	QWidget::tabletEvent(event);
+}
+
+
+void
 BView::_AttachToWindow(BWindow* window)
 {
 	fWindow = window;
@@ -297,14 +329,7 @@ BView::_AllDetachedFromWindow()
 void
 BView::_TranslateMouseEvent(QMouseEvent& event, BMessage& message)
 {
-	// event time
-	bigtime_t eventTime = system_time();
-		// TODO: Event timestamps are available with Qt 5.
-	message.AddInt64("when", eventTime);
-
-	// mouse position
-	message.AddPoint("be:view_where", BPoint::FromQPoint(event.pos()));
-	message.AddPoint("screen_where", BPoint::FromQPoint(event.globalPos()));
+	_TranslatePointerDeviceEvent(event, message);
 
 	// mouse buttons
 	Qt::MouseButtons qtButtons = event.buttons();
@@ -319,6 +344,40 @@ BView::_TranslateMouseEvent(QMouseEvent& event, BMessage& message)
 
 	// mouse clicks
 	// TODO: int32 "clicks"!
+}
+
+
+void
+BView::_TranslateTabletEvent(QTabletEvent& event, BMessage& message)
+{
+	_TranslatePointerDeviceEvent(event, message);
+
+	// pressure
+	message.AddFloat("be:tablet_pressure", event.pressure());
+
+	// tilt
+	message.AddFloat("be:tablet_tilt_x", (float)event.xTilt() / 180 * M_PI);
+	message.AddFloat("be:tablet_tilt_y", (float)event.yTilt() / 180 * M_PI);
+
+	// relative positions
+	BSize screenSize = BScreen().Frame().Size();
+	message.AddFloat("be:tablet_x", event.hiResGlobalX() / screenSize.Width());
+	message.AddFloat("be:tablet_y", event.hiResGlobalY() / screenSize.Height());
+}
+
+
+template<typename Event>
+void
+BView::_TranslatePointerDeviceEvent(Event& event, BMessage& message)
+{
+	// event time
+	bigtime_t eventTime = system_time();
+		// TODO: Event timestamps are available with Qt 5.
+	message.AddInt64("when", eventTime);
+
+	// mouse position
+	message.AddPoint("be:view_where", BPoint::FromQPoint(event.pos()));
+	message.AddPoint("screen_where", BPoint::FromQPoint(event.globalPos()));
 
 	// keyboard modifiers
 	message.AddInt32("modifiers", FromQtModifiers(event.modifiers()));

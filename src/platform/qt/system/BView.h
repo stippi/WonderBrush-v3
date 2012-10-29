@@ -129,6 +129,7 @@ protected:
 	virtual	void				mousePressEvent(QMouseEvent* event);
 	virtual	void				mouseReleaseEvent(QMouseEvent* event);
 	virtual	void				mouseMoveEvent(QMouseEvent* event);
+	virtual	void				tabletEvent(QTabletEvent* event);
 
 private:
 			friend class BWindow;
@@ -140,6 +141,11 @@ private:
 			void				_AllDetachedFromWindow();
 
 			void				_TranslateMouseEvent(QMouseEvent& event,
+									BMessage& message);
+			void				_TranslateTabletEvent(QTabletEvent& event,
+									BMessage& message);
+			template<typename Event>
+			void				_TranslatePointerDeviceEvent(Event& event,
 									BMessage& message);
 
 			void				_DeliverMessage(BMessage* message);
