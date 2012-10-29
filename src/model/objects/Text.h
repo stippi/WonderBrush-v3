@@ -9,6 +9,7 @@
 #include <List.h>
 #include <String.h>
 
+#include "Font.h"
 #include "Styleable.h"
 #include "TextLayout.h"
 
@@ -34,31 +35,26 @@ public:
 			void				SetJustify(bool justify);
 
 			void				SetText(const char* utf8String,
-									const char* fontFilePath, double size,
-									rgb_color color);
+									const Font& font, rgb_color color);
 
 			void				SetText(const char* utf8String,
-									const char* fontFilePath, double size,
-									const StyleRef& style);
+									const Font& font, const StyleRef& style);
 
 			const char*			GetText() const;
 
 			int32				GetCharCount() const;
 
 			void				Insert(int32 textOffset,
-									const char* utf8String,
-									const char* fontFilePath, double size,
+									const char* utf8String, const Font& font,
 									const StyleRef& style);
 
 			void				Remove(int32 textOffset, int32 length);
 
 			void				SetStyle(int32 textOffset, int32 length,
-									const char* utf8String,
-									const char* fontFilePath, double size,
-									const StyleRef& style);
+									const Font& font, const StyleRef& style);
 
 			void				SetFont(int32 textOffset, int32 length,
-									const char* fontFilePath);
+									const char* family, const char* style);
 
 			void				SetSize(int32 textOffset, int32 length,
 									double size);
@@ -66,14 +62,14 @@ public:
 			const TextLayout&	getTextLayout() const;
 			TextLayout&			getTextLayout();
 
+			void				UpdateLayout();
+
 private:
 			class CharacterStyle;
 			typedef Reference<Text::CharacterStyle>		CharacterStyleRef;
 
 			class StyleRun;
 			class StyleRunList;
-
-			void				_UpdateLayout();
 
 private:
 			BString				fText;

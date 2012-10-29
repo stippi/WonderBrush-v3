@@ -155,11 +155,11 @@ canEndLine(GlyphInfo* buffer, int offset, int count)
 TextLayout::TextLayout(FontCache* fontCache)
 	:
 	fFontCache(fontCache),
-	
-	fFont("DejaVuSans.ttf", 12.0),
+
+	fFont("DejaVu Sans", "Book", 12.0),
 	fAscent(0.0),
 	fDescent(0.0),
-	
+
 	fFirstLineInset(0.0),
 	fLineInset(0.0),
 	fWidth(0.0),
@@ -185,7 +185,7 @@ TextLayout::TextLayout(FontCache* fontCache)
 
 	fTabBuffer(NULL),
 	fTabCount(0),
-	
+
 	fSubpixelRendering(false),
 	fKerning(true),
 	fHinting(true),
@@ -211,7 +211,7 @@ TextLayout&
 TextLayout::operator=(const TextLayout& other)
 {
 	fFontCache = other.fFontCache;
-	
+
 	fFont = other.fFont;
 	fAscent = other.fAscent;
 	fDescent = other.fDescent;
@@ -257,13 +257,13 @@ TextLayout::operator=(const TextLayout& other)
 	fTabBuffer = (double*)realloc(fTabBuffer,
 		other.fTabCount * sizeof(double));;
 	fTabCount = other.fTabCount;
-	
+
 	fSubpixelRendering = other.fSubpixelRendering;
 	fKerning = other.fKerning;
 	fHinting = other.fHinting;
 
 	fLayoutPerformed = other.fLayoutPerformed;
-	
+
 	return *this;
 }
 
@@ -403,8 +403,7 @@ TextLayout::clearStyleRuns()
 
 
 bool
-TextLayout::addStyleRun(int start, const char* fontPath,
-	double fontSize, unsigned fontStyle,
+TextLayout::addStyleRun(int start, const Font& font,
 	double metricsAscent, double metricsDescent, double metricsWidth,
 	int fgRed, int fgGreen, int fgBlue,
 	int bgRed, int bgGreen, int bgBlue,
@@ -437,8 +436,7 @@ TextLayout::addStyleRun(int start, const char* fontPath,
 	// Store given information
 	fStyleRunBuffer[fStyleRunCount].start = start;
 
-	new (&(fStyleRunBuffer[fStyleRunCount].font)) Font(fontPath, fontSize,
-		fontStyle);
+	new (&(fStyleRunBuffer[fStyleRunCount].font)) Font(font);
 
 	fStyleRunBuffer[fStyleRunCount].ascent = metricsAscent;
 	fStyleRunBuffer[fStyleRunCount].descent = metricsDescent;
@@ -640,10 +638,10 @@ int
 TextLayout::getFirstOffsetOnLine(int lineIndex)
 {
 	validateLayout();
-	
+
 	if (lineIndex < 0)
 		return 0;
-	
+
 	if (lineIndex >= (int)fLineInfoCount)
 		return fGlyphInfoCount;
 
@@ -658,7 +656,7 @@ TextLayout::getLastOffsetOnLine(int lineIndex)
 
 	if (lineIndex < 0)
 		return 0;
-	
+
 	if (lineIndex >= (int)fLineInfoCount - 1)
 		return fGlyphInfoCount;
 
@@ -934,7 +932,7 @@ TextLayout::getTextBounds(int textOffset, double& x1, double& y1,
 	double& x2, double& y2)
 {
 	validateLayout();
-	
+
 	if (textOffset < 0) {
 		x1 = 0.0;
 		y1 = 0.0;
@@ -967,18 +965,16 @@ TextLayout::init(const char* text, FontEngine& fontEngine,
 	unsigned subpixelScale)
 {
 	AutoWriteLocker _(FontCache::getInstance());
-	
+
 	fGlyphInfoCount = 0;
 	fLineInfoCount = 0;
 
-	BString resolvedFontPath = FontCache::getInstance()
-		->resolveFont(fFont.getName());
     double height = fFont.getSize();
 
-	if (!fontEngine.load_font(resolvedFontPath.String(), 0,
+	if (!fontEngine.load_font(fFont.getFontFilePath(), 0,
 		agg::glyph_ren_outline, height * scaleX * subpixelScale, height)) {
 		fprintf(stderr, "Error loading font: '%s'\n",
-			resolvedFontPath.String());
+			fFont.getFontFilePath());
 	}
 
 	fAscent = fontEngine.ascender();
@@ -1001,14 +997,12 @@ TextLayout::init(const char* text, FontEngine& fontEngine,
 			if (nextStyleRun->start == (int) offset) {
 				height = nextStyleRun->font.getSize();
 
-				resolvedFontPath = FontCache::getInstance()
-					->resolveFont(nextStyleRun->font.getName());
-
-				if (!fontEngine.load_font(resolvedFontPath.String(), 0,
-					agg::glyph_ren_outline, height * scaleX * subpixelScale,
-					height)) {
+				if (!fontEngine.load_font(
+						nextStyleRun->font.getFontFilePath(), 0,
+						agg::glyph_ren_outline,
+						height * scaleX * subpixelScale, height)) {
 					fprintf(stderr, "Error loading font: '%s'\n",
-						resolvedFontPath.String());
+						nextStyleRun->font.getFontFilePath());
 				}
 
 				// Init these two after having loaded the font in the engine.
@@ -1242,14 +1236,12 @@ TextLayout::layout(FontEngine& fontEngine, FontManager& fontManager,
 						lastLoadedStyleRun = fGlyphInfoBuffer[i].styleRun;
 						double size = lastLoadedStyleRun->font.getSize();
 
-						BString resolvedFontPath = FontCache::getInstance()
-							->resolveFont(lastLoadedStyleRun->font.getName());
-
-						if (!fontEngine.load_font(resolvedFontPath.String(), 0,
+						if (!fontEngine.load_font(
+							lastLoadedStyleRun->font.getFontFilePath(), 0,
 							agg::glyph_ren_outline,
 							size * scaleX * subpixelScale, size)) {
 							fprintf(stderr, "Error loading font: '%s'\n",
-								resolvedFontPath.String());
+								lastLoadedStyleRun->font.getFontFilePath());
 						}
 					}
 

@@ -145,10 +145,7 @@ TextRenderer::setTransformation(const Transformation& transformation)
 bool
 TextRenderer::loadFont(const char* fontFilePath, double height)
 {
-	BString resolvedFontPath = FontCache::getInstance()->resolveFont(
-		fontFilePath);
-
-	return getFontEngine().load_font(resolvedFontPath.String(), 0,
+	return getFontEngine().load_font(fontFilePath, 0,
 		agg::glyph_ren_outline, height, height);
 }
 
@@ -385,7 +382,7 @@ TextRenderer::drawText(RendererType& renderer,
 	Color lastUnderlineColor = fForeground;
 
 	agg::rect_i clipRect = fRenderer.clip_box();
-	
+
 	FontManager& fontManager = getFontManager();
 
 	for (int index = 0; index < count; index++) {

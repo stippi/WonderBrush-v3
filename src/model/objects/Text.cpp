@@ -388,8 +388,7 @@ Text::SetJustify(bool justify)
 
 // SetText
 void
-Text::SetText(const char* utf8String, const char* fontFilePath, double size,
-	rgb_color color)
+Text::SetText(const char* utf8String, const Font& font, rgb_color color)
 {
 	::Style* style = new(std::nothrow) ::Style();
 	if (style == NULL)
@@ -398,18 +397,17 @@ Text::SetText(const char* utf8String, const char* fontFilePath, double size,
 	style->SetFillPaint(Paint(color));
 
 	StyleRef styleRef(style, true);
-	SetText(utf8String, fontFilePath, size, styleRef);
+	SetText(utf8String, font, styleRef);
 }
 
 // SetText
 void
-Text::SetText(const char* utf8String, const char* fontFilePath, double size,
-	const StyleRef& style)
+Text::SetText(const char* utf8String, const Font& font, const StyleRef& style)
 {
 	fText = "";
 	fStyleRuns->MakeEmpty();
 
-	Insert(0, utf8String, fontFilePath, size, style);
+	Insert(0, utf8String, font, style);
 }
 
 // GetText
@@ -428,14 +426,14 @@ Text::GetCharCount() const
 
 // Insert
 void
-Text::Insert(int32 textOffset, const char* utf8String,
-	const char* fontFilePath, double size, const StyleRef& style)
+Text::Insert(int32 textOffset, const char* utf8String, const Font& font,
+	const StyleRef& style)
 {
 	if (textOffset < 0 || textOffset > fCharCount)
 		return;
 
 	CharacterStyle* characterStyle = new(std::nothrow) CharacterStyle(
-		Font(fontFilePath, size), style);
+		font, style);
 
 	if (characterStyle == NULL)
 		return;
@@ -456,7 +454,7 @@ Text::Insert(int32 textOffset, const char* utf8String,
 
 	styleRef.Detach();
 
-	_UpdateLayout();
+	UpdateLayout();
 }
 
 // Remove
@@ -470,20 +468,19 @@ Text::Remove(int32 textOffset, int32 length)
 	fStyleRuns->Remove(textOffset, length);
 	fCharCount -= length;
 
-	_UpdateLayout();
+	UpdateLayout();
 }
 
 // SetStyle
 void
-Text::SetStyle(int32 textOffset, int32 length,
-	const char* utf8String, const char* fontFilePath, double size,
+Text::SetStyle(int32 textOffset, int32 length, const Font& font,
 	const StyleRef& style)
 {
 	if (textOffset < 0 || textOffset + length > fCharCount || length == 0)
 		return;
 
 	CharacterStyle* characterStyle = new(std::nothrow) CharacterStyle(
-		Font(fontFilePath, size), style);
+		font, style);
 
 	if (characterStyle == NULL)
 		return;
@@ -500,12 +497,13 @@ Text::SetStyle(int32 textOffset, int32 length,
 
 	styleRef.Detach();
 
-	_UpdateLayout();
+	UpdateLayout();
 }
 
 // SetFont
 void
-Text::SetFont(int32 textOffset, int32 length, const char* fontFilePath)
+Text::SetFont(int32 textOffset, int32 length, const char* family,
+	const char* style)
 {
 	if (textOffset < 0 || textOffset + length > fCharCount || length == 0)
 		return;
@@ -515,7 +513,8 @@ Text::SetFont(int32 textOffset, int32 length, const char* fontFilePath)
 		const StyleRun* run = fStyleRuns->FindStyleRun(textOffset);
 
 		CharacterStyle* characterStyle = new(std::nothrow) CharacterStyle(
-			Font(fontFilePath, run->GetStyle()->GetFont().getSize()),
+			Font(family, style, run->GetStyle()->GetFont().getSize(),
+				run->GetStyle()->GetFont().getScriptLevel()),
 			run->GetStyle()->GetStyle());
 
 		if (characterStyle == NULL)
@@ -536,7 +535,7 @@ Text::SetFont(int32 textOffset, int32 length, const char* fontFilePath)
 		length--;
 	}
 
-	_UpdateLayout();
+	UpdateLayout();
 }
 
 // SetSize
@@ -551,7 +550,9 @@ Text::SetSize(int32 textOffset, int32 length, double size)
 		const StyleRun* run = fStyleRuns->FindStyleRun(textOffset);
 
 		CharacterStyle* characterStyle = new(std::nothrow) CharacterStyle(
-			Font(run->GetStyle()->GetFont().getName(), size),
+			Font(run->GetStyle()->GetFont().getFamily(),
+				run->GetStyle()->GetFont().getStyle(), size,
+				run->GetStyle()->GetFont().getScriptLevel()),
 			run->GetStyle()->GetStyle());
 
 		if (characterStyle == NULL)
@@ -572,7 +573,7 @@ Text::SetSize(int32 textOffset, int32 length, double size)
 		length--;
 	}
 
-	_UpdateLayout();
+	UpdateLayout();
 }
 
 // getTextLayout
@@ -591,11 +592,11 @@ Text::getTextLayout() const
 
 // #pragma mark -
 
-// _UpdateLayout
+// UpdateLayout
 void
-Text::_UpdateLayout()
+Text::UpdateLayout()
 {
-//	printf("_UpdateLayout() (%p)\n", &fTextLayout);
+//	printf("UpdateLayout() (%p)\n", &fTextLayout);
 
 	fTextLayout.clearStyleRuns();
 
@@ -615,8 +616,7 @@ Text::_UpdateLayout()
 //			run->GetLength());
 
 		fTextLayout.addStyleRun(
-			start, font.getName(), font.getSize(), font.getStyle(),
-			0.0, 0.0, 0.0,
+			start, font, 0.0, 0.0, 0.0,
 			color.red, color.green, color.blue,
 			255, 255, 255,
 			false, 0, 0, 0,
@@ -629,7 +629,7 @@ Text::_UpdateLayout()
 //	printf("  chars: %ld, total run length: %ld\n",
 //		fText.CountChars(), start);
 	if (fText.CountChars() != start)
-		debugger("Text::_UpdateLayout() - StyleRunList invalid!");
+		debugger("Text::UpdateLayout() - StyleRunList invalid!");
 
 	fTextLayout.setText(fText.String());
 

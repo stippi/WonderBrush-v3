@@ -27,17 +27,9 @@ public:
 		return fFontManager;
 	}
 
-	void setFontFolder(const char* path);
-	
-	const BString& getFontFolder() const;
-
-	BString resolveFont(const char* fontFilePath) const;
-
 private:
 	FontEngine			fFontEngine;
 	FontManager			fFontManager;
-
-	BString				fFontFolder;
 };
 
 #endif // FONT_CACHE_H

@@ -137,10 +137,13 @@ TextToolConfigView::TextToolConfigView(::Tool* tool)
 
 	fFontPopup = new FontPopup("Font", true);
 
-	fSizeSlider = new BSlider("size slider", "Size",
+	fSizeLabel = new BStringView("size label", "Size");
+
+	fSizeSlider = new BSlider("size slider", NULL,
 		new BMessage(MSG_SIZE_SLIDER),
 		1, 1024, B_HORIZONTAL, B_TRIANGLE_THUMB);
 	fSizeSlider->SetExplicitMinSize(BSize(80, B_SIZE_UNSET));
+	fSizeSlider->SetModificationMessage(new BMessage(MSG_SIZE_SLIDER));
 
 	fSizeTextControl = new BTextControl("size text y", "", "",
 		new BMessage(MSG_SIZE_TEXT));
@@ -154,11 +157,15 @@ TextToolConfigView::TextToolConfigView(::Tool* tool)
 		fTextView, 0, false, true);
 
 	BGroupLayoutBuilder(layout)
-		.AddGroup(B_VERTICAL)
-			.Add(fFontPopup)
-			.AddGroup(B_HORIZONTAL)
-				.Add(fSizeSlider)
-				.Add(fSizeTextControl)
+		.AddGroup(B_VERTICAL, 3.0f)
+			.AddGroup(B_HORIZONTAL, 0.0f)
+				.Add(fFontPopup->CreateLabelLayoutItem())
+				.Add(fFontPopup->CreateMenuBarLayoutItem())
+			.End()
+			.AddGroup(B_HORIZONTAL, 0.0f)
+				.Add(fSizeLabel)
+				.Add(fSizeSlider, 0.8f)
+				.Add(fSizeTextControl, 0.2f)
 			.End()
 		.End()
 		.Add(new BSeparatorView(B_VERTICAL, B_PLAIN_BORDER))
@@ -187,10 +194,18 @@ TextToolConfigView::AttachedToWindow()
 
 	FontRegistry* fontRegistry = FontRegistry::Default();
 	if (fontRegistry->LockWithTimeout(3000) == B_OK) {
-		_PolulateFontMenu(fFontPopup->Menu(), this, NULL, NULL);
+		_PopulateFontMenu(fFontPopup->Menu(), this, NULL, NULL);
 		fontRegistry->Unlock();
 	}
-	fontRegistry->StartWatching(this, FONTS_CHANGED);
+	fontRegistry->StartWatchingAll(this);
+}
+
+// DetachedFromWindow
+void
+TextToolConfigView::DetachedFromWindow()
+{
+	FontRegistry* fontRegistry = FontRegistry::Default();
+	fontRegistry->StopWatchingAll(this);
 }
 
 // MessageReceived
@@ -198,12 +213,14 @@ void
 TextToolConfigView::MessageReceived(BMessage* message)
 {
 	switch (message->what) {
-		case MSG_FONTS_CHANGED:
-			printf("MSG_FONTS_CHANGED\n");
+		case B_OBSERVER_NOTICE_CHANGE:
+			_PopulateFontMenu(fFontPopup->Menu(), this, NULL, NULL);
 			break;
 
 		case MSG_FONT_SELECTED:
 		{
+			fFontPopup->RefreshItemLabel();
+
 			const char* family;
 			if (message->FindString("font family", &family) != B_OK)
 				break;
@@ -212,21 +229,13 @@ TextToolConfigView::MessageReceived(BMessage* message)
 			if (message->FindString("font style", &style) != B_OK)
 				break;
 
-			FontRegistry* registry = FontRegistry::Default();
-			if (registry->Lock()) {
-				const char* fontFilePath = registry->FontFileFor(
-					family,
-					style
-				);
-				if (fontFilePath != NULL)
-					((TextTool*)fTool)->SetFont(fontFilePath);
-				registry->Unlock();
-			}
+			((TextTool*)fTool)->SetFont(family, style);
 			break;
 		}
 
 		case MSG_SIZE_SLIDER:
-			fTool->SetOption(TextTool::SIZE, fSizeSlider->Value());
+			fTool->SetOption(TextTool::SIZE,
+				(float)_FromLinearSize(fSizeSlider->Value()));
 			break;
 
 		case MSG_SIZE_TEXT:
@@ -289,7 +298,7 @@ TextToolConfigView::MessageReceived(BMessage* message)
 		{
 			float size;
 			if (message->FindFloat("size", &size) == B_OK) {
-				fSizeSlider->SetValue(size);
+				fSizeSlider->SetValue(_ToLinearSize(size));
 				_SetValue(fSizeTextControl, size);
 			}
 
@@ -298,6 +307,13 @@ TextToolConfigView::MessageReceived(BMessage* message)
 				fTextView->SetNotificationsEnabled(false);
 				fTextView->SetText(text);
 				fTextView->SetNotificationsEnabled(true);
+			}
+
+			const char* family;
+			const char* style;
+			if (message->FindString("family", &family) == B_OK
+				&& message->FindString("style", &style) == B_OK) {
+				fFontPopup->SetFamilyAndStyle(family, style);
 			}
 
 			break;
@@ -359,13 +375,21 @@ TextToolConfigView::_Value(BTextControl* control) const
 	return atof(control->Text());
 }
 
-// _PolulateFontMenu
+// _PopulateFontMenu
 void
-TextToolConfigView::_PolulateFontMenu(BMenu* menu, BHandler* target,
+TextToolConfigView::_PopulateFontMenu(BMenu* menu, BHandler* target,
 	const char* markedFamily, const char* markedStyle)
 {
 	if (menu == NULL)
 		return;
+
+	font_family defaultFamily;
+	font_style defaultStyle;
+	if (markedFamily == NULL || markedStyle == NULL) {
+		be_plain_font->GetFamilyAndStyle(&defaultFamily, &defaultStyle);
+		markedFamily = defaultFamily;
+		markedStyle = defaultStyle;
+	}
 
 	FontRegistry* manager = FontRegistry::Default();
 
@@ -394,7 +418,7 @@ TextToolConfigView::_PolulateFontMenu(BMenu* menu, BHandler* target,
 		item->SetTarget(target);
 
 		bool markStyle = false;
-		if (!fontMenu
+		if (fontMenu == NULL
 			|| (fontMenu->Name()
 				&& strcmp(fontMenu->Name(), family) != 0)) {
 			// create new entry
@@ -402,7 +426,7 @@ TextToolConfigView::_PolulateFontMenu(BMenu* menu, BHandler* target,
 			fontMenu->AddItem(item);
 			menu->AddItem(fontMenu);
 			// mark the menu if necessary
-			if (markedFamily && strcmp(markedFamily, family) == 0) {
+			if (markedFamily != NULL && strcmp(markedFamily, family) == 0) {
 				if (BMenuItem* superItem = fontMenu->Superitem())
 					superItem->SetMarked(true);
 				markStyle = true;
@@ -412,11 +436,28 @@ TextToolConfigView::_PolulateFontMenu(BMenu* menu, BHandler* target,
 			fontMenu->AddItem(item);
 		}
 		// mark the item if necessary
-		if (markStyle && markedStyle && strcmp(markedStyle, style) == 0)
+		if (markStyle
+			&& markedStyle != NULL && strcmp(markedStyle, style) == 0) {
 			item->SetMarked(true);
+		}
 	}
+
+	fFontPopup->SetFamilyAndStyle(markedFamily, markedStyle);
 
 	manager->Unlock();
 }
 
 
+// _FromLinearSize
+double
+TextToolConfigView::_FromLinearSize(double value) const
+{
+	return 1.0 + 1023.0 * pow((value - 1) / 1023.0, 2.0);
+}
+
+// _ToLinearSize
+double
+TextToolConfigView::_ToLinearSize(double value) const
+{
+	return 1.0 + 1023.0 * sqrt((value - 1) / 1023.0);
+}
