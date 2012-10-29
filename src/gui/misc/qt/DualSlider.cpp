@@ -7,6 +7,7 @@
 #include "DualSlider.h"
 
 #include <Message.h>
+#include <Window.h>
 
 #include <QCheckBox>
 #include <QHBoxLayout>
@@ -106,7 +107,7 @@ DualSlider::Init(const char* label, BMessage* valueMessage,
 {
 	SetLabel(label);
 	delete fValueMessage;
-	valueMessage = valueMessage;
+	fValueMessage = valueMessage;
 	delete fControlMessage;
 	fControlMessage = controlMessage;
 	fTarget = target;
@@ -237,7 +238,6 @@ DualSlider::_Invoke(BMessage* fromMessage)
 	if (fromMessage == NULL)
 		fromMessage = fValueMessage;
 	if (fromMessage != NULL) {
-#if 0
 		BHandler* target = fTarget != NULL ? fTarget : Window();
 		BLooper* looper;
 		if (target != NULL && (looper = target->Looper())) {
@@ -252,8 +252,6 @@ DualSlider::_Invoke(BMessage* fromMessage)
 				message.AddInt32("be:value", (int32)IsMinEnabled());
 			looper->PostMessage(&message, target);
 		}
-#endif
-// TODO:...
 	}
 }
 
@@ -281,7 +279,7 @@ DualSlider::_MinValueChanged()
 	if (!fDraggingMinSlider)
 		fLastFactor = fMinValue != 0 ? fMaxValue / fMinValue : 1;
 
-	fMinValue = _FromSliderValue(fMinSlider->value());
+	SetMinValue(_FromSliderValue(fMinSlider->value()));
 	if (fLastFactor < 1.0)
 		SetMaxValue(fLastFactor * fMinValue);
 
@@ -297,7 +295,7 @@ DualSlider::_MaxValueChanged()
 	if (!fDraggingMaxSlider)
 		fLastFactor = fMaxValue != 0 ? fMinValue / fMaxValue : 1;
 
-	fMaxValue = _FromSliderValue(fMaxSlider->value());
+	SetMaxValue(_FromSliderValue(fMaxSlider->value()));
 	if (fLastFactor < 1.0)
 		SetMinValue(fLastFactor * fMaxValue);
 }
