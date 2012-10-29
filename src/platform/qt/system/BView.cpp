@@ -221,7 +221,7 @@ BView::FromQtModifiers(Qt::KeyboardModifiers qtModifiers)
 void
 BView::mousePressEvent(QMouseEvent* event)
 {
-	if (Looper()) {
+	if (Looper() != NULL) {
 		BMessage message(B_MOUSE_DOWN);
 		_TranslateMouseEvent(*event, message);
 		_DeliverMessage(&message);
@@ -235,7 +235,7 @@ BView::mousePressEvent(QMouseEvent* event)
 void
 BView::mouseReleaseEvent(QMouseEvent* event)
 {
-	if (Looper()) {
+	if (Looper() != NULL) {
 		BMessage message(B_MOUSE_UP);
 		_TranslateMouseEvent(*event, message);
 		_DeliverMessage(&message);
@@ -249,7 +249,7 @@ BView::mouseReleaseEvent(QMouseEvent* event)
 void
 BView::mouseMoveEvent(QMouseEvent* event)
 {
-	if (Looper()) {
+	if (Looper() != NULL) {
 		BMessage message(B_MOUSE_MOVED);
 		_TranslateMouseEvent(*event, message);
 		_DeliverMessage(&message);
