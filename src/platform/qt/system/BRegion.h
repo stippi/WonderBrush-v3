@@ -8,10 +8,13 @@
 
 #include <Rect.h>
 
+#include <QRegion>
+
+
 namespace BPrivate {
 	class ServerLink;
 	class LinkReceiver;
-};
+}
 
 /* Integer rect used to define a clipping rectangle. All bounds are inclusive. */
 /* Moved from DirectWindow.h */
@@ -72,6 +75,8 @@ public:
 			void				IntersectWith(const BRegion* region);
 
 			void				ExclusiveInclude(const BRegion* region);
+
+			QRegion				ToQRegion() const;
 
 private:
 	friend class BDirectWindow;

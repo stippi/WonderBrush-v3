@@ -514,6 +514,16 @@ BRegion::ExclusiveInclude(const BRegion* region)
 }
 
 
+QRegion
+BRegion::ToQRegion() const
+{
+	QRegion qRegion;
+	for (int32 i = 0; i < fCount; i++)
+		qRegion += RectAt(i).ToQRect();
+	return qRegion;
+}
+
+
 // #pragma mark -
 
 
