@@ -258,6 +258,7 @@ HEADERS  += \
 	platform/qt/PlatformScrollArea.h \
 	platform/qt/PlatformSemaphoreManager.h \
 	platform/qt/PlatformThread.h \
+	platform/qt/PlatformViewMixin.h \
 	platform/qt/PlatformWonderBrush.h \
 	platform/qt/system/ArchivingManagers.h \
 	platform/qt/system/BAlignment.h \
