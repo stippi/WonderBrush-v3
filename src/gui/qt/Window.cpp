@@ -6,6 +6,7 @@
 #include "CommandStack.h"
 #include "Document.h"
 #include "IconButton.h"
+#include "NavigatorView.h"
 #include "RenderManager.h"
 #include "Tool.h"
 #include "ToolConfigView.h"
@@ -35,6 +36,9 @@ Window::Window(BRect frame, const char* title, Document* document, Layer* layer,
 	fRenderManager = new RenderManager(fDocument);
 	// TODO: Check error
 	fRenderManager->Init();
+
+	_ReplaceWidget(fUi->navigatorViewDummy,
+		new NavigatorView(fDocument, fRenderManager));
 
 	fView->Init(fDocument, fRenderManager);
 	fUi->canvasScrollView->SetScrollTarget(fView);
@@ -154,4 +158,19 @@ Window::_ObjectChanged(const Notifier* object)
 			fRedoMI->SetLabel("<nothing to redo>");
 	}
 #endif
+}
+
+
+void
+Window::_ReplaceWidget(QWidget*& toReplace, QWidget* replacement)
+{
+	QLayout* layout = toReplace->parentWidget()->layout();
+	if (QBoxLayout* boxLayout = dynamic_cast<QBoxLayout*>(layout)) {
+		boxLayout->insertWidget(boxLayout->indexOf(toReplace), replacement);
+		boxLayout->removeWidget(toReplace);
+		delete toReplace;
+		toReplace = replacement;
+	} else {
+		debugger("Window::_ReplaceWidget(): Unsupported layout!");
+	}
 }

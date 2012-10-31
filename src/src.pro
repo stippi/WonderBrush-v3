@@ -26,6 +26,7 @@ INCLUDEPATH += icon/include
 QMAKE_CXXFLAGS += -iquote $$PWD/commands
 QMAKE_CXXFLAGS += -iquote $$PWD/gui
 QMAKE_CXXFLAGS += -iquote $$PWD/gui/icons
+QMAKE_CXXFLAGS += -iquote $$PWD/gui/misc
 QMAKE_CXXFLAGS += -iquote $$PWD/gui/misc/qt
 QMAKE_CXXFLAGS += -iquote $$PWD/gui/qt
 QMAKE_CXXFLAGS += -iquote $$PWD/gui/scrollview
@@ -61,9 +62,11 @@ SOURCES += \
 	commands/ObjectAddedCommand.cpp \
 	commands/SetPropertiesCommand.cpp \
 	gui/ToolConfigView.cpp \
+	gui/misc/NavigatorView.cpp \
 	gui/misc/qt/DualSlider.cpp \
 	gui/misc/qt/IconButton.cpp \
 	gui/misc/qt/IconOptionsControl.cpp \
+	gui/misc/qt/NavigatorViewPlatformDelegate.cpp \
 	gui/qt/CanvasView.cpp \
 	gui/qt/Window.cpp \
 	gui/stateview/StateView.cpp \
@@ -200,9 +203,11 @@ HEADERS  += \
 	commands/ObjectAddedCommand.h \
 	commands/SetPropertiesCommand.h \
 	gui/ToolConfigView.h \
+	gui/misc/NavigatorView.h \
 	gui/misc/qt/DualSlider.h \
 	gui/misc/qt/IconButton.h \
 	gui/misc/qt/IconOptionsControl.h \
+	gui/misc/qt/NavigatorViewPlatformDelegate.h \
 	gui/qt/CanvasView.h \
 	gui/qt/Window.h \
 	gui/icons/BrushIcon.h \

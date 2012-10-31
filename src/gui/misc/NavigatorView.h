@@ -7,12 +7,18 @@
 
 #include <Locker.h>
 #include <String.h>
-#include <View.h>
+
+#include "PlatformViewMixin.h"
+
+
+#define NAVIGATOR_VIEW_USE_BEAUTIFUL_DOWN_SCALING 0
+
 
 class Document;
 class RenderManager;
 
-class NavigatorView : public BView {
+
+class NavigatorView : public PlatformViewMixin<BView> {
 public:
 								NavigatorView(Document* document,
 									RenderManager* manager);
@@ -24,7 +30,7 @@ public:
 	virtual	void				Pulse();
 	virtual	void				AttachedToWindow();
 	virtual	void				FrameResized(float width, float height);
-	virtual	void				Draw(BRect updateRect);
+	virtual	void				PlatformDraw(PlatformDrawContext& drawContext);
 
 	virtual	void				MouseDown(BPoint where);
 	virtual	void				MouseUp(BPoint where);
@@ -37,6 +43,9 @@ public:
 	virtual	bool				HasHeightForWidth();
 	virtual	void				GetHeightForWidth(float width, float* min,
 									float* max, float* preferred);
+
+private:
+			class PlatformDelegate;
 
 private:
 			BRect				_IconBounds() const;
@@ -57,6 +66,8 @@ private:
 
 			BLocker				fRescaleLock;
 			thread_id			fRescaleThread;
+
+			PlatformDelegate*	fPlatformDelegate;
 };
 
 #endif // NAVIGATOR_VIEW_H

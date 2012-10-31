@@ -111,6 +111,7 @@ Application WonderBrush :
 	DualSlider.cpp
 	IconButton.cpp
 	IconOptionsControl.cpp
+	NavigatorViewPlatformDelegate.cpp
 
 	# gui/tools
 	TextToolConfigView.cpp
