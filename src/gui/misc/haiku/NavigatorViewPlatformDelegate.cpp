@@ -3,7 +3,6 @@
 #include <Bitmap.h>
 #include <Region.h>
 
-#include "platform_support_ui.h"
 #include "ui_defines.h"
 
 
@@ -31,7 +30,7 @@ void
 NavigatorView::PlatformDelegate::DrawBackground(
 	PlatformDrawContext& drawContext, const BRegion& region)
 {
-	fView->FillRegion(&region, kStripes);
+	fView->FillRegion(const_cast<BRegion*>(&region), kStripes);
 }
 
 
@@ -48,7 +47,7 @@ NavigatorView::PlatformDelegate::DrawRect(PlatformDrawContext& drawContext,
 	visibleRect.InsetBy(1, 1);
 	fView->StrokeRect(visibleRect, kDotted);
 
-	outside.Set(iconBounds);
+	BRegion outside(iconBounds);
 	outside.Exclude(visibleRect);
 	fView->SetHighColor(0, 0, 0, 50);
 	fView->FillRegion(&outside);

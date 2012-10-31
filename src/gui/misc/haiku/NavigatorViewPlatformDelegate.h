@@ -4,8 +4,6 @@
 
 #include "NavigatorView.h"
 
-#include <QBrush>
-
 
 class NavigatorView::PlatformDelegate {
 public:
