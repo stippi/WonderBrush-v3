@@ -131,6 +131,7 @@ SOURCES += \
 	platform/qt/system/BInterfaceDefs.cpp \
 	platform/qt/system/BInvoker.cpp \
 	platform/qt/system/BHandler.cpp \
+	platform/qt/system/BLayoutUtils.cpp \
 	platform/qt/system/BList.cpp \
 	platform/qt/system/BLocker.cpp \
 	platform/qt/system/BLooper.cpp \
@@ -282,6 +283,7 @@ HEADERS  += \
 	platform/qt/system/Bimage.h \
 	platform/qt/system/BInterfaceDefs.h \
 	platform/qt/system/BInvoker.h \
+	platform/qt/system/BLayoutUtils.h \
 	platform/qt/system/BList.h \
 	platform/qt/system/BLocker.h \
 	platform/qt/system/BLooper.h \
@@ -331,6 +333,7 @@ HEADERS  += \
 	platform/qt/system/include/image.h \
 	platform/qt/system/include/InterfaceDefs.h \
 	platform/qt/system/include/Invoker.h \
+	platform/qt/system/include/LayoutUtils.h \
 	platform/qt/system/include/List.h \
 	platform/qt/system/include/Locker.h \
 	platform/qt/system/include/Looper.h \
