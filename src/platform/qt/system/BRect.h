@@ -56,8 +56,8 @@ public:
 	// Expression transformations
 			BRect&				InsetBySelf(BPoint inset);
 			BRect&				InsetBySelf(float dx, float dy);
-			BRect				InsetByCopy(BPoint inset);
-			BRect				InsetByCopy(float dx, float dy);
+			BRect				InsetByCopy(BPoint inset) const;
+			BRect				InsetByCopy(float dx, float dy) const;
 			BRect&				OffsetBySelf(BPoint offset);
 			BRect&				OffsetBySelf(float dx, float dy);
 			BRect				OffsetByCopy(BPoint offset);
