@@ -106,6 +106,7 @@ Application WonderBrush :
 	NummericalTextView.cpp
 	Panel.cpp
 	StringTextView.cpp
+	SwatchGroup.cpp
 	SwatchView.cpp
 	TextViewPopup.cpp
 
