@@ -179,7 +179,7 @@ ColorField::FrameResized(float width, float height)
 {
 	BRect r = _BitmapRect();
 	_AllocBitmap(r.IntegerWidth() + 1, r.IntegerHeight() + 1);
-	Invalidate();
+	SetMarkerToColor(fMarkerColor);
 }
 
 // MouseDown
@@ -224,49 +224,52 @@ ColorField::MouseMoved(BPoint where, uint32 transit,
 void
 ColorField::SetModeAndValue(SelectedColorMode mode, float fixedValue)
 {
-	float R(0), G(0), B(0);
-	float H(0), S(0), V(0);
+	float R = 0;
+	float G = 0;
+	float B = 0;
+	float H = 0;
+	float S = 0;
+	float V = 0;
 
 	float width = Width();
 	float height = Height();
 
 	switch (fMode) {
-
-		case R_SELECTED: {
+		case R_SELECTED:
 			R = fFixedValue * 255;
 			G = round(fMarkerPosition.x / width * 255.0);
 			B = round(255.0 - fMarkerPosition.y / height * 255.0);
-		}; break;
+			break;
 
-		case G_SELECTED: {
+		case G_SELECTED:
 			R = round(fMarkerPosition.x / width * 255.0);
 			G = fFixedValue * 255;
 			B = round(255.0 - fMarkerPosition.y / height * 255.0);
-		}; break;
+			break;
 
-		case B_SELECTED: {
+		case B_SELECTED:
 			R = round(fMarkerPosition.x / width * 255.0);
 			G = round(255.0 - fMarkerPosition.y / height * 255.0);
 			B = fFixedValue * 255;
-		}; break;
+			break;
 
-		case H_SELECTED: {
+		case H_SELECTED:
 			H = fFixedValue;
 			S = fMarkerPosition.x / width;
 			V = 1.0 - fMarkerPosition.y / height;
-		}; break;
+			break;
 
-		case S_SELECTED: {
+		case S_SELECTED:
 			H = fMarkerPosition.x / width * 6.0;
 			S = fFixedValue;
 			V = 1.0 - fMarkerPosition.y / height;
-		}; break;
+			break;
 
-		case V_SELECTED: {
+		case V_SELECTED:
 			H = fMarkerPosition.x / width * 6.0;
 			S = 1.0 - fMarkerPosition.y / height;
 			V = fFixedValue;
-		}; break;
+			break;
 	}
 
 	if (fMode & (H_SELECTED | S_SELECTED | V_SELECTED)) {
@@ -279,9 +282,9 @@ ColorField::SetModeAndValue(SelectedColorMode mode, float fixedValue)
 	if (fFixedValue != fixedValue || fMode != mode) {
 		fFixedValue = fixedValue;
 		fMode = mode;
-
-		_Update();
 	}
+
+	_Update();
 
 	SetMarkerToColor(color);
 }
@@ -300,11 +303,11 @@ ColorField::SetFixedValue(float fixedValue)
 void
 ColorField::SetMarkerToColor(rgb_color color)
 {
+	fMarkerColor = color;
+
 	float h, s, v;
 	RGB_to_HSV(color.red / 255.0, color.green / 255.0, color.blue / 255.0,
 		h, s, v );
-
-	fLastMarkerPosition = fMarkerPosition;
 
 	float width = Width();
 	float height = Height();
@@ -352,7 +355,6 @@ ColorField::PositionMarkerAt(BPoint where)
 	where.ConstrainTo(rect);
 	where -= rect.LeftTop();
 
-	fLastMarkerPosition = fMarkerPosition;
 	fMarkerPosition = where;
 	Invalidate();
 }
@@ -392,7 +394,7 @@ ColorField::_Init(SelectedColorMode mode, float fixedValue,
 	fBorderStyle = border;
 
 	fMarkerPosition = BPoint(0.0, 0.0);
-	fLastMarkerPosition = BPoint(-1.0, -1.0);
+	fMarkerColor = (rgb_color) { 0, 0, 0, 255 };
 	fMouseDown = false;
 
 	fBitmap = NULL;
