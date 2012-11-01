@@ -1,21 +1,17 @@
-/* 
+/*
  * Copyright 2001 Werner Freytag - please read to the LICENSE file
  *
  * Copyright 2002-2006, Stephan Aßmus <superstippi@gmx.de>
  * All rights reserved.
- *		
+ *
  */
 
-#ifndef _COLOR_FIELD_H
-#define _COLOR_FIELD_H
+#ifndef COLOR_FIELD_H
+#define COLOR_FIELD_H
 
 #include <Control.h>
 
-#if LIB_LAYOUT
-#  include <layout.h>
-#endif
-
-#include "selected_color_mode.h"
+#include "SelectedColorMode.h"
 
 enum {
 	MSG_COLOR_FIELD		= 'ColF',
@@ -23,26 +19,24 @@ enum {
 
 class BBitmap;
 
-class ColorField :
-				   #if LIB_LAYOUT
-				   public MView,
-				   #endif
-				   public BControl {
- public:
+class ColorField : public BControl {
+public:
 								ColorField(BPoint offset_point,
-										   selected_color_mode mode,
-										   float fixed_value,
-										   orientation orient = B_VERTICAL);
+									SelectedColorMode mode, float fixedValue,
+									orientation orient = B_VERTICAL);
+
+								ColorField(SelectedColorMode mode,
+									float fixedValue,
+									orientation orient = B_VERTICAL);
+
 	virtual						~ColorField();
 
-								// MView
-	#if LIB_LAYOUT
-	virtual	minimax				layoutprefs();
-	virtual	BRect				layout(BRect frame);
-	#endif
+	// BControl interface
+	virtual	BSize				MinSize();
+	virtual	BSize				PreferredSize();
+	virtual	BSize				MaxSize();
 
-								// BControl
-	virtual	status_t			Invoke(BMessage *msg = NULL);
+	virtual	status_t			Invoke(BMessage* message = NULL);
 
 	virtual	void				AttachedToWindow();
 	virtual	void				Draw(BRect updateRect);
@@ -50,29 +44,34 @@ class ColorField :
 	virtual	void				MouseDown(BPoint where);
 	virtual	void				MouseUp(BPoint where);
 	virtual	void				MouseMoved(BPoint where, uint32 code,
-										   const BMessage* message);
+									const BMessage* dragMessage);
 
-								// ColorField
+	// ColorField
 			void				Update(int depth);
 
-			void				SetModeAndValue(selected_color_mode mode, float fixed_value);
-			void				SetFixedValue(float fixed_value);
+			void				SetModeAndValue(SelectedColorMode mode,
+									float fixedValue);
+			void				SetFixedValue(float fixedValue);
 			float				FixedValue() const
 									{ return fFixedValue; }
-			
-			void				SetMarkerToColor( rgb_color color );
-			void				PositionMarkerAt( BPoint where );
+
+			void				SetMarkerToColor(rgb_color color);
+			void				PositionMarkerAt(BPoint where);
 
 			float				Width() const;
 			float				Height() const;
 			bool				IsTracking() const
 									{ return fMouseDown; }
 
- private:
-	static	int32				_UpdateThread(void* data);
+private:
+			void				_Init(SelectedColorMode mode,
+									float fixedValue, orientation orient);
+
+	static	status_t			_UpdateThread(void* data);
 			void				_DrawBorder();
 
-	selected_color_mode			fMode;
+private:
+	SelectedColorMode			fMode;
 	float						fFixedValue;
 	orientation					fOrientation;
 
@@ -88,4 +87,4 @@ class ColorField :
 	port_id						fUpdatePort;
 };
 
-#endif
+#endif // COLOR_FIELD_H

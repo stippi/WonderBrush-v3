@@ -1,9 +1,9 @@
-/* 
+/*
  * Copyright 2001 Werner Freytag - please read to the LICENSE file
  *
  * Copyright 2002-2006, Stephan Aßmus <superstippi@gmx.de>
  * All rights reserved.
- *		
+ *
  */
 
 #include "ColorField.h"
@@ -11,16 +11,16 @@
 #include <stdio.h>
 
 #include <Bitmap.h>
+#include <LayoutUtils.h>
 #include <OS.h>
 #include <Region.h>
 #include <Window.h>
 
-#include "selected_color_mode.h"
 #include "support_ui.h"
 
 #include "rgb_hsv.h"
 
-#define round(x) (int)(x+.5)
+#define round(x) (int)(x +.5)
 
 enum {
 	MSG_UPDATE			= 'Updt',
@@ -30,42 +30,23 @@ enum {
 #define MAX_Y 255
 
 // constructor
-ColorField::ColorField(BPoint offset_point, selected_color_mode mode,
-					   float fixed_value, orientation orient)
-	: BControl(BRect(0.0, 0.0, MAX_X + 4.0, MAX_Y + 4.0).OffsetToCopy(offset_point),
-			   "ColorField", "", new BMessage(MSG_COLOR_FIELD),
-			   B_FOLLOW_LEFT | B_FOLLOW_TOP,
-			   B_WILL_DRAW | B_FRAME_EVENTS),
-	  fMode(mode),
-	  fFixedValue(fixed_value),
-	  fOrientation(orient),
-	  fMarkerPosition(0.0, 0.0),
-	  fLastMarkerPosition(-1.0, -1.0),
-	  fMouseDown(false),
-	  fUpdateThread(B_ERROR),
-	  fUpdatePort(B_ERROR)
+ColorField::ColorField(BPoint offsetPoint, SelectedColorMode mode,
+	float fixedValue, orientation orient)
+	: BControl(BRect(0.0, 0.0, MAX_X + 4.0, MAX_Y + 4.0)
+			.OffsetToCopy(offsetPoint),
+		"ColorField", "", new BMessage(MSG_COLOR_FIELD),
+		B_FOLLOW_LEFT | B_FOLLOW_TOP, B_WILL_DRAW | B_FRAME_EVENTS)
 {
-	SetViewColor(B_TRANSPARENT_32_BIT);
+	_Init(mode, fixedValue, orient);
+}
 
-	for (int i = 0; i < 2; ++i) {
-		fBgBitmap[i] = new BBitmap(Bounds(), B_RGB32, true);
-
-		fBgBitmap[i]->Lock();
-		fBgView[i] = new BView(Bounds(), "", B_FOLLOW_NONE, B_WILL_DRAW);
-		fBgBitmap[i]->AddChild(fBgView[i]);
-		fBgView[i]->SetOrigin(2.0, 2.0);
-		fBgBitmap[i]->Unlock();
-	}
-
-	_DrawBorder();
-
-	fUpdatePort = create_port(100, "color field update port");
-
-	fUpdateThread = spawn_thread(ColorField::_UpdateThread,
-								 "color field update thread", 10, this);
-	resume_thread(fUpdateThread);
-
-//	Update(3);
+// constructor
+ColorField::ColorField(SelectedColorMode mode, float fixedValue,
+	orientation orient)
+	: BControl("ColorField", "", new BMessage(MSG_COLOR_FIELD),
+		B_WILL_DRAW | B_FRAME_EVENTS)
+{
+	_Init(mode, fixedValue, orient);
 }
 
 // destructor
@@ -73,62 +54,66 @@ ColorField::~ColorField()
 {
 	if (fUpdatePort >= B_OK)
 		delete_port(fUpdatePort);
-	if (fUpdateThread >= B_OK)
+
+	if (fUpdateThread >= B_OK) {
+//		status_t exitValue;
+//		wait_for_thread(fUpdateThread, &exitValue);
 		kill_thread(fUpdateThread);
+	}
 
 	delete fBgBitmap[0];
 	delete fBgBitmap[1];
 }
 
-#if LIB_LAYOUT
-// layoutprefs
-minimax
-ColorField::layoutprefs()
+// MinSize
+BSize
+ColorField::MinSize()
 {
-	if (fOrientation == B_VERTICAL) {
-		mpm.mini.x = 4 + MAX_X / 17;
-		mpm.mini.y = 4 + MAX_Y / 5;
-	} else {
-		mpm.mini.x = 4 + MAX_X / 5;
-		mpm.mini.y = 4 + MAX_Y / 17;
-	}
-	mpm.maxi.x = 4 + MAX_X;
-	mpm.maxi.y = 4 + MAX_Y;
+	BSize minSize;
+	if (fOrientation == B_VERTICAL)
+		minSize = BSize(4 + MAX_X / 17, 4 + MAX_Y / 5);
+	else
+		minSize = BSize(4 + MAX_X / 5, 4 + MAX_Y / 17);
 
-	mpm.weight = 1.0;
-
-	return mpm;
+	return BLayoutUtils::ComposeSize(ExplicitMinSize(), minSize);
 }
 
-// layout
-BRect
-ColorField::layout(BRect frame)
+// PreferredSize
+BSize
+ColorField::PreferredSize()
 {
-	MoveTo(frame.LeftTop());
-
-	// reposition marker
-	fMarkerPosition.x *= (frame.Width() - 4.0) / (Bounds().Width() - 4.0);
-	fMarkerPosition.y *= (frame.Height() - 4.0) / (Bounds().Height() - 4.0);
-
-	ResizeTo(frame.Width(), frame.Height());
-	_DrawBorder();
-	Update(3);
-	return Frame();
+	return BLayoutUtils::ComposeSize(ExplicitPreferredSize(), MinSize());
 }
-#endif // LIB_LAYOUT
+
+// MaxSize
+BSize
+ColorField::MaxSize()
+{
+	BSize maxSize;
+	if (fOrientation == B_VERTICAL)
+		maxSize = BSize(4 + MAX_X, 4 + MAX_Y);
+	else
+		maxSize = BSize(4 + MAX_X, 4 + MAX_Y);
+	return BLayoutUtils::ComposeSize(ExplicitMaxSize(), maxSize);
+//	return BLayoutUtils::ComposeSize(ExplicitMaxSize(),
+//		BSize(B_SIZE_UNLIMITED, B_SIZE_UNLIMITED));
+}
 
 // Invoke
 status_t
-ColorField::Invoke(BMessage *msg)
-{	
-	if (!msg)
-		msg = Message();
+ColorField::Invoke(BMessage* message)
+{
+	if (message == NULL)
+		message = Message();
 
-	msg->RemoveName("value");
+	if (message == NULL)
+		return BControl::Invoke(message);
+
+	message->RemoveName("value");
 
 	float v1 = 0;
 	float v2 = 0;
-	
+
 	switch (fMode) {
 		case R_SELECTED:
 		case G_SELECTED:
@@ -146,7 +131,7 @@ ColorField::Invoke(BMessage *msg)
 				v2 = 1.0 - fMarkerPosition.x / Width();
 			}
 			break;
-		
+
 		case S_SELECTED:
 		case V_SELECTED:
 			v1 = fMarkerPosition.x / Width() * 6.0;
@@ -154,11 +139,11 @@ ColorField::Invoke(BMessage *msg)
 			break;
 
 	}
-	
-	msg->AddFloat("value", v1);
-	msg->AddFloat("value", v2);
-	
-	return BControl::Invoke(msg);
+
+	message->AddFloat("value", v1);
+	message->AddFloat("value", v2);
+
+	return BControl::Invoke(message);
 }
 
 // AttachedToWindow
@@ -179,13 +164,12 @@ ColorField::Draw(BRect updateRect)
 void
 ColorField::MouseDown(BPoint where)
 {
-	Window()->Activate();
-	
 	fMouseDown = true;
-	SetMouseEventMask(B_POINTER_EVENTS, B_SUSPEND_VIEW_FOCUS|B_LOCK_WINDOW_FOCUS );
-	PositionMarkerAt( where );
+	SetMouseEventMask(B_POINTER_EVENTS,
+		B_SUSPEND_VIEW_FOCUS | B_LOCK_WINDOW_FOCUS);
+	PositionMarkerAt(where);
 
-	if (Message()) {
+	if (Message() != NULL) {
 		BMessage message(*Message());
 		message.AddBool("begin", true);
 		Invoke(&message);
@@ -202,13 +186,14 @@ ColorField::MouseUp(BPoint where)
 
 // MouseMoved
 void
-ColorField::MouseMoved(BPoint where, uint32 code, const BMessage *a_message)
+ColorField::MouseMoved(BPoint where, uint32 transit,
+	const BMessage* dragMessage)
 {
-	if (a_message || !fMouseDown ) {
-		BView::MouseMoved( where, code, a_message);
+	if (dragMessage != NULL || !fMouseDown ) {
+		BView::MouseMoved(where, transit, dragMessage);
 		return;
 	}
-	
+
 	PositionMarkerAt(where);
 	Invoke();
 }
@@ -217,7 +202,11 @@ ColorField::MouseMoved(BPoint where, uint32 code, const BMessage *a_message)
 void
 ColorField::Update(int depth)
 {
-	// depth: 0 = only onscreen redraw, 1 = only cursor 1, 2 = full update part 2, 3 = full
+	// depth:
+	// 0 = only onscreen redraw,
+	// 1 = only cursor 1,
+	// 2 = full update part 2,
+	// 3 = full
 
 	if (depth == 3) {
 		write_port(fUpdatePort, MSG_UPDATE, NULL, 0);
@@ -226,21 +215,21 @@ ColorField::Update(int depth)
 
 	if (depth >= 1) {
 		fBgBitmap[1]->Lock();
-		
+
 		fBgView[1]->DrawBitmap( fBgBitmap[0], BPoint(-2.0, -2.0) );
-	
+
 		fBgView[1]->SetHighColor( 0, 0, 0 );
 		fBgView[1]->StrokeEllipse( fMarkerPosition, 5.0, 5.0 );
 		fBgView[1]->SetHighColor( 255.0, 255.0, 255.0 );
 		fBgView[1]->StrokeEllipse( fMarkerPosition, 4.0, 4.0 );
-			
+
 		fBgView[1]->Sync();
 
 		fBgBitmap[1]->Unlock();
 	}
-	
+
 	if (depth != 0 && depth != 2 && fMarkerPosition != fLastMarkerPosition) {
-	
+
 		fBgBitmap[1]->Lock();
 
 		DrawBitmap( fBgBitmap[1],
@@ -261,24 +250,24 @@ ColorField::Update(int depth)
 
 // SetModeAndValue
 void
-ColorField::SetModeAndValue(selected_color_mode mode, float fixed_value)
+ColorField::SetModeAndValue(SelectedColorMode mode, float fixedValue)
 {
 	float R(0), G(0), B(0);
 	float H(0), S(0), V(0);
-	
+
 	fBgBitmap[0]->Lock();
 
 	float width = Width();
 	float height = Height();
 
 	switch (fMode) {
-		
+
 		case R_SELECTED: {
 			R = fFixedValue * 255;
 			G = round(fMarkerPosition.x / width * 255.0);
 			B = round(255.0 - fMarkerPosition.y / height * 255.0);
 		}; break;
-		
+
 		case G_SELECTED: {
 			R = round(fMarkerPosition.x / width * 255.0);
 			G = fFixedValue * 255;
@@ -314,15 +303,15 @@ ColorField::SetModeAndValue(selected_color_mode mode, float fixed_value)
 		HSV_to_RGB(H, S, V, R, G, B);
 		R *= 255.0; G *= 255.0; B *= 255.0;
 	}
-	
+
 	rgb_color color = { round(R), round(G), round(B), 255 };
 
 	fBgBitmap[0]->Unlock();
 
-	if (fFixedValue != fixed_value || fMode != mode) {
-		fFixedValue = fixed_value;
+	if (fFixedValue != fixedValue || fMode != mode) {
+		fFixedValue = fixedValue;
 		fMode = mode;
-	
+
 		Update(3);
 	}
 
@@ -331,10 +320,10 @@ ColorField::SetModeAndValue(selected_color_mode mode, float fixed_value)
 
 // SetFixedValue
 void
-ColorField::SetFixedValue(float fixed_value)
+ColorField::SetFixedValue(float fixedValue)
 {
-	if (fFixedValue != fixed_value) {
-		fFixedValue = fixed_value;
+	if (fFixedValue != fixedValue) {
+		fFixedValue = fixedValue;
 		Update(3);
 	}
 }
@@ -344,43 +333,44 @@ void
 ColorField::SetMarkerToColor(rgb_color color)
 {
 	float h, s, v;
-	RGB_to_HSV( (float)color.red / 255.0, (float)color.green / 255.0, (float)color.blue / 255.0, h, s, v );
-	
+	RGB_to_HSV(color.red / 255.0, color.green / 255.0, color.blue / 255.0,
+		h, s, v );
+
 	fLastMarkerPosition = fMarkerPosition;
 
 	float width = Width();
 	float height = Height();
 
 	switch (fMode) {
-		case R_SELECTED: {
+		case R_SELECTED:
 			fMarkerPosition = BPoint(color.green / 255.0 * width,
-									 (255.0 - color.blue) / 255.0 * height);
-		} break;
-		
-		case G_SELECTED: {
-			fMarkerPosition = BPoint(color.red / 255.0 * width,
-									 (255.0 - color.blue) / 255.0 * height);
-		} break;
+				(255.0 - color.blue) / 255.0 * height);
+			break;
 
-		case B_SELECTED: {
+		case G_SELECTED:
 			fMarkerPosition = BPoint(color.red / 255.0 * width,
-									 (255.0 - color.green) / 255.0 * height);
-		} break;
-		
-		case H_SELECTED: {
+				(255.0 - color.blue) / 255.0 * height);
+			break;
+
+		case B_SELECTED:
+			fMarkerPosition = BPoint(color.red / 255.0 * width,
+				(255.0 - color.green) / 255.0 * height);
+			break;
+
+		case H_SELECTED:
 			if (fOrientation == B_VERTICAL)
 				fMarkerPosition = BPoint(s * width, height - v * height);
 			else
 				fMarkerPosition = BPoint(width - v * width, s * height);
-		} break;
-		
-		case S_SELECTED: {
-			fMarkerPosition = BPoint(h / 6.0 * width, height - v * height);
-		} break;
+			break;
 
-		case V_SELECTED: {
+		case S_SELECTED:
+			fMarkerPosition = BPoint(h / 6.0 * width, height - v * height);
+			break;
+
+		case V_SELECTED:
 			fMarkerPosition = BPoint( h / 6.0 * width, height - s * height);
-		} break;
+			break;
 	}
 
 	Update(1);
@@ -390,10 +380,10 @@ ColorField::SetMarkerToColor(rgb_color color)
 void
 ColorField::PositionMarkerAt( BPoint where )
 {
-	BRect rect = Bounds().InsetByCopy( 2.0, 2.0 ).OffsetToCopy(0.0, 0.0);
+	BRect rect = Bounds().InsetByCopy(2.0, 2.0).OffsetToCopy(0.0, 0.0);
 	where = BPoint(max_c(min_c(where.x - 2.0, rect.right), 0.0),
-				   max_c(min_c(where.y - 2.0, rect.bottom), 0.0) );
-	
+		max_c(min_c(where.y - 2.0, rect.bottom), 0.0));
+
 	fLastMarkerPosition = fMarkerPosition;
 	fMarkerPosition = where;
 	Update(1);
@@ -415,22 +405,59 @@ ColorField::Height() const
 }
 
 // set_bits
-void
+static inline void
 set_bits(uint8* bits, uint8 r, uint8 g, uint8 b)
 {
 	bits[0] = b;
 	bits[1] = g;
 	bits[2] = r;
-//	bits[3] = 255;
+	bits[3] = 255;
+}
+
+// _Init
+void
+ColorField::_Init(SelectedColorMode mode, float fixedValue,
+	orientation orient)
+{
+	fMode = mode;
+	fFixedValue = fixedValue;
+	fOrientation = orient;
+
+	fMarkerPosition = BPoint(0.0, 0.0);
+	fLastMarkerPosition = BPoint(-1.0, -1.0);
+	fMouseDown = false;
+	fUpdateThread = B_ERROR;
+	fUpdatePort = B_ERROR;
+
+	SetViewColor(B_TRANSPARENT_COLOR);
+
+	BRect bounds = BRect(0.0, 0.0, MAX_X + 4.0, MAX_Y + 4.0);
+	for (int32 i = 0; i < 2; i++) {
+		fBgBitmap[i] = new BBitmap(bounds, B_RGB32, true);
+
+		fBgBitmap[i]->Lock();
+		fBgView[i] = new BView(bounds, "", B_FOLLOW_NONE, B_WILL_DRAW);
+		fBgBitmap[i]->AddChild(fBgView[i]);
+		fBgView[i]->SetOrigin(2.0, 2.0);
+		fBgBitmap[i]->Unlock();
+	}
+
+	_DrawBorder();
+
+	fUpdatePort = create_port(100, "color field update port");
+
+	fUpdateThread = spawn_thread(ColorField::_UpdateThread,
+		"color field update thread", 10, this);
+	resume_thread(fUpdateThread);
 }
 
 // _UpdateThread
-int32
+status_t
 ColorField::_UpdateThread(void* data)
 {
 	// initializing
 	ColorField* colorField = (ColorField *)data;
-	
+
 	bool looperLocked = colorField->LockLooper();
 
 	BBitmap* bitmap = colorField->fBgBitmap[0];
@@ -439,45 +466,48 @@ ColorField::_UpdateThread(void* data)
 
 	if (looperLocked)
 		colorField->UnlockLooper();
-	
-	float h, s, v, r, g, b;
-	int R, G, B;
-		
+
+	float h = 0;
+	float s = 0;
+	float v = 0;
+	float r = 0;
+	float g = 0;
+	float b = 0;
+	int R = 0;
+	int G = 0;
+	int B = 0;
+
 	// drawing
 
     int32 msg_code;
     char msg_buffer;
 
 	while (true) {
-
 		port_info info;
-
 		do {
-
 			read_port(port, &msg_code, &msg_buffer, sizeof(msg_buffer));
 			get_port_info(port, &info);
-			
 		} while (info.queue_count);
-		
+
 		if (colorField->LockLooper()) {
-		
+
 			uint 	colormode = colorField->fMode;
 			float	fixedvalue = colorField->fFixedValue;
-		
+
 			int width = (int)colorField->Width();
 			int height = (int)colorField->Height();
-		     
+
 			colorField->UnlockLooper();
-		
+
 			bitmap->Lock();
 	//bigtime_t now = system_time();
 			uint8* bits = (uint8*)bitmap->Bits();
 			uint32 bpr = bitmap->BytesPerRow();
 			// offset 2 pixels from top and left
 			bits += 2 * 4 + 2 * bpr;
-			
+
 			switch (colormode) {
-				
+
 				case R_SELECTED: {
 					R = round(fixedvalue * 255);
 					for (int y = height; y >= 0; y--) {
@@ -491,7 +521,7 @@ ColorField::_UpdateThread(void* data)
 						bits += bpr;
 					}
 				}; break;
-				
+
 				case G_SELECTED: {
 					G = round(fixedvalue * 255);
 					for (int y = height; y >= 0; y--) {
@@ -505,7 +535,7 @@ ColorField::_UpdateThread(void* data)
 						bits += bpr;
 					}
 				}; break;
-				
+
 				case B_SELECTED: {
 					B = round(fixedvalue * 255);
 					for (int y = height; y >= 0; y--) {
@@ -519,7 +549,7 @@ ColorField::_UpdateThread(void* data)
 						bits += bpr;
 					}
 				}; break;
-				
+
 				case H_SELECTED: {
 					h = fixedvalue;
 					if (orient == B_VERTICAL) {
@@ -548,7 +578,7 @@ ColorField::_UpdateThread(void* data)
 						}
 					}
 				}; break;
-				
+
 				case S_SELECTED: {
 					s = fixedvalue;
 					for (int y = 0; y <= height; ++y) {
@@ -563,7 +593,7 @@ ColorField::_UpdateThread(void* data)
 						bits += bpr;
 					}
 				}; break;
-				
+
 				case V_SELECTED: {
 					v = fixedvalue;
 					for (int y = 0; y <= height; ++y) {
@@ -579,16 +609,17 @@ ColorField::_UpdateThread(void* data)
 					}
 				}; break;
 			}
-	
+
 	//printf("color field update: %lld\n", system_time() - now);
 			bitmap->Unlock();
-	
+
 			if (colorField->LockLooper()) {
 				colorField->Update(2);
 				colorField->UnlockLooper();
 			}
 		}
 	}
+	return B_OK;
 }
 
 // _DrawBorder
@@ -596,7 +627,7 @@ void
 ColorField::_DrawBorder()
 {
 	bool looperLocked = LockLooper();
-		
+
 	fBgBitmap[1]->Lock();
 
 	rgb_color background = ui_color(B_PANEL_BACKGROUND_COLOR);

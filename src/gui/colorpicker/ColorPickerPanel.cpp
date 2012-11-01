@@ -1,7 +1,7 @@
-/* 
+/*
  * Copyright 2002-2006, Stephan Aßmus <superstippi@gmx.de>
  * All rights reserved. Distributed under the terms of the MIT license.
- *		
+ *
  */
 
 #include "ColorPickerPanel.h"
@@ -37,7 +37,7 @@ ColorPickerPanel::sDefaultPanel = NULL;
 
 // constructor
 ColorPickerPanel::ColorPickerPanel(BRect frame, rgb_color color,
-								   selected_color_mode mode,
+								   SelectedColorMode mode,
 								   BWindow* window,
 								   BMessage* message, BHandler* target)
 	: Panel(frame, "Pick Color",

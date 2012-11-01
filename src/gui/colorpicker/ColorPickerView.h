@@ -1,9 +1,9 @@
-/* 
+/*
  * Copyright 2001 Werner Freytag - please read to the LICENSE file
  *
  * Copyright 2002-2006, Stephan Aßmus <superstippi@gmx.de>
  * All rights reserved.
- *		
+ *
  */
 
 #ifndef COLOR_PICKER_VIEW_H
@@ -15,7 +15,7 @@
 #  include <layout.h>
 #endif
 
-#include "selected_color_mode.h"
+#include "SelectedColorMode.h"
 
 #define	MSG_RADIOBUTTON		'Rad0'
 #define	MSG_TEXTCONTROL		'Txt0'
@@ -36,7 +36,7 @@ class ColorPickerView :
  public:
 								ColorPickerView(const char* name,
 												rgb_color color,
-												selected_color_mode mode);
+												SelectedColorMode mode);
 	virtual						~ColorPickerView();
 
 	#if LIB_LAYOUT
@@ -53,15 +53,15 @@ class ColorPickerView :
 	virtual	void				Pulse();
 
 								// ColorPickerView
-			void				SetColorMode(selected_color_mode mode,
+			void				SetColorMode(SelectedColorMode mode,
 											 bool update = true);
 			void				SetColor(rgb_color color);
 			rgb_color			Color();
-			selected_color_mode	Mode() const
+			SelectedColorMode	Mode() const
 									{ return fSelectedColorMode; }
 
  private:
-			int32				_NumForMode(selected_color_mode mode) const;
+			int32				_NumForMode(SelectedColorMode mode) const;
 
 			void				_UpdateColor(float value, float value1,
 											 float value2);
@@ -71,7 +71,7 @@ class ColorPickerView :
 										 bool* requiresUpdate);
 
 
-	selected_color_mode			fSelectedColorMode;
+	SelectedColorMode			fSelectedColorMode;
 
 	float						h, s, v, r, g, b;
 	float						*p, *p1, *p2;

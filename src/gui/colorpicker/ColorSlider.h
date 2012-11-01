@@ -1,46 +1,38 @@
-/* 
+/*
  * Copyright 2001 Werner Freytag - please read to the LICENSE file
  *
  * Copyright 2002-2006, Stephan Aßmus <superstippi@gmx.de>
  * All rights reserved.
- *		
+ *
  */
 
-#ifndef _COLOR_SLIDER_H
-#define _COLOR_SLIDER_H
+#ifndef COLOR_SLIDER_H
+#define COLOR_SLIDER_H
 
 #include <Control.h>
 
-#if LIB_LAYOUT
-#  include <layout.h>
-#endif
-
-#include "selected_color_mode.h"
+#include "SelectedColorMode.h"
 
 #define	MSG_COLOR_SLIDER	'ColS'
 
 class BBitmap;
 
-class ColorSlider : 
-					#if LIB_LAYOUT
-					public MView,
-					#endif
-					public BControl {
-
+class ColorSlider : public BControl {
 public:
-								ColorSlider(BPoint offset_point,
-											selected_color_mode mode,
-											float value1, float value2,
-											orientation dir = B_VERTICAL);
+								ColorSlider(SelectedColorMode mode,
+									float value1, float value2,
+									orientation dir = B_VERTICAL);
+								ColorSlider(BPoint offsetPoint,
+									SelectedColorMode mode,
+									float value1, float value2,
+									orientation dir = B_VERTICAL);
 	virtual						~ColorSlider();
 
-	#if LIB_LAYOUT
-								// MView
-	virtual	minimax				layoutprefs();
-	virtual	BRect				layout(BRect frame);
-	#endif
-
 								// BControl
+	virtual	BSize				MinSize();
+	virtual	BSize				PreferredSize();
+	virtual	BSize				MaxSize();
+
 	virtual	void				AttachedToWindow();
 
 	virtual	status_t			Invoke(BMessage* message = NULL);
@@ -61,36 +53,40 @@ public:
 			bool				IsTracking() const
 									{ return fMouseDown; }
 
-			void				SetModeAndValues(selected_color_mode mode,
-												 float value1, float value2);
+			void				SetModeAndValues(SelectedColorMode mode,
+									float value1, float value2);
 			void				SetOtherValues(float value1, float value2);
-			void				GetOtherValues(float* value1, float* value2) const;
+			void				GetOtherValues(float* value1,
+									float* value2) const;
 
 			void				SetMarkerToColor( rgb_color color );
 
-//	inline	void				_DrawColorLineY( float y, int r, int g, int b);
 private:
+			void				_Init(SelectedColorMode mode,
+						 			float value1, float value2,
+						 			orientation dir);
 
 	static	int32				_UpdateThread(void* cookie);
 	static	inline void			_DrawColorLineY(BView* view, float y,
-											  int r, int g, int b);
+									int r, int g, int b);
 	static	inline void			_DrawColorLineX(BView* view, float x,
-											  int r, int g, int b);
+									int r, int g, int b);
 			void				_TrackMouse(BPoint where);
 
-	selected_color_mode			fMode;
+private:
+	SelectedColorMode			fMode;
 	float						fFixedValue1;
 	float						fFixedValue2;
-	
+
 	bool						fMouseDown;
-	
+
 	BBitmap*					fBgBitmap;
 	BView*						fBgView;
-	
+
 	thread_id					fUpdateThread;
 	port_id						fUpdatePort;
 
 	orientation					fOrientation;
 };
 
-#endif
+#endif // COLOR_SLIDER_H

@@ -1,9 +1,9 @@
-/* 
+/*
  * Copyright 2001 Werner Freytag - please read to the LICENSE file
  *
  * Copyright 2002-2006, Stephan Aßmus <superstippi@gmx.de>
  * All rights reserved.
- *		
+ *
  */
 
 #include <stdio.h>
@@ -33,7 +33,7 @@
 
 // constructor
 ColorPickerView::ColorPickerView(const char* name, rgb_color color,
-								 selected_color_mode mode)
+								 SelectedColorMode mode)
 	: BView(BRect(0.0, 0.0, 400.0, 277.0), name,
 			B_FOLLOW_NONE, B_WILL_DRAW | B_PULSE_NEEDED),
 	  h(0.0),
@@ -43,7 +43,7 @@ ColorPickerView::ColorPickerView(const char* name, rgb_color color,
 	  g((float)color.green / 255.0),
 	  b((float)color.blue / 255.0),
 	  fRequiresUpdate(false)
-	  
+
 {
 	SetViewColor(ui_color(B_PANEL_BACKGROUND_COLOR));
 
@@ -90,7 +90,7 @@ ColorPickerView::AttachedToWindow()
 	fColorField->SetMarkerToColor(color);
 	AddChild(fColorField);
 	fColorField->SetTarget(this);
-	
+
 	fColorSlider = new ColorSlider(BPoint(278.0, 7.0), fSelectedColorMode, *p1, *p2);
 	fColorSlider->SetMarkerToColor(color);
 	AddChild(fColorSlider);
@@ -103,14 +103,14 @@ ColorPickerView::AttachedToWindow()
 	BFont font(be_plain_font);
 	font.SetSize(10.0);
 	SetFont(&font);
-	
+
 	const char *title[] = { "H", "S", "V", "R", "G", "B" };
-	
+
 	BTextView	*textView;
 
 	int32 selectedRadioButton = _NumForMode(fSelectedColorMode);
 	for (int i=0; i<6; ++i) {
-	
+
 		fRadioButton[i] = new BRadioButton(BRect(0.0, 0.0, 30.0, 10.0).OffsetToCopy(320.0, 92.0 + 24.0 * i + (int)i/3 * 8),
 			NULL, title[i], new BMessage(MSG_RADIOBUTTON + i));
 		fRadioButton[i]->SetFont(&font);
@@ -121,9 +121,9 @@ ColorPickerView::AttachedToWindow()
 		if (i == selectedRadioButton)
 			fRadioButton[i]->SetValue(1);
 	}
-	 
+
 	for (int i=0; i<6; ++i) {
-	
+
 		fTextControl[i] = new BTextControl(BRect(0.0, 0.0, 32.0, 19.0).OffsetToCopy(350.0, 90.0 + 24.0 * i + (int)i/3 * 8),
 			NULL, NULL, NULL, new BMessage(MSG_TEXTCONTROL + i));
 
@@ -132,14 +132,14 @@ ColorPickerView::AttachedToWindow()
 		for (int j=32; j<255; ++j) {
 			if (j<'0'||j>'9') textView->DisallowChar(j);
 		}
-		
+
 		fTextControl[i]->SetFont(&font);
 		fTextControl[i]->SetDivider(0.0);
 		AddChild(fTextControl[i]);
 
 		fTextControl[i]->SetTarget(this);
 	}
-	 
+
 	fHexTextControl = new BTextControl(BRect(0.0, 0.0, 69.0, 19.0).OffsetToCopy(320.0, 248.0),
 			NULL, "#", NULL, new BMessage(MSG_HEXTEXTCONTROL));
 
@@ -148,13 +148,13 @@ ColorPickerView::AttachedToWindow()
 	for (int j=32; j<255; ++j) {
 		if (!((j>='0' && j<='9') || (j>='a' && j<='f') || (j>='A' && j<='F'))) textView->DisallowChar(j);
 	}
-	
+
 	fHexTextControl->SetFont(&font);
 	fHexTextControl->SetDivider(12.0);
 	AddChild(fHexTextControl);
 
 	fHexTextControl->SetTarget(this);
-	
+
 	_UpdateTextControls();
 }
 
@@ -171,14 +171,14 @@ ColorPickerView::MessageReceived(BMessage *message)
 			_UpdateColor(-1, value1, value2);
 			fRequiresUpdate = true;
 		} break;
-		
+
 		case MSG_COLOR_SLIDER: {
 			float	value;
 			message->FindFloat("value", &value);
 			_UpdateColor(value, -1, -1);
 			fRequiresUpdate = true;
 		} break;
-		
+
 		case MSG_COLOR_PREVIEW: {
 			rgb_color	*color;
 			ssize_t		numBytes;
@@ -187,7 +187,7 @@ ColorPickerView::MessageReceived(BMessage *message)
 				SetColor(*color);
 			}
 		} break;
-		
+
 		case MSG_RADIOBUTTON: {
 			SetColorMode(H_SELECTED);
 		} break;
@@ -211,7 +211,7 @@ ColorPickerView::MessageReceived(BMessage *message)
 		case MSG_RADIOBUTTON + 5: {
 			SetColorMode(B_SELECTED);
 		} break;
-		
+
 		case MSG_TEXTCONTROL:
 		case MSG_TEXTCONTROL + 1:
 		case MSG_TEXTCONTROL + 2:
@@ -221,7 +221,7 @@ ColorPickerView::MessageReceived(BMessage *message)
 
 			int nr = message->what - MSG_TEXTCONTROL;
 			int value = atoi(fTextControl[nr]->Text());
-			
+
 			char string[4];
 
 			switch (nr) {
@@ -261,7 +261,7 @@ ColorPickerView::MessageReceived(BMessage *message)
 					b = (float)value / 255;
 				} break;
 			}
-			
+
 			if (nr<3) { // hsv-mode
 				HSV_to_RGB(h, s, v, r, g, b);
 			}
@@ -269,9 +269,9 @@ ColorPickerView::MessageReceived(BMessage *message)
 			rgb_color color = { round(r*255), round(g*255), round(b*255), 255 };
 
 			SetColor(color);
-			
+
 		} break;
-		
+
 		case MSG_HEXTEXTCONTROL: {
 			if (fHexTextControl->TextView()->TextLength()==6) {
 				const char *string = fHexTextControl->TextView()->Text();
@@ -313,10 +313,10 @@ ColorPickerView::Draw(BRect updateRect)
 	// some additional labels
 	font_height fh;
 	GetFontHeight(&fh);
-	
+
 	const char *title[] = { "°", "%", "%" };
 	for (int i = 0; i < 3; ++i) {
-		DrawString(title[i], 
+		DrawString(title[i],
 				   BPoint(385.0, 93.0 + 24.0 * i + (int)i / 3 * 8 + fh.ascent));
 	}
 }
@@ -331,7 +331,7 @@ ColorPickerView::Pulse()
 
 // SetColorMode
 void
-ColorPickerView::SetColorMode(selected_color_mode mode, bool update)
+ColorPickerView::SetColorMode(SelectedColorMode mode, bool update)
 {
 	fSelectedColorMode = mode;
 	switch (mode) {
@@ -359,12 +359,12 @@ ColorPickerView::SetColorMode(selected_color_mode mode, bool update)
 			p = &v; p1 = &h; p2 = &s;
 		break;
 	}
-	
+
 	if (!update) return;
 
 	fColorSlider->SetModeAndValues(fSelectedColorMode, *p1, *p2);
 	fColorField->SetModeAndValue(fSelectedColorMode, *p);
-	
+
 }
 
 // SetColor
@@ -373,7 +373,7 @@ ColorPickerView::SetColor(rgb_color color)
 {
 	r = (float)color.red/255; g = (float)color.green/255; b = (float)color.blue/255;
 	RGB_to_HSV(r, g, b, h, s, v);
-	
+
 	fColorSlider->SetModeAndValues(fSelectedColorMode, *p1, *p2);
 	fColorSlider->SetMarkerToColor(color);
 
@@ -381,7 +381,7 @@ ColorPickerView::SetColor(rgb_color color)
 	fColorField->SetMarkerToColor(color);
 
 	fColorPreview->SetColor(color);
-	
+
 	fRequiresUpdate = true;
 }
 
@@ -405,7 +405,7 @@ ColorPickerView::Color()
 
 // _NumForMode
 int32
-ColorPickerView::_NumForMode(selected_color_mode mode) const
+ColorPickerView::_NumForMode(SelectedColorMode mode) const
 {
 	int32 num = -1;
 	switch (mode) {
@@ -465,7 +465,7 @@ ColorPickerView::_UpdateTextControls()
 
 	sprintf(string, "%d", round(h*60));
 	_SetText(fTextControl[0], string, &fRequiresUpdate);
-	
+
 	sprintf(string, "%d", round(s*100));
 	_SetText(fTextControl[1], string, &fRequiresUpdate);
 
@@ -474,7 +474,7 @@ ColorPickerView::_UpdateTextControls()
 
 	sprintf(string, "%d", round(r*255));
 	_SetText(fTextControl[3], string, &fRequiresUpdate);
-	
+
 	sprintf(string, "%d", round(g*255));
 	_SetText(fTextControl[4], string, &fRequiresUpdate);
 
