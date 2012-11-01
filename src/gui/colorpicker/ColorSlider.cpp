@@ -1,9 +1,9 @@
-/* 
+/*
  * Copyright 2001 Werner Freytag - please read to the LICENSE file
  *
  * Copyright 2002-2006, Stephan Aßmus <superstippi@gmx.de>
  * All rights reserved.
- *		
+ *
  */
 
 #include "ColorSlider.h"
@@ -11,11 +11,11 @@
 #include <stdio.h>
 
 #include <Bitmap.h>
+#include <LayoutUtils.h>
 #include <OS.h>
 #include <Window.h>
 #include <math.h>
 
-#include "selected_color_mode.h"
 #include "support_ui.h"
 
 #include "rgb_hsv.h"
@@ -30,44 +30,22 @@ enum {
 #define MAX_Y 255
 
 // constructor
-ColorSlider::ColorSlider(BPoint offset_point,
-						 selected_color_mode mode,
-						 float value1, float value2, orientation dir)
-	:  BControl(BRect(0.0, 0.0, 35.0, 265.0).OffsetToCopy(offset_point),
-				"ColorSlider", "", new BMessage(MSG_COLOR_SLIDER),
-				B_FOLLOW_LEFT | B_FOLLOW_TOP, B_WILL_DRAW | B_FRAME_EVENTS),
-	  fMode(mode),
-	  fFixedValue1(value1),
-	  fFixedValue2(value2),
-	  fMouseDown(false),
-	  fBgBitmap(new BBitmap(Bounds(), B_RGB32, true)),
-	  fBgView(NULL),
-	  fUpdateThread(0),
-	  fUpdatePort(0),
-	  fOrientation(dir)
+ColorSlider::ColorSlider(SelectedColorMode mode,
+	float value1, float value2, orientation dir)
+	:  BControl("ColorSlider", "", new BMessage(MSG_COLOR_SLIDER),
+		B_WILL_DRAW | B_FRAME_EVENTS)
 {
-	SetViewColor(B_TRANSPARENT_32_BIT);
+	_Init(mode, value1, value2, dir);
+}
 
-	if (fBgBitmap->IsValid() && fBgBitmap->Lock()) {
-		fBgView = new BView(Bounds(), "", B_FOLLOW_NONE, B_WILL_DRAW);
-		fBgBitmap->AddChild(fBgView);
-/*		if (fOrientation == B_VERTICAL)
-			fBgView->SetOrigin(8.0, 2.0);
-		else
-			fBgView->SetOrigin(2.0, 2.0);*/
-		fBgBitmap->Unlock();
-	} else {
-		delete fBgBitmap;
-		fBgBitmap = NULL;
-		fBgView = this;
-	}
-
-	fUpdatePort = create_port(100, "color slider update port");
-
-	fUpdateThread = spawn_thread(ColorSlider::_UpdateThread, "color slider update thread", 10, this);
-	resume_thread( fUpdateThread );
-
-	Update(2);
+// constructor
+ColorSlider::ColorSlider(BPoint offsetPoint, SelectedColorMode mode,
+	float value1, float value2, orientation dir)
+	:  BControl(BRect(0.0, 0.0, 35.0, 265.0).OffsetToCopy(offsetPoint),
+		"ColorSlider", "", new BMessage(MSG_COLOR_SLIDER),
+		B_FOLLOW_LEFT | B_FOLLOW_TOP, B_WILL_DRAW | B_FRAME_EVENTS)
+{
+	_Init(mode, value1, value2, dir);
 }
 
 // destructor
@@ -78,40 +56,39 @@ ColorSlider::~ColorSlider()
 	if (fUpdateThread)
 		kill_thread(fUpdateThread);
 
-	delete fBgBitmap;	
+	delete fBgBitmap;
 }
 
-#if LIB_LAYOUT
-// layoutprefs
-minimax
-ColorSlider::layoutprefs()
+// MinSize
+BSize
+ColorSlider::MinSize()
 {
-	if (fOrientation == B_VERTICAL) {
-		mpm.mini.x = 36;
-		mpm.maxi.x = 36;
-		mpm.mini.y = 10 + MAX_Y / 17;
-		mpm.maxi.y = 10 + MAX_Y;
-	} else {
-		mpm.mini.x = 10 + MAX_X / 17;
-		mpm.maxi.x = 10 + MAX_X;
-		mpm.mini.y = 10.0;
-		mpm.maxi.y = 12.0;
-	}
-	mpm.weight = 1.0;
-
-	return mpm;
+	BSize minSize;
+	if (fOrientation == B_VERTICAL)
+		minSize = BSize(36, 10 + MAX_Y / 17);
+	else
+		minSize = BSize(10 + MAX_X / 17, 10);
+	return BLayoutUtils::ComposeSize(ExplicitMinSize(), minSize);
 }
 
-// layout
-BRect
-ColorSlider::layout(BRect frame)
+// PreferredSize
+BSize
+ColorSlider::PreferredSize()
 {
-	MoveTo(frame.LeftTop());
-	ResizeTo(frame.Width(), frame.Height());
-//	Update(2);
-	return Frame();
+	return BLayoutUtils::ComposeSize(ExplicitPreferredSize(), MinSize());
 }
-#endif // LIB_LAYOUT
+
+// MaxSize
+BSize
+ColorSlider::MaxSize()
+{
+	BSize maxSize;
+	if (fOrientation == B_VERTICAL)
+		maxSize = BSize(36, 10 + MAX_Y);
+	else
+		maxSize = BSize(10 + MAX_X, 18);
+	return BLayoutUtils::ComposeSize(ExplicitMaxSize(), maxSize);
+}
 
 // AttachedToWindow
 void
@@ -138,27 +115,27 @@ status_t
 ColorSlider::Invoke(BMessage *msg)
 {
 	if (!msg) msg = Message();
-	
+
 	msg->RemoveName("value");
 	msg->RemoveName("begin");
-	
+
 	switch (fMode) {
-				
+
 		case R_SELECTED:
 		case G_SELECTED:
 		case B_SELECTED: {
 			msg->AddFloat("value", 1.0 - (float)Value() / 255);
 		} break;
-		
+
 		case H_SELECTED: {
 			msg->AddFloat("value", (1.0 - (float)Value() / 255) * 6);
 		} break;
-		
+
 		case S_SELECTED:
 		case V_SELECTED: {
 			msg->AddFloat("value", 1.0 - (float)Value() / 255);
 		} break;
-		
+
 	}
 
 	// some other parts of WonderBrush rely on this.
@@ -207,7 +184,7 @@ void
 ColorSlider::MouseDown(BPoint where)
 {
 	Window()->Activate();
-	
+
 	SetMouseEventMask(B_POINTER_EVENTS, B_SUSPEND_VIEW_FOCUS | B_LOCK_WINDOW_FOCUS);
 	_TrackMouse(where);
 	fMouseDown = true;
@@ -226,7 +203,7 @@ ColorSlider::MouseMoved( BPoint where, uint32 code, const BMessage* dragMessage)
 {
 	if (dragMessage || !fMouseDown)
 		return;
-	
+
 	_TrackMouse(where);
 }
 
@@ -237,7 +214,7 @@ ColorSlider::SetValue(int32 value)
 	value = max_c(min_c(value, 255), 0);
 	if (value != Value()) {
 		BControl::SetValue(value);
-	
+
 		Update(1);
 	}
 }
@@ -254,7 +231,7 @@ ColorSlider::Update(int depth)
 
 	if (!Parent())
 		return;
-	
+
 	fBgBitmap->Lock();
 
 //	BRect r(fBgView->Bounds());
@@ -281,7 +258,7 @@ ColorSlider::Update(int depth)
 	if (depth >= 1) {
 
 		fBgBitmap->Lock();
-	
+
 
 		// frame
 		stroke_frame(fBgView, r, shadow, shadow, light, light);
@@ -307,7 +284,7 @@ ColorSlider::Update(int depth)
 			fBgView->StrokeLine( BPoint(bounds.left, value - 2.0), BPoint(bounds.left + 5.0, value + 3.0));
 			fBgView->StrokeLine( BPoint(bounds.left, value + 8.0));
 			fBgView->StrokeLine( BPoint(bounds.left, value - 2.0));
-	
+
 			fBgView->StrokeLine( BPoint(bounds.right, value - 2.0), BPoint(bounds.right - 5.0, value + 3.0));
 			fBgView->StrokeLine( BPoint(bounds.right, value + 8.0));
 			fBgView->StrokeLine( BPoint(bounds.right, value - 2.0));
@@ -387,46 +364,46 @@ ColorSlider::Update(int depth)
 
 // SetModeAndValues
 void
-ColorSlider::SetModeAndValues(selected_color_mode mode,
+ColorSlider::SetModeAndValues(SelectedColorMode mode,
 							  float value1, float value2)
 {
 	float R(0), G(0), B(0);
 	float h(0), s(0), v(0);
-	
+
 	fBgBitmap->Lock();
-	
+
 	switch (fMode) {
-		
+
 		case R_SELECTED: {
 			R = 255 - Value();
 			G = round(fFixedValue1 * 255.0);
 			B = round(fFixedValue2 * 255.0);
 		}; break;
-		
+
 		case G_SELECTED: {
 			R = round(fFixedValue1 * 255.0);
 			G = 255 - Value();
 			B = round(fFixedValue2 * 255.0);
 		}; break;
-		
+
 		case B_SELECTED: {
 			R = round(fFixedValue1 * 255.0);
 			G = round(fFixedValue2 * 255.0);
 			B = 255 - Value();
 		}; break;
-		
+
 		case H_SELECTED: {
 			h = (1.0 - (float)Value()/255.0)*6.0;
 			s = fFixedValue1;
 			v = fFixedValue2;
 		}; break;
-		
+
 		case S_SELECTED: {
 			h = fFixedValue1;
 			s = 1.0 - (float)Value()/255.0;
 			v = fFixedValue2;
 		}; break;
-		
+
 		case V_SELECTED: {
 			h = fFixedValue1;
 			s = fFixedValue2;
@@ -438,9 +415,9 @@ ColorSlider::SetModeAndValues(selected_color_mode mode,
 		HSV_to_RGB(h, s, v, R, G, B);
 		R*=255.0; G*=255.0; B*=255.0;
 	}
-	
+
 	rgb_color color = { round(R), round(G), round(B), 255 };
-	
+
 	fMode = mode;
 	SetOtherValues(value1, value2);
 	fBgBitmap->Unlock();
@@ -471,24 +448,63 @@ ColorSlider::GetOtherValues(float* value1, float* value2) const
 	}
 }
 
+// #pragma mark - private
+
+// _Init
+void
+ColorSlider::_Init(SelectedColorMode mode, float value1, float value2,
+	orientation dir)
+{
+	fMode = mode;
+	fFixedValue1 = value1;
+	fFixedValue2 = value2;
+	fMouseDown = false;
+	fBgBitmap = new BBitmap(Bounds(), B_RGB32, true);
+	fBgView = NULL;
+	fUpdateThread = 0;
+	fUpdatePort = 0;
+	fOrientation = dir;
+
+	SetViewColor(B_TRANSPARENT_COLOR);
+
+	if (fBgBitmap->IsValid() && fBgBitmap->Lock()) {
+		fBgView = new BView(Bounds(), "", B_FOLLOW_NONE, B_WILL_DRAW);
+		fBgBitmap->AddChild(fBgView);
+		fBgBitmap->Unlock();
+	} else {
+		delete fBgBitmap;
+		fBgBitmap = NULL;
+		fBgView = this;
+	}
+
+	fUpdatePort = create_port(100, "color slider update port");
+
+	fUpdateThread = spawn_thread(ColorSlider::_UpdateThread, "color slider update thread", 10, this);
+	resume_thread( fUpdateThread );
+
+	Update(2);
+}
+
 // SetMarkerToColor
 void
 ColorSlider::SetMarkerToColor(rgb_color color)
 {
-	float h, s, v;
+	float h = 0;
+	float s = 0;
+	float v = 0;
 	if (fMode & (H_SELECTED | S_SELECTED | V_SELECTED)) {
-		RGB_to_HSV((float)color.red / 255.0, 
+		RGB_to_HSV((float)color.red / 255.0,
 				   (float)color.green / 255.0,
 				   (float)color.blue / 255.0,
 				   h, s, v);
 	}
-	
+
 	switch (fMode) {
-				
+
 		case R_SELECTED: {
 			SetValue( 255 - color.red );
 		} break;
-		
+
 		case G_SELECTED: {
 			SetValue( 255 - color.green );
 		} break;
@@ -496,19 +512,19 @@ ColorSlider::SetMarkerToColor(rgb_color color)
 		case B_SELECTED: {
 			SetValue( 255 - color.blue );
 		} break;
-		
+
 		case H_SELECTED: {
 			SetValue( 255.0 - round(h / 6.0 * 255.0) );
 		} break;
-		
+
 		case S_SELECTED: {
 			SetValue( 255.0 - round(s * 255.0) );
 		} break;
-		
+
 		case V_SELECTED: {
 			SetValue( 255.0 - round(v * 255.0) );
 		} break;
-		
+
 	}
 }
 
@@ -518,7 +534,7 @@ ColorSlider::_UpdateThread(void* data)
 {
 	// initializing
 	ColorSlider* colorSlider = (ColorSlider*)data;
-	
+
 	bool looperLocked = colorSlider->LockLooper();
 
 	port_id	port = colorSlider->fUpdatePort;
@@ -526,10 +542,17 @@ ColorSlider::_UpdateThread(void* data)
 
 	if (looperLocked)
 		colorSlider->UnlockLooper();
-	
-	float h, s, v, r, g, b;
-	int R, G, B;
-		
+
+	float h = 0;
+	float s = 0;
+	float v = 0;
+	float r = 0;
+	float g = 0;
+	float b = 0;
+	int R = 0;
+	int G = 0;
+	int B = 0;
+
 	// drawing
 
     int32 msg_code;
@@ -543,26 +566,26 @@ ColorSlider::_UpdateThread(void* data)
 
 			read_port(port, &msg_code, &msg_buffer, sizeof(msg_buffer));
 			get_port_info(port, &info);
-			
+
 		} while (info.queue_count);
-		
+
 		if (colorSlider->LockLooper()) {
-	
+
 			uint 	colormode = colorSlider->fMode;
 			float	fixedvalue1 = colorSlider->fFixedValue1;
 			float	fixedvalue2 = colorSlider->fFixedValue2;
-		    
+
 			BBitmap* bitmap = colorSlider->fBgBitmap;
 			BView* view = colorSlider->fBgView;
 
 			bitmap->Lock();
 
-			colorSlider->UnlockLooper();	
-	
+			colorSlider->UnlockLooper();
+
 			view->BeginLineArray(256);
-			
+
 			switch (colormode) {
-				
+
 				case R_SELECTED: {
 					G = round(fixedvalue1 * 255);
 					B = round(fixedvalue2 * 255);
@@ -570,7 +593,7 @@ ColorSlider::_UpdateThread(void* data)
 						_DrawColorLineY( view, R, R, G, B );
 					}
 				}; break;
-				
+
 				case G_SELECTED: {
 					R = round(fixedvalue1 * 255);
 					B = round(fixedvalue2 * 255);
@@ -578,7 +601,7 @@ ColorSlider::_UpdateThread(void* data)
 						_DrawColorLineY( view, G, R, G, B );
 					}
 				}; break;
-				
+
 				case B_SELECTED: {
 					R = round(fixedvalue1 * 255);
 					G = round(fixedvalue2 * 255);
@@ -586,7 +609,7 @@ ColorSlider::_UpdateThread(void* data)
 						_DrawColorLineY( view, B, R, G, B );
 					}
 				}; break;
-				
+
 				case H_SELECTED: {
 					s = 1.0;//fixedvalue1;
 					v = 1.0;//fixedvalue2;
@@ -602,7 +625,7 @@ ColorSlider::_UpdateThread(void* data)
 						}
 					}
 				}; break;
-				
+
 				case S_SELECTED: {
 					h = fixedvalue1;
 					v = 1.0;//fixedvalue2;
@@ -611,7 +634,7 @@ ColorSlider::_UpdateThread(void* data)
 						_DrawColorLineY( view, y, r*255, g*255, b*255 );
 					}
 				}; break;
-				
+
 				case V_SELECTED: {
 					h = fixedvalue1;
 					s = 1.0;//fixedvalue2;
@@ -621,7 +644,7 @@ ColorSlider::_UpdateThread(void* data)
 					}
 				}; break;
 			}
-		
+
 			view->EndLineArray();
 			view->Sync();
 			bitmap->Unlock();
@@ -632,6 +655,8 @@ ColorSlider::_UpdateThread(void* data)
 			}
 		}
 	}
+
+	return 0;
 }
 
 // _DrawColorLineY

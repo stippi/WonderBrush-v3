@@ -1,9 +1,6 @@
 /*
- * Copyright 2006, Haiku.
+ * Copyright 2006-2012 Stephan Aßmus <superstippi@gmx.de>
  * Distributed under the terms of the MIT License.
- *
- * Authors:
- *		Stephan Aßmus <superstippi@gmx.de>
  */
 
 #include "AlphaSlider.h"
@@ -13,6 +10,7 @@
 
 #include <AppDefs.h>
 #include <Bitmap.h>
+#include <LayoutUtils.h>
 #include <Message.h>
 #include <Window.h>
 
@@ -21,21 +19,16 @@
 
 // constructor
 AlphaSlider::AlphaSlider(orientation dir, BMessage* message)
-	: BControl(dir == B_HORIZONTAL ? BRect(0, 0, 255 + 4, 7 + 4)
-								   : BRect(0, 0, 7 + 4, 255 + 4),
-			   "alpha slider", NULL, message,
-
-			   B_FOLLOW_NONE,
-			   B_WILL_DRAW | B_FRAME_EVENTS | B_NAVIGABLE),
-
-	  fBitmap(NULL),
-	  fColor(kBlack),
-	  fDragging(false),
-	  fOrientation(dir)
+	: BControl("alpha slider", NULL, message,
+		B_WILL_DRAW | B_FRAME_EVENTS | B_NAVIGABLE)
+	, fBitmap(NULL)
+	, fColor(kBlack)
+	, fDragging(false)
+	, fOrientation(dir)
 {
 	FrameResized(Bounds().Width(), Bounds().Height());
 
-	SetViewColor(B_TRANSPARENT_32_BIT);
+	SetViewColor(B_TRANSPARENT_COLOR);
 	SetLowColor(ui_color(B_PANEL_BACKGROUND_COLOR));
 
 	SetValue(255);
@@ -46,31 +39,6 @@ AlphaSlider::~AlphaSlider()
 {
 	delete fBitmap;
 }
-
-#if LIB_LAYOUT
-// layoutprefs
-minimax
-AlphaSlider::layoutprefs()
-{
-	mpm.mini.x = 256 + 4;
-	mpm.maxi.x = mpm.mini.x + 10000;
-	mpm.mini.y = 8 + 4;
-	mpm.maxi.y = mpm.mini.y + 10;
-
-	mpm.weight = 1.0;
-
-	return mpm;
-}
-
-// layout
-BRect
-AlphaSlider::layout(BRect frame)
-{
-	MoveTo(frame.LeftTop());
-	ResizeTo(frame.Width(), frame.Height());
-	return Frame();
-}
-#endif // LIB_LAYOUT
 
 // WindowActivated
 void
@@ -88,6 +56,37 @@ AlphaSlider::MakeFocus(bool focus)
 		BControl::MakeFocus(focus);
 		Invalidate();
 	}
+}
+
+// MinSize
+BSize
+AlphaSlider::MinSize()
+{
+	BSize minSize;
+	if (fOrientation == B_HORIZONTAL)
+		minSize = BSize(255 + 4, 7 + 4);
+	else
+		minSize = BSize(7 + 4, 255 + 4);
+	return BLayoutUtils::ComposeSize(ExplicitMinSize(), minSize);
+}
+
+// PreferredSize
+BSize
+AlphaSlider::PreferredSize()
+{
+	return BLayoutUtils::ComposeSize(ExplicitPreferredSize(), MinSize());
+}
+
+// MaxSize
+BSize
+AlphaSlider::MaxSize()
+{
+	BSize minSize;
+	if (fOrientation == B_HORIZONTAL)
+		minSize = BSize(B_SIZE_UNLIMITED, 16 + 4);
+	else
+		minSize = BSize(16 + 4, B_SIZE_UNLIMITED);
+	return BLayoutUtils::ComposeSize(ExplicitMinSize(), minSize);
 }
 
 // MouseDown
@@ -115,7 +114,8 @@ AlphaSlider::MouseUp(BPoint where)
 
 // MouseMoved
 void
-AlphaSlider::MouseMoved(BPoint where, uint32 transit, const BMessage* dragMessage)
+AlphaSlider::MouseMoved(BPoint where, uint32 transit,
+	const BMessage* dragMessage)
 {
 	if (!IsEnabled() || !fDragging)
 		return;
@@ -310,7 +310,7 @@ blend_colors(uint8* d, uint8 alpha, uint8 c1, uint8 c2, uint8 c3)
 void
 AlphaSlider::_UpdateColors()
 {
-	if (!fBitmap || !fBitmap->IsValid())
+	if (fBitmap == NULL || !fBitmap->IsValid())
 		return;
 
 	// fill in top row with alpha gradient

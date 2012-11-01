@@ -1,9 +1,6 @@
 /*
- * Copyright 2006, Haiku.
+ * Copyright 2006-2012 Stephan Aßmus <superstippi@gmx.de>
  * Distributed under the terms of the MIT License.
- *
- * Authors:
- *		Stephan Aßmus <superstippi@gmx.de>
  */
 
 #ifndef ALPHA_SLIDER_H
@@ -11,30 +8,19 @@
 
 #include <Control.h>
 
-#if LIB_LAYOUT
-#  include <layout.h>
-#endif
-
-class AlphaSlider : 
-					#if LIB_LAYOUT
-					public MView,
-					#endif
-					public BControl {
-
- public:
+class AlphaSlider : public BControl {
+public:
 								AlphaSlider(orientation dir = B_HORIZONTAL,
-											BMessage* message = NULL);
+									BMessage* message = NULL);
 	virtual						~AlphaSlider();
-
-	#if LIB_LAYOUT
-	// MView interface
-	virtual	minimax				layoutprefs();
-	virtual	BRect				layout(BRect frame);
-	#endif
 
 	// BControl interface
 	virtual	void				WindowActivated(bool active);
 	virtual	void				MakeFocus(bool focus);
+
+	virtual	BSize				MinSize();
+	virtual	BSize				PreferredSize();
+	virtual	BSize				MaxSize();
 
 	virtual	void				MouseDown(BPoint where);
 	virtual	void				MouseUp(BPoint where);
@@ -55,12 +41,13 @@ class AlphaSlider :
 			bool				IsTracking() const
 									{ return fDragging; }
 
- private:
+private:
 			void				_UpdateColors();
 			void				_AllocBitmap(int32 width, int32 height);
 			BRect				_BitmapRect() const;
 			int32				_ValueFor(BPoint where) const;
 
+private:
 			BBitmap*			fBitmap;
 			rgb_color			fColor;
 			bool				fDragging;
