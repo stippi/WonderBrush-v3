@@ -38,6 +38,7 @@
 #include "RenderManager.h"
 #include "ResourceTreeView.h"
 #include "ScrollView.h"
+#include "SwatchGroup.h"
 #include "WonderBrush.h"
 
 enum {
@@ -219,6 +220,8 @@ exportButton->SetEnabled(false);
 	fToolConfigLayout = new BCardLayout();
 	toolConfigView->SetLayout(fToolConfigLayout);
 
+	fSwatchGroup = new SwatchGroup("swatch group");
+
 	fInspectorView = new InspectorView();
 	fInspectorView->SetMenu(fPropertyMenu);
 	fInspectorView->SetCommandStack(fDocument->CommandStack());
@@ -275,11 +278,16 @@ exportButton->SetEnabled(false);
 				.Add(new BSeparatorView(B_VERTICAL))
 			.End()
 			.AddGroup(B_VERTICAL, 0.0f)
-				.Add(toolConfigView)
 				.AddGroup(B_HORIZONTAL, 0.0f)
-					.Add(fToolIconControl, 0.0f)
-					.AddGlue()
-					.Add(undoIconGroup, 0.0f)
+					.AddGroup(B_VERTICAL, 0.0f)
+						.Add(toolConfigView)
+						.AddGroup(B_HORIZONTAL, 0.0f)
+							.Add(fToolIconControl, 0.0f)
+							.AddGlue()
+							.Add(undoIconGroup, 0.0f)
+						.End()
+					.End()
+					.Add(fSwatchGroup)
 				.End()
 				.Add(new BSeparatorView(B_HORIZONTAL))
 				.AddGroup(B_HORIZONTAL, 0.0f)
