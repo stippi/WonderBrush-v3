@@ -10,6 +10,7 @@
 
 
 #include <Archivable.h>
+#include <Messenger.h>
 #include <String.h>
 
 #include <QObject>
@@ -17,9 +18,18 @@
 #include <QSharedPointer>
 
 
+#define B_OBSERVE_WHAT_CHANGE "be:observe_change_what"
+#define B_OBSERVE_ORIGINAL_WHAT "be:observe_orig_what"
+const uint32 B_OBSERVER_OBSERVE_ALL = 0xffffffff;
+
+
 class BHandler;
 class BLooper;
 class BMessage;
+
+namespace BPrivate {
+	class ObserverList;
+}
 
 
 class BHandler : public BArchivable
@@ -40,6 +50,19 @@ public:
 	virtual	void				SetNextHandler(BHandler* handler);
 			BHandler*			NextHandler() const;
 
+	// Observer calls, inter-looper and inter-team
+			status_t			StartWatching(BMessenger target, uint32 what);
+			status_t			StartWatchingAll(BMessenger target);
+			status_t			StopWatching(BMessenger target, uint32 what);
+			status_t			StopWatchingAll(BMessenger target);
+
+	// Observer calls for observing targets in the local team
+			status_t			StartWatching(BHandler* observer, uint32 what);
+			status_t			StartWatchingAll(BHandler* observer);
+			status_t			StopWatching(BHandler* observer, uint32 what);
+			status_t			StopWatchingAll(BHandler* observer);
+
+
 	virtual	void				SendNotices(uint32 what,
 									const BMessage* notice = NULL);
 			bool				IsWatched() const;
@@ -59,11 +82,14 @@ private:
 			void				_SetLooper(BLooper* looper)
 									{ fLooper = looper; }
 
+			BPrivate::ObserverList* _ObserverList();
+
 private:
 			char*				fName;
 			int32				fToken;
 			BLooper*			fLooper;
 			BHandler*			fNextHandler;
+			BPrivate::ObserverList*	fObserverList;
 };
 
 
