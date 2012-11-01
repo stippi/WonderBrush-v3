@@ -5,6 +5,8 @@
 
 #include "LayoutState.h"
 
+#include <stdio.h>
+
 // constructor
 LayoutState::LayoutState()
 	: Previous(NULL)
@@ -34,6 +36,7 @@ LayoutState::~LayoutState()
 {
 	SetFillPaint(NULL);
 	SetStrokePaint(NULL);
+	SetStrokeProperties(NULL);
 }
 
 // operator=
@@ -67,7 +70,15 @@ LayoutState::SetStrokePaint(Paint* paint)
 void
 LayoutState::SetStrokeProperties(::StrokeProperties* properties)
 {
+//	if (fStrokeProperties != NULL) {
+//		printf("LayoutState::SetStrokeProperties(%p) %p -> %ld\n",
+//			properties, fStrokeProperties, fStrokeProperties->CountReferences());
+//	}
 	_SetMember(fStrokeProperties, properties);
+//	if (fStrokeProperties != NULL) {
+//		printf("                                (%p) %p -> %ld\n",
+//			properties, fStrokeProperties, fStrokeProperties->CountReferences());
+//	}
 }
 
 // _SetMember
@@ -82,11 +93,11 @@ LayoutState::_SetMember(MemberType*& member, MemberType* newMember)
 	if (member == newMember)
 		return;
 
-	if (member != NULL)
-		member->RemoveReference();
-
 	if (newMember != NULL)
 		newMember->AddReference();
+
+	if (member != NULL)
+		member->RemoveReference();
 
 	member = newMember;
 }
