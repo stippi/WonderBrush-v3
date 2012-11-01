@@ -19,7 +19,7 @@
 #include "ColorField.h"
 #include "ColorPickerPanel.h"
 #include "ColorSlider.h"
-//#include "CurrentColor.h"
+#include "CurrentColor.h"
 #include "SwatchView.h"
 
 
@@ -36,7 +36,7 @@ enum {
 
 SwatchGroup::SwatchGroup(const char* name)
 	: BView(name, 0)
-//	, fCurrentColor(NULL)
+	, fCurrentColor(NULL)
 	, fIgnoreNotifications(false)
 
 	, fColorPickerPanel(NULL)
@@ -138,23 +138,17 @@ SwatchGroup::SwatchGroup(const char* name)
 
 SwatchGroup::~SwatchGroup()
 {
-//	SetCurrentColor(NULL);
+	SetCurrentColor(NULL);
 }
 
 
 void
 SwatchGroup::ObjectChanged(const Notifier* object)
 {
-//	if (object != fCurrentColor || fIgnoreNotifications)
-//		return;
-//
-//	rgb_color color = fCurrentColor->Color();
-//
-//	float h, s, v;
-//	RGB_to_HSV(color.red / 255.0, color.green / 255.0, color.blue / 255.0,
-//		h, s, v);
-//
-//	_SetColor(h, s, v, color.alpha);
+	if (object != fCurrentColor || fIgnoreNotifications)
+		return;
+
+	_AdoptColor(fCurrentColor->Color());
 }
 
 
@@ -181,10 +175,11 @@ SwatchGroup::MessageReceived(BMessage* message)
 // TODO: fix color picker panel to respect alpha
 if (message->HasRect("panel frame"))
 color.alpha = fAlphaSlider->Value();
-//
-//				if (fCurrentColor != NULL)
-//					fCurrentColor->SetColor(color);
-_AdoptColor(color);
+
+				if (fCurrentColor != NULL)
+					fCurrentColor->SetColor(color);
+				else
+					_AdoptColor(color);
 			}
 			// if message contains these fields,
 			// then it comes from the color picker panel.
@@ -267,23 +262,23 @@ _AdoptColor(color);
 // #pragma mark -
 
 
-//void
-//SwatchGroup::SetCurrentColor(CurrentColor* color)
-//{
-//	if (fCurrentColor == color)
-//		return;
-//
-//	if (fCurrentColor != NULL)
-//		fCurrentColor->RemoveObserver(this);
-//
-//	fCurrentColor = color;
-//
-//	if (fCurrentColor != NULL) {
-//		fCurrentColor->AddObserver(this);
-//
-//		ObjectChanged(fCurrentColor);
-//	}
-//}
+void
+SwatchGroup::SetCurrentColor(CurrentColor* color)
+{
+	if (fCurrentColor == color)
+		return;
+
+	if (fCurrentColor != NULL)
+		fCurrentColor->RemoveListener(this);
+
+	fCurrentColor = color;
+
+	if (fCurrentColor != NULL) {
+		fCurrentColor->AddListener(this);
+
+		ObjectChanged(fCurrentColor);
+	}
+}
 
 
 // #pragma mark -
@@ -336,8 +331,8 @@ SwatchGroup::_AdoptColor(float h, float s, float v, uint8 a)
 		fAlphaSlider->SetValue(a);
 	}
 
-//	if (fCurrentColor)
-//		fCurrentColor->SetColor(color);
+	if (fCurrentColor)
+		fCurrentColor->SetColor(color);
 	_SetColor(color);
 
 	fIgnoreNotifications = false;

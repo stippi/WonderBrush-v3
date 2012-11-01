@@ -15,6 +15,7 @@ class AlphaSlider;
 class ColorField;
 class ColorPickerPanel;
 class ColorSlider;
+class CurrentColor;
 class SwatchView;
 
 class SwatchGroup : public BView, public Listener {
@@ -30,7 +31,7 @@ public:
 	virtual	void				MessageReceived(BMessage* message);
 
 	// SwatchGroup
-//			void				SetCurrentColor(CurrentColor* color);
+			void				SetCurrentColor(CurrentColor* color);
 
 private:
 			void				_SetColor(rgb_color color);
@@ -45,7 +46,7 @@ private:
 			ColorSlider*		fColorSlider;
 			AlphaSlider*		fAlphaSlider;
 
-//			CurrentColor*		fCurrentColor;
+			CurrentColor*		fCurrentColor;
 			bool				fIgnoreNotifications;
 
 			ColorPickerPanel*	fColorPickerPanel;
