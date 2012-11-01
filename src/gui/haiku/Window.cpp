@@ -221,6 +221,7 @@ exportButton->SetEnabled(false);
 	toolConfigView->SetLayout(fToolConfigLayout);
 
 	fSwatchGroup = new SwatchGroup("swatch group");
+	fSwatchGroup->SetCurrentColor(&fCurrentColor);
 
 	fInspectorView = new InspectorView();
 	fInspectorView->SetMenu(fPropertyMenu);
@@ -329,6 +330,8 @@ Window::~Window()
 	fDocument->CommandStack()->RemoveListener(&fCommandStackListener);
 	delete fRenderManager;
 //	delete fLayerTreeModel;
+
+	fSwatchGroup->SetCurrentColor(NULL);
 
 	fView->SetState(NULL);
 	for (int32 i = fTools.CountItems() - 1; i >= 0; i--)
