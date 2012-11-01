@@ -23,11 +23,13 @@ class ColorField : public BControl {
 public:
 								ColorField(BPoint offset_point,
 									SelectedColorMode mode, float fixedValue,
-									orientation orient = B_VERTICAL);
+									orientation orient = B_VERTICAL,
+									border_style border = B_FANCY_BORDER);
 
 								ColorField(SelectedColorMode mode,
 									float fixedValue,
-									orientation orient = B_VERTICAL);
+									orientation orient = B_VERTICAL,
+									border_style border = B_FANCY_BORDER);
 
 	virtual						~ColorField();
 
@@ -40,6 +42,7 @@ public:
 
 	virtual	void				AttachedToWindow();
 	virtual	void				Draw(BRect updateRect);
+	virtual	void				FrameResized(float width, float height);
 
 	virtual	void				MouseDown(BPoint where);
 	virtual	void				MouseUp(BPoint where);
@@ -47,8 +50,6 @@ public:
 									const BMessage* dragMessage);
 
 	// ColorField
-			void				Update(int depth);
-
 			void				SetModeAndValue(SelectedColorMode mode,
 									float fixedValue);
 			void				SetFixedValue(float fixedValue);
@@ -65,26 +66,29 @@ public:
 
 private:
 			void				_Init(SelectedColorMode mode,
-									float fixedValue, orientation orient);
+									float fixedValue, orientation orient,
+									border_style border);
 
-	static	status_t			_UpdateThread(void* data);
-			void				_DrawBorder();
+			void				_AllocBitmap(int32 width, int32 height);
+			void				_Update();
+			BRect				_BitmapRect() const;
+			void				_FillBitmap(BBitmap* bitmap,
+									SelectedColorMode mode,
+									float fixedValue, orientation orient) const;
 
 private:
 	SelectedColorMode			fMode;
 	float						fFixedValue;
 	orientation					fOrientation;
+	border_style				fBorderStyle;
 
 	BPoint						fMarkerPosition;
 	BPoint						fLastMarkerPosition;
 
 	bool						fMouseDown;
 
-	BBitmap*					fBgBitmap[2];
-	BView*						fBgView[2];
-
-	thread_id					fUpdateThread;
-	port_id						fUpdatePort;
+	BBitmap*					fBitmap;
+	bool						fBitmapDirty;
 };
 
 #endif // COLOR_FIELD_H

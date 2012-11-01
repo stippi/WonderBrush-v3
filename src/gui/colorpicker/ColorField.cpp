@@ -11,6 +11,7 @@
 #include <stdio.h>
 
 #include <Bitmap.h>
+#include <ControlLook.h>
 #include <LayoutUtils.h>
 #include <OS.h>
 #include <Region.h>
@@ -31,38 +32,29 @@ enum {
 
 // constructor
 ColorField::ColorField(BPoint offsetPoint, SelectedColorMode mode,
-	float fixedValue, orientation orient)
+	float fixedValue, orientation orient, border_style border)
 	: BControl(BRect(0.0, 0.0, MAX_X + 4.0, MAX_Y + 4.0)
 			.OffsetToCopy(offsetPoint),
 		"ColorField", "", new BMessage(MSG_COLOR_FIELD),
 		B_FOLLOW_LEFT | B_FOLLOW_TOP, B_WILL_DRAW | B_FRAME_EVENTS)
 {
-	_Init(mode, fixedValue, orient);
+	_Init(mode, fixedValue, orient, border);
+	FrameResized(Bounds().Width(), Bounds().Height());
 }
 
 // constructor
 ColorField::ColorField(SelectedColorMode mode, float fixedValue,
-	orientation orient)
+	orientation orient, border_style border)
 	: BControl("ColorField", "", new BMessage(MSG_COLOR_FIELD),
 		B_WILL_DRAW | B_FRAME_EVENTS)
 {
-	_Init(mode, fixedValue, orient);
+	_Init(mode, fixedValue, orient, border);
 }
 
 // destructor
 ColorField::~ColorField()
 {
-	if (fUpdatePort >= B_OK)
-		delete_port(fUpdatePort);
-
-	if (fUpdateThread >= B_OK) {
-//		status_t exitValue;
-//		wait_for_thread(fUpdateThread, &exitValue);
-		kill_thread(fUpdateThread);
-	}
-
-	delete fBgBitmap[0];
-	delete fBgBitmap[1];
+	delete fBitmap;
 }
 
 // MinSize
@@ -89,11 +81,7 @@ ColorField::PreferredSize()
 BSize
 ColorField::MaxSize()
 {
-	BSize maxSize;
-	if (fOrientation == B_VERTICAL)
-		maxSize = BSize(4 + MAX_X, 4 + MAX_Y);
-	else
-		maxSize = BSize(4 + MAX_X, 4 + MAX_Y);
+	BSize maxSize(4 + MAX_X, 4 + MAX_Y);
 	return BLayoutUtils::ComposeSize(ExplicitMaxSize(), maxSize);
 //	return BLayoutUtils::ComposeSize(ExplicitMaxSize(),
 //		BSize(B_SIZE_UNLIMITED, B_SIZE_UNLIMITED));
@@ -150,14 +138,49 @@ ColorField::Invoke(BMessage* message)
 void
 ColorField::AttachedToWindow()
 {
-	Update(3);
 }
 
 // Draw
 void
 ColorField::Draw(BRect updateRect)
 {
-	Update(0);
+	if (fBitmapDirty && fBitmap != NULL) {
+		_FillBitmap(fBitmap, fMode, fFixedValue, fOrientation);
+		fBitmapDirty = false;
+	}
+
+	BRect bounds = Bounds();
+
+	// Frame
+	if (fBorderStyle == B_FANCY_BORDER) {
+		rgb_color color = LowColor();
+		be_control_look->DrawTextControlBorder(this, bounds, updateRect,
+			color);
+	}
+
+	// Color field fill
+	if (fBitmap != NULL)
+		DrawBitmap(fBitmap, bounds.LeftTop());
+	else {
+		SetHighColor(255, 0, 0);
+		FillRect(bounds);
+	}
+
+	// Marker
+	SetHighColor(0, 0, 0);
+	StrokeEllipse(fMarkerPosition + bounds.LeftTop(), 5.0, 5.0);
+	SetHighColor(255.0, 255.0, 255.0);
+	StrokeEllipse(fMarkerPosition + bounds.LeftTop(), 4.0, 4.0);
+}
+
+// FrameResized
+void
+ColorField::FrameResized(float width, float height)
+{
+	BRect r = _BitmapRect();
+	_AllocBitmap(r.IntegerWidth() + 1, r.IntegerHeight() + 1);
+	Invalidate();
+
 }
 
 // MouseDown
@@ -198,64 +221,12 @@ ColorField::MouseMoved(BPoint where, uint32 transit,
 	Invoke();
 }
 
-// Update
-void
-ColorField::Update(int depth)
-{
-	// depth:
-	// 0 = only onscreen redraw,
-	// 1 = only cursor 1,
-	// 2 = full update part 2,
-	// 3 = full
-
-	if (depth == 3) {
-		write_port(fUpdatePort, MSG_UPDATE, NULL, 0);
-		return;
-	}
-
-	if (depth >= 1) {
-		fBgBitmap[1]->Lock();
-
-		fBgView[1]->DrawBitmap( fBgBitmap[0], BPoint(-2.0, -2.0) );
-
-		fBgView[1]->SetHighColor( 0, 0, 0 );
-		fBgView[1]->StrokeEllipse( fMarkerPosition, 5.0, 5.0 );
-		fBgView[1]->SetHighColor( 255.0, 255.0, 255.0 );
-		fBgView[1]->StrokeEllipse( fMarkerPosition, 4.0, 4.0 );
-
-		fBgView[1]->Sync();
-
-		fBgBitmap[1]->Unlock();
-	}
-
-	if (depth != 0 && depth != 2 && fMarkerPosition != fLastMarkerPosition) {
-
-		fBgBitmap[1]->Lock();
-
-		DrawBitmap( fBgBitmap[1],
-			BRect(-3.0, -3.0, 7.0, 7.0).OffsetByCopy(fMarkerPosition),
-			BRect(-3.0, -3.0, 7.0, 7.0).OffsetByCopy(fMarkerPosition));
-		DrawBitmap( fBgBitmap[1],
-			BRect(-3.0, -3.0, 7.0, 7.0).OffsetByCopy(fLastMarkerPosition),
-			BRect(-3.0, -3.0, 7.0, 7.0).OffsetByCopy(fLastMarkerPosition));
-
-		fLastMarkerPosition = fMarkerPosition;
-
-		fBgBitmap[1]->Unlock();
-
-	} else
-		DrawBitmap(fBgBitmap[1]);
-
-}
-
 // SetModeAndValue
 void
 ColorField::SetModeAndValue(SelectedColorMode mode, float fixedValue)
 {
 	float R(0), G(0), B(0);
 	float H(0), S(0), V(0);
-
-	fBgBitmap[0]->Lock();
 
 	float width = Width();
 	float height = Height();
@@ -306,13 +277,11 @@ ColorField::SetModeAndValue(SelectedColorMode mode, float fixedValue)
 
 	rgb_color color = { round(R), round(G), round(B), 255 };
 
-	fBgBitmap[0]->Unlock();
-
 	if (fFixedValue != fixedValue || fMode != mode) {
 		fFixedValue = fixedValue;
 		fMode = mode;
 
-		Update(3);
+		_Update();
 	}
 
 	SetMarkerToColor(color);
@@ -324,7 +293,7 @@ ColorField::SetFixedValue(float fixedValue)
 {
 	if (fFixedValue != fixedValue) {
 		fFixedValue = fixedValue;
-		Update(3);
+		_Update();
 	}
 }
 
@@ -373,35 +342,34 @@ ColorField::SetMarkerToColor(rgb_color color)
 			break;
 	}
 
-	Update(1);
+	Invalidate();
 }
 
 // PositionMarkerAt
 void
-ColorField::PositionMarkerAt( BPoint where )
+ColorField::PositionMarkerAt(BPoint where)
 {
-	BRect rect = Bounds().InsetByCopy(2.0, 2.0).OffsetToCopy(0.0, 0.0);
-	where = BPoint(max_c(min_c(where.x - 2.0, rect.right), 0.0),
-		max_c(min_c(where.y - 2.0, rect.bottom), 0.0));
+	BRect rect = _BitmapRect();
+	where.ConstrainTo(rect);
+	where -= rect.LeftTop();
 
 	fLastMarkerPosition = fMarkerPosition;
 	fMarkerPosition = where;
-	Update(1);
-
+	Invalidate();
 }
 
 // Width
 float
 ColorField::Width() const
 {
-	return Bounds().IntegerWidth() + 1 - 4;
+	return _BitmapRect().IntegerWidth() + 1;
 }
 
 // Height
 float
 ColorField::Height() const
 {
-	return Bounds().IntegerHeight() + 1 - 4;
+	return _BitmapRect().IntegerHeight() + 1;
 }
 
 // set_bits
@@ -417,242 +385,186 @@ set_bits(uint8* bits, uint8 r, uint8 g, uint8 b)
 // _Init
 void
 ColorField::_Init(SelectedColorMode mode, float fixedValue,
-	orientation orient)
+	orientation orient, border_style border)
 {
 	fMode = mode;
 	fFixedValue = fixedValue;
 	fOrientation = orient;
+	fBorderStyle = border;
 
 	fMarkerPosition = BPoint(0.0, 0.0);
 	fLastMarkerPosition = BPoint(-1.0, -1.0);
 	fMouseDown = false;
-	fUpdateThread = B_ERROR;
-	fUpdatePort = B_ERROR;
+
+	fBitmap = NULL;
+	fBitmapDirty = true;
 
 	SetViewColor(B_TRANSPARENT_COLOR);
-
-	BRect bounds = BRect(0.0, 0.0, MAX_X + 4.0, MAX_Y + 4.0);
-	for (int32 i = 0; i < 2; i++) {
-		fBgBitmap[i] = new BBitmap(bounds, B_RGB32, true);
-
-		fBgBitmap[i]->Lock();
-		fBgView[i] = new BView(bounds, "", B_FOLLOW_NONE, B_WILL_DRAW);
-		fBgBitmap[i]->AddChild(fBgView[i]);
-		fBgView[i]->SetOrigin(2.0, 2.0);
-		fBgBitmap[i]->Unlock();
-	}
-
-	_DrawBorder();
-
-	fUpdatePort = create_port(100, "color field update port");
-
-	fUpdateThread = spawn_thread(ColorField::_UpdateThread,
-		"color field update thread", 10, this);
-	resume_thread(fUpdateThread);
+	SetLowColor(ui_color(B_PANEL_BACKGROUND_COLOR));
 }
 
-// _UpdateThread
-status_t
-ColorField::_UpdateThread(void* data)
+// _AllocBitmap
+void
+ColorField::_AllocBitmap(int32 width, int32 height)
 {
-	// initializing
-	ColorField* colorField = (ColorField *)data;
+	if (width < 2 || height < 2)
+		return;
 
-	bool looperLocked = colorField->LockLooper();
+	delete fBitmap;
+	fBitmap = new BBitmap(BRect(0, 0, width - 1, height - 1), 0, B_RGB32);
 
-	BBitmap* bitmap = colorField->fBgBitmap[0];
-	port_id	port = colorField->fUpdatePort;
-	orientation orient = colorField->fOrientation;
+	fBitmapDirty = true;
+}
 
-	if (looperLocked)
-		colorField->UnlockLooper();
+// _Update
+void
+ColorField::_Update()
+{
+	fBitmapDirty = true;
+	Invalidate();
+}
 
-	float h = 0;
-	float s = 0;
-	float v = 0;
+// _BitmapRect
+BRect
+ColorField::_BitmapRect() const
+{
+	BRect r = Bounds();
+	if (fBorderStyle == B_FANCY_BORDER)
+		r.InsetBy(2, 2);
+	return r;
+}
+
+// _FillBitmap
+void
+ColorField::_FillBitmap(BBitmap* bitmap, SelectedColorMode mode,
+	float fixedValue, orientation orient) const
+{
+	int32 width = bitmap->Bounds().IntegerWidth();
+	int32 height = bitmap->Bounds().IntegerHeight();
+	uint32 bpr = bitmap->BytesPerRow();
+
+//bigtime_t now = system_time();
+	uint8* bits = (uint8*)bitmap->Bits();
+
 	float r = 0;
 	float g = 0;
 	float b = 0;
-	int R = 0;
-	int G = 0;
-	int B = 0;
+	float h;
+	float s;
+	float v;
 
-	// drawing
-
-    int32 msg_code;
-    char msg_buffer;
-
-	while (true) {
-		port_info info;
-		do {
-			read_port(port, &msg_code, &msg_buffer, sizeof(msg_buffer));
-			get_port_info(port, &info);
-		} while (info.queue_count);
-
-		if (colorField->LockLooper()) {
-
-			uint 	colormode = colorField->fMode;
-			float	fixedvalue = colorField->fFixedValue;
-
-			int width = (int)colorField->Width();
-			int height = (int)colorField->Height();
-
-			colorField->UnlockLooper();
-
-			bitmap->Lock();
-	//bigtime_t now = system_time();
-			uint8* bits = (uint8*)bitmap->Bits();
-			uint32 bpr = bitmap->BytesPerRow();
-			// offset 2 pixels from top and left
-			bits += 2 * 4 + 2 * bpr;
-
-			switch (colormode) {
-
-				case R_SELECTED: {
-					R = round(fixedvalue * 255);
-					for (int y = height; y >= 0; y--) {
-						uint8* bitsHandle = bits;
-						int B = y / height * 255;
-						for (int x = 0; x <= width; ++x) {
-							int G = x / width * 255;
-							set_bits(bitsHandle, R, G, B);
-							bitsHandle += 4;
-						}
-						bits += bpr;
-					}
-				}; break;
-
-				case G_SELECTED: {
-					G = round(fixedvalue * 255);
-					for (int y = height; y >= 0; y--) {
-						uint8* bitsHandle = bits;
-						int B = y / height * 255;
-						for (int x = 0; x <= width; ++x) {
-							int R = x / width * 255;
-							set_bits(bitsHandle, R, G, B);
-							bitsHandle += 4;
-						}
-						bits += bpr;
-					}
-				}; break;
-
-				case B_SELECTED: {
-					B = round(fixedvalue * 255);
-					for (int y = height; y >= 0; y--) {
-						uint8* bitsHandle = bits;
-						int G = y / height * 255;
-						for (int x = 0; x <= width; ++x) {
-							int R = x / width * 255;
-							set_bits(bitsHandle, R, G, B);
-							bitsHandle += 4;
-						}
-						bits += bpr;
-					}
-				}; break;
-
-				case H_SELECTED: {
-					h = fixedvalue;
-					if (orient == B_VERTICAL) {
-						for (int y = 0; y <= height; ++y) {
-							v = (float)(height - y) / height;
-							uint8* bitsHandle = bits;
-							for (int x = 0; x <= width; ++x) {
-								s = (float)x / width;
-								HSV_to_RGB( h, s, v, r, g, b );
-								set_bits(bitsHandle, round(r * 255.0), round(g * 255.0), round(b * 255.0));
-								bitsHandle += 4;
-							}
-							bits += bpr;
-						}
-					} else {
-						for (int y = 0; y <= height; ++y) {
-							s = (float)y / height;
-							uint8* bitsHandle = bits;
-							for (int x = 0; x <= width; ++x) {
-								v = (float)(width - x) / width;
-								HSV_to_RGB( h, s, v, r, g, b );
-								set_bits(bitsHandle, round(r * 255.0), round(g * 255.0), round(b * 255.0));
-								bitsHandle += 4;
-							}
-							bits += bpr;
-						}
-					}
-				}; break;
-
-				case S_SELECTED: {
-					s = fixedvalue;
-					for (int y = 0; y <= height; ++y) {
-						v = (float)(height - y) / height;
-						uint8* bitsHandle = bits;
-						for (int x = 0; x <= width; ++x) {
-							h = 6.0 / width * x;
-							HSV_to_RGB( h, s, v, r, g, b );
-							set_bits(bitsHandle, round(r * 255.0), round(g * 255.0), round(b * 255.0));
-							bitsHandle += 4;
-						}
-						bits += bpr;
-					}
-				}; break;
-
-				case V_SELECTED: {
-					v = fixedvalue;
-					for (int y = 0; y <= height; ++y) {
-						s = (float)(height - y) / height;
-						uint8* bitsHandle = bits;
-						for (int x = 0; x <= width; ++x) {
-							h = 6.0 / width * x;
-							HSV_to_RGB( h, s, v, r, g, b );
-							set_bits(bitsHandle, round(r * 255.0), round(g * 255.0), round(b * 255.0));
-							bitsHandle += 4;
-						}
-						bits += bpr;
-					}
-				}; break;
+	switch (mode) {
+		case R_SELECTED:
+			r = round(fixedValue * 255);
+			for (int y = height; y >= 0; y--) {
+				uint8* bitsHandle = bits;
+				b = y / height * 255;
+				for (int32 x = 0; x <= width; x++) {
+					g = x / width * 255;
+					set_bits(bitsHandle, r, g, b);
+					bitsHandle += 4;
+				}
+				bits += bpr;
 			}
+			break;
 
-	//printf("color field update: %lld\n", system_time() - now);
-			bitmap->Unlock();
-
-			if (colorField->LockLooper()) {
-				colorField->Update(2);
-				colorField->UnlockLooper();
+		case G_SELECTED:
+			g = round(fixedValue * 255);
+			for (int y = height; y >= 0; y--) {
+				uint8* bitsHandle = bits;
+				b = y / height * 255;
+				for (int x = 0; x <= width; x++) {
+					r = x / width * 255;
+					set_bits(bitsHandle, r, g, b);
+					bitsHandle += 4;
+				}
+				bits += bpr;
 			}
-		}
+			break;
+
+		case B_SELECTED:
+			b = round(fixedValue * 255);
+			for (int y = height; y >= 0; y--) {
+				uint8* bitsHandle = bits;
+				g = y / height * 255;
+				for (int x = 0; x <= width; ++x) {
+					r = x / width * 255;
+					set_bits(bitsHandle, r, g, b);
+					bitsHandle += 4;
+				}
+				bits += bpr;
+			}
+			break;
+
+		case H_SELECTED:
+			h = fixedValue;
+			if (orient == B_VERTICAL) {
+				for (int y = 0; y <= height; ++y) {
+					v = (float)(height - y) / height;
+					uint8* bitsHandle = bits;
+					for (int x = 0; x <= width; ++x) {
+						s = (float)x / width;
+						HSV_to_RGB(h, s, v, r, g, b);
+						set_bits(bitsHandle,
+							round(r * 255.0),
+							round(g * 255.0),
+							round(b * 255.0));
+						bitsHandle += 4;
+					}
+					bits += bpr;
+				}
+			} else {
+				for (int y = 0; y <= height; ++y) {
+					s = (float)y / height;
+					uint8* bitsHandle = bits;
+					for (int x = 0; x <= width; ++x) {
+						v = (float)(width - x) / width;
+						HSV_to_RGB(h, s, v, r, g, b);
+						set_bits(bitsHandle,
+							round(r * 255.0),
+							round(g * 255.0),
+							round(b * 255.0));
+						bitsHandle += 4;
+					}
+					bits += bpr;
+				}
+			}
+			break;
+
+		case S_SELECTED:
+			s = fixedValue;
+			for (int y = 0; y <= height; ++y) {
+				v = (float)(height - y) / height;
+				uint8* bitsHandle = bits;
+				for (int x = 0; x <= width; ++x) {
+					h = 6.0 / width * x;
+					HSV_to_RGB(h, s, v, r, g, b);
+					set_bits(bitsHandle,
+						round(r * 255.0),
+						round(g * 255.0),
+						round(b * 255.0));
+					bitsHandle += 4;
+				}
+				bits += bpr;
+			}
+			break;
+
+		case V_SELECTED:
+			v = fixedValue;
+			for (int y = 0; y <= height; ++y) {
+				s = (float)(height - y) / height;
+				uint8* bitsHandle = bits;
+				for (int x = 0; x <= width; ++x) {
+					h = 6.0 / width * x;
+					HSV_to_RGB(h, s, v, r, g, b);
+					set_bits(bitsHandle,
+						round(r * 255.0),
+						round(g * 255.0),
+						round(b * 255.0));
+					bitsHandle += 4;
+				}
+				bits += bpr;
+			}
+			break;
 	}
-	return B_OK;
-}
-
-// _DrawBorder
-void
-ColorField::_DrawBorder()
-{
-	bool looperLocked = LockLooper();
-
-	fBgBitmap[1]->Lock();
-
-	rgb_color background = ui_color(B_PANEL_BACKGROUND_COLOR);
-	rgb_color shadow = tint_color(background, B_DARKEN_1_TINT);
-	rgb_color darkShadow = tint_color(background, B_DARKEN_3_TINT);
-	rgb_color light = tint_color(background, B_LIGHTEN_MAX_TINT);
-
-	BRect r(fBgView[1]->Bounds());
-	r.OffsetBy(-2.0, -2.0);
-	BRegion region(r);
-	fBgView[1]->ConstrainClippingRegion(&region);
-
-	r = Bounds();
-	r.OffsetBy(-2.0, -2.0);
-
-	stroke_frame(fBgView[1], r, shadow, shadow, light, light);
-	r.InsetBy(1.0, 1.0);
-	stroke_frame(fBgView[1], r, darkShadow, darkShadow, background, background);
-	r.InsetBy(1.0, 1.0);
-
-	region.Set(r);
-	fBgView[1]->ConstrainClippingRegion(&region);
-
-	fBgBitmap[1]->Unlock();
-
-	if (looperLocked)
-		UnlockLooper();
 }
