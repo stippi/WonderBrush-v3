@@ -180,7 +180,6 @@ ColorField::FrameResized(float width, float height)
 	BRect r = _BitmapRect();
 	_AllocBitmap(r.IntegerWidth() + 1, r.IntegerHeight() + 1);
 	Invalidate();
-
 }
 
 // MouseDown
@@ -458,9 +457,9 @@ ColorField::_FillBitmap(BBitmap* bitmap, SelectedColorMode mode,
 			r = round(fixedValue * 255);
 			for (int y = height; y >= 0; y--) {
 				uint8* bitsHandle = bits;
-				b = y / height * 255;
+				b = y * 255 / height;
 				for (int32 x = 0; x <= width; x++) {
-					g = x / width * 255;
+					g = x * 255 / width;
 					set_bits(bitsHandle, r, g, b);
 					bitsHandle += 4;
 				}
@@ -472,9 +471,9 @@ ColorField::_FillBitmap(BBitmap* bitmap, SelectedColorMode mode,
 			g = round(fixedValue * 255);
 			for (int y = height; y >= 0; y--) {
 				uint8* bitsHandle = bits;
-				b = y / height * 255;
+				b = y * 255 / height;
 				for (int x = 0; x <= width; x++) {
-					r = x / width * 255;
+					r = x * 255 / width;
 					set_bits(bitsHandle, r, g, b);
 					bitsHandle += 4;
 				}
@@ -486,9 +485,9 @@ ColorField::_FillBitmap(BBitmap* bitmap, SelectedColorMode mode,
 			b = round(fixedValue * 255);
 			for (int y = height; y >= 0; y--) {
 				uint8* bitsHandle = bits;
-				g = y / height * 255;
+				g = y * 255 / height;
 				for (int x = 0; x <= width; ++x) {
-					r = x / width * 255;
+					r = x * 255 / width;
 					set_bits(bitsHandle, r, g, b);
 					bitsHandle += 4;
 				}

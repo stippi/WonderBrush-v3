@@ -287,6 +287,7 @@ exportButton->SetEnabled(false);
 							.Add(undoIconGroup, 0.0f)
 						.End()
 					.End()
+					.Add(new BSeparatorView(B_VERTICAL))
 					.Add(fSwatchGroup)
 				.End()
 				.Add(new BSeparatorView(B_HORIZONTAL))

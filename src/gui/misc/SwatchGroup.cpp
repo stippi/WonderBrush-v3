@@ -9,6 +9,7 @@
 
 #include <GroupLayout.h>
 #include <GroupLayoutBuilder.h>
+#include <SeparatorView.h>
 
 #include "support_ui.h"
 #include "ui_defines.h"
@@ -42,7 +43,11 @@ SwatchGroup::SwatchGroup(const char* name)
 	, fColorPickerMode(H_SELECTED)
 	, fColorPickerFrame(100.0, 100.0, 200.0, 200.0)
 {
-	BGroupLayout* layout = new BGroupLayout(B_VERTICAL);
+	const float spacing = 0.0f;
+
+	SetViewColor(ui_color(B_PANEL_BACKGROUND_COLOR));
+
+	BGroupLayout* layout = new BGroupLayout(B_VERTICAL, spacing);
 	SetLayout(layout);
 
 	// create swatch views with rainbow default palette
@@ -79,10 +84,12 @@ SwatchGroup::SwatchGroup(const char* name)
 	fCurrentColorSV->SetDroppedMessage(new BMessage(MSG_SET_COLOR));
 
 	// create color field and slider
-	fColorField = new ColorField(H_SELECTED, 1.0, B_HORIZONTAL);
-	fColorSlider = new ColorSlider(H_SELECTED, 1.0, 1.0, B_HORIZONTAL);
+	fColorField = new ColorField(H_SELECTED, 1.0, B_HORIZONTAL, B_NO_BORDER);
+	fColorField->SetExplicitMinSize(BSize(B_SIZE_UNSET, 48));
+	fColorSlider = new ColorSlider(H_SELECTED, 1.0, 1.0, B_HORIZONTAL,
+		B_NO_BORDER);
 	fAlphaSlider = new AlphaSlider(B_HORIZONTAL,
-		new BMessage(MSG_ALPHA_SLIDER));
+		new BMessage(MSG_ALPHA_SLIDER), B_NO_BORDER);
 
 	// layout UI
 	BGroupLayoutBuilder(layout)
@@ -115,10 +122,13 @@ SwatchGroup::SwatchGroup(const char* name)
 				.End()
 			.End()
 		.End()
-		.Add(fColorField)
-		.Add(fColorSlider)
-		.Add(fAlphaSlider)
-		.SetInsets(0, 0, 0, 0)
+		.Add(new BSeparatorView(B_HORIZONTAL))
+		.Add(fColorField, 3.0f)
+		.Add(new BSeparatorView(B_HORIZONTAL))
+		.Add(fColorSlider, 1.0f)
+		.Add(new BSeparatorView(B_HORIZONTAL))
+		.Add(fAlphaSlider, 1.0f)
+		.SetInsets(spacing, spacing, spacing, spacing)
 	;
 }
 

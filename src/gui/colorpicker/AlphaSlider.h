@@ -11,7 +11,8 @@
 class AlphaSlider : public BControl {
 public:
 								AlphaSlider(orientation dir = B_HORIZONTAL,
-									BMessage* message = NULL);
+									BMessage* message = NULL,
+									border_style border = B_FANCY_BORDER);
 	virtual						~AlphaSlider();
 
 	// BControl interface
@@ -52,6 +53,7 @@ private:
 			rgb_color			fColor;
 			bool				fDragging;
 			orientation			fOrientation;
+			border_style		fBorderStyle;
 };
 
 #endif // ALPHA_SLIDER_H

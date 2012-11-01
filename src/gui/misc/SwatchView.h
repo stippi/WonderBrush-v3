@@ -1,5 +1,5 @@
 /*
- * Copyright 2006, Haiku.
+ * Copyright 2006-2012, Haiku.
  * Distributed under the terms of the MIT License.
  *
  * Authors:
@@ -11,29 +11,13 @@
 
 #include <View.h>
 
-#if LIB_LAYOUT
-#include <layout.h>
-#endif
-
-class SwatchView :
-				   #if LIB_LAYOUT
-				   public MView,
-				   #endif
-				   public BView {
- public:
-								SwatchView(const char* name,
-										   BMessage* message,
-										   BHandler* target,
-										   rgb_color color,
-										   float width = 24.0,
-										   float height = 24.0);
+class SwatchView : public BView {
+public:
+								SwatchView(const char* name, BMessage* message,
+									BHandler* target, rgb_color color,
+									float width = 24.0, float height = 24.0,
+									border_style border = B_PLAIN_BORDER);
 	virtual						~SwatchView();
-
-	#if LIB_LAYOUT
-								// MView
-	virtual	minimax				layoutprefs();
-	virtual	BRect				layout(BRect frame);
-	#endif
 
 								// BView
 	virtual	void				Draw(BRect updateRect);
@@ -42,7 +26,7 @@ class SwatchView :
 	virtual	void				MouseDown(BPoint where);
 	virtual	void				MouseUp(BPoint where);
 	virtual	void				MouseMoved(BPoint where, uint32 transit,
-										   const BMessage* dragMessage);
+									const BMessage* dragMessage);
 
 								// SwatchView
 			void				SetColor(rgb_color color);
@@ -52,12 +36,13 @@ class SwatchView :
 			void				SetClickedMessage(BMessage* message);
 			void				SetDroppedMessage(BMessage* message);
 
- private:
+private:
 			void				_Invoke(const BMessage* message);
 			void				_StrokeRect(BRect frame, rgb_color leftTop,
-										   rgb_color rightBottom);
+									rgb_color rightBottom);
 			void				_DragColor();
 
+private:
 			rgb_color			fColor;
 			BPoint				fTrackingStart;
 			bool				fActive;
@@ -69,6 +54,7 @@ class SwatchView :
 
 			float				fWidth;
 			float				fHeight;
+			border_style		fBorderStyle;
 };
 
 #endif // SWATCH_VIEW_H
