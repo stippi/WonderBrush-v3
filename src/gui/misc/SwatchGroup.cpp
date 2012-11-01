@@ -130,6 +130,8 @@ SwatchGroup::SwatchGroup(const char* name)
 		.Add(fAlphaSlider, 1.0f)
 		.SetInsets(spacing, spacing, spacing, spacing)
 	;
+
+	_AdoptColor((rgb_color){ 0, 0, 0, 255 });
 }
 
 
@@ -207,7 +209,7 @@ color.alpha = fAlphaSlider->Value();
 			// s and v are comming from the message
 			if (message->FindFloat("value", &s) == B_OK
 				&& message->FindFloat("value", 1, &v) == B_OK) {
-				_SetColor(h, s, v, fAlphaSlider->Value());
+				_AdoptColor(h, s, v, fAlphaSlider->Value());
 			}
 			break;
 		}
@@ -219,7 +221,7 @@ color.alpha = fAlphaSlider->Value();
 			fColorSlider->GetOtherValues(&s, &v);
 			// h is comming from the message
 			if (message->FindFloat("value", &h) == B_OK)
-				_SetColor(h, s, v, fAlphaSlider->Value());
+				_AdoptColor(h, s, v, fAlphaSlider->Value());
 			break;
 		}
 
@@ -228,7 +230,7 @@ color.alpha = fAlphaSlider->Value();
 			float h = (1.0 - (float)fColorSlider->Value() / 255.0) * 6;
 			float s, v;
 			fColorSlider->GetOtherValues(&s, &v);
-			_SetColor(h, s, v, fAlphaSlider->Value());
+			_AdoptColor(h, s, v, fAlphaSlider->Value());
 			break;
 		}
 
@@ -291,9 +293,20 @@ SwatchGroup::_SetColor(rgb_color color)
 	fCurrentColorSV->SetColor(color);
 }
 
+void
+SwatchGroup::_AdoptColor(rgb_color color)
+{
+	float h = 0.0f;
+	float s = 0.0f;
+	float v = 0.0f;
+	RGB_to_HSV(color.red / 255.0, color.green / 255.0, color.blue / 255.0,
+		h, s, v);
+
+	_AdoptColor(h, s, v, color.alpha);
+}
 
 void
-SwatchGroup::_SetColor(float h, float s, float v, uint8 a)
+SwatchGroup::_AdoptColor(float h, float s, float v, uint8 a)
 {
 	float r = 0.0f;
 	float g = 0.0f;
@@ -305,6 +318,8 @@ SwatchGroup::_SetColor(float h, float s, float v, uint8 a)
 	color.green = (uint8)(g * 255.0);
 	color.blue = (uint8)(b * 255.0);
 	color.alpha = a;
+
+	fIgnoreNotifications = true;
 
 	if (!fColorField->IsTracking()) {
 		fColorField->SetFixedValue(h);
@@ -318,8 +333,6 @@ SwatchGroup::_SetColor(float h, float s, float v, uint8 a)
 		fAlphaSlider->SetColor(color);
 		fAlphaSlider->SetValue(a);
 	}
-
-	fIgnoreNotifications = true;
 
 //	if (fCurrentColor)
 //		fCurrentColor->SetColor(color);

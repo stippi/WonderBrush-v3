@@ -83,8 +83,7 @@ private:
 	border_style				fBorderStyle;
 
 	BPoint						fMarkerPosition;
-	BPoint						fLastMarkerPosition;
-
+	rgb_color					fMarkerColor;
 	bool						fMouseDown;
 
 	BBitmap*					fBitmap;

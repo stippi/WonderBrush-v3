@@ -34,7 +34,8 @@ public:
 
 private:
 			void				_SetColor(rgb_color color);
-			void				_SetColor(float h, float s, float v,
+			void				_AdoptColor(rgb_color color);
+			void				_AdoptColor(float h, float s, float v,
 									uint8 a);
 
 private:
