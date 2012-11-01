@@ -1,5 +1,5 @@
 /*
- * Copyright 2006, Haiku.
+ * Copyright 2006-2012, Haiku.
  * Distributed under the terms of the MIT License.
  *
  * Authors:
@@ -26,8 +26,8 @@
 
 // constructor
 SwatchView::SwatchView(const char* name, BMessage* message,
-					   BHandler* target, rgb_color color,
-					   float width, float height)
+	BHandler* target, rgb_color color, float width, float height,
+	border_style border)
 	: BView(BRect(0.0, 0.0, width, height), name,
 			B_FOLLOW_NONE, B_WILL_DRAW),
 	  fColor(color),
@@ -38,9 +38,10 @@ SwatchView::SwatchView(const char* name, BMessage* message,
 	  fDroppedMessage(NULL),
 	  fTarget(target),
 	  fWidth(width),
-	  fHeight(height)
+	  fHeight(height),
+	  fBorderStyle(border)
 {
-	SetViewColor(B_TRANSPARENT_32_BIT);
+	SetViewColor(B_TRANSPARENT_COLOR);
 	SetHighColor(fColor);
 }
 
@@ -50,34 +51,6 @@ SwatchView::~SwatchView()
 	delete fClickMessage;
 	delete fDroppedMessage;
 }
-
-#if LIB_LAYOUT
-// layoutprefs
-minimax
-SwatchView::layoutprefs()
-{
-	if (fWidth > 6.0 && fHeight > 6.0) {
-		mpm.mini.x = mpm.maxi.x = fWidth;
-		mpm.mini.y = mpm.maxi.y = fHeight;
-	} else {
-		mpm.mini.x = 6.0;
-		mpm.maxi.x = 10000.0;
-		mpm.mini.y = 6.0;
-		mpm.maxi.y = 10000.0;
-	}
-	mpm.weight = 1.0;
-	return mpm;
-}
-
-// layout
-BRect
-SwatchView::layout(BRect frame)
-{
-	MoveTo(frame.LeftTop());
-	ResizeTo(frame.Width(), frame.Height());
-	return Frame();
-}
-#endif // LIB_LAYOUT
 
 inline void
 blend_color(rgb_color& a, const rgb_color& b, float alpha)
@@ -94,8 +67,8 @@ SwatchView::Draw(BRect updateRect)
 {
 	BRect r(Bounds());
 
-	rgb_color colorLight = tint_color(fColor, B_LIGHTEN_2_TINT);
-	rgb_color colorShadow = tint_color(fColor, B_DARKEN_2_TINT);
+	rgb_color colorLight = tint_color(fColor, B_LIGHTEN_1_TINT);
+	rgb_color colorShadow = tint_color(fColor, B_DARKEN_1_TINT);
 
 	if (fColor.alpha < 255) {
 		// left/top
@@ -106,43 +79,47 @@ SwatchView::Draw(BRect updateRect)
 		rgb_color l = colorLight;
 		blend_color(l, kAlphaLow, alpha);
 
-		SetHighColor(h);
-		SetLowColor(l);
-		
-		StrokeLine(BPoint(r.left, r.bottom - 1),
-				   BPoint(r.left, r.top), kDottedBig);
-		StrokeLine(BPoint(r.left + 1, r.top),
-				   BPoint(r.right, r.top), kDottedBig);
+		if (fBorderStyle == B_PLAIN_BORDER) {
+			SetHighColor(h);
+			SetLowColor(l);
 
-		// right/bottom
-		h = colorShadow;
-		blend_color(h, kAlphaHigh, alpha);
-		l = colorShadow;
-		blend_color(l, kAlphaLow, alpha);
+			StrokeLine(BPoint(r.left, r.bottom - 1),
+					   BPoint(r.left, r.top), kDottedBig);
+			StrokeLine(BPoint(r.left + 1, r.top),
+					   BPoint(r.right, r.top), kDottedBig);
 
-		SetHighColor(h);
-		SetLowColor(l);
-		
-		StrokeLine(BPoint(r.right, r.top + 1),
-				   BPoint(r.right, r.bottom), kDottedBig);
-		StrokeLine(BPoint(r.right - 1, r.bottom),
-				   BPoint(r.left, r.bottom), kDottedBig);
+			// right/bottom
+			h = colorShadow;
+			blend_color(h, kAlphaHigh, alpha);
+			l = colorShadow;
+			blend_color(l, kAlphaLow, alpha);
+
+			SetHighColor(h);
+			SetLowColor(l);
+
+			StrokeLine(BPoint(r.right, r.top + 1),
+					   BPoint(r.right, r.bottom), kDottedBig);
+			StrokeLine(BPoint(r.right - 1, r.bottom),
+					   BPoint(r.left, r.bottom), kDottedBig);
+
+			r.InsetBy(1.0, 1.0);
+		}
 
 		// fill
-		r.InsetBy(1.0, 1.0);
-
 		h = fColor;
 		blend_color(h, kAlphaHigh, alpha);
 		l = fColor;
 		blend_color(l, kAlphaLow, alpha);
 
 		SetHighColor(h);
-		SetLowColor(l);		
+		SetLowColor(l);
 
 		FillRect(r, kDottedBig);
 	} else {
-		_StrokeRect(r, colorLight, colorShadow);
-		r.InsetBy(1.0, 1.0);
+		if (fBorderStyle == B_PLAIN_BORDER) {
+			_StrokeRect(r, colorLight, colorShadow);
+			r.InsetBy(1.0, 1.0);
+		}
 		SetHighColor(fColor);
 		FillRect(r);
 	}

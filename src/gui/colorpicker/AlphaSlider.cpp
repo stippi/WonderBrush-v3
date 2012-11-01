@@ -10,21 +10,23 @@
 
 #include <AppDefs.h>
 #include <Bitmap.h>
+#include <ControlLook.h>
 #include <LayoutUtils.h>
 #include <Message.h>
 #include <Window.h>
 
 #include "ui_defines.h"
-#include "support_ui.h"
 
 // constructor
-AlphaSlider::AlphaSlider(orientation dir, BMessage* message)
+AlphaSlider::AlphaSlider(orientation dir, BMessage* message,
+	border_style border)
 	: BControl("alpha slider", NULL, message,
 		B_WILL_DRAW | B_FRAME_EVENTS | B_NAVIGABLE)
 	, fBitmap(NULL)
 	, fColor(kBlack)
 	, fDragging(false)
 	, fOrientation(dir)
+	, fBorderStyle(border)
 {
 	FrameResized(Bounds().Width(), Bounds().Height());
 
@@ -159,39 +161,20 @@ AlphaSlider::KeyDown(const char* bytes, int32 numBytes)
 void
 AlphaSlider::Draw(BRect updateRect)
 {
-	BRect b = _BitmapRect();
-	b.InsetBy(-2.0, -2.0);
-
+	BRect b = Bounds();
 	bool isFocus = IsFocus() && Window()->IsActive();
 
-	rgb_color bg = LowColor();
-	rgb_color shadow;
-	rgb_color darkShadow;
-	rgb_color light;
-	rgb_color black;
+	if (fBorderStyle == B_FANCY_BORDER) {
+		rgb_color bg = LowColor();
+		uint32 flags = 0;
 
-	if (IsEnabled()) {
-		shadow = tint_color(bg, B_DARKEN_1_TINT);
-		darkShadow = tint_color(bg, B_DARKEN_3_TINT);
-		light = tint_color(bg, B_LIGHTEN_MAX_TINT);
-		black = tint_color(bg, B_DARKEN_MAX_TINT);
-	} else {
-		shadow = bg;
-		darkShadow = tint_color(bg, B_DARKEN_1_TINT);
-		light = tint_color(bg, B_LIGHTEN_2_TINT);
-		black = tint_color(bg, B_DARKEN_2_TINT);
+		if (!IsEnabled())
+			flags |= BControlLook::B_DISABLED;
+		if (isFocus)
+			flags |= BControlLook::B_FOCUSED;
+
+		be_control_look->DrawTextControlBorder(this, b, updateRect, bg, flags);
 	}
-
-	rgb_color focus = isFocus ? ui_color(B_KEYBOARD_NAVIGATION_COLOR)
-							  : black;
-
-	stroke_frame(this, b, shadow, shadow, light, light);
-	b.InsetBy(1.0, 1.0);
-	if (isFocus)
-		stroke_frame(this, b, focus, focus, focus, focus);
-	else
-		stroke_frame(this, b, darkShadow, darkShadow, bg, bg);
-	b.InsetBy(1.0, 1.0);
 
 	DrawBitmap(fBitmap, b.LeftTop());
 
@@ -398,7 +381,8 @@ BRect
 AlphaSlider::_BitmapRect() const
 {
 	BRect r = Bounds();
-	r.InsetBy(2, 2);
+	if (fBorderStyle == B_FANCY_BORDER)
+		r.InsetBy(2, 2);
 	return r;
 }
 

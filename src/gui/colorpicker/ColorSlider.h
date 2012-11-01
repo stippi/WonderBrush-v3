@@ -21,11 +21,13 @@ class ColorSlider : public BControl {
 public:
 								ColorSlider(SelectedColorMode mode,
 									float value1, float value2,
-									orientation dir = B_VERTICAL);
+									orientation dir = B_VERTICAL,
+									border_style border = B_FANCY_BORDER);
 								ColorSlider(BPoint offsetPoint,
 									SelectedColorMode mode,
 									float value1, float value2,
-									orientation dir = B_VERTICAL);
+									orientation dir = B_VERTICAL,
+									border_style border = B_FANCY_BORDER);
 	virtual						~ColorSlider();
 
 								// BControl
@@ -47,9 +49,7 @@ public:
 
 	virtual	void				SetValue(int32 value);
 
-								// ColorSlider
-			void				Update(int depth);
-
+	// ColorSlider
 			bool				IsTracking() const
 									{ return fMouseDown; }
 
@@ -59,18 +59,26 @@ public:
 			void				GetOtherValues(float* value1,
 									float* value2) const;
 
-			void				SetMarkerToColor( rgb_color color );
+			void				SetMarkerToColor(rgb_color color);
 
 private:
 			void				_Init(SelectedColorMode mode,
 						 			float value1, float value2,
-						 			orientation dir);
+						 			orientation dir, border_style border);
 
-	static	int32				_UpdateThread(void* cookie);
-	static	inline void			_DrawColorLineY(BView* view, float y,
+			void				_AllocBitmap(int32 width, int32 height);
+			void				_Update();
+			BRect				_BitmapRect() const;
+			void				_FillBitmap(BBitmap* bitmap,
+									SelectedColorMode mode,
+									float fixedValue1, float fixedValue2,
+									orientation orient) const;
+
+	static	inline void			_DrawColorLineY(uint8* bits, int width,
 									int r, int g, int b);
-	static	inline void			_DrawColorLineX(BView* view, float x,
-									int r, int g, int b);
+	static	inline void			_DrawColorLineX(uint8* bits, int height,
+									int bpr, int r, int g, int b);
+
 			void				_TrackMouse(BPoint where);
 
 private:
@@ -80,13 +88,11 @@ private:
 
 	bool						fMouseDown;
 
-	BBitmap*					fBgBitmap;
-	BView*						fBgView;
-
-	thread_id					fUpdateThread;
-	port_id						fUpdatePort;
+	BBitmap*					fBitmap;
+	bool						fBitmapDirty;
 
 	orientation					fOrientation;
+	border_style				fBorderStyle;
 };
 
 #endif // COLOR_SLIDER_H
