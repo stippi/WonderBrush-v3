@@ -77,7 +77,8 @@ SwatchGroup::SwatchGroup(const char* name)
 
 	// create current color swatch view
 	fCurrentColorSV = new SwatchView("current swatch",
-		new BMessage(MSG_COLOR_PICKER), this, color, 28.0, 28.0);
+		new BMessage(MSG_COLOR_PICKER), this, color, 28.0, 28.0,
+		B_NO_BORDER);
 
 	// When the color of this swatch changes via drag&drop, we want to
 	// adopt it as current color.
@@ -183,6 +184,7 @@ color.alpha = fAlphaSlider->Value();
 //
 //				if (fCurrentColor != NULL)
 //					fCurrentColor->SetColor(color);
+_AdoptColor(color);
 			}
 			// if message contains these fields,
 			// then it comes from the color picker panel.
