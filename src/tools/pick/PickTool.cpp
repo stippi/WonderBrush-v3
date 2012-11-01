@@ -54,7 +54,7 @@ PickTool::ShortHelpMessage()
 // MakeViewState
 ViewState*
 PickTool::MakeViewState(StateView* view, Document* document,
-	Selection* selection)
+	Selection* selection, CurrentColor* color)
 {
 	PickToolState* state = new PickToolState(view, document->RootLayer(),
 		document, selection);

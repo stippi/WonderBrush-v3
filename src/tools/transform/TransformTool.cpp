@@ -54,7 +54,7 @@ TransformTool::ShortHelpMessage()
 // MakeViewState
 ViewState*
 TransformTool::MakeViewState(StateView* view, Document* document,
-	Selection* selection)
+	Selection* selection, CurrentColor* color)
 {
 	return new(std::nothrow) TransformToolState(view, BRect(0, 0, -1, -1),
 		document, selection, BMessenger(ConfigView()));

@@ -53,9 +53,10 @@ BrushTool::ShortHelpMessage()
 // MakeViewState
 ViewState*
 BrushTool::MakeViewState(StateView* view, Document* document,
-	Selection* selection)
+	Selection* selection, CurrentColor* color)
 {
-	return new(std::nothrow) BrushToolState(view, document, selection, fBrush);
+	return new(std::nothrow) BrushToolState(view, document, selection, color,
+		fBrush);
 }
 
 // MakeConfigView
@@ -128,7 +129,7 @@ BrushTool::SetOption(uint32 option, float value)
 			fBrush.SetMaxHardness(value);
 			break;
 	}
-		
+
 }
 
 // SetOption
