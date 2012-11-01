@@ -12,6 +12,8 @@
 
 #include "BLooper.h"
 
+#include <stdio.h>
+
 #include <new>
 
 #include <List.h>
@@ -20,6 +22,8 @@
 #include <Messenger.h>
 
 #include <MessagePrivate.h>
+
+#include <QThread>
 
 #include "AutoLocker.h"
 #include "PlatformMessageEvent.h"
@@ -180,12 +184,11 @@ void
 BLooper::DispatchMessage(BMessage* message, BHandler* handler)
 {
 	switch (message->what) {
-// TODO:...
-#if 0
 		case _QUIT_:
 			// Can't call Quit() to do this, because of the slight chance
 			// another thread with have us locked between now and then.
 			fTerminating = true;
+			fEventLoop->quit();
 
 			// After returning from DispatchMessage(), the looper will be
 			// deleted in _task0_()
@@ -198,7 +201,6 @@ BLooper::DispatchMessage(BMessage* message, BHandler* handler)
 			}
 
 			// fall through
-#endif
 
 		default:
 			handler->MessageReceived(message);
@@ -287,6 +289,94 @@ BLooper::SetPreferredHandler(BHandler* handler)
 	} else {
 		fPreferred = NULL;
 	}
+}
+
+
+thread_id
+BLooper::Run()
+{
+	AssertLocked();
+
+	if (fRunCalled) {
+		// Not allowed to call Run() more than once
+		debugger("can't call BLooper::Run twice!");
+		return fThread;
+	}
+
+	if (fLock == NULL || fMessageTarget == NULL)
+		return B_NO_MEMORY;
+
+	fThread = spawn_thread(&BLooper::_ThreadEntry, Name(), fInitPriority, this);
+	if (fThread < B_OK)
+		return fThread;
+
+	fRunCalled = true;
+	Unlock();
+
+	status_t err = resume_thread(fThread);
+	if (err < B_OK)
+		return err;
+
+	return fThread;
+}
+
+
+void
+BLooper::Quit()
+{
+	if (!IsLocked()) {
+		printf("ERROR - you must Lock a looper before calling Quit(), "
+			"looper=%s\n", Name() ? Name() : "unnamed");
+	}
+
+	// Try to lock
+	if (!Lock()) {
+		// We're toast already
+		return;
+	}
+
+	if (!fRunCalled) {
+		fTerminating = true;
+		delete this;
+	} else if (find_thread(NULL) == fThread) {
+		fTerminating = true;
+		// NOTE: With Qt this doesn't work, since we can't exit the thread at
+		// this point (well, QThread::terminate() might work, but its use is
+		// discouraged). We just quit the event loop instead -- _EventLoop()
+		// will delete the object when it is done. This also means Quit() will
+		// return, though.
+//		delete this;
+//		exit_thread(0);
+		fEventLoop->exit();
+	} else {
+		// As with sem in _Lock(), we need to cache this here in case the looper
+		// disappears before we get to the wait_for_thread() below
+		thread_id thread = Thread();
+
+		// We need to unlock here. Otherwise the looper thread can't
+		// dispatch the _QUIT_ message we're going to post.
+		_UnlockFully();
+
+		// As per the BeBook, if we've been called by a thread other than
+		// our own, the rest of the message queue has to get processed.  So
+		// we put this in the queue, and when it shows up, we'll call Quit()
+		// from our own thread.
+		// QuitRequested() will not be called in this case.
+		PostMessage(_QUIT_);
+
+		// We have to wait until the looper is done processing any remaining
+		// messages.
+		status_t status;
+		while (wait_for_thread(thread, &status) == B_INTERRUPTED)
+			;
+	}
+}
+
+
+bool
+BLooper::QuitRequested()
+{
+	return true;
 }
 
 
@@ -428,14 +518,16 @@ BLooper::_InitData(const char* name, int32 priority)
 	fLock = new(std::nothrow) LooperLock(name);
 	fMessageTarget = new(std::nothrow) MessageTarget(this);
 	fCommonFilters = NULL;
+	fThread = B_ERROR;
+	fRunCalled = false;
+	fTerminating = false;
+	fInitPriority = priority;
+	fEventLoop = NULL;
 
 #if 0
 	fOwner = B_ERROR;
 	fCachedStack = 0;
-	fRunCalled = false;
 	fDirectTarget = new (std::nothrow) BPrivate::BDirectMessageTarget();
-	fThread = B_ERROR;
-	fTerminating = false;
 	fMsgPort = -1;
 	fAtomicCount = 0;
 
@@ -452,8 +544,6 @@ BLooper::_InitData(const char* name, int32 priority)
 		portCapacity = B_LOOPER_PORT_DEFAULT_CAPACITY;
 
 	fMsgPort = create_port(portCapacity, name);
-
-	fInitPriority = priority;
 
 	gLooperList.AddLooper(this);
 		// this will also lock this looper
@@ -485,6 +575,14 @@ BLooper::_Lock(bigtime_t timeout)
 	return timeout == B_INFINITE_TIMEOUT
 		? (fLock->Lock() ? B_OK : B_ERROR)
 		: fLock->LockWithTimeout(timeout);
+}
+
+
+void
+BLooper::_UnlockFully()
+{
+	while (IsLocked())
+		Unlock();
 }
 
 
@@ -613,16 +711,55 @@ BLooper::_DispatchMessage(BMessage* message)
 			DispatchMessage(fLastMessage, handler);
 	}
 
-// TODO:...
-#if 0
 	if (fTerminating) {
 		// we leave the looper locked when we quit
 		return;
 	}
-#endif
 
 	fLastMessage = NULL;
 
 	// Unlock the looper
 	Unlock();
+}
+
+
+void
+BLooper::_QuitRequested(BMessage* message)
+{
+	bool isQuitting = QuitRequested();
+	int32 thread = fThread;
+
+	if (isQuitting)
+		Quit();
+
+	// We send a reply to the sender, when they're waiting for a reply or
+	// if the request message contains a boolean "_shutdown_" field with value
+	// true. In the latter case the message came from the registrar, asking
+	// the application to shut down.
+	bool shutdown;
+	if (message->IsSourceWaiting()
+		|| (message->FindBool("_shutdown_", &shutdown) == B_OK && shutdown)) {
+		BMessage replyMsg(B_REPLY);
+		replyMsg.AddBool("result", isQuitting);
+		replyMsg.AddInt32("thread", thread);
+		message->SendReply(&replyMsg);
+	}
+}
+
+
+void
+BLooper::_EventLoop()
+{
+	QEventLoop eventLoop;
+	fEventLoop = &eventLoop;
+	eventLoop.exec();
+	delete this;
+}
+
+
+status_t
+BLooper::_ThreadEntry(void* data)
+{
+	((BLooper*)data)->_EventLoop();
+	return B_OK;
 }

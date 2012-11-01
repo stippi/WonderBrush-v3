@@ -11,6 +11,7 @@
 
 #include <Handler.h>
 
+#include <QEventLoop>
 #include <QHash>
 #include <QList>
 #include <QSet>
@@ -64,10 +65,15 @@ public:
 			BMessage*			CurrentMessage() const
 									{ return fLastMessage; }
 
+	virtual	thread_id			Run();
+	virtual	void				Quit();
+	virtual	bool				QuitRequested();
 			bool				Lock();
 			void				Unlock();
 			bool				IsLocked() const;
 			status_t			LockWithTimeout(bigtime_t timeout);
+			thread_id			Thread() const
+									{ return fThread; }
 
 	virtual	void				AddCommonFilter(BMessageFilter* filter);
 	virtual	bool				RemoveCommonFilter(BMessageFilter* filter);
@@ -90,6 +96,7 @@ private:
 			void				_InitData(const char* name, int32 priority);
 
 			status_t			_Lock(bigtime_t timeout);
+			void				_UnlockFully();
 			bool				AssertLocked() const;
 
 			BHandler*			_TopLevelFilter(BMessage* message,
@@ -98,6 +105,9 @@ private:
 									BMessage* message, BHandler* target);
 
 			void				_DispatchMessage(BMessage* message);
+			void				_QuitRequested(BMessage* message);
+			void				_EventLoop();
+	static	status_t			_ThreadEntry(void* data);
 
 private:
 			LooperLock*			fLock;
@@ -106,6 +116,11 @@ private:
 			QList<BHandler*>	fHandlers;
 			BList*				fCommonFilters;
 			BHandler*			fPreferred;
+			thread_id			fThread;
+			bool				fTerminating;
+			bool				fRunCalled;
+			int32				fInitPriority;
+			QEventLoop*			fEventLoop;
 };
 
 
