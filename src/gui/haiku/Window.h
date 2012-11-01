@@ -25,6 +25,7 @@ class ObjectColumnTreeItem;
 class ObjectTreeView;
 class RenderManager;
 class ResourceTreeView;
+class SwatchGroup;
 class Tool;
 
 class Window : public BWindow {
@@ -68,6 +69,7 @@ private:
 
 			IconOptionsControl*	fToolIconControl;
 			BCardLayout*		fToolConfigLayout;
+			SwatchGroup*		fSwatchGroup;
 			ObjectTreeView*		fLayerTreeView;
 //			ColumnTreeModel*	fLayerTreeModel;
 			ResourceTreeView*	fResourceTreeView;
