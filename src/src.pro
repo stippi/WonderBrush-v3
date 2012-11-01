@@ -127,6 +127,8 @@ SOURCES += \
 	platform/qt/system/BControl.cpp \
 	platform/qt/system/BCursor.cpp \
 	platform/qt/system/BDataIO.cpp \
+	platform/qt/system/BDirectory.cpp \
+	platform/qt/system/BEntry.cpp \
 	platform/qt/system/BFile.cpp \
 	platform/qt/system/BFlattenable.cpp \
 	platform/qt/system/BGradient.cpp \
@@ -144,6 +146,7 @@ SOURCES += \
 	platform/qt/system/BMessageUtils.cpp \
 	platform/qt/system/BMessenger.cpp \
 	platform/qt/system/BOS.cpp \
+	platform/qt/system/BPath.cpp \
 	platform/qt/system/BPoint.cpp \
 	platform/qt/system/BPointerList.cpp \
 	platform/qt/system/BRect.cpp \
@@ -280,6 +283,8 @@ HEADERS  += \
 	platform/qt/system/BDataIO.h \
 	platform/qt/system/BDebug.h \
 	platform/qt/system/Bdebugger.h \
+	platform/qt/system/BEntry.h \
+	platform/qt/system/BDirectory.h \
 	platform/qt/system/BErrors.h \
 	platform/qt/system/BFile.h \
 	platform/qt/system/BFlattenable.h \
@@ -301,6 +306,7 @@ HEADERS  += \
 	platform/qt/system/BMessenger.h \
 	platform/qt/system/BObjectList.h \
 	platform/qt/system/BOS.h \
+	platform/qt/system/BPath.h \
 	platform/qt/system/BPoint.h \
 	platform/qt/system/BRect.h \
 	platform/qt/system/BRegion.h \
@@ -330,6 +336,8 @@ HEADERS  += \
 	platform/qt/system/include/DataIO.h \
 	platform/qt/system/include/Debug.h \
 	platform/qt/system/include/debugger.h \
+	platform/qt/system/include/Directory.h \
+	platform/qt/system/include/Entry.h \
 	platform/qt/system/include/Errors.h \
 	platform/qt/system/include/File.h \
 	platform/qt/system/include/Flattenable.h \
@@ -351,6 +359,7 @@ HEADERS  += \
 	platform/qt/system/include/Messenger.h \
 	platform/qt/system/include/ObjectList.h \
 	platform/qt/system/include/OS.h \
+	platform/qt/system/include/Path.h \
 	platform/qt/system/include/Point.h \
 	platform/qt/system/include/Rect.h \
 	platform/qt/system/include/Region.h \

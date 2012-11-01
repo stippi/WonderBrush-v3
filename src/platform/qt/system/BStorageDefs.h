@@ -7,6 +7,9 @@
 
 
 #include <fcntl.h>
+#include <limits.h>
+
+#include <SupportDefs.h>
 
 
 // Open Modes
@@ -19,6 +22,8 @@
 #define B_ERASE_FILE		O_TRUNC		// erase the file's data
 #define B_OPEN_AT_END	   	O_APPEND	// point to the end of the data
 
+
+#define B_PATH_NAME_LENGTH	(PATH_MAX)
 
 
 #endif	// PLATFORM_QT_STORAGE_DEFS
