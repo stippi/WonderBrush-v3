@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2010 Stephan Aßmus <superstippi@gmx.de>
+ * Copyright 2009-2012 Stephan Aßmus <superstippi@gmx.de>
  * All rights reserved. Distributed under the terms of the MIT license.
  */
 
@@ -13,6 +13,7 @@
 
 #include "BrushStroke.h"
 #include "CommandStack.h"
+#include "CurrentColor.h"
 #include "Document.h"
 #include "Layer.h"
 #include "ObjectAddedCommand.h"
@@ -20,10 +21,11 @@
 
 // constructor
 BrushToolState::BrushToolState(StateView* view, Document* document,
-		Selection* selection, Brush& brush)
+		Selection* selection, CurrentColor* color, Brush& brush)
 	: TransformViewState(view)
 	, fDocument(document)
 	, fSelection(selection)
+	, fCurrentColor(color)
 	, fInsertionLayer(NULL)
 	, fInsertionIndex(-1)
 	, fBrush(brush)
@@ -47,7 +49,7 @@ BrushToolState::MessageReceived(BMessage* message, Command** _command)
 	bool handled = true;
 
 	switch (message->what) {
-		
+
 		default:
 			handled = TransformViewState::MessageReceived(message, _command);
 	}
@@ -68,9 +70,13 @@ BrushToolState::MouseDown(const MouseInfo& info)
 	}
 
 	Brush* brush = new(std::nothrow) Brush(fBrush);
-	if (brush == NULL) {
+	Paint* paint = new(std::nothrow) Paint(fCurrentColor->Color());
+
+	if (brush == NULL || paint == NULL) {
 		fprintf(stderr, "BrushToolState::MouseDown(): Failed to allocate "
-			"Brush. Out of memory\n");
+			"Brush or Paint. Out of memory\n");
+		delete brush;
+		delete paint;
 		return;
 	}
 
@@ -85,6 +91,10 @@ BrushToolState::MouseDown(const MouseInfo& info)
 	// transfer ownership of brush
 	fBrushStroke->SetBrush(brush);
 	brush->RemoveReference();
+
+	// transfer ownership of paint
+	fBrushStroke->SetPaint(paint);
+	paint->RemoveReference();
 
 	if (fInsertionIndex < 0)
 		fInsertionIndex = 0;

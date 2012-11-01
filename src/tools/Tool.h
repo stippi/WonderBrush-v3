@@ -9,6 +9,7 @@
 #include <Handler.h>
 
 class BMessage;
+class CurrentColor;
 class Document;
 class IconButton;
 class Selection;
@@ -32,7 +33,8 @@ public:
 
 	// GUI
 			ViewState*			ToolViewState(StateView* view,
-									Document* document, Selection* selection);
+									Document* document, Selection* selection,
+									CurrentColor* color);
 	inline	ViewState*			ToolViewState() const
 									{ return fViewState; }
 			ToolConfigView*		ConfigView();
@@ -54,7 +56,8 @@ public:
 protected:
 	virtual	ViewState*			MakeViewState(StateView* view,
 									Document* document,
-									Selection* selection) = 0;
+									Selection* selection,
+									CurrentColor* color) = 0;
 	virtual	ToolConfigView*		MakeConfigView() = 0;
 	virtual	IconButton*			MakeIcon() = 0;
 

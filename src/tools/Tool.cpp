@@ -51,10 +51,11 @@ Tool::LoadSettings(BMessage* message)
 
 // ToolViewState
 ViewState*
-Tool::ToolViewState(StateView* view, Document* document, Selection* selection)
+Tool::ToolViewState(StateView* view, Document* document, Selection* selection,
+	CurrentColor* color)
 {
 	if (fViewState == NULL)
-		fViewState = MakeViewState(view, document, selection);
+		fViewState = MakeViewState(view, document, selection, color);
 	return fViewState;
 }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2010 Stephan Aßmus <superstippi@gmx.de>
+ * Copyright 2009-2012 Stephan Aßmus <superstippi@gmx.de>
  * All rights reserved. Distributed under the terms of the MIT license.
  */
 
@@ -11,6 +11,7 @@
 #include "TransformViewState.h"
 
 class BrushStroke;
+class CurrentColor;
 class Document;
 class Layer;
 
@@ -19,7 +20,7 @@ class BrushToolState : public TransformViewState,
 public:
 								BrushToolState(StateView* view,
 									Document* document, Selection* selection,
-									Brush& brush);
+									CurrentColor* color, Brush& brush);
 	virtual						~BrushToolState();
 
 	// ViewState interface
@@ -41,6 +42,7 @@ private:
 
 			Document*			fDocument;
 			Selection*			fSelection;
+			CurrentColor*		fCurrentColor;
 
 			Layer*				fInsertionLayer;
 			int32				fInsertionIndex;

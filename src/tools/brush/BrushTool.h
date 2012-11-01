@@ -24,15 +24,15 @@ public:
 				OPACITY_MIN = 0,
 				OPACITY_MAX,
 				OPACITY_CONTROLLED,
-		
+
 				RADIUS_MIN,
 				RADIUS_MAX,
 				RADIUS_CONTROLLED,
-		
+
 				HARDNESS_MIN,
 				HARDNESS_MAX,
 				HARDNESS_CONTROLLED,
-		
+
 				SPACING,
 				SOLID,
 				SUBPIXELS,
@@ -46,7 +46,8 @@ public:
 
 private:
 	virtual	ViewState*			MakeViewState(StateView* view,
-									Document* document, Selection* selection);
+									Document* document, Selection* selection,
+									CurrentColor* color);
 	virtual	ToolConfigView*		MakeConfigView();
 	virtual	IconButton*			MakeIcon();
 
