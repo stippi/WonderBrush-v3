@@ -176,7 +176,7 @@ ColorSlider::Draw(BRect updateRect)
 		StrokeLine(BPoint(bounds.right, value));
 	} else {
 		BRect r = bounds;
-		float x = bounds.left - 2 + Value() * bounds.Width() / 255.0;
+		float x = bounds.left - 2 + (255 - Value()) * bounds.Width() / 255.0;
 		if (x > r.left) {
 			SetHighColor(255, 255, 255);
 			StrokeLine(BPoint(x, bounds.top),
@@ -598,8 +598,8 @@ ColorSlider::_TrackMouse(BPoint where)
 	if (fOrientation == B_VERTICAL) {
 		SetValue((int)where.y - 2);
 	} else {
-		BRect b(Bounds());
-		SetValue((int)(((where.x - 2.0) / b.Width()) * 255.0));
+		BRect b(_BitmapRect());
+		SetValue(255 - (int)(((where.x - b.left) / b.Width()) * 255.0));
 	}
 	Invoke();
 }
