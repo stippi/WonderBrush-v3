@@ -135,6 +135,7 @@ Application WonderBrush :
 
 	# model
 	BaseObject.cpp
+	CurrentColor.cpp
 	Selectable.cpp
 	Selection.cpp
 
