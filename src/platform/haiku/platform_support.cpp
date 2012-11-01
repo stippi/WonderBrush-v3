@@ -3,6 +3,7 @@
 #include <Application.h>
 #include <Resources.h>
 #include <Roster.h>
+#include <UTF8.h>
 
 
 int32
@@ -23,4 +24,26 @@ get_app_resources(BResources& resources)
 		return status;
 
 	return resources.SetTo(&info.ref);
+}
+
+
+char*
+convert_utf16_to_utf8(const void* string, size_t length)
+{
+	// Worst case is UTF-8 needs 3 bytes for an UTF-16 char.
+	int32 destLength = length * 3 / 2;
+	char* buffer = (char*)malloc(destLength + 1);
+	if (buffer == NULL)
+		return NULL;
+
+	// convert
+	int32 sourceLength = length;
+	int32 state = 0;
+	convert_to_utf8(B_UNICODE_CONVERSION, string,
+		&sourceLength, buffer, &destLength, &state, B_SUBSTITUTE);
+
+	// null-terminate
+	buffer[destLength] = '\0';
+
+	return buffer;
 }

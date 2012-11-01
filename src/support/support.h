@@ -153,8 +153,12 @@ void append_float(BString& string, float n, int32 maxDigits = 4);
 
 status_t write_string(BPositionIO* stream, BString& string);
 
+// platform dependent
+
 int32 get_optimal_worker_thread_count();
 
 status_t get_app_resources(BResources& resources);
+
+char* convert_utf16_to_utf8(const void* string, size_t length);
 
 # endif // SUPPORT_H
