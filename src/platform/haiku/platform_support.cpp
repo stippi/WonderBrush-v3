@@ -1,5 +1,7 @@
 #include "support.h"
 
+#include <stdlib.h>
+
 #include <Application.h>
 #include <Resources.h>
 #include <Roster.h>
@@ -39,7 +41,7 @@ convert_utf16_to_utf8(const void* string, size_t length)
 	// convert
 	int32 sourceLength = length;
 	int32 state = 0;
-	convert_to_utf8(B_UNICODE_CONVERSION, string,
+	convert_to_utf8(B_UNICODE_CONVERSION, (const char*)string,
 		&sourceLength, buffer, &destLength, &state, B_SUBSTITUTE);
 
 	// null-terminate
