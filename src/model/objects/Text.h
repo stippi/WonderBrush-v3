@@ -59,6 +59,9 @@ public:
 			void				SetSize(int32 textOffset, int32 length,
 									double size);
 
+			void				SetColor(int32 textOffset, int32 length,
+									const rgb_color& color);
+
 			const TextLayout&	getTextLayout() const;
 			TextLayout&			getTextLayout();
 
