@@ -42,6 +42,7 @@ QMAKE_CXXFLAGS += -iquote $$PWD/model/property
 QMAKE_CXXFLAGS += -iquote $$PWD/model/property/specific_properties
 QMAKE_CXXFLAGS += -iquote $$PWD/model/snapshots
 QMAKE_CXXFLAGS += -iquote $$PWD/render
+QMAKE_CXXFLAGS += -iquote $$PWD/render/text
 QMAKE_CXXFLAGS += -iquote $$PWD/support
 QMAKE_CXXFLAGS += -iquote $$PWD/tools
 QMAKE_CXXFLAGS += -iquote $$PWD/tools/brush
@@ -172,11 +173,13 @@ SOURCES += \
 	render/TextLayout.cpp \
 	render/TextRenderer.cpp \
 	render/VertexSource.cpp \
+	render/text/FontRegistry.cpp \
 	support/AbstractLOAdapter.cpp \
 	support/Command.cpp \
 	support/CommandStack.cpp \
 	support/CompoundCommand.cpp \
 	support/Debug.cpp \
+	support/HashString.cpp \
 	support/Listener.cpp \
 	support/ListenerAdapter.cpp \
 	support/Notifier.cpp \
@@ -200,6 +203,7 @@ SOURCES += \
 #	tools/brush/transform/TransformToolState.cpp
 
 HEADERS  += \
+	WonderBrush.h \
 	cimg/CImg.h \
 	commands/AddObjectsCommand.h \
 	commands/MoveObjectsCommand.h \
@@ -391,6 +395,7 @@ HEADERS  += \
 	render/TextLayout.h \
 	render/TextRenderer.h \
 	render/VertexSource.h \
+	render/text/FontRegistry.h \
 	support/AbstractLOAdapter.h \
 	support/AutoLocker.h \
 	support/bitmap_support.h \
@@ -400,6 +405,7 @@ HEADERS  += \
 	support/CompoundCommand.h \
 	support/Debug.h \
 	support/DLList.h \
+	support/HashString.h \
 	support/Listener.h \
 	support/ListenerAdapter.h \
 	support/Notifier.h \

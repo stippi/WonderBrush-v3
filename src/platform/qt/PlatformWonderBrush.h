@@ -10,11 +10,13 @@
 #include <QApplication>
 #include <QDir>
 
+#include "FontRegistry.h"
 #include "Window.h"
 
 
 template<typename BaseClass>
-class PlatformWonderBrush : public QApplication, protected BaseClass {
+class PlatformWonderBrush : public QApplication, protected BaseClass,
+	public BLooper {
 public:
 	using BaseClass::NewWindow;
 	using BaseClass::WindowQuit;
@@ -24,16 +26,25 @@ public:
 	PlatformWonderBrush(int& argc, char** argv, BRect bounds)
 		:
 		QApplication(argc, argv),
-		BaseClass(bounds)
+		BaseClass(bounds),
+		BLooper("application")
 	{
 	}
 
-	void Run()
+	thread_id Run()
 	{
+		FontRegistry* registry = FontRegistry::Default();
+		if (registry->Lock()) {
+			registry->StartWatchingAll(this);
+			registry->Scan();
+			registry->Unlock();
+		}
+
 		RestoreSettings();
 		NewWindow();
 
 		exec();
+		return -1;
 	}
 
 //	virtual	bool QuitRequested()

@@ -13,6 +13,7 @@
 #include "Document.h"
 #include "Filter.h"
 #include "FontCache.h"
+#include "FontRegistry.h"
 #include "Image.h"
 #include "Layer.h"
 #include "Rect.h"
@@ -149,8 +150,38 @@ WonderBrushBase::WonderBrushBase(BRect bounds)
 
 WonderBrush::WonderBrush(int& argc, char** argv, BRect bounds)
 	:
-	PlatformWonderBrush<WonderBrushBase>(argc, argv, bounds)
+	BaseClass(argc, argv, bounds)
 {
+}
+
+
+void
+WonderBrush::MessageReceived(BMessage* message)
+{
+	switch (message->what) {
+		case B_OBSERVER_NOTICE_CHANGE:
+		{
+			int32 what;
+			if (message->FindInt32(B_OBSERVE_ORIGINAL_WHAT, &what) == B_OK
+				&& what == MSG_FONTS_CHANGED) {
+				NotifyFontsLoaded();
+			}
+			break;
+		}
+		case MSG_NEW_WINDOW:
+			NewWindow();
+			break;
+		case MSG_WINDOW_QUIT:
+		{
+			WindowQuit(message);
+			if (BaseClass::fWindowCount == 0)
+				PostMessage(B_QUIT_REQUESTED, this);
+			break;
+		}
+		default:
+			BaseClass::MessageReceived(message);
+			break;
+	}
 }
 
 
@@ -266,6 +297,10 @@ WonderBrush::_NotifyFontsLoaded(Layer* layer)
 int
 main(int argc, char* argv[])
 {
+	// Create app already here. For Qt this must be the first event loop
+	// created and FontRegistry is a BLooper which uses an event loop, too.
+	WonderBrush app(argc, argv, BRect(0, 0, 799, 599));
+
 	for (int i = 1; i < argc; i++) {
 		if (strcmp(argv[i], "--fonts") == 0 && i < argc - 1) {
 			printf("Using font folder: '%s'\n", argv[i + 1]);
@@ -279,7 +314,6 @@ main(int argc, char* argv[])
 		}
 	}
 
-	WonderBrush app(argc, argv, BRect(0, 0, 799, 599));
 	app.Run();
 	return 0;
 }
