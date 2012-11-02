@@ -315,7 +315,20 @@ TextToolConfigView::MessageReceived(BMessage* message)
 				&& message->FindString("style", &style) == B_OK) {
 				fFontPopup->SetFamilyAndStyle(family, style);
 			}
+			break;
+		}
 
+		case MSG_SET_SELECTION:
+		{
+			int32 selectionStart;
+			int32 selectionEnd;
+			if (message->FindInt32("selection start", &selectionStart) == B_OK
+				&& message->FindInt32("selection end", &selectionEnd)
+					== B_OK) {
+				fTextView->SetNotificationsEnabled(false);
+				fTextView->Select(selectionStart, selectionEnd);
+				fTextView->SetNotificationsEnabled(true);
+			}
 			break;
 		}
 
