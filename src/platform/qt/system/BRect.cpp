@@ -80,7 +80,7 @@ BRect::InsetBySelf(float dx, float dy)
 
 
 BRect
-BRect::InsetByCopy(BPoint point)
+BRect::InsetByCopy(BPoint point) const
 {
 	BRect copy(*this);
 	copy.InsetBy(point);
@@ -89,7 +89,7 @@ BRect::InsetByCopy(BPoint point)
 
 
 BRect
-BRect::InsetByCopy(float dx, float dy)
+BRect::InsetByCopy(float dx, float dy) const
 {
 	BRect copy(*this);
 	copy.InsetBy(dx, dy);

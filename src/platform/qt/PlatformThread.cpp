@@ -1,5 +1,6 @@
 #include "PlatformThread.h"
 
+#include <QCoreApplication>
 #include <QMap>
 #include <QMutexLocker>
 #include <QThread>
@@ -21,6 +22,10 @@ struct PlatformThread::Thread : public QThread {
 		// TODO: Set priority!
 	}
 
+	~Thread()
+	{
+	}
+
 	PlatformThread* GetPlatformThread() const
 	{
 		return fPlatformThread;
@@ -28,6 +33,12 @@ struct PlatformThread::Thread : public QThread {
 
 	virtual void run()
 	{
+		// Now that the thread is running, reparent the thread object, so the
+		// PlatformThread object doesn't delete it before the thread is really
+		// gone. Instead trigger deleteLater() when the thread is finished.
+		setParent(QCoreApplication::instance());
+		connect(this, SIGNAL(finished()), SLOT(deleteLater()));
+
 		// Make sure we are registered with the QThreadStorage, so that the
 		// PlatformThread object is dereferenced when the thread terminates.
 		CurrentThread();

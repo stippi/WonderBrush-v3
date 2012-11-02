@@ -14,11 +14,6 @@
 #include "FontCache.h"
 #include "FontRegistry.h"
 
-enum {
-	MSG_NEW_WINDOW	= 'nwnd',
-	MSG_WINDOW_QUIT	= 'wndq'
-};
-
 
 template<typename BaseClass>
 class PlatformWonderBrush : public BApplication, protected BaseClass {
@@ -29,39 +24,11 @@ public:
 	using BaseClass::RestoreSettings;
 	using BaseClass::NotifyFontsLoaded;
 
-	PlatformWonderBrush(int argc, char** argv, BRect bounds)
+	PlatformWonderBrush(int& argc, char** argv, BRect bounds)
 		:
 		BApplication("application/x-vnd.Yellowbites.WonderBrush2"),
 		BaseClass(bounds)
 	{
-	}
-
-	virtual void MessageReceived(BMessage* message)
-	{
-		switch (message->what) {
-			case B_OBSERVER_NOTICE_CHANGE:
-			{
-				int32 what;
-				if (message->FindInt32(B_OBSERVE_ORIGINAL_WHAT, &what) == B_OK
-					&& what == MSG_FONTS_CHANGED) {
-					NotifyFontsLoaded();
-				}
-				break;
-			}
-			case MSG_NEW_WINDOW:
-				NewWindow();
-				break;
-			case MSG_WINDOW_QUIT:
-			{
-				WindowQuit(message);
-				if (BaseClass::fWindowCount == 0)
-					PostMessage(B_QUIT_REQUESTED, this);
-				break;
-			}
-			default:
-				BApplication::MessageReceived(message);
-				break;
-		}
 	}
 
 	virtual void ReadyToRun()

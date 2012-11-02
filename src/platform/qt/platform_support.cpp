@@ -43,3 +43,27 @@ get_app_resources(BResources& resources)
 
 	return B_ENTRY_NOT_FOUND;
 }
+
+
+char*
+convert_utf16_to_utf8(const void* string, size_t length)
+{
+	// copy into a QString for easy conversion
+	QString qString;
+	if (((addr_t)string & 0x1) == 0) {
+		qString.setUtf16((const ushort*)string, length / 2);
+	} else {
+		// The source string is not aligned, so we have to copy it.
+		QByteArray stringData((const char*)string, length);
+		qString.setUtf16((const ushort*)stringData.data(), length / 2);
+	}
+
+	// convert to UTF-8 and allocate the result buffer
+	QByteArray utf8String = qString.toUtf8();
+	char* result = (char*)malloc(utf8String.length() + 1);
+	if (result == NULL)
+		return NULL;
+
+	memcpy(result, utf8String.data(), utf8String.length() + 1);
+	return result;
+}

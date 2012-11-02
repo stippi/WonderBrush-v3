@@ -245,3 +245,11 @@ BMessenger::SendMessage(BMessage* message, BMessage* reply,
 
 	return replyHandler.WaitForReply(replyTimeout) ? B_OK : B_TIMED_OUT;
 }
+
+
+bool
+BMessenger::operator==(const BMessenger& other) const
+{
+	return fLooperToken == other.fLooperToken
+		&& fHandlerToken == other.fHandlerToken;
+}

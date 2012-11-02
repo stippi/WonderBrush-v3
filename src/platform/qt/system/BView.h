@@ -6,6 +6,7 @@
 #define PLATFORM_QT_BVIEW_H
 
 
+#include <Alignment.h>
 #include <Handler.h>
 #include <InterfaceDefs.h>
 #include <Rect.h>
@@ -87,6 +88,19 @@ public:
 			void				Invalidate();
 			void				InvalidateLayout(bool descendants = false);
 
+			void				MoveBy(float dh, float dv)
+									{ move(x() + int(dh), y() + int(dv)); }
+			void				MoveTo(float x, float y)
+									{ move(int(x), int(y)); }
+			void				MoveTo(BPoint where)
+									{ MoveTo(where.x, where.y); }
+			void				ResizeBy(float dh, float dv)
+									{ resize(width() + int(dh), height() + int(dv)); }
+			void				ResizeTo(float width, float height)
+									{ resize(int(width) + 1, int(height) + 1); }
+			void				ResizeTo(BSize size)
+									{ ResizeTo(size.width, size.height); }
+
 			void				ConvertToScreen(BPoint* pt) const
 									{ *pt = ConvertToScreen(*pt); }
 			BPoint				ConvertToScreen(BPoint pt) const;
@@ -105,8 +119,6 @@ public:
 			status_t			SetMouseEventMask(uint32 mask,
 									uint32 options = 0);
 
-			void				SetExplicitMaxSize(BSize size);
-
 	virtual	void				AttachedToWindow();
 	virtual	void				DetachedFromWindow();
 	virtual	void				AllAttached();
@@ -122,13 +134,45 @@ public:
 	virtual	void				KeyDown(const char* bytes, int32 numBytes);
 	virtual	void				KeyUp(const char* bytes, int32 numBytes);
 
+	virtual	void				Pulse();
+	virtual	void				FrameMoved(BPoint newPosition);
+	virtual	void				FrameResized(float newWidth, float newHeight);
+
+	// layout related
+
+	virtual	BSize				MinSize();
+	virtual	BSize				MaxSize();
+	virtual	BSize				PreferredSize();
+	virtual	BAlignment			LayoutAlignment();
+
+			void				SetExplicitMinSize(BSize size);
+			void				SetExplicitMaxSize(BSize size);
+			void				SetExplicitPreferredSize(BSize size);
+			void				SetExplicitAlignment(BAlignment alignment);
+
+			BSize				ExplicitMinSize() const;
+			BSize				ExplicitMaxSize() const;
+			BSize				ExplicitPreferredSize() const;
+			BAlignment			ExplicitAlignment() const;
+
+	virtual	bool				HasHeightForWidth();
+	virtual	void				GetHeightForWidth(float width, float* min,
+									float* max, float* preferred);
+
 	static	int32				FromQtModifiers(
 									Qt::KeyboardModifiers qtModifiers);
+
+	virtual	QSize				minimumSizeHint() const;
+	virtual	QSize				sizeHint() const;
 
 protected:
 	virtual	void				mousePressEvent(QMouseEvent* event);
 	virtual	void				mouseReleaseEvent(QMouseEvent* event);
 	virtual	void				mouseMoveEvent(QMouseEvent* event);
+	virtual	void				tabletEvent(QTabletEvent* event);
+
+	virtual void				moveEvent(QMoveEvent* event);
+	virtual void				resizeEvent(QResizeEvent* event);
 
 private:
 			friend class BWindow;
@@ -141,11 +185,21 @@ private:
 
 			void				_TranslateMouseEvent(QMouseEvent& event,
 									BMessage& message);
+			void				_TranslateTabletEvent(QTabletEvent& event,
+									BMessage& message);
+			template<typename Event>
+			void				_TranslatePointerDeviceEvent(Event& event,
+									BMessage& message);
 
 			void				_DeliverMessage(BMessage* message);
 
 private:
 			BWindow*			fWindow;
+
+			BSize				fMinSize;
+			BSize				fMaxSize;
+			BSize				fPreferredSize;
+			BAlignment			fAlignment;
 };
 
 

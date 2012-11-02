@@ -4,6 +4,7 @@
  */
 
 #include "NavigatorView.h"
+#include "NavigatorViewPlatformDelegate.h"
 
 #include <new>
 #include <stdio.h>
@@ -19,7 +20,6 @@
 #include "Document.h"
 #include "RenderManager.h"
 
-#define USE_BEAUTIFUL_DOWN_SCALING 0
 
 enum {
 	MSG_INVALIDATE = 'ivdt'
@@ -27,7 +27,8 @@ enum {
 
 // constructor
 NavigatorView::NavigatorView(Document* document, RenderManager* manager)
-	: BView("document icon", B_WILL_DRAW | B_FRAME_EVENTS | B_PULSE_NEEDED)
+	: PlatformViewMixin<BView>("document icon",
+		B_WILL_DRAW | B_FRAME_EVENTS | B_PULSE_NEEDED)
 	, fDocument(document)
 	, fRenderManager(manager)
 
@@ -38,10 +39,7 @@ NavigatorView::NavigatorView(Document* document, RenderManager* manager)
 	, fRescaleLock("rescale bitmap lock")
 	, fRescaleThread(B_BAD_THREAD_ID)
 {
-	SetViewColor(B_TRANSPARENT_COLOR);
-	SetHighColor(kStripesHigh);
-	SetLowColor(kStripesLow);
-		// used for drawing the stripes pattern
+	fPlatformDelegate = new PlatformDelegate(this);
 }
 
 // destructor
@@ -53,6 +51,8 @@ NavigatorView::~NavigatorView()
 	}
 
 	delete fScaledBitmap;
+
+	delete fPlatformDelegate;
 }
 
 // #pragma mark -
@@ -66,7 +66,7 @@ NavigatorView::MessageReceived(BMessage* message)
 		{
 			BRect area;
 			if (message->FindRect("area", &area) == B_OK) {
-#if USE_BEAUTIFUL_DOWN_SCALING
+#if NAVIGATOR_VIEW_USE_BEAUTIFUL_DOWN_SCALING
 				BAutolock _(&fRescaleLock);
 				if (fDirtyDisplayArea.IsValid())
 					fDirtyDisplayArea = fDirtyDisplayArea | area;
@@ -94,7 +94,7 @@ NavigatorView::MessageReceived(BMessage* message)
 void
 NavigatorView::Pulse()
 {
-#if USE_BEAUTIFUL_DOWN_SCALING
+#if NAVIGATOR_VIEW_USE_BEAUTIFUL_DOWN_SCALING
 	if (!fDirtyDisplayArea.IsValid())
 		return;
 
@@ -176,35 +176,34 @@ NavigatorView::FrameResized(float width, float height)
 	Invalidate();
 }
 
-// Draw
+
 void
-NavigatorView::Draw(BRect updateRect)
+NavigatorView::PlatformDraw(PlatformDrawContext& drawContext)
 {
 	BRect bounds(Bounds());
 	BRegion outside(bounds);
 
 	// This method needs to be fast, since it will be called often.
 	BRect iconBounds = _IconBounds();
-	if (updateRect.Intersects(iconBounds)) {
-#if USE_BEAUTIFUL_DOWN_SCALING
+	if (drawContext.UpdateRect().Intersects(iconBounds)) {
+#if NAVIGATOR_VIEW_USE_BEAUTIFUL_DOWN_SCALING
 		if (fScaledBitmap != NULL) {
 			BAutolock _(&fRescaleLock);
-			DrawBitmapAsync(fScaledBitmap, fScaledBitmap->Bounds(),
-				iconBounds, B_FILTER_BITMAP_BILINEAR);
+			fPlatformDelegate->DrawBitmap(drawContext, fScaledBitmap,
+				iconBounds);
 			outside.Exclude(iconBounds);
 		}
 #else
 		if (fRenderManager->LockDisplay()) {
 			const BBitmap* bitmap = fRenderManager->DisplayBitmap();
-			DrawBitmapAsync(bitmap, bitmap->Bounds(),
-				iconBounds, B_FILTER_BITMAP_BILINEAR);
-			outside.Exclude(iconBounds);
+			fPlatformDelegate->DrawBitmap(drawContext, bitmap, iconBounds);
 			fRenderManager->UnlockDisplay();
+			outside.Exclude(iconBounds);
 		}
 #endif
 	}
 
-	FillRegion(&outside, kStripes);
+	fPlatformDelegate->DrawBackground(drawContext, outside);
 
 	// Access to the RenderManager is save like this, since these members
 	// are modified in the window thread only.
@@ -226,21 +225,10 @@ NavigatorView::Draw(BRect updateRect)
 		floorf(visibleRect.top + 0.5f) - visibleRect.top);
 	visibleRect.right = floorf(visibleRect.right + 0.5f);
 	visibleRect.bottom = floorf(visibleRect.bottom + 0.5f);
-	if (!visibleRect.Contains(iconBounds)) {
-		SetHighColor(255, 255, 255, 170);
-		SetLowColor(0, 0, 0);
-		SetDrawingMode(B_OP_ALPHA);
-		SetBlendingMode(B_CONSTANT_ALPHA, B_ALPHA_OVERLAY);
-		StrokeRect(visibleRect, kDotted);
-		visibleRect.InsetBy(1, 1);
-		StrokeRect(visibleRect, kDotted);
-
-		outside.Set(iconBounds);
-		outside.Exclude(visibleRect);
-		SetHighColor(0, 0, 0, 50);
-		FillRegion(&outside);
-	}
+	if (!visibleRect.Contains(iconBounds))
+		fPlatformDelegate->DrawRect(drawContext, visibleRect, iconBounds);
 }
+
 
 // #pragma mark -
 

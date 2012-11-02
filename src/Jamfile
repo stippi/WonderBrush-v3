@@ -113,6 +113,7 @@ Application WonderBrush :
 	IconButton.cpp
 	IconOptionsControl.cpp
 	LabelPopup.cpp
+	NavigatorViewPlatformDelegate.cpp
 
 	# gui/tools
 	TextToolConfigView.cpp

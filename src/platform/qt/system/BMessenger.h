@@ -2,13 +2,13 @@
 #define PLATFORM_QT_MESSENGER_H
 
 
-#include <Handler.h>
 #include <Message.h>
 #include <SupportDefs.h>
 
 #include <QWeakPointer>
 
 
+class BHandler;
 class BLooper;
 
 
@@ -50,6 +50,10 @@ public:
 									{ return fLooperToken; }
 			int32				HandlerToken() const
 									{ return fHandlerToken; }
+
+			bool				operator==(const BMessenger& other) const;
+			bool				operator!=(const BMessenger& other) const
+									{ return !(*this == other); }
 
 private:
 			struct SynchronousReplyHandler;

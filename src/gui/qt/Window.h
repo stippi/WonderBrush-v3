@@ -41,6 +41,8 @@ private:
 
 			void				_ObjectChanged(const Notifier* object);
 
+			void				_ReplaceWidget(QWidget*& toReplace, QWidget* replacement);
+
 private:
 			Ui::Window*			fUi;
 

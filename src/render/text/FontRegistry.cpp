@@ -20,9 +20,9 @@
 //#include <MenuItem.h>
 #include <Path.h>
 #include <String.h>
-#include <UTF8.h>
 
 //#include "common.h"
+#include "support.h"
 
 //#include "FontPopup.h"
 
@@ -431,13 +431,12 @@ FontRegistry::_ExtractFontNames(FT_Face face, font_file* fontFile,
 					if (fontName.encoding_id == TT_MS_ID_UNICODE_CS) {
 						if (fontName.name_id == TT_NAME_ID_FONT_FAMILY
 							|| fontName.name_id == TT_NAME_ID_PS_NAME) {
-							int32 length = fontName.string_len + 1;
-							char* buffer = (char*)malloc(length);
-							memcpy(buffer, fontName.string, length - 1);
-							buffer[length - 1] = 0;
-							int32 state = 0;
-							convert_to_utf8(B_UNICODE_CONVERSION, buffer,
-								&length, buffer, &length, &state, B_SUBSTITUTE);
+
+							char* buffer = convert_utf16_to_utf8(
+								fontName.string, fontName.string_len);
+							if (buffer == NULL)
+								break;
+
 							if (fontName.name_id == TT_NAME_ID_FONT_FAMILY)
 								fontFile->full_family_name = buffer;
 							else if (fontName.name_id == TT_NAME_ID_PS_NAME)

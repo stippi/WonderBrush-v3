@@ -7,6 +7,12 @@
 #include "PlatformWonderBrush.h"
 
 
+enum {
+	MSG_NEW_WINDOW	= 'nwnd',
+	MSG_WINDOW_QUIT	= 'wndq'
+};
+
+
 class BFile;
 class Document;
 class Layer;
@@ -39,9 +45,14 @@ protected:
 
 
 class WonderBrush : public PlatformWonderBrush<WonderBrushBase> {
+private:
+			typedef PlatformWonderBrush<WonderBrushBase> BaseClass;
+
 public:
-								WonderBrush(int argc, char** argv,
+								WonderBrush(int& argc, char** argv,
 									BRect bounds);
+
+	virtual	void				MessageReceived(BMessage* message);
 
 protected:
 	virtual	void				NewWindow();

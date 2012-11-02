@@ -11,6 +11,7 @@
 #include FT_GLYPH_H
 
 #include <Entry.h>
+#include <List.h>
 #include <Looper.h>
 #include <String.h>
 

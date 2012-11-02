@@ -26,6 +26,7 @@ INCLUDEPATH += icon/include
 QMAKE_CXXFLAGS += -iquote $$PWD/commands
 QMAKE_CXXFLAGS += -iquote $$PWD/gui
 QMAKE_CXXFLAGS += -iquote $$PWD/gui/icons
+QMAKE_CXXFLAGS += -iquote $$PWD/gui/misc
 QMAKE_CXXFLAGS += -iquote $$PWD/gui/misc/qt
 QMAKE_CXXFLAGS += -iquote $$PWD/gui/qt
 QMAKE_CXXFLAGS += -iquote $$PWD/gui/scrollview
@@ -41,6 +42,7 @@ QMAKE_CXXFLAGS += -iquote $$PWD/model/property
 QMAKE_CXXFLAGS += -iquote $$PWD/model/property/specific_properties
 QMAKE_CXXFLAGS += -iquote $$PWD/model/snapshots
 QMAKE_CXXFLAGS += -iquote $$PWD/render
+QMAKE_CXXFLAGS += -iquote $$PWD/render/text
 QMAKE_CXXFLAGS += -iquote $$PWD/support
 QMAKE_CXXFLAGS += -iquote $$PWD/tools
 QMAKE_CXXFLAGS += -iquote $$PWD/tools/brush
@@ -61,9 +63,11 @@ SOURCES += \
 	commands/ObjectAddedCommand.cpp \
 	commands/SetPropertiesCommand.cpp \
 	gui/ToolConfigView.cpp \
+	gui/misc/NavigatorView.cpp \
 	gui/misc/qt/DualSlider.cpp \
 	gui/misc/qt/IconButton.cpp \
 	gui/misc/qt/IconOptionsControl.cpp \
+	gui/misc/qt/NavigatorViewPlatformDelegate.cpp \
 	gui/qt/CanvasView.cpp \
 	gui/qt/Window.cpp \
 	gui/stateview/StateView.cpp \
@@ -124,6 +128,8 @@ SOURCES += \
 	platform/qt/system/BControl.cpp \
 	platform/qt/system/BCursor.cpp \
 	platform/qt/system/BDataIO.cpp \
+	platform/qt/system/BDirectory.cpp \
+	platform/qt/system/BEntry.cpp \
 	platform/qt/system/BFile.cpp \
 	platform/qt/system/BFlattenable.cpp \
 	platform/qt/system/BGradient.cpp \
@@ -131,6 +137,7 @@ SOURCES += \
 	platform/qt/system/BInterfaceDefs.cpp \
 	platform/qt/system/BInvoker.cpp \
 	platform/qt/system/BHandler.cpp \
+	platform/qt/system/BLayoutUtils.cpp \
 	platform/qt/system/BList.cpp \
 	platform/qt/system/BLocker.cpp \
 	platform/qt/system/BLooper.cpp \
@@ -140,6 +147,7 @@ SOURCES += \
 	platform/qt/system/BMessageUtils.cpp \
 	platform/qt/system/BMessenger.cpp \
 	platform/qt/system/BOS.cpp \
+	platform/qt/system/BPath.cpp \
 	platform/qt/system/BPoint.cpp \
 	platform/qt/system/BPointerList.cpp \
 	platform/qt/system/BRect.cpp \
@@ -165,11 +173,13 @@ SOURCES += \
 	render/TextLayout.cpp \
 	render/TextRenderer.cpp \
 	render/VertexSource.cpp \
+	render/text/FontRegistry.cpp \
 	support/AbstractLOAdapter.cpp \
 	support/Command.cpp \
 	support/CommandStack.cpp \
 	support/CompoundCommand.cpp \
 	support/Debug.cpp \
+	support/HashString.cpp \
 	support/Listener.cpp \
 	support/ListenerAdapter.cpp \
 	support/Notifier.cpp \
@@ -193,15 +203,18 @@ SOURCES += \
 #	tools/brush/transform/TransformToolState.cpp
 
 HEADERS  += \
+	WonderBrush.h \
 	cimg/CImg.h \
 	commands/AddObjectsCommand.h \
 	commands/MoveObjectsCommand.h \
 	commands/ObjectAddedCommand.h \
 	commands/SetPropertiesCommand.h \
 	gui/ToolConfigView.h \
+	gui/misc/NavigatorView.h \
 	gui/misc/qt/DualSlider.h \
 	gui/misc/qt/IconButton.h \
 	gui/misc/qt/IconOptionsControl.h \
+	gui/misc/qt/NavigatorViewPlatformDelegate.h \
 	gui/qt/CanvasView.h \
 	gui/qt/Window.h \
 	gui/icons/BrushIcon.h \
@@ -257,6 +270,7 @@ HEADERS  += \
 	platform/qt/PlatformScrollArea.h \
 	platform/qt/PlatformSemaphoreManager.h \
 	platform/qt/PlatformThread.h \
+	platform/qt/PlatformViewMixin.h \
 	platform/qt/PlatformWonderBrush.h \
 	platform/qt/system/ArchivingManagers.h \
 	platform/qt/system/BAlignment.h \
@@ -273,6 +287,8 @@ HEADERS  += \
 	platform/qt/system/BDataIO.h \
 	platform/qt/system/BDebug.h \
 	platform/qt/system/Bdebugger.h \
+	platform/qt/system/BEntry.h \
+	platform/qt/system/BDirectory.h \
 	platform/qt/system/BErrors.h \
 	platform/qt/system/BFile.h \
 	platform/qt/system/BFlattenable.h \
@@ -282,6 +298,7 @@ HEADERS  += \
 	platform/qt/system/Bimage.h \
 	platform/qt/system/BInterfaceDefs.h \
 	platform/qt/system/BInvoker.h \
+	platform/qt/system/BLayoutUtils.h \
 	platform/qt/system/BList.h \
 	platform/qt/system/BLocker.h \
 	platform/qt/system/BLooper.h \
@@ -293,6 +310,7 @@ HEADERS  += \
 	platform/qt/system/BMessenger.h \
 	platform/qt/system/BObjectList.h \
 	platform/qt/system/BOS.h \
+	platform/qt/system/BPath.h \
 	platform/qt/system/BPoint.h \
 	platform/qt/system/BRect.h \
 	platform/qt/system/BRegion.h \
@@ -322,6 +340,8 @@ HEADERS  += \
 	platform/qt/system/include/DataIO.h \
 	platform/qt/system/include/Debug.h \
 	platform/qt/system/include/debugger.h \
+	platform/qt/system/include/Directory.h \
+	platform/qt/system/include/Entry.h \
 	platform/qt/system/include/Errors.h \
 	platform/qt/system/include/File.h \
 	platform/qt/system/include/Flattenable.h \
@@ -331,6 +351,7 @@ HEADERS  += \
 	platform/qt/system/include/image.h \
 	platform/qt/system/include/InterfaceDefs.h \
 	platform/qt/system/include/Invoker.h \
+	platform/qt/system/include/LayoutUtils.h \
 	platform/qt/system/include/List.h \
 	platform/qt/system/include/Locker.h \
 	platform/qt/system/include/Looper.h \
@@ -342,6 +363,7 @@ HEADERS  += \
 	platform/qt/system/include/Messenger.h \
 	platform/qt/system/include/ObjectList.h \
 	platform/qt/system/include/OS.h \
+	platform/qt/system/include/Path.h \
 	platform/qt/system/include/Point.h \
 	platform/qt/system/include/Rect.h \
 	platform/qt/system/include/Region.h \
@@ -373,6 +395,7 @@ HEADERS  += \
 	render/TextLayout.h \
 	render/TextRenderer.h \
 	render/VertexSource.h \
+	render/text/FontRegistry.h \
 	support/AbstractLOAdapter.h \
 	support/AutoLocker.h \
 	support/bitmap_support.h \
@@ -382,6 +405,7 @@ HEADERS  += \
 	support/CompoundCommand.h \
 	support/Debug.h \
 	support/DLList.h \
+	support/HashString.h \
 	support/Listener.h \
 	support/ListenerAdapter.h \
 	support/Notifier.h \
