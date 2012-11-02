@@ -576,6 +576,49 @@ Text::SetSize(int32 textOffset, int32 length, double size)
 	UpdateLayout();
 }
 
+// SetColor
+void
+Text::SetColor(int32 textOffset, int32 length, const rgb_color& color)
+{
+	if (textOffset < 0 || textOffset + length > fCharCount || length == 0)
+		return;
+
+	::Style* style = new(std::nothrow) ::Style();
+	if (style == NULL)
+		return;
+
+	style->SetFillPaint(Paint(color));
+
+	StyleRef styleRef(style, true);
+
+	while (length > 0) {
+		// TODO: Make more efficient
+		const StyleRun* run = fStyleRuns->FindStyleRun(textOffset);
+
+		CharacterStyle* characterStyle = new(std::nothrow) CharacterStyle(
+			Font(run->GetStyle()->GetFont()), styleRef);
+
+		if (characterStyle == NULL)
+			return;
+
+		CharacterStyleRef styleRef(characterStyle, true);
+
+		StyleRun replaceRun(styleRef);
+		replaceRun.SetLength(1);
+
+		if (!fStyleRuns->Insert(textOffset, replaceRun))
+			return;
+
+		fStyleRuns->Remove(textOffset + 1, 1);
+		styleRef.Detach();
+
+		textOffset++;
+		length--;
+	}
+
+	UpdateLayout();
+}
+
 // getTextLayout
 TextLayout&
 Text::getTextLayout()
@@ -617,8 +660,12 @@ Text::UpdateLayout()
 
 		fTextLayout.addStyleRun(
 			start, font, 0.0, 0.0, 0.0,
-			color.red, color.green, color.blue,
-			255, 255, 255,
+			RenderEngine::GammaToLinear(color.red),
+			RenderEngine::GammaToLinear(color.green),
+			RenderEngine::GammaToLinear(color.blue),
+			RenderEngine::GammaToLinear(255),
+			RenderEngine::GammaToLinear(255),
+			RenderEngine::GammaToLinear(255),
 			false, 0, 0, 0,
 			false, 0, 0, 0, 0
 		);
