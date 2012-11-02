@@ -101,6 +101,10 @@ Layer::Layer(const BRect& bounds)
 // destructor
 Layer::~Layer()
 {
+	for (int32 i = fObjects.CountItems() - 1; i >= 0; i--) {
+		Object* object = (Object*)fObjects.ItemAtFast(i);
+		object->RemoveReference();
+	}
 }
 
 // #pragma mark -
@@ -189,7 +193,7 @@ Layer::AddProperties(PropertyObject* object, uint32 flags) const
 bool
 Layer::SetToPropertyObject(const PropertyObject* object, uint32 flags)
 {
-	AutoNotificationSuspender _(this); 
+	AutoNotificationSuspender _(this);
 
 	Object::SetToPropertyObject(object, flags);
 
@@ -258,6 +262,8 @@ Layer::AddObject(Object* object, int32 index)
 {
 //printf("%p->Layer::AddObject(%p, %ld)\n", this, object, index);
 	if (object && fObjects.AddItem(object, index)) {
+		object->AddReference();
+
 		BList listeners(fListeners);
 		int32 count = listeners.CountItems();
 		for (int32 i = 0; i < count; i++) {
@@ -285,7 +291,7 @@ Layer::RemoveObject(int32 index)
 {
 	Object* object = ObjectAt(index);
 //printf("%p->Layer::RemoveObject(%ld): %p\n", this, index, object);
-	if (object) {
+	if (object != NULL) {
 		BRect invalidArea;
 		BoundedObject* boundedObject = dynamic_cast<BoundedObject*>(object);
 		if (boundedObject != NULL)
@@ -310,6 +316,7 @@ Layer::RemoveObject(int32 index)
 		}
 
 		Invalidate(invalidArea, index);
+		object->RemoveReference();
 	}
 	return object;
 }
