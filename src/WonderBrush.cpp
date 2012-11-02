@@ -147,7 +147,7 @@ WonderBrushBase::WonderBrushBase(BRect bounds)
 // #pragma mark - WonderBrush
 
 
-WonderBrush::WonderBrush(int argc, char** argv, BRect bounds)
+WonderBrush::WonderBrush(int& argc, char** argv, BRect bounds)
 	:
 	PlatformWonderBrush<WonderBrushBase>(argc, argv, bounds)
 {

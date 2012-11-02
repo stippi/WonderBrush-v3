@@ -21,7 +21,7 @@ public:
 	using BaseClass::StoreSettings;
 	using BaseClass::RestoreSettings;
 
-	PlatformWonderBrush(int argc, char** argv, BRect bounds)
+	PlatformWonderBrush(int& argc, char** argv, BRect bounds)
 		:
 		QApplication(argc, argv),
 		BaseClass(bounds)

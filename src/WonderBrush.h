@@ -40,7 +40,7 @@ protected:
 
 class WonderBrush : public PlatformWonderBrush<WonderBrushBase> {
 public:
-								WonderBrush(int argc, char** argv,
+								WonderBrush(int& argc, char** argv,
 									BRect bounds);
 
 protected:

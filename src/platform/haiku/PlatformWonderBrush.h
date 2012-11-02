@@ -29,7 +29,7 @@ public:
 	using BaseClass::RestoreSettings;
 	using BaseClass::NotifyFontsLoaded;
 
-	PlatformWonderBrush(int argc, char** argv, BRect bounds)
+	PlatformWonderBrush(int& argc, char** argv, BRect bounds)
 		:
 		BApplication("application/x-vnd.Yellowbites.WonderBrush2"),
 		BaseClass(bounds)
