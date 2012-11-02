@@ -13,6 +13,7 @@
 #include "Style.h"
 
 class BMessageRunner;
+class CurrentColor;
 class Document;
 class Layer;
 class Text;
@@ -20,6 +21,7 @@ class TextLayout;
 
 enum {
 	MSG_LAYOUT_CHANGED			= 'lych',
+	MSG_SET_SELECTION			= 'stsl',
 };
 
 class TextToolState : public DragStateViewState,
@@ -28,6 +30,7 @@ class TextToolState : public DragStateViewState,
 public:
 								TextToolState(StateView* view,
 									Document* document, Selection* selection,
+									CurrentColor* color,
 									const BMessenger& configView);
 	virtual						~TextToolState();
 
@@ -85,6 +88,8 @@ public:
 			void				SetWidth(float width);
 			float				Width() const;
 
+			void				SetColor(const rgb_color& color);
+
 			void				SelectionChanged(int32 startOffset,
 									int32 endOffset);
 
@@ -92,6 +97,7 @@ public:
 
 private:
 			void				_UpdateConfigView() const;
+			void				_UpdateConfigViewSelection() const;
 
 			void				_DrawControls(BView* view);
 
@@ -119,6 +125,7 @@ private:
 
 			bool				_HasSelection() const;
 			int32				_SelectionStart() const;
+			int32				_SelectionEnd() const;
 			int32				_SelectionLength() const;
 
 			void				_AdoptStyleAtOffset(int32 textOffset);
@@ -140,6 +147,7 @@ private:
 
 			Document*			fDocument;
 			Selection*			fSelection;
+			CurrentColor*		fCurrentColor;
 
 			BMessenger			fConfigViewMessenger;
 

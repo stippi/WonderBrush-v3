@@ -55,7 +55,7 @@ TextTool::MakeViewState(StateView* view, Document* document,
 	Selection* selection, CurrentColor* color)
 {
 	return new(std::nothrow) TextToolState(view, document, selection,
-		BMessenger(ConfigView()));
+		color, BMessenger(ConfigView()));
 }
 
 // MakeConfigView

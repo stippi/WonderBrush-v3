@@ -17,6 +17,7 @@
 #include <agg_math.h>
 
 #include "CommandStack.h"
+#include "CurrentColor.h"
 #include "FontCache.h"
 #include "Document.h"
 #include "Layer.h"
@@ -244,7 +245,8 @@ enum {
 
 // constructor
 TextToolState::TextToolState(StateView* view, Document* document,
-		Selection* selection, const BMessenger& configView)
+		Selection* selection, CurrentColor* color,
+		const BMessenger& configView)
 	: DragStateViewState(view)
 
 	, fPickTextState(new(std::nothrow) PickTextState(this))
@@ -255,6 +257,7 @@ TextToolState::TextToolState(StateView* view, Document* document,
 
 	, fDocument(document)
 	, fSelection(selection)
+	, fCurrentColor(color)
 
 	, fConfigViewMessenger(configView)
 
@@ -277,14 +280,16 @@ TextToolState::TextToolState(StateView* view, Document* document,
 		fDocument->RootLayer()->CountObjects());
 
 	fSelection->AddListener(this);
+	fCurrentColor->AddListener(this);
 
-	fStyle.Get()->SetFillPaint(Paint(kBlack));
+	fStyle.Get()->SetFillPaint(Paint(fCurrentColor->Color()));
 }
 
 // destructor
 TextToolState::~TextToolState()
 {
 	SetText(NULL);
+	fCurrentColor->RemoveListener(this);
 	fSelection->RemoveListener(this);
 
 	delete fPickTextState;
@@ -408,12 +413,20 @@ TextToolState::HandleKeyDown(const StateView::KeyEvent& event,
 				break;
 
 			case B_BACKSPACE:
-				if (fCaretOffset > 0)
-					Remove(fCaretOffset - 1, 1);
+				if (_HasSelection()) {
+					Remove(_SelectionStart(), _SelectionLength());
+				} else {
+					if (fCaretOffset > 0)
+						Remove(fCaretOffset - 1, 1);
+				}
 				break;
 			case B_DELETE:
-				if (fCaretOffset < fText->GetCharCount())
-					Remove(fCaretOffset, 1);
+				if (_HasSelection()) {
+					Remove(_SelectionStart(), _SelectionLength());
+				} else {
+					if (fCaretOffset < fText->GetCharCount())
+						Remove(fCaretOffset, 1);
+				}
 				break;
 			case B_INSERT:
 				// TODO: Toggle insert mode
@@ -580,6 +593,9 @@ TextToolState::ObjectChanged(const Notifier* object)
 		UpdateDragState();
 		_UpdateConfigView();
 	}
+	if (object == fCurrentColor) {
+		SetColor(fCurrentColor->Color());
+	}
 }
 
 // #pragma mark -
@@ -685,6 +701,7 @@ TextToolState::SetText(Text* text, bool modifySelection)
 	fCaretAnchorX = 0.0;
 
 	_UpdateConfigView();
+	_UpdateConfigViewSelection();
 }
 
 // OffsetTextBy
@@ -705,14 +722,9 @@ TextToolState::Insert(int32 textOffset, const char* text,
 	bool setCaretOffset)
 {
 	if (fText != NULL) {
-		if (setCaretOffset && fSelectionAnchorOffset != fCaretOffset) {
-			int start = fSelectionAnchorOffset;
-			int end = fCaretOffset;
-			if (start > end) {
-				start = fCaretOffset;
-				end = fSelectionAnchorOffset;
-			}
-			fText->Remove(start, end - start);
+		if (setCaretOffset && _HasSelection()) {
+			int32 start = _SelectionStart();
+			fText->Remove(start, _SelectionLength());
 			textOffset = start;
 		}
 
@@ -778,6 +790,23 @@ TextToolState::SetWidth(float width)
 	}
 }
 
+// SetColor
+void
+TextToolState::SetColor(const rgb_color& color)
+{
+	::Style* style = new(std::nothrow) ::Style();
+	if (style == NULL)
+		return;
+
+	style->SetFillPaint(Paint(color));
+	fStyle.SetTo(style, true);
+
+	if (_HasSelection()) {
+		fText->SetColor(_SelectionStart(), _SelectionLength(), color);
+		UpdateBounds();
+	}
+}
+
 // Width
 float
 TextToolState::Width() const
@@ -834,6 +863,20 @@ TextToolState::_UpdateConfigView() const
 		message.AddString("text", "");
 	}
 
+	fConfigViewMessenger.SendMessage(&message);
+}
+
+// _UpdateConfigViewSelection
+void
+TextToolState::_UpdateConfigViewSelection() const
+{
+	if (!fConfigViewMessenger.IsValid())
+		return;
+
+	BMessage message(MSG_SET_SELECTION);
+
+	message.AddInt32("selection start", _SelectionStart());
+	message.AddInt32("selection end", _SelectionEnd());
 	fConfigViewMessenger.SendMessage(&message);
 }
 
@@ -1024,6 +1067,8 @@ TextToolState::_SetCaretOffset(int32 offset, bool updateAnchor,
 	fCaretOffset = offset;
 	fShowCaret = true;
 
+	_UpdateConfigViewSelection();
+
 	if (updateAnchor) {
 		double x1;
 		double y1;
@@ -1128,6 +1173,13 @@ int32
 TextToolState::_SelectionStart() const
 {
 	return min_c(fCaretOffset, fSelectionAnchorOffset);
+}
+
+// _SelectionEnd
+int32
+TextToolState::_SelectionEnd() const
+{
+	return max_c(fCaretOffset, fSelectionAnchorOffset);
 }
 
 // _SelectionLength
