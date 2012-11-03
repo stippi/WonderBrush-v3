@@ -7,18 +7,36 @@
 
 #include <new>
 
+#include <stdio.h>
+
+#include <Autolock.h>
+
 #include "OptionProperty.h"
+
+#define DEBUG_INSTANCE_COUNT 0
+
+#if DEBUG_INSTANCE_COUNT
+#include "StackTrace.h"
+static vint32 sInstanceCount = 0;
+#endif
 
 // constructor
 StrokeProperties::StrokeProperties()
 	: BaseObject()
-	, fWidth(1.0f)
+	, fWidth(0.0f)
 	, fMiterLimit(4.0f)
 	, fSetProperties(0)
 	, fCapMode(ButtCap)
 	, fJoinMode(MiterJoin)
 	, fStrokePosition(CenterStroke)
 {
+#if DEBUG_INSTANCE_COUNT
+	int32 count = atomic_add(&sInstanceCount, 1);
+	BAutolock _(get_stack_trace_locker());
+	printf("[%ld] %p StrokeProperties(): %ld\n", find_thread(NULL), this,
+		count + 1);
+	print_stack_trace();
+#endif
 }
 
 // constructor
@@ -26,11 +44,18 @@ StrokeProperties::StrokeProperties(float width)
 	: BaseObject()
 	, fWidth(width)
 	, fMiterLimit(4.0f)
-	, fSetProperties(STROKE_POSITION | STROKE_WIDTH)
+	, fSetProperties(STROKE_WIDTH)
 	, fCapMode(ButtCap)
 	, fJoinMode(MiterJoin)
 	, fStrokePosition(CenterStroke)
 {
+#if DEBUG_INSTANCE_COUNT
+	int32 count = atomic_add(&sInstanceCount, 1);
+	BAutolock _(get_stack_trace_locker());
+	printf("[%ld] %p StrokeProperties(%.1f): %ld\n", find_thread(NULL), this,
+		width, count + 1);
+	print_stack_trace();
+#endif
 }
 
 // constructor
@@ -43,6 +68,13 @@ StrokeProperties::StrokeProperties(float width, ::CapMode capMode)
 	, fJoinMode(MiterJoin)
 	, fStrokePosition(CenterStroke)
 {
+#if DEBUG_INSTANCE_COUNT
+	int32 count = atomic_add(&sInstanceCount, 1);
+	BAutolock _(get_stack_trace_locker());
+	printf("[%ld] %p StrokeProperties(%.1f, cap %d): %ld\n", find_thread(NULL),
+		this, width, capMode, count + 1);
+	print_stack_trace();
+#endif
 }
 
 // constructor
@@ -55,6 +87,13 @@ StrokeProperties::StrokeProperties(float width, ::JoinMode joinMode)
 	, fJoinMode(joinMode)
 	, fStrokePosition(CenterStroke)
 {
+#if DEBUG_INSTANCE_COUNT
+	int32 count = atomic_add(&sInstanceCount, 1);
+	BAutolock _(get_stack_trace_locker());
+	printf("[%ld] %p StrokeProperties(%.1f, join %d): %ld\n", find_thread(NULL),
+		this, width, joinMode, count + 1);
+	print_stack_trace();
+#endif
 }
 
 // constructor
@@ -68,6 +107,13 @@ StrokeProperties::StrokeProperties(float width, ::CapMode capMode,
 	, fJoinMode(joinMode)
 	, fStrokePosition(CenterStroke)
 {
+#if DEBUG_INSTANCE_COUNT
+	int32 count = atomic_add(&sInstanceCount, 1);
+	BAutolock _(get_stack_trace_locker());
+	printf("[%ld] %p StrokeProperties(%.1f, cap: %d, join %d): %ld\n",
+		find_thread(NULL), this, width, capMode, joinMode, count + 1);
+	print_stack_trace();
+#endif
 }
 
 // constructor
@@ -82,13 +128,40 @@ StrokeProperties::StrokeProperties(float width, ::CapMode capMode,
 	, fJoinMode(joinMode)
 	, fStrokePosition(CenterStroke)
 {
+#if DEBUG_INSTANCE_COUNT
+	int32 count = atomic_add(&sInstanceCount, 1);
+	BAutolock _(get_stack_trace_locker());
+	printf("[%ld] %p StrokeProperties(%.1f, cap: %d, join %d, %.1f): %ld\n",
+		find_thread(NULL), this, width, capMode, joinMode, miterLimit,
+		count + 1);
+	print_stack_trace();
+#endif
 }
 
 // constructor
 StrokeProperties::StrokeProperties(const StrokeProperties& other)
 	: BaseObject()
 {
+#if DEBUG_INSTANCE_COUNT
+	int32 count = atomic_add(&sInstanceCount, 1);
+	BAutolock _(get_stack_trace_locker());
+	printf("[%ld] %p StrokeProperties(copy): %ld\n", find_thread(NULL), this,
+		count + 1);
+	print_stack_trace();
+#endif
 	*this = other;
+}
+
+// destructor
+StrokeProperties::~StrokeProperties()
+{
+#if DEBUG_INSTANCE_COUNT
+	int32 count = atomic_add(&sInstanceCount, -1);
+	BAutolock _(get_stack_trace_locker());
+	printf("[%ld] %p ~StrokeProperties(): %ld\n", find_thread(NULL), this,
+		count - 1);
+	print_stack_trace();
+#endif
 }
 
 // #pragma mark -
@@ -209,7 +282,7 @@ StrokeProperties::SetToPropertyObject(const PropertyObject* object,
 	// TODO: Allow value for "inherited"
 	if (object->FindProperty(PROPERTY_MITER_LIMIT))
 		SetMiterLimit(object->Value(PROPERTY_MITER_LIMIT, fMiterLimit));
-	
+
 	OptionProperty* capMode = dynamic_cast<OptionProperty*>(
 		object->FindProperty(PROPERTY_CAP_MODE));
 	if (capMode != NULL) {
@@ -260,16 +333,35 @@ StrokeProperties::operator=(const StrokeProperties& other)
 {
 	AutoNotificationSuspender _(this);
 
-	if ((other.fSetProperties & STROKE_WIDTH) != 0)
-		SetWidth(other.fWidth);
-	if ((other.fSetProperties & STROKE_MITER_LIMIT) != 0)
-		SetMiterLimit(other.fMiterLimit);
-	if ((other.fSetProperties & STROKE_CAP_MODE) != 0)
-		SetCapMode(other.CapMode());
-	if ((other.fSetProperties & STROKE_JOIN_MODE) != 0)
-		SetJoinMode(other.JoinMode());
-	if ((other.fSetProperties & STROKE_POSITION) != 0)
-		SetStrokePosition(other.StrokePosition());
+	if (fWidth != other.fWidth) {
+		fWidth = other.fWidth;
+		if ((other.fSetProperties & STROKE_WIDTH) != 0)
+			Notify();
+	}
+
+	if (fMiterLimit != other.fMiterLimit) {
+		fMiterLimit = other.fMiterLimit;
+		if ((other.fSetProperties & STROKE_MITER_LIMIT) != 0)
+			Notify();
+	}
+
+	if (fCapMode != other.fCapMode) {
+		fCapMode = other.fCapMode;
+		if ((other.fSetProperties & STROKE_CAP_MODE) != 0)
+			Notify();
+	}
+
+	if (fJoinMode != other.fJoinMode) {
+		fJoinMode = other.fJoinMode;
+		if ((other.fSetProperties & STROKE_JOIN_MODE) != 0)
+			Notify();
+	}
+
+	if (fStrokePosition != other.fStrokePosition) {
+		fStrokePosition = other.fStrokePosition;
+		if ((other.fSetProperties & STROKE_POSITION) != 0)
+			Notify();
+	}
 
 	if (fSetProperties != other.fSetProperties) {
 		fSetProperties = other.fSetProperties;
@@ -283,9 +375,11 @@ StrokeProperties::operator=(const StrokeProperties& other)
 bool
 StrokeProperties::operator==(const StrokeProperties& other) const
 {
-	return fWidth == other.fWidth && fMiterLimit == other.fMiterLimit
+	return fWidth == other.fWidth
+		&& fMiterLimit == other.fMiterLimit
 		&& fSetProperties == other.fSetProperties
-		&& fCapMode == other.fCapMode && fJoinMode == other.fJoinMode
+		&& fCapMode == other.fCapMode
+		&& fJoinMode == other.fJoinMode
 		&& fStrokePosition == other.fStrokePosition;
 }
 
@@ -351,7 +445,7 @@ StrokeProperties::SetCapMode(::CapMode capMode)
 void
 StrokeProperties::SetJoinMode(::JoinMode joinMode)
 {
-	if ((fSetProperties & STROKE_CAP_MODE) != 0
+	if ((fSetProperties & STROKE_JOIN_MODE) != 0
 		&& JoinMode() == joinMode) {
 		return;
 	}
@@ -378,6 +472,8 @@ size_t
 StrokeProperties::HashKey() const
 {
 	// TODO: ...
-	return 0;
+//	return 0;
+	return (size_t)((int)(fWidth * 10) ^ (int)(fMiterLimit * 10)
+		^ fSetProperties ^ fCapMode ^ fJoinMode ^ fStrokePosition);
 }
 
