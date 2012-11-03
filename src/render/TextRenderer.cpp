@@ -48,7 +48,8 @@ TextRenderer::TextRenderer(FontCache* fontCache)
 
 	fBaseMatrix(),
 	fMatrix(),
-	fGlyph(getFontManager().path_adaptor()),
+	fPathAdaptor(),
+	fGlyph(fPathAdaptor),
     fTransformedGlyph(fGlyph, fMatrix),
     fFauxWeightGlyph(fTransformedGlyph),
 
@@ -150,6 +151,16 @@ TextRenderer::loadFont(const char* fontFilePath, double height)
 }
 
 
+void
+TextRenderer::initPathAdaptor(const agg::glyph_cache* glyph, double x, double y,
+	double scale)
+{
+	if (glyph != NULL && glyph->data_type == agg::glyph_data_outline) {
+		fPathAdaptor.init(glyph->data, glyph->data_size, x, y, scale);
+	}
+}
+
+
 double
 TextRenderer::drawString(const char* text, double x, double y)
 {
@@ -228,7 +239,7 @@ TextRenderer::drawString(RendererType& renderer,
 			fontManager.add_kerning(&x, &y);
 		}
 
-		fontManager.init_embedded_adaptors(glyph, 0, 0);
+		initPathAdaptor(glyph, 0, 0);
 
 		if (glyph->data_type == agg::glyph_data_outline) {
 			double ty = fHinting ? floor(y + 0.5) : y;
@@ -383,8 +394,6 @@ TextRenderer::drawText(RendererType& renderer,
 
 	agg::rect_i clipRect = fRenderer.clip_box();
 
-	FontManager& fontManager = getFontManager();
-
 	for (int index = 0; index < count; index++) {
 
 		const agg::glyph_cache* glyph;
@@ -408,7 +417,7 @@ TextRenderer::drawText(RendererType& renderer,
 			&& xOffset + (x + glyph->bounds.x1) / scale <= clipRect.x2
 			&& ty + glyph->bounds.y2 >= clipRect.y1
 			&& ty + glyph->bounds.y1 <= clipRect.y2) {
-			fontManager.init_embedded_adaptors(glyph, 0, 0);
+			initPathAdaptor(glyph, 0, 0);
 
 			fMatrix.reset();
 			fMatrix *= agg::trans_affine_scaling(

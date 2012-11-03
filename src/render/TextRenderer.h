@@ -46,7 +46,8 @@ typedef agg::font_cache_manager<FontEngine>				FontManager;
 
 typedef agg::gamma_lut<>								GammaLUT;
 
-typedef agg::conv_curve<FontManager::path_adaptor_type>	Glyph;
+typedef agg::serialized_integer_path_adaptor<int32, 6>	PathAdaptor;
+typedef agg::conv_curve<PathAdaptor>					Glyph;
 typedef agg::conv_transform<Glyph, Transformation>		TransformedGlyph;
 typedef FauxWeight<TransformedGlyph>					FauxWeightGlyph;
 
@@ -150,6 +151,9 @@ public:
 
 
 private:
+	void initPathAdaptor(const agg::glyph_cache* glyph, double x, double y,
+		double scale = 1.0);
+
 	template<class RendererType>
 	double drawString(RendererType& renderer,
 		const char* text, double x, double y, unsigned subpixelScale);
@@ -206,6 +210,7 @@ private:
 	Transformation			fMatrix;
 
 	// AGG-Pipeline to process vector glyphs (path->transformation->faux weight)
+	PathAdaptor				fPathAdaptor;
 	Glyph					fGlyph;
 	TransformedGlyph		fTransformedGlyph;
     FauxWeightGlyph			fFauxWeightGlyph;
