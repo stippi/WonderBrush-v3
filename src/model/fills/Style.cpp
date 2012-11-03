@@ -28,7 +28,7 @@ Style::Style()
 {
 	SetFillPaint(Paint::EmptyPaint());
 	SetStrokePaint(Paint::EmptyPaint());
-	SetStrokeProperties(::StrokeProperties(1.0f, ButtCap, MiterJoin, 4.0f));
+	SetStrokeProperties(::StrokeProperties());
 }
 
 // constructor
@@ -202,7 +202,7 @@ Style::SetStrokeProperties(const ::StrokeProperties& properties)
 void
 Style::UnsetStrokeProperties()
 {
-	uint64 properties = STROKE_WIDTH | STROKE_JOIN_MODE | STROKE_CAP_MODE 
+	uint64 properties = STROKE_WIDTH | STROKE_JOIN_MODE | STROKE_CAP_MODE
 		| STROKE_MITER_LIMIT;
 	_UnsetProperty(fStrokeProperties, _StrokePropertiesCache(), properties);
 }
