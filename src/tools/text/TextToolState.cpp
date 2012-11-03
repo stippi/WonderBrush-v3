@@ -493,7 +493,7 @@ TextToolState::Bounds() const
 	BRect bounds = fText->Bounds();
 	bounds.right = fText->Width();
 	bounds.InsetBy(-15, -15);
-	TransformObjectToCanvas(&bounds);
+	TransformObjectToView(&bounds);
 	return bounds;
 }
 
@@ -520,16 +520,16 @@ TextToolState::DragStateFor(BPoint canvasWhere, float zoomLevel) const
 		BPoint objectWhere = canvasWhere;
 		TransformCanvasToObject(&objectWhere);
 
-		BPoint widthOffset(fText->Width(), -10.0f / scaleY);
+		BPoint widthOffset(fText->Width(), -10.0f / scaleY / zoomLevel);
 		if (point_point_distance(objectWhere, widthOffset) < inset)
 			return fDragWidthState;
 
-		BPoint leftTop(0.0, -10.0f / scaleY);
+		BPoint leftTop(0.0, -10.0f / scaleY / zoomLevel);
 		if (point_point_distance(objectWhere, leftTop) < inset)
 			return fDragLeftTopState;
 
 		BRect bounds = fText->Bounds();
-		bounds.top -= 10.0f / scaleY;
+		bounds.top -= 10.0f / scaleY / zoomLevel;
 		bounds.InsetBy(-inset, -inset);
 
 		if (bounds.Contains(objectWhere))
