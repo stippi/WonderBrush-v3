@@ -47,6 +47,8 @@ public:
 								StrokeProperties(
 									const StrokeProperties& other);
 
+								~StrokeProperties();
+
 	// BaseObject interface
 	virtual	status_t			Unarchive(const BMessage* archive);
 	virtual	status_t			Archive(BMessage* into,
