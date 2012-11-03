@@ -63,17 +63,15 @@ TextSnapshot::Render(RenderEngine& engine, RenderBuffer* bitmap,
 	);
 	renderer.setTransformation(LayoutedState().Matrix);
 	renderer.setGrayScale(true);
-	
-//	if (FontCache::getInstance()->ReadLock()) {
-	if (FontCache::getInstance()->WriteLock()) {
+
+	if (FontCache::getInstance()->ReadLock()) {
 		renderer.drawText(
 			const_cast<TextLayout*>(&fTextLayout),
 			0, 0, -1, -1,
 			Color(255, 255, 255), Color(80, 128, 255),
 			TEXT_TRANSPARENT
 		);
-//		FontCache::getInstance()->ReadUnlock();
-		FontCache::getInstance()->WriteUnlock();
+		FontCache::getInstance()->ReadUnlock();
 	}
 }
 
