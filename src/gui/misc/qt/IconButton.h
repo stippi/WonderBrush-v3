@@ -3,6 +3,7 @@
 
 
 #include <Handler.h>
+#include <GraphicsDefs.h>
 #include <Invoker.h>
 #include <Rect.h>
 #include <SupportDefs.h>
@@ -40,6 +41,10 @@ public:
 
 			status_t			SetIcon(int32 resourceID, int32 size);
 			status_t			SetIcon(const BBitmap* bitmap);
+			status_t			SetIcon(const unsigned char* bitsFromQuickRes,
+										uint32 width, uint32 height,
+										color_space format,
+										bool convertToBW = false);
 
 			void				TrimIcon(BRect bounds);
 
