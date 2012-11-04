@@ -271,7 +271,7 @@ struct HashKey32 {
 
 	uint32 GetHashCode() const
 	{
-		return (uint32)value;
+		return (uint32)(addr_t)value;
 	}
 
 	HashKey32<Value>& operator=(const HashKey32<Value>& other)
