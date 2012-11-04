@@ -8,6 +8,7 @@
 #include "CommandStack.h"
 #include "Document.h"
 #include "Layer.h"
+#include "PickToolStatePlatformDelegate.h"
 
 enum {
 	DRAGGING_NONE = 0,
@@ -114,7 +115,9 @@ PickToolState::PickToolState(StateView* parent, Layer* layer,
 	fShapeLOAdapter(parent),
 
 	fDragMode(DRAGGING_NONE),
-	fLastDragPos(0.0, 0.0)
+	fLastDragPos(0.0, 0.0),
+
+	fPlatformDelegate(new PlatformDelegate(this))
 {
 	fSelection->AddListener(this);
 }
@@ -125,6 +128,8 @@ PickToolState::~PickToolState()
 	fSelection->RemoveListener(this);
 	SetRect(NULL);
 	SetShape(NULL);
+
+	delete fPlatformDelegate;
 }
 
 // MessageReceived
@@ -261,7 +266,7 @@ PickToolState::MouseUp()
 
 // Draw
 void
-PickToolState::Draw(BView* view, BRect updateRect)
+PickToolState::Draw(PlatformDrawContext& drawContext)
 {
 	if (!fDocument->ReadLock())
 		return;
@@ -276,11 +281,7 @@ PickToolState::Draw(BView* view, BRect updateRect)
 
 	if (r.IsValid()) {
 		fView->ConvertFromCanvas(&r);
-		view->SetHighColor(0, 0, 0);
-		view->StrokeRect(r);
-		r.InsetBy(-1, -1);
-		view->SetHighColor(255, 255, 255);
-		view->StrokeRect(r);
+		fPlatformDelegate->DrawRect(drawContext, r);
 	}
 }
 

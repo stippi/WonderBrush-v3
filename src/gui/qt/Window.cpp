@@ -7,6 +7,7 @@
 #include "Document.h"
 #include "IconButton.h"
 #include "NavigatorView.h"
+#include "PickTool.h"
 #include "RenderManager.h"
 #include "Tool.h"
 #include "ToolConfigView.h"
@@ -124,7 +125,7 @@ void
 Window::_InitTools()
 {
 	// create canvas tools
-//	AddTool(new(std::nothrow) PickTool());
+	AddTool(new(std::nothrow) PickTool());
 //	AddTool(new(std::nothrow) TransformTool());
 	AddTool(new(std::nothrow) BrushTool());
 //	AddTool(new(std::nothrow) TextTool());

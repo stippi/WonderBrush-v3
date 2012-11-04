@@ -47,6 +47,7 @@ QMAKE_CXXFLAGS += -iquote $$PWD/support
 QMAKE_CXXFLAGS += -iquote $$PWD/tools
 QMAKE_CXXFLAGS += -iquote $$PWD/tools/brush
 QMAKE_CXXFLAGS += -iquote $$PWD/tools/pick
+QMAKE_CXXFLAGS += -iquote $$PWD/tools/pick/qt
 QMAKE_CXXFLAGS += -iquote $$PWD/tools/text
 QMAKE_CXXFLAGS += -iquote $$PWD/tools/transform
 
@@ -193,14 +194,14 @@ SOURCES += \
 	tools/TransformViewState.cpp \
 	tools/brush/BrushTool.cpp \
 	tools/brush/BrushToolState.cpp \
-#	tools/brush/pick/PickTool.cpp \
-#	tools/brush/pick/PickToolState.cpp \
-#	tools/brush/transform/ChannelTransform.cpp \
+	tools/pick/PickTool.cpp \
+	tools/pick/PickToolState.cpp
 #	tools/text/TextTool.cpp \
 #	tools/text/TextToolState.cpp \
-#	tools/brush/transform/TransformableGroup.cpp \
-#	tools/brush/transform/TransformTool.cpp \
-#	tools/brush/transform/TransformToolState.cpp
+#	tools/transform/ChannelTransform.cpp \
+#	tools/transform/TransformableGroup.cpp \
+#	tools/transform/TransformTool.cpp \
+#	tools/transform/TransformToolState.cpp
 
 HEADERS  += \
 	WonderBrush.h \
@@ -422,8 +423,9 @@ HEADERS  += \
 	tools/TransformViewState.h \
 	tools/brush/BrushTool.h \
 	tools/brush/BrushToolState.h \
-#	tools/pick/PickTool.h \
-#	tools/pick/PickToolState.h \
+	tools/pick/PickTool.h \
+	tools/pick/PickToolState.h \
+	tools/pick/qt/PickToolStatePlatformDelegate.h \
 #	tools/text/TextTool.h \
 #	tools/text/TextToolState.h \
 #	tools/transform/ChannelTransform.h \

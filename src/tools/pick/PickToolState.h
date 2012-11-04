@@ -58,7 +58,7 @@ public:
 	virtual void				MouseMoved(const MouseInfo& info);
 	virtual Command*			MouseUp();
 
-	virtual void				Draw(BView* view, BRect updateRect);
+	virtual void				Draw(PlatformDrawContext& drawContext);
 
 	virtual	BRect				Bounds() const;
 
@@ -104,6 +104,12 @@ private:
 
 			uint32				fDragMode;
 			BPoint				fLastDragPos;
+
+private:
+			class PlatformDelegate;
+
+private:
+			PlatformDelegate*	fPlatformDelegate;
 };
 
 #endif // PICK_TOOL_STATE_H
