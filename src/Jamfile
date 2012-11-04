@@ -175,7 +175,10 @@ Application WonderBrush :
 	TextSnapshot.cpp
 
 	# model/text
+	CharacterStyle.cpp
 	Font.cpp
+	StyleRun.cpp
+	StyleRunList.cpp
 
 	# platform/<platform>
 	platform_bitmap_support.cpp

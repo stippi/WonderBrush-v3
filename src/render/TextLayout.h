@@ -10,71 +10,6 @@
 
 class FontCache;
 
-struct StyleRun {
-	int							start;
-
-	Font						font;
-
-	double						ascent;
-	double						descent;
-	double						width;
-
-	int							fgRed;
-	int							fgGreen;
-	int							fgBlue;
-
-	int							bgRed;
-	int							bgGreen;
-	int							bgBlue;
-
-	bool						strikeOut;
-	int							strikeRed;
-	int							strikeGreen;
-	int							strikeBlue;
-
-	bool						underline;
-	unsigned					underlineStyle;
-	int							underlineRed;
-	int							underlineGreen;
-	int							underlineBlue;
-
-	// TODO: Probably needs metrics as well to define custom gaps in the text
-	// where the client can paint images that are wrapped like ordinary glyphs.
-};
-
-
-struct GlyphInfo {
-	unsigned					charCode;
-
-	// TODO: This should be referenceable. Then the layout process can
-	// happen in the UI thread while the rendering can happen asynchronously.
-	// The UI thread may decide to throw away font cache entries, but the
-	// refernces of any actually used glyphs would remain valid in each
-	// TextLayout.
-	const agg::glyph_cache*		glyph;
-
-	double						x;
-	double						y;
-	double						advanceX;
-
-	double						maxAscend;
-	double						maxDescend;
-
-	unsigned					lineIndex;
-
-	StyleRun*					styleRun;
-};
-
-
-struct LineInfo {
-	unsigned					startOffset;
-	double						y;
-	double						height;
-	double						maxAscent;
-	double						maxDescent;
-};
-
-
 static const unsigned MOVEMENT_CHAR				= 1 << 0;
 static const unsigned MOVEMENT_CLUSTER			= 1 << 1;
 static const unsigned MOVEMENT_WORD				= 1 << 2;
@@ -92,6 +27,70 @@ static const unsigned SELECTION_LAST_LINE		= 1 << 20;
 static const unsigned TEXT_TRANSPARENT			= 1 << 30;
 
 class TextLayout {
+private:
+	struct StyleRun {
+		int							start;
+
+		Font						font;
+
+		double						ascent;
+		double						descent;
+		double						width;
+
+		int							fgRed;
+		int							fgGreen;
+		int							fgBlue;
+
+		int							bgRed;
+		int							bgGreen;
+		int							bgBlue;
+
+		bool						strikeOut;
+		int							strikeRed;
+		int							strikeGreen;
+		int							strikeBlue;
+
+		bool						underline;
+		unsigned					underlineStyle;
+		int							underlineRed;
+		int							underlineGreen;
+		int							underlineBlue;
+
+		// TODO: Probably needs metrics as well to define custom gaps in the
+		// text where the client can paint images that are wrapped like
+		// ordinary glyphs.
+	};
+
+	struct GlyphInfo {
+		unsigned					charCode;
+
+		// TODO: This should be referenceable. Then the layout process can
+		// happen in the UI thread while the rendering can happen asynchronously.
+		// The UI thread may decide to throw away font cache entries, but the
+		// refernces of any actually used glyphs would remain valid in each
+		// TextLayout.
+		const agg::glyph_cache*		glyph;
+
+		double						x;
+		double						y;
+		double						advanceX;
+
+		double						maxAscend;
+		double						maxDescend;
+
+		unsigned					lineIndex;
+
+		StyleRun*					styleRun;
+	};
+
+	struct LineInfo {
+		unsigned					startOffset;
+		double						y;
+		double						height;
+		double						maxAscent;
+		double						maxDescent;
+	};
+
 public:
 	TextLayout(FontCache* fontCache);
 	TextLayout(const TextLayout& layout);
@@ -327,6 +326,8 @@ private:
 		StyleRun* styleRun);
 	bool appendLine(unsigned startOffset, double y, double lineHeight,
 		double maxAscent, double maxDescent);
+
+	static inline bool canEndLine(GlyphInfo* buffer, int offset, int count);
 
 private:
 	FontCache*			fFontCache;
