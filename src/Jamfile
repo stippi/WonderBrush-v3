@@ -15,6 +15,7 @@ local sourceDirs =
 	model/fills
 	model/objects
 	model/snapshots
+	model/text
 	platform/$(WONDERBRUSH_PLATFORM)
 	render
 	render/text
@@ -70,6 +71,7 @@ SubDirHdrs [ FDirName $(TOP) src model property ] ;
 SubDirHdrs [ FDirName $(TOP) src model property
 	specific_properties ] ;
 SubDirHdrs [ FDirName $(TOP) src model snapshots ] ;
+SubDirHdrs [ FDirName $(TOP) src model text ] ;
 SubDirHdrs [ FDirName $(TOP) src render ] ;
 SubDirHdrs [ FDirName $(TOP) src support ] ;
 SubDirHdrs [ FDirName $(TOP) src tools ] ;
@@ -172,12 +174,14 @@ Application WonderBrush :
 	Text.cpp
 	TextSnapshot.cpp
 
+	# model/text
+	Font.cpp
+
 	# platform/<platform>
 	platform_bitmap_support.cpp
 	platform_support.cpp
 
 	# render
-	Font.cpp
 	FontCache.cpp
 	GaussFilter.cpp
 	LayoutContext.cpp
