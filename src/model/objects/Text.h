@@ -13,6 +13,10 @@
 #include "Styleable.h"
 #include "TextLayout.h"
 
+class CharacterStyle;
+class StyleRun;
+class StyleRunList;
+
 class Text : public Styleable {
 public:
 								Text(const rgb_color& color);
@@ -66,13 +70,6 @@ public:
 			TextLayout&			getTextLayout();
 
 			void				UpdateLayout();
-
-private:
-			class CharacterStyle;
-			typedef Reference<Text::CharacterStyle>		CharacterStyleRef;
-
-			class StyleRun;
-			class StyleRunList;
 
 private:
 			BString				fText;

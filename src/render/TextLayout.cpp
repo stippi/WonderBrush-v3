@@ -89,8 +89,8 @@ getCharClassification(unsigned charCode)
 }
 
 
-static inline bool
-canEndLine(GlyphInfo* buffer, int offset, int count)
+inline bool
+TextLayout::canEndLine(GlyphInfo* buffer, int offset, int count)
 {
 	if (offset == count - 1)
 		return true;
