@@ -29,6 +29,8 @@ public:
 									QWidget* parent = 0);
 								~Window();
 
+	virtual	void				MessageReceived(BMessage* message);
+
 			void				AddTool(Tool* tool);
 
 			status_t			StoreSettings(BMessage& settings) const;
@@ -42,6 +44,10 @@ private:
 			void				_ObjectChanged(const Notifier* object);
 
 			void				_ReplaceWidget(QWidget*& toReplace, QWidget* replacement);
+
+private slots:
+			void				_UndoActionInvoked();
+			void				_RedoActionInvoked();
 
 private:
 			Ui::Window*			fUi;
