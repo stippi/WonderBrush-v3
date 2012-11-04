@@ -4,6 +4,8 @@
 #include <Message.h>
 #include <View.h>
 
+#include "PlatformViewMixin.h"
+
 class BMessageFilter;
 class Command;
 class CommandStack;
@@ -26,7 +28,7 @@ struct MouseInfo {
 			BMessage			dragMessage;
 };
 
-class StateView : public BView {
+class StateView : public PlatformViewMixin<BView> {
 public:
 	class KeyEvent;
 
@@ -40,7 +42,7 @@ public:
 	// BView interface
 	virtual	void				AttachedToWindow();
 	virtual	void				DetachedFromWindow();
-	virtual	void				Draw(BRect updateRect);
+	virtual void				PlatformDraw(PlatformDrawContext& drawContext);
 	virtual	void				MessageReceived(BMessage* message);
 
 	virtual	void				MouseDown(BPoint where);
@@ -57,7 +59,7 @@ public:
 			BRect				ViewStateBounds();
 	virtual	void				ViewStateBoundsChanged();
 
-			void				Draw(BView* into, BRect updateRect);
+			void				Draw(PlatformDrawContext& drawContext);
 
 	virtual	bool				MouseWheelChanged(BPoint where,
 									float x, float y);

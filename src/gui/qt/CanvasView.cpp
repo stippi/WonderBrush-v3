@@ -429,6 +429,7 @@ CanvasView::paintEvent(QPaintEvent* event)
 	}
 
 	//	StateView::Draw(this, updateRect);
+	StateView::paintEvent(event);
 }
 
 

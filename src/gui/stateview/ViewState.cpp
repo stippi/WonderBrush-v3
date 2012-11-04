@@ -45,7 +45,7 @@ ViewState::Cleanup()
 
 // Draw
 void
-ViewState::Draw(BView* into, BRect updateRect)
+ViewState::Draw(PlatformDrawContext& drawContext)
 {
 }
 
