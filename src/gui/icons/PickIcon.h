@@ -1,3 +1,5 @@
+#include <GraphicsDefs.h>
+
 const uint32 kPickIconWidth = 20;
 const uint32 kPickIconHeight = 20;
 const color_space kPickIconFormat = B_RGBA32;
