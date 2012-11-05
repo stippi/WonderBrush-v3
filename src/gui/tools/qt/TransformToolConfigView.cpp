@@ -8,7 +8,8 @@
 TransformToolConfigView::TransformToolConfigView(::Tool* tool)
 	:
 	ToolConfigView(tool),
-	fUi(new Ui::TransformToolConfigView)
+	fUi(new Ui::TransformToolConfigView),
+	fNotificationsEnabled(true)
 {
 	fUi->setupUi(this);
 
@@ -56,11 +57,15 @@ TransformToolConfigView::MessageReceived(BMessage* message)
 			message->FindDouble("scale x", &scaleX);
 			message->FindDouble("scale y", &scaleY);
 
+			fNotificationsEnabled = false;
+
 			_SetValue(fUi->translationXEdit, translation.x);
 			_SetValue(fUi->translationYEdit, translation.y);
 			_SetValue(fUi->rotationEdit, rotation);
 			_SetValue(fUi->scaleXEdit, scaleX);
 			_SetValue(fUi->scaleYEdit, scaleY);
+
+			fNotificationsEnabled = true;
 			break;
 		}
 
@@ -74,48 +79,60 @@ TransformToolConfigView::MessageReceived(BMessage* message)
 void
 TransformToolConfigView::_TranslationXChanged()
 {
-	fTool->SetOption(TransformTool::TRANSLATION_X,
-		(float)fUi->translationXEdit->value());
+	if (fNotificationsEnabled) {
+		fTool->SetOption(TransformTool::TRANSLATION_X,
+			(float)fUi->translationXEdit->value());
+	}
 }
 
 
 void
 TransformToolConfigView::_TranslationYChanged()
 {
-	fTool->SetOption(TransformTool::TRANSLATION_Y,
-		(float)fUi->translationYEdit->value());
+	if (fNotificationsEnabled) {
+		fTool->SetOption(TransformTool::TRANSLATION_Y,
+			(float)fUi->translationYEdit->value());
+	}
 }
 
 
 void
 TransformToolConfigView::_RotationChanged()
 {
-	fTool->SetOption(TransformTool::ROTATION,
-		(float)fUi->rotationEdit->value());
+	if (fNotificationsEnabled) {
+		fTool->SetOption(TransformTool::ROTATION,
+			(float)fUi->rotationEdit->value());
+	}
 }
 
 
 void
 TransformToolConfigView::_ScaleXChanged()
 {
-	fTool->SetOption(TransformTool::SCALE_X,
-		(float)fUi->scaleXEdit->value());
+	if (fNotificationsEnabled) {
+		fTool->SetOption(TransformTool::SCALE_X,
+			(float)fUi->scaleXEdit->value());
+	}
 }
 
 
 void
 TransformToolConfigView::_ScaleYChanged()
 {
-	fTool->SetOption(TransformTool::SCALE_Y,
-		(float)fUi->scaleYEdit->value());
+	if (fNotificationsEnabled) {
+		fTool->SetOption(TransformTool::SCALE_Y,
+			(float)fUi->scaleYEdit->value());
+	}
 }
 
 
 void
 TransformToolConfigView::_SubpixelsChanged()
 {
-	fTool->SetOption(TransformTool::SUBPIXELS,
-		(float)fUi->subpixelsCheckBox->isChecked());
+	if (fNotificationsEnabled) {
+		fTool->SetOption(TransformTool::SUBPIXELS,
+			(float)fUi->subpixelsCheckBox->isChecked());
+	}
 }
 
 

@@ -40,6 +40,8 @@ private slots:
 
 private:
 			Ui::TransformToolConfigView* fUi;
+
+			bool				fNotificationsEnabled;
 };
 
 
