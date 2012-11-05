@@ -75,6 +75,7 @@ SOURCES += \
 	gui/stateview/StateView.cpp \
 	gui/stateview/ViewState.cpp \
 	gui/tools/qt/BrushToolConfigView.cpp \
+	gui/tools/qt/TextToolConfigView.cpp \
 	gui/tools/qt/TransformToolConfigView.cpp \
 	model/property/CommonPropertyIDs.cpp \
 	model/BaseObject.cpp \
@@ -198,8 +199,8 @@ SOURCES += \
 	tools/brush/BrushToolState.cpp \
 	tools/pick/PickTool.cpp \
 	tools/pick/PickToolState.cpp \
-#	tools/text/TextTool.cpp \
-#	tools/text/TextToolState.cpp \
+	tools/text/TextTool.cpp \
+	tools/text/TextToolState.cpp \
 	tools/transform/ChannelTransform.cpp \
 	tools/transform/TransformableGroup.cpp \
 	tools/transform/TransformTool.cpp \
@@ -226,6 +227,7 @@ HEADERS  += \
 	gui/stateview/StateView.h \
 	gui/stateview/ViewState.h \
 	gui/tools/qt/BrushToolConfigView.h \
+	gui/tools/qt/TextToolConfigView.h \
 	gui/tools/qt/TransformToolConfigView.h \
 	model/BaseObject.h \
 	model/Selectable.h \
@@ -431,8 +433,8 @@ HEADERS  += \
 	tools/pick/PickTool.h \
 	tools/pick/PickToolState.h \
 	tools/pick/qt/PickToolStatePlatformDelegate.h \
-#	tools/text/TextTool.h \
-#	tools/text/TextToolState.h \
+	tools/text/TextTool.h \
+	tools/text/TextToolState.h \
 	tools/transform/ChannelTransform.h \
 	tools/transform/TransformableGroup.h \
 	tools/transform/TransformTool.h \
@@ -442,7 +444,8 @@ HEADERS  += \
 FORMS += \
 	gui/qt/Window.ui \
     gui/tools/qt/BrushToolConfigView.ui \
-    gui/tools/qt/TransformToolConfigView.ui
+	gui/tools/qt/TextToolConfigView.ui \
+	gui/tools/qt/TransformToolConfigView.ui
 
 RESOURCES += \
     wonderbrush2.qrc

@@ -117,11 +117,9 @@ Application WonderBrush :
 	LabelPopup.cpp
 	NavigatorViewPlatformDelegate.cpp
 
-	# gui/tools
-	TextToolConfigView.cpp
-
 	# gui/tools/<platform>
 	BrushToolConfigView.cpp
+	TextToolConfigView.cpp
 	TransformToolConfigView.cpp
 
 	# gui (WonderBrush specific)
