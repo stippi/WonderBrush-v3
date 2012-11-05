@@ -4,8 +4,6 @@
 
 #include "PickToolState.h"
 
-#include <QPainter>
-
 
 class PickToolState::PlatformDelegate {
 public:
