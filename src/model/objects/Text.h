@@ -52,7 +52,16 @@ public:
 									const char* utf8String, const Font& font,
 									const StyleRef& style);
 
+			void				Insert(int32 textOffset,
+									const BString& utf8String,
+									const StyleRunList& styleRuns);
+
 			void				Remove(int32 textOffset, int32 length);
+
+			BString				GetSubString(int32 textOffset,
+									int32 length) const;
+			StyleRunList*		GetStyleRuns(int32 textOffset,
+									int32 length) const;
 
 			void				SetStyle(int32 textOffset, int32 length,
 									const Font& font, const StyleRef& style);

@@ -18,10 +18,12 @@
 
 #include "CommandStack.h"
 #include "CurrentColor.h"
-#include "FontCache.h"
 #include "Document.h"
+#include "FontCache.h"
+#include "InsertTextCommand.h"
 #include "Layer.h"
 #include "ObjectAddedCommand.h"
+#include "RemoveTextCommand.h"
 #include "support.h"
 #include "Text.h"
 #include "ui_defines.h"
@@ -724,12 +726,23 @@ TextToolState::Insert(int32 textOffset, const char* text,
 	if (fText != NULL) {
 		if (setCaretOffset && _HasSelection()) {
 			int32 start = _SelectionStart();
-			fText->Remove(start, _SelectionLength());
+//			fText->Remove(start, _SelectionLength());
+			View()->PerformCommand(
+				new(std::nothrow) RemoveTextCommand(
+					fText, start, _SelectionLength()
+				)
+			);
 			textOffset = start;
 		}
 
-		fText->Insert(textOffset, text, Font(fFontFamily, fFontStyle, fSize),
-			fStyle);
+//		fText->Insert(textOffset, text, Font(fFontFamily, fFontStyle, fSize),
+//			fStyle);
+		View()->PerformCommand(
+			new(std::nothrow) InsertTextCommand(
+				fText, textOffset, text, Font(fFontFamily, fFontStyle, fSize),
+				fStyle
+			)
+		);
 
 		if (setCaretOffset) {
 			_SetCaretOffset(textOffset + BString(text).CountChars(), true,
@@ -746,7 +759,10 @@ void
 TextToolState::Remove(int32 textOffset, int32 length, bool setCaretOffset)
 {
 	if (fText != NULL) {
-		fText->Remove(textOffset, length);
+//		fText->Remove(textOffset, length);
+		View()->PerformCommand(
+			new(std::nothrow) RemoveTextCommand(fText, textOffset, length)
+		);
 		if (setCaretOffset) {
 			_SetCaretOffset(textOffset, true, false, true);
 		} else

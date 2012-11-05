@@ -180,6 +180,25 @@ Text::Insert(int32 textOffset, const char* utf8String, const Font& font,
 	UpdateLayout();
 }
 
+// Insert
+void
+Text::Insert(int32 textOffset, const BString& utf8String,
+	const StyleRunList& styleRuns)
+{
+	if (textOffset < 0 || textOffset > fCharCount)
+		return;
+
+	int32 charCount = utf8String.CountChars();
+
+	if (!fStyleRuns->Insert(textOffset, styleRuns))
+		return;
+
+	fText.InsertChars(utf8String, textOffset);
+	fCharCount += charCount;
+
+	UpdateLayout();
+}
+
 // Remove
 void
 Text::Remove(int32 textOffset, int32 length)
@@ -192,6 +211,26 @@ Text::Remove(int32 textOffset, int32 length)
 	fCharCount -= length;
 
 	UpdateLayout();
+}
+
+// GetSubString
+BString
+Text::GetSubString(int32 textOffset, int32 length) const
+{
+	BString subString;
+	if (textOffset < 0 || textOffset + length > fCharCount)
+		return subString;
+	subString = fText;
+	subString.RemoveChars(0, textOffset);
+	subString.TruncateChars(length);
+	return subString;
+}
+
+// GetStyleRuns
+StyleRunList*
+Text::GetStyleRuns(int32 textOffset, int32 length) const
+{
+	return fStyleRuns->GetSubList(textOffset, length);
 }
 
 // SetStyle
