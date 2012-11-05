@@ -13,6 +13,10 @@ public:
 									const CharacterStyleRef& characterStyle);
 								StyleRun(const StyleRun& other);
 
+			StyleRun&			operator=(const StyleRun& other);
+			bool				operator==(const StyleRun& other) const;
+			bool				operator!=(const StyleRun& other) const;
+
 	inline	const CharacterStyleRef& GetStyle() const
 									{ return fCharacterStyle; }
 

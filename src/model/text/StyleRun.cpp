@@ -19,6 +19,29 @@ StyleRun::StyleRun(const StyleRun& other)
 {
 }
 
+// =
+StyleRun&
+StyleRun::operator=(const StyleRun& other)
+{
+	fCharacterStyle = other.fCharacterStyle;
+	fLength = other.fLength;
+	return *this;
+}
+
+// ==
+bool
+StyleRun::operator==(const StyleRun& other) const
+{
+	return fLength == other.fLength && IsSameStyle(other);
+}
+
+// !=
+bool
+StyleRun::operator!=(const StyleRun& other) const
+{
+	return !(*this == other);
+}
+
 // SetLength
 void
 StyleRun::SetLength(int32 length)
