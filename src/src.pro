@@ -50,6 +50,7 @@ QMAKE_CXXFLAGS += -iquote $$PWD/tools/pick
 QMAKE_CXXFLAGS += -iquote $$PWD/tools/pick/qt
 QMAKE_CXXFLAGS += -iquote $$PWD/tools/text
 QMAKE_CXXFLAGS += -iquote $$PWD/tools/transform
+QMAKE_CXXFLAGS += -iquote $$PWD/tools/transform/qt
 
 LIBS += -Lagg -lagg -Lgui/scrollview -lscrollview -Licon -licon -ldl -lfreetype
 
@@ -74,6 +75,7 @@ SOURCES += \
 	gui/stateview/StateView.cpp \
 	gui/stateview/ViewState.cpp \
 	gui/tools/qt/BrushToolConfigView.cpp \
+	gui/tools/qt/TransformToolConfigView.cpp \
 	model/property/CommonPropertyIDs.cpp \
 	model/BaseObject.cpp \
 	model/Selectable.cpp \
@@ -195,18 +197,19 @@ SOURCES += \
 	tools/brush/BrushTool.cpp \
 	tools/brush/BrushToolState.cpp \
 	tools/pick/PickTool.cpp \
-	tools/pick/PickToolState.cpp
+	tools/pick/PickToolState.cpp \
 #	tools/text/TextTool.cpp \
 #	tools/text/TextToolState.cpp \
-#	tools/transform/ChannelTransform.cpp \
-#	tools/transform/TransformableGroup.cpp \
-#	tools/transform/TransformTool.cpp \
-#	tools/transform/TransformToolState.cpp
+	tools/transform/ChannelTransform.cpp \
+	tools/transform/TransformableGroup.cpp \
+	tools/transform/TransformTool.cpp \
+	tools/transform/TransformToolState.cpp
 
 HEADERS  += \
 	WonderBrush.h \
 	cimg/CImg.h \
 	commands/AddObjectsCommand.h \
+	commands/ChangeAreaCommand.h \
 	commands/MoveObjectsCommand.h \
 	commands/ObjectAddedCommand.h \
 	commands/SetPropertiesCommand.h \
@@ -223,6 +226,7 @@ HEADERS  += \
 	gui/stateview/StateView.h \
 	gui/stateview/ViewState.h \
 	gui/tools/qt/BrushToolConfigView.h \
+	gui/tools/qt/TransformToolConfigView.h \
 	model/BaseObject.h \
 	model/Selectable.h \
 	model/Selection.h \
@@ -404,6 +408,7 @@ HEADERS  += \
 	support/Command.h \
 	support/CommandStack.h \
 	support/CompoundCommand.h \
+	support/cursors.h \
 	support/Debug.h \
 	support/DLList.h \
 	support/HashString.h \
@@ -428,14 +433,16 @@ HEADERS  += \
 	tools/pick/qt/PickToolStatePlatformDelegate.h \
 #	tools/text/TextTool.h \
 #	tools/text/TextToolState.h \
-#	tools/transform/ChannelTransform.h \
-#	tools/transform/TransformableGroup.h \
-#	tools/transform/TransformTool.h \
-#	tools/transform/TransformToolState.h
+	tools/transform/ChannelTransform.h \
+	tools/transform/TransformableGroup.h \
+	tools/transform/TransformTool.h \
+	tools/transform/TransformToolState.h \
+	tools/transform/qt/TransformToolStatePlatformDelegate.h
 
 FORMS += \
 	gui/qt/Window.ui \
-    gui/tools/qt/BrushToolConfigView.ui
+    gui/tools/qt/BrushToolConfigView.ui \
+    gui/tools/qt/TransformToolConfigView.ui
 
 RESOURCES += \
     wonderbrush2.qrc

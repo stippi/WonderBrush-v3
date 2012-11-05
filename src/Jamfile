@@ -77,6 +77,7 @@ SubDirHdrs [ FDirName $(TOP) src tools brush ] ;
 SubDirHdrs [ FDirName $(TOP) src tools pick ] ;
 SubDirHdrs [ FDirName $(TOP) src tools pick $(WONDERBRUSH_PLATFORM) ] ;
 SubDirHdrs [ FDirName $(TOP) src tools transform ] ;
+SubDirHdrs [ FDirName $(TOP) src tools transform $(WONDERBRUSH_PLATFORM) ] ;
 SubDirSysHdrs [ FDirName $(TOP) agg/include ] ;
 SubDirSysHdrs [ FDirName $(TOP) agg/font_freetype ] ;
 SubDirSysHdrs [ FDirName $(TOP) cimg ] ;
@@ -118,10 +119,10 @@ Application WonderBrush :
 
 	# gui/tools
 	TextToolConfigView.cpp
-	TransformToolConfigView.cpp
 
 	# gui/tools/<platform>
 	BrushToolConfigView.cpp
+	TransformToolConfigView.cpp
 
 	# gui (WonderBrush specific)
 	InspectorView.cpp

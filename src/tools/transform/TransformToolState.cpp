@@ -5,9 +5,9 @@
  */
 
 #include "TransformToolState.h"
+#include "TransformToolStatePlatformDelegate.h"
 
 #include <Cursor.h>
-#include <Shape.h>
 
 #include <new>
 
@@ -559,6 +559,7 @@ private:
 TransformToolState::TransformToolState(StateView* view, const BRect& box,
 		Document* document, Selection* selection, const BMessenger& configView)
 	: DragStateViewState(view)
+	, fPlatformDelegate(new PlatformDelegate(this))
 	, fOriginalBox(box)
 	, fModifiedBox(box)
 //	, fTransformation()
@@ -615,6 +616,8 @@ TransformToolState::~TransformToolState()
 	delete fDragTState;
 	delete fDragRState;
 	delete fDragBState;
+
+	delete fPlatformDelegate;
 }
 
 // MessageReceived
@@ -633,7 +636,7 @@ TransformToolState::MessageReceived(BMessage* message, Command** _command)
 
 // Draw
 void
-TransformToolState::Draw(BView* view, BRect updateRect)
+TransformToolState::Draw(PlatformDrawContext& drawContext)
 {
 	if (!fOriginalBox.IsValid())
 		return;
@@ -648,226 +651,9 @@ TransformToolState::Draw(BView* view, BRect updateRect)
 	scaleX *= fView->ZoomLevel();
 	scaleY *= fView->ZoomLevel();
 
-	float insetX = 6 / scaleX;
-	float insetY = 6 / scaleY;
-	float insetFill1X = 5.2 / scaleX;
-	float insetFill1Y = 5.2 / scaleY;
-	float insetFill2X = 0.8 / scaleX;
-	float insetFill2Y = 0.8 / scaleY;
-
-	BPoint lt(
-		min_c(fModifiedBox.left, fModifiedBox.right),
-		min_c(fModifiedBox.top, fModifiedBox.bottom));
-	BPoint rt(
-		max_c(fModifiedBox.left, fModifiedBox.right),
-		min_c(fModifiedBox.top, fModifiedBox.bottom));
-	BPoint rb(
-		max_c(fModifiedBox.left, fModifiedBox.right),
-		max_c(fModifiedBox.top, fModifiedBox.bottom));
-	BPoint lb(
-		min_c(fModifiedBox.left, fModifiedBox.right),
-		max_c(fModifiedBox.top, fModifiedBox.bottom));
-
-	BPoint lt1(lt.x - insetX, lt.y);
-	BPoint lt2(lt.x - insetX, lt.y - insetY);
-	BPoint lt3(lt.x, lt.y - insetY);
-
-	BPoint rt1(rt.x, rt.y - insetY);
-	BPoint rt2(rt.x + insetX, rt.y - insetY);
-	BPoint rt3(rt.x + insetX, rt.y);
-
-	BPoint rb1(rb.x + insetX, rb.y);
-	BPoint rb2(rb.x + insetX, rb.y + insetY);
-	BPoint rb3(rb.x, rb.y + insetY);
-
-	BPoint lb1(lb.x, lb.y + insetY);
-	BPoint lb2(lb.x - insetX, lb.y + insetY);
-	BPoint lb3(lb.x - insetX, lb.y);
-
-	BPoint ltF0(lt.x - insetFill2X, lt.y - insetFill2Y);
-	BPoint ltF1(lt.x - insetFill1X, lt.y - insetFill2Y);
-	BPoint ltF2(lt.x - insetFill1X, lt.y - insetFill1Y);
-	BPoint ltF3(lt.x - insetFill2X, lt.y - insetFill1Y);
-
-	BPoint rtF0(rt.x + insetFill2X, rt.y - insetFill2Y);
-	BPoint rtF1(rt.x + insetFill2X, rt.y - insetFill1Y);
-	BPoint rtF2(rt.x + insetFill1X, rt.y - insetFill1Y);
-	BPoint rtF3(rt.x + insetFill1X, rt.y - insetFill2Y);
-
-	BPoint rbF0(rb.x + insetFill2X, rb.y + insetFill2Y);
-	BPoint rbF1(rb.x + insetFill1X, rb.y + insetFill2Y);
-	BPoint rbF2(rb.x + insetFill1X, rb.y + insetFill1Y);
-	BPoint rbF3(rb.x + insetFill2X, rb.y + insetFill1Y);
-
-	BPoint lbF0(lb.x - insetFill2X, lb.y + insetFill2Y);
-	BPoint lbF1(lb.x - insetFill2X, lb.y + insetFill1Y);
-	BPoint lbF2(lb.x - insetFill1X, lb.y + insetFill1Y);
-	BPoint lbF3(lb.x - insetFill1X, lb.y + insetFill2Y);
-
-	BPoint pivot = Pivot();
-
-	uint32 flags = view->Flags();
-	bool round = true;
-	if (ViewspaceRotation() != 0.0) {
-		view->SetFlags(flags | B_SUBPIXEL_PRECISE);
-		round = false;
-	} else
-		view->SetFlags(flags & ~B_SUBPIXEL_PRECISE);
-
-	TransformObjectToView(&lt, round);
-	TransformObjectToView(&rt, round);
-	TransformObjectToView(&rb, round);
-	TransformObjectToView(&lb, round);
-
-	TransformObjectToView(&lt1, round);
-	TransformObjectToView(&lt2, round);
-	TransformObjectToView(&lt3, round);
-
-	TransformObjectToView(&rt1, round);
-	TransformObjectToView(&rt2, round);
-	TransformObjectToView(&rt3, round);
-
-	TransformObjectToView(&rb1, round);
-	TransformObjectToView(&rb2, round);
-	TransformObjectToView(&rb3, round);
-
-	TransformObjectToView(&lb1, round);
-	TransformObjectToView(&lb2, round);
-	TransformObjectToView(&lb3, round);
-
-	TransformObjectToView(&ltF0, round);
-	TransformObjectToView(&ltF1, round);
-	TransformObjectToView(&ltF2, round);
-	TransformObjectToView(&ltF3, round);
-
-	TransformObjectToView(&rtF0, round);
-	TransformObjectToView(&rtF1, round);
-	TransformObjectToView(&rtF2, round);
-	TransformObjectToView(&rtF3, round);
-
-	TransformObjectToView(&rbF0, round);
-	TransformObjectToView(&rbF1, round);
-	TransformObjectToView(&rbF2, round);
-	TransformObjectToView(&rbF3, round);
-
-	TransformObjectToView(&lbF0, round);
-	TransformObjectToView(&lbF1, round);
-	TransformObjectToView(&lbF2, round);
-	TransformObjectToView(&lbF3, round);
-
-	TransformCanvasToView(&pivot);
-
-	view->PushState();
-
-	view->MovePenTo(B_ORIGIN);
-
-	// white corner fills
-	BShape shape;
-	shape.MoveTo(ltF0);
-	shape.LineTo(ltF1);
-	shape.LineTo(ltF2);
-	shape.LineTo(ltF3);
-	shape.Close();
-
-	shape.MoveTo(rtF0);
-	shape.LineTo(rtF1);
-	shape.LineTo(rtF2);
-	shape.LineTo(rtF3);
-	shape.Close();
-
-	shape.MoveTo(rbF0);
-	shape.LineTo(rbF1);
-	shape.LineTo(rbF2);
-	shape.LineTo(rbF3);
-	shape.Close();
-
-	shape.MoveTo(lbF0);
-	shape.LineTo(lbF1);
-	shape.LineTo(lbF2);
-	shape.LineTo(lbF3);
-	shape.Close();
-
-	view->SetHighColor(255, 255, 255);
-	view->FillShape(&shape);
-
-	shape.Clear();
-
-	// transparent side fills
-
-	shape.MoveTo(ltF0);
-	shape.LineTo(lt3);
-	shape.LineTo(rt1);
-	shape.LineTo(rtF0);
-	shape.Close();
-
-	shape.MoveTo(rtF0);
-	shape.LineTo(rt3);
-	shape.LineTo(rb1);
-	shape.LineTo(rbF0);
-	shape.Close();
-
-	shape.MoveTo(rbF0);
-	shape.LineTo(rb3);
-	shape.LineTo(lb1);
-	shape.LineTo(lbF0);
-	shape.Close();
-
-	shape.MoveTo(lbF0);
-	shape.LineTo(lb3);
-	shape.LineTo(lt1);
-	shape.LineTo(ltF0);
-	shape.Close();
-
-	view->SetHighColor(0, 0, 0, 30);
-	view->SetDrawingMode(B_OP_ALPHA);
-	view->FillShape(&shape);
-
-	// white outlines
-
-	shape.Clear();
-
-	shape.MoveTo(ltF0);
-	shape.LineTo(rtF0);
-	shape.LineTo(rbF0);
-	shape.LineTo(lbF0);
-	shape.Close();
-
-	view->SetHighColor(255, 255, 255, 200);
-	view->StrokeShape(&shape);
-
-	// black outlines
-
-	shape.Clear();
-
-	shape.MoveTo(lt1);
-	shape.LineTo(rt3);
-	shape.LineTo(rt2);
-	shape.LineTo(rt1);
-	shape.LineTo(rb3);
-	shape.LineTo(rb2);
-	shape.LineTo(rb1);
-	shape.LineTo(lb3);
-	shape.LineTo(lb2);
-	shape.LineTo(lb1);
-	shape.LineTo(lt3);
-	shape.LineTo(lt2);
-	shape.Close();
-
-	view->SetHighColor(0, 0, 0, 200);
-//	view->SetDrawingMode(B_OP_ALPHA);
-	view->StrokeShape(&shape);
-
-	// pivot
-	const float pivotSize = 3;
-	view->SetHighColor(255, 255, 255, 200);
-	view->FillEllipse(BRect(pivot.x - pivotSize, pivot.y - pivotSize,
-		pivot.x + pivotSize + 0.5, pivot.y + pivotSize + 0.5));
-	view->SetHighColor(0, 0, 0, 200);
-	view->StrokeEllipse(BRect(pivot.x - pivotSize, pivot.y - pivotSize,
-		pivot.x + pivotSize + 1, pivot.y + pivotSize + 1));
-
-	view->PopState();
-	view->SetFlags(flags);
+	DrawParameters drawParameters(this, fModifiedBox, scaleX, scaleY, Pivot(),
+		ViewspaceRotation() != 0.0);
+	fPlatformDelegate->Draw(drawContext, drawParameters);
 }
 
 // Bounds

@@ -9,8 +9,8 @@
 #include "NavigatorView.h"
 #include "PickTool.h"
 #include "RenderManager.h"
-#include "Tool.h"
 #include "ToolConfigView.h"
+#include "TransformTool.h"
 
 
 enum {
@@ -163,7 +163,7 @@ Window::_InitTools()
 {
 	// create canvas tools
 	AddTool(new(std::nothrow) PickTool());
-//	AddTool(new(std::nothrow) TransformTool());
+	AddTool(new(std::nothrow) TransformTool());
 	AddTool(new(std::nothrow) BrushTool());
 //	AddTool(new(std::nothrow) TextTool());
 }
