@@ -20,7 +20,7 @@ public:
 		BView* view = drawContext.View();
 
 		uint32 flags = view->Flags();
-		if (subpixelPrecise)
+		if (parameters.subpixelPrecise)
 			view->SetFlags(flags | B_SUBPIXEL_PRECISE);
 		else
 			view->SetFlags(flags & ~B_SUBPIXEL_PRECISE);
