@@ -56,9 +56,6 @@ public:
 
 		painter.setPen(QColor(0, 0, 0, 200));
 
-		painter.drawPolygon(QPolygonF() << parameters.ltF0 << parameters.rtF0
-			<< parameters.rbF0 << parameters.lbF0);
-
 		painter.drawPolygon(QPolygonF() << parameters.lt1 << parameters.rt3
 			<< parameters.rt2 << parameters.rt1 << parameters.rb3
 			<< parameters.rb2 << parameters.rb1 << parameters.lb3
