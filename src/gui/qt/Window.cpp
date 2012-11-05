@@ -162,7 +162,7 @@ void
 Window::_InitTools()
 {
 	// create canvas tools
-	AddTool(new(std::nothrow) PickTool());
+//	AddTool(new(std::nothrow) PickTool());
 	AddTool(new(std::nothrow) TransformTool());
 	AddTool(new(std::nothrow) BrushTool());
 //	AddTool(new(std::nothrow) TextTool());
