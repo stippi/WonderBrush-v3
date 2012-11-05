@@ -17,6 +17,9 @@ public:
 	{
 		QPainter painter(drawContext.View());
 
+		if (parameters.subpixelPrecise)
+			painter.setRenderHint(QPainter::Antialiasing, true);
+
 		// white corner fills
 
 		painter.setBrush(QColor(255, 255, 255));
