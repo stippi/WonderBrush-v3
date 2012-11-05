@@ -49,6 +49,7 @@ BView::BView(BRect frame, const char* name, uint32 resizeMask, uint32 flags)
 	fPreferredSize(),
 	fAlignment()
 {
+	setMouseTracking(true);
 }
 
 
