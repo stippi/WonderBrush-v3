@@ -13,6 +13,54 @@ StyleRunList::StyleRunList()
 {
 }
 
+// constructor
+StyleRunList::StyleRunList(const StyleRunList& other)
+	: fRuns(4)
+{
+	*this = other;
+}
+
+// =
+StyleRunList&
+StyleRunList::operator=(const StyleRunList& other)
+{
+	MakeEmpty();
+
+	int32 count = fRuns.CountItems();
+	for (int32 i = 0; i < count; i++) {
+		StyleRun* run = (StyleRun*)other.fRuns.ItemAtFast(i);
+		if (!Append(*run))
+			break;
+	}
+
+	return *this;
+}
+
+// ==
+bool
+StyleRunList::operator==(const StyleRunList& other) const
+{
+	int32 count = fRuns.CountItems();
+	if (count != other.fRuns.CountItems())
+		return false;
+
+	for (int32 i = 0; i < count; i++) {
+		StyleRun* runA = (StyleRun*)fRuns.ItemAtFast(i);
+		StyleRun* runB = (StyleRun*)other.fRuns.ItemAtFast(i);
+		if (*runA != *runB)
+			return false;
+	}
+
+	return true;
+}
+
+// !=
+bool
+StyleRunList::operator!=(const StyleRunList& other) const
+{
+	return !(*this == other);
+}
+
 // destructor
 StyleRunList::~StyleRunList()
 {
@@ -113,6 +161,26 @@ StyleRunList::Insert(int32 textOffset, const StyleRun& runToInsert)
 	return Append(runToInsert);
 }
 
+// Insert
+bool
+StyleRunList::Insert(int32 textOffset, const StyleRunList& runListToInsert)
+{
+	// TODO: Optimize
+	int32 count = runListToInsert.CountRuns();
+	for (int32 i = 0; i < count; i++) {
+		StyleRun* run = (StyleRun*)runListToInsert.fRuns.ItemAtFast(i);
+		if (!Insert(textOffset, *run)) {
+			// TODO: Roll back already inserted styles
+			return false;
+		}
+		textOffset += run->GetLength();
+	}
+
+	_MergeEqualRuns();
+
+	return true;
+}
+
 // Remove
 void
 StyleRunList::Remove(int32 textOffset, int32 length)
@@ -199,6 +267,41 @@ int32
 StyleRunList::CountRuns() const
 {
 	return fRuns.CountItems();
+}
+
+// GetLength
+int32
+StyleRunList::GetLength() const
+{
+	int32 length = 0;
+	int32 count = fRuns.CountItems();
+	for (int32 i = 0; i < count; i++) {
+		StyleRun* run = (StyleRun*)fRuns.ItemAtFast(i);
+		length += run->GetLength();
+	}
+	return length;
+}
+
+// GetSubList
+StyleRunList*
+StyleRunList::GetSubList(int32 textOffset, int32 length) const
+{
+	// TODO: Could be optimized...
+
+	StyleRunList* subList = new(std::nothrow) StyleRunList(*this);
+	if (subList == NULL)
+		return NULL;
+
+	// Cut off beginning
+	if (textOffset > 0)
+		subList->Remove(0, textOffset);
+
+	// Cut off end
+	int32 subListLength = subList->GetLength();
+	if (subListLength > length)
+		subList->Remove(length, subListLength - length);
+
+	return subList;
 }
 
 // #pragma mark - private
