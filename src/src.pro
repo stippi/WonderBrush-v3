@@ -155,6 +155,7 @@ SOURCES += \
 	platform/qt/system/BMessage.cpp \
 	platform/qt/system/BMessageAdapter.cpp \
 	platform/qt/system/BMessageFilter.cpp \
+	platform/qt/system/BMessageRunner.cpp \
 	platform/qt/system/BMessageUtils.cpp \
 	platform/qt/system/BMessenger.cpp \
 	platform/qt/system/BOS.cpp \
@@ -329,6 +330,7 @@ HEADERS  += \
 	platform/qt/system/BMessageAdapter.h \
 	platform/qt/system/BMessageFilter.h \
 	platform/qt/system/BMessagePrivate.h \
+	platform/qt/system/BMessageRunner.h \
 	platform/qt/system/BMessageUtils.h \
 	platform/qt/system/BMessenger.h \
 	platform/qt/system/BObjectList.h \
@@ -383,6 +385,7 @@ HEADERS  += \
 	platform/qt/system/include/MessageAdapter.h \
 	platform/qt/system/include/MessageFilter.h \
 	platform/qt/system/include/MessagePrivate.h \
+	platform/qt/system/include/MessageRunner.h \
 	platform/qt/system/include/MessageUtils.h \
 	platform/qt/system/include/Messenger.h \
 	platform/qt/system/include/ObjectList.h \
