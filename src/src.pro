@@ -41,6 +41,7 @@ QMAKE_CXXFLAGS += -iquote $$PWD/model/objects
 QMAKE_CXXFLAGS += -iquote $$PWD/model/property
 QMAKE_CXXFLAGS += -iquote $$PWD/model/property/specific_properties
 QMAKE_CXXFLAGS += -iquote $$PWD/model/snapshots
+QMAKE_CXXFLAGS += -iquote $$PWD/model/text
 QMAKE_CXXFLAGS += -iquote $$PWD/render
 QMAKE_CXXFLAGS += -iquote $$PWD/render/text
 QMAKE_CXXFLAGS += -iquote $$PWD/support
@@ -80,6 +81,7 @@ SOURCES += \
 	gui/tools/qt/TransformToolConfigView.cpp \
 	model/property/CommonPropertyIDs.cpp \
 	model/BaseObject.cpp \
+	model/CurrentColor.cpp \
 	model/Selectable.cpp \
 	model/Selection.cpp \
 	model/document/Document.cpp \
@@ -116,6 +118,10 @@ SOURCES += \
 	model/snapshots/ShapeSnapshot.cpp \
 	model/snapshots/StyleableSnapshot.cpp \
 	model/snapshots/TextSnapshot.cpp \
+	model/text/CharacterStyle.cpp \
+	model/text/Font.cpp \
+	model/text/StyleRun.cpp \
+	model/text/StyleRunList.cpp \
 	platform/qt/platform_bitmap_support.cpp \
 	platform/qt/platform_support.cpp \
 	platform/qt/platform_support_ui.cpp \
@@ -164,7 +170,6 @@ SOURCES += \
 	platform/qt/system/BString.cpp \
 	platform/qt/system/BView.cpp \
 	platform/qt/system/BWindow.cpp \
-	render/Font.cpp \
 	render/FontCache.cpp \
 	render/GaussFilter.cpp \
 	render/LayoutContext.cpp \
@@ -212,8 +217,10 @@ HEADERS  += \
 	cimg/CImg.h \
 	commands/AddObjectsCommand.h \
 	commands/ChangeAreaCommand.h \
+	commands/InsertTextCommand.h \
 	commands/MoveObjectsCommand.h \
 	commands/ObjectAddedCommand.h \
+	commands/RemoveTextCommand.h \
 	commands/SetPropertiesCommand.h \
 	gui/ToolConfigView.h \
 	gui/misc/NavigatorView.h \
@@ -233,6 +240,7 @@ HEADERS  += \
 	gui/tools/qt/TextToolConfigView.h \
 	gui/tools/qt/TransformToolConfigView.h \
 	model/BaseObject.h \
+	model/CurrentColor.h \
 	model/Selectable.h \
 	model/Selection.h \
 	model/document/Document.h \
@@ -274,6 +282,10 @@ HEADERS  += \
 	model/snapshots/ShapeSnapshot.h \
 	model/snapshots/StyleableSnapshot.h \
 	model/snapshots/TextSnapshot.h \
+	model/text/CharacterStyle.h \
+	model/text/Font.h \
+	model/text/StyleRun.h \
+	model/text/StyleRunList.h \
 	platform/qt/platform_support_ui.h \
 	platform/qt/PlatformMessageEvent.h \
 	platform/qt/PlatformResourceParser.h \
@@ -392,7 +404,6 @@ HEADERS  += \
 	platform/qt/system/include/View.h \
 	platform/qt/system/include/Window.h \
 	render/FauxWeight.h \
-	render/Font.h \
 	render/FontCache.h \
 	render/GaussFilter.h \
 	render/LayoutContext.h \

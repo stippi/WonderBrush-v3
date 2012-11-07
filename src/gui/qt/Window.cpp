@@ -83,7 +83,7 @@ Window::MessageReceived(BMessage* message)
 			if (message->FindInt32("tool", &index) == B_OK) {
 				if (Tool* tool = (Tool*)fTools.ItemAt(index)) {
 					fView->SetState(tool->ToolViewState(fView, fDocument,
-						&fSelection));
+						&fSelection, &fCurrentColor));
 					fUi->toolConfigView->setCurrentIndex(index);
 				}
 			}
@@ -127,7 +127,8 @@ Window::AddTool(Tool* tool)
 
 	if (count == 0) {
 		// this was the first tool
-		fView->SetState(tool->ToolViewState(fView, fDocument, &fSelection));
+		fView->SetState(tool->ToolViewState(fView, fDocument, &fSelection,
+			&fCurrentColor));
 		fUi->toolConfigView->setCurrentIndex(0);
 	}
 }

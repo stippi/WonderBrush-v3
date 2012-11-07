@@ -4,6 +4,7 @@
 
 #include <Window.h>
 
+#include "CurrentColor.h"
 #include "ListenerAdapter.h"
 #include "Selection.h"
 
@@ -58,6 +59,7 @@ private:
 			RenderManager*		fRenderManager;
 			ListenerAdapter		fCommandStackListener;
 			Selection			fSelection;
+			CurrentColor		fCurrentColor;
 
 			BList				fTools;
 };
