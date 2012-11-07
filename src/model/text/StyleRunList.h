@@ -38,6 +38,8 @@ public:
 				StyleRunList*	GetSubList(int32 textOffset,
 									int32 length) const;
 
+				void			PrintToStream() const;
+
 private:
 
 				void			_MergeEqualRuns();

@@ -5,6 +5,8 @@
 
 #include "StyleRunList.h"
 
+#include <stdio.h>
+
 #include "StyleRun.h"
 
 // constructor
@@ -26,7 +28,7 @@ StyleRunList::operator=(const StyleRunList& other)
 {
 	MakeEmpty();
 
-	int32 count = fRuns.CountItems();
+	int32 count = other.fRuns.CountItems();
 	for (int32 i = 0; i < count; i++) {
 		StyleRun* run = (StyleRun*)other.fRuns.ItemAtFast(i);
 		if (!Append(*run))
@@ -302,6 +304,20 @@ StyleRunList::GetSubList(int32 textOffset, int32 length) const
 		subList->Remove(length, subListLength - length);
 
 	return subList;
+}
+
+// PrintToStream()
+void
+StyleRunList::PrintToStream() const
+{
+	printf("%p StyleRunList:\n", this);
+	for (int32 i = 0; i < fRuns.CountItems(); i++) {
+		StyleRun* run = (StyleRun*)fRuns.ItemAtFast(i);
+		const Font& font = run->GetStyle()->GetFont();
+		printf("  [%ld] %s/%s %.1f - %ld\n", i,
+			font.getFamily(), font.getStyle(), font.getSize(),
+			run->GetLength());
+	}
 }
 
 // #pragma mark - private
