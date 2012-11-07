@@ -67,6 +67,7 @@ SOURCES += \
 	gui/ToolConfigView.cpp \
 	gui/misc/NavigatorView.cpp \
 	gui/misc/qt/DualSlider.cpp \
+	gui/misc/qt/FontPopup.cpp \
 	gui/misc/qt/IconButton.cpp \
 	gui/misc/qt/IconOptionsControl.cpp \
 	gui/misc/qt/NavigatorViewPlatformDelegate.cpp \
@@ -217,8 +218,10 @@ HEADERS  += \
 	gui/ToolConfigView.h \
 	gui/misc/NavigatorView.h \
 	gui/misc/qt/DualSlider.h \
+	gui/misc/qt/FontPopup.h \
 	gui/misc/qt/IconButton.h \
 	gui/misc/qt/IconOptionsControl.h \
+	gui/misc/qt/ListModel.h \
 	gui/misc/qt/NavigatorViewPlatformDelegate.h \
 	gui/qt/CanvasView.h \
 	gui/qt/Window.h \
@@ -299,6 +302,7 @@ HEADERS  += \
 	platform/qt/system/BErrors.h \
 	platform/qt/system/BFile.h \
 	platform/qt/system/BFlattenable.h \
+	platform/qt/system/BFont.h \
 	platform/qt/system/BGradient.h \
 	platform/qt/system/BGraphicsDefs.h \
 	platform/qt/system/BHandler.h \
@@ -352,6 +356,7 @@ HEADERS  += \
 	platform/qt/system/include/Errors.h \
 	platform/qt/system/include/File.h \
 	platform/qt/system/include/Flattenable.h \
+	platform/qt/system/include/Font.h \
 	platform/qt/system/include/Gradient.h \
 	platform/qt/system/include/GraphicsDefs.h \
 	platform/qt/system/include/Handler.h \
@@ -442,6 +447,7 @@ HEADERS  += \
 	tools/transform/qt/TransformToolStatePlatformDelegate.h
 
 FORMS += \
+	gui/misc/qt/FontPopup.ui \
 	gui/qt/Window.ui \
     gui/tools/qt/BrushToolConfigView.ui \
 	gui/tools/qt/TextToolConfigView.ui \
