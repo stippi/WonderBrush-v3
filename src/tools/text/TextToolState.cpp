@@ -893,6 +893,8 @@ TextToolState::_UpdateConfigViewSelection() const
 
 	message.AddInt32("selection start", _SelectionStart());
 	message.AddInt32("selection end", _SelectionEnd());
+	message.AddInt32("anchor", fSelectionAnchorOffset);
+	message.AddInt32("caret", fCaretOffset);
 	fConfigViewMessenger.SendMessage(&message);
 }
 
