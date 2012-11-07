@@ -7,10 +7,10 @@
  */
 
 #include "TextToolState.h"
+#include "TextToolStatePlatformDelegate.h"
 
 #include <Cursor.h>
 #include <MessageRunner.h>
-#include <Shape.h>
 
 #include <new>
 
@@ -251,6 +251,8 @@ TextToolState::TextToolState(StateView* view, Document* document,
 		const BMessenger& configView)
 	: DragStateViewState(view)
 
+	, fPlatformDelegate(new PlatformDelegate(this))
+
 	, fPickTextState(new(std::nothrow) PickTextState(this))
 	, fCreateTextState(new(std::nothrow) CreateTextState(this))
 	, fDragLeftTopState(new(std::nothrow) DragLeftTopState(this))
@@ -303,6 +305,8 @@ TextToolState::~TextToolState()
 	SetInsertionInfo(NULL, -1);
 
 	delete fCaretPulseRunner;
+
+	delete fPlatformDelegate;
 }
 
 // Init
@@ -468,20 +472,20 @@ TextToolState::HandleKeyUp(const StateView::KeyEvent& event,
 
 // Draw
 void
-TextToolState::Draw(BView* view, BRect updateRect)
+TextToolState::Draw(PlatformDrawContext& drawContext)
 {
 	if (fText == NULL)
 		return;
 
-	_DrawControls(view);
+	_DrawControls(drawContext);
 	if (fSelectionAnchorOffset == fCaretOffset) {
 		if (fShowCaret)
-			_DrawCaret(view, fCaretOffset);
+			_DrawCaret(drawContext, fCaretOffset);
 	} else {
 		if (fSelectionAnchorOffset < fCaretOffset)
-			_DrawSelection(view, fSelectionAnchorOffset, fCaretOffset);
+			_DrawSelection(drawContext, fSelectionAnchorOffset, fCaretOffset);
 		else
-			_DrawSelection(view, fCaretOffset, fSelectionAnchorOffset);
+			_DrawSelection(drawContext, fCaretOffset, fSelectionAnchorOffset);
 	}
 }
 
@@ -900,7 +904,7 @@ TextToolState::_UpdateConfigViewSelection() const
 
 // _DrawControls
 void
-TextToolState::_DrawControls(BView* view)
+TextToolState::_DrawControls(PlatformDrawContext& drawContext)
 {
 	double scaleX;
 	double scaleY;
@@ -918,33 +922,12 @@ TextToolState::_DrawControls(BView* view)
 	BPoint widthOffset(fText->Width(), -10.0f / scaleY);
 	TransformObjectToView(&widthOffset, true);
 
-	view->SetHighColor(0, 0, 0, 200);
-	view->SetPenSize(3.0);
-	view->StrokeLine(origin, widthOffset);
-	view->SetHighColor(255, 255, 255, 200);
-	view->SetPenSize(1.0);
-	view->StrokeLine(origin, widthOffset);
-
-	float size = 3;
-	view->SetHighColor(255, 255, 255, 200);
-	view->FillEllipse(BRect(origin.x - size, origin.y - size,
-		origin.x + size + 0.5, origin.y + size + 0.5));
-	view->SetHighColor(0, 0, 0, 200);
-	view->StrokeEllipse(BRect(origin.x - size, origin.y - size,
-		origin.x + size + 1, origin.y + size + 1));
-
-	size = 2;
-	view->SetHighColor(255, 255, 255, 200);
-	view->FillRect(BRect(widthOffset.x - size, widthOffset.y - size,
-		widthOffset.x + size + 0.5, widthOffset.y + size + 0.5));
-	view->SetHighColor(0, 0, 0, 200);
-	view->StrokeRect(BRect(widthOffset.x - size, widthOffset.y - size,
-		widthOffset.x + size + 1, widthOffset.y + size + 1));
+	fPlatformDelegate->DrawControls(drawContext, origin, widthOffset);
 }
 
 // _DrawCaret
 void
-TextToolState::_DrawCaret(BView* view, int32 textOffset)
+TextToolState::_DrawCaret(PlatformDrawContext& drawContext, int32 textOffset)
 {
 	double x1;
 	double y1;
@@ -964,37 +947,23 @@ TextToolState::_DrawCaret(BView* view, int32 textOffset)
 	TransformObjectToView(&lb, false);
 	TransformObjectToView(&rb, false);
 
-	BShape shape;
-	shape.MoveTo(lt);
-	shape.LineTo(rt);
-	shape.LineTo(rb);
-	shape.LineTo(lb);
-	shape.Close();
+	PlatformDelegate::PolygonBuilder polygonBuilder;
+	polygonBuilder << lt << rt << lb << rb;
 
-	_DrawInvertedShape(view, shape);
+	fPlatformDelegate->DrawInvertedPolygon(drawContext,
+		polygonBuilder.GetPolygon());
 }
 
 // _DrawSelection
 void
-TextToolState::_DrawSelection(BView* view, int32 startOffset, int32 endOffset)
+TextToolState::_DrawSelection(PlatformDrawContext& drawContext,
+	int32 startOffset, int32 endOffset)
 {
-	BShape shape;
-	_GetSelectionShape(fText->getTextLayout(), shape, startOffset, endOffset);
-	_DrawInvertedShape(view, shape);
-}
-
-// _DrawInvertedShape
-void
-TextToolState::_DrawInvertedShape(BView* view, BShape& shape)
-{
-	view->PushState();
-	uint32 flags = view->Flags();
-	view->SetFlags(flags | B_SUBPIXEL_PRECISE);
-	view->SetDrawingMode(B_OP_INVERT);
-	view->MovePenTo(B_ORIGIN);
-	view->FillShape(&shape);
-	view->SetFlags(flags);
-	view->PopState();
+	PlatformDelegate::PolygonBuilder polygonBuilder;
+	_GetSelectionShape(fText->getTextLayout(), polygonBuilder, startOffset,
+		endOffset);
+	fPlatformDelegate->DrawInvertedPolygon(drawContext,
+		polygonBuilder.GetPolygon());
 }
 
 // #pragma mark -
@@ -1104,9 +1073,10 @@ TextToolState::_SetCaretOffset(int32 offset, bool updateAnchor,
 }
 
 // _GetSelectionShape
+template<typename PolygonBuilder>
 void
-TextToolState::_GetSelectionShape(TextLayout& layout, BShape& shape,
-	int32 start, int32 end) const
+TextToolState::_GetSelectionShape(TextLayout& layout,
+	PolygonBuilder& polygonBuilder, int32 start, int32 end) const
 {
 	double startX1;
 	double startY1;
@@ -1135,47 +1105,41 @@ TextToolState::_GetSelectionShape(TextLayout& layout, BShape& shape,
 		TransformObjectToView(&rb, false);
 		TransformObjectToView(&lb, false);
 
-		shape.MoveTo(lt);
-		shape.LineTo(rt);
-		shape.LineTo(rb);
-		shape.LineTo(lb);
-		shape.Close();
+		polygonBuilder <<  lt << rt << rb << lb;
 	} else {
 		// Selection over multiple lines
 		BPoint p;
 		p = BPoint(startX1, startY1);
 		TransformObjectToView(&p, false);
-		shape.MoveTo(p);
+		polygonBuilder << p;
 
 		p = BPoint(layout.getWidth(), startY1);
 		TransformObjectToView(&p, false);
-		shape.LineTo(p);
+		polygonBuilder << p;
 
 		p = BPoint(layout.getWidth(), endY1);
 		TransformObjectToView(&p, false);
-		shape.LineTo(p);
+		polygonBuilder << p;
 
 		p = BPoint(endX1, endY1);
 		TransformObjectToView(&p, false);
-		shape.LineTo(p);
+		polygonBuilder << p;
 
 		p = BPoint(endX1, endY2);
 		TransformObjectToView(&p, false);
-		shape.LineTo(p);
+		polygonBuilder << p;
 
 		p = BPoint(0, endY2);
 		TransformObjectToView(&p, false);
-		shape.LineTo(p);
+		polygonBuilder << p;
 
 		p = BPoint(0, startY2);
 		TransformObjectToView(&p, false);
-		shape.LineTo(p);
+		polygonBuilder << p;
 
 		p = BPoint(startX1, startY2);
 		TransformObjectToView(&p, false);
-		shape.LineTo(p);
-
-		shape.Close();
+		polygonBuilder << p;
 	}
 }
 

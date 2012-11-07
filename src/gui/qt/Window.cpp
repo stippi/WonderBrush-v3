@@ -9,6 +9,7 @@
 #include "NavigatorView.h"
 #include "PickTool.h"
 #include "RenderManager.h"
+#include "TextTool.h"
 #include "ToolConfigView.h"
 #include "TransformTool.h"
 
@@ -166,7 +167,7 @@ Window::_InitTools()
 //	AddTool(new(std::nothrow) PickTool());
 	AddTool(new(std::nothrow) TransformTool());
 	AddTool(new(std::nothrow) BrushTool());
-//	AddTool(new(std::nothrow) TextTool());
+	AddTool(new(std::nothrow) TextTool());
 }
 
 

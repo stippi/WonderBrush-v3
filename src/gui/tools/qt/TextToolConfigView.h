@@ -1,8 +1,18 @@
+/*
+ * Copyright 2012, Stephan Aßmus <superstippi@gmx.de>
+ * Copyright 2012, Ingo Weinhold <ingo_weinhold@gmx.de>
+ * All rights reserved.
+ */
 #ifndef TEXT_TOOL_CONFIG_VIEW_H
 #define TEXT_TOOL_CONFIG_VIEW_H
 
 
 #include "ToolConfigView.h"
+
+
+class QDoubleSpinBox;
+
+class FontPopup;
 
 
 namespace Ui {
@@ -28,20 +38,32 @@ public:
 	virtual	void				MessageReceived(BMessage* message);
 
 private:
-			void				_SetValue(BTextControl* control,
+			void				_SetValue(QDoubleSpinBox* control,
 									float value) const;
-			float				_Value(BTextControl* control) const;
 
-			void				_PopulateFontMenu(BMenu* menu,
-									BHandler* target,
-									const char* markedFamily,
+			void				_PopulateFontPopup(const char* markedFamily,
 									const char* markedStyle);
+
+			void				_GetSelection(int& anchor, int& caret);
+			void				_SetSelection(int anchor, int caret);
 
 			double				_FromLinearSize(double value) const;
 			double				_ToLinearSize(double value) const;
 
+private slots:
+			void				_SizeSliderChanged();
+			void				_SizeEditChanged();
+			void				_TextChanged();
+			void				_TextSelectionChanged();
+			void				_SubpixelsChanged();
+
 private:
 			Ui::TextToolConfigView*	fUi;
+
+			QString				fText;
+			int					fAnchor;
+			int					fCaret;
+			bool				fNotificationsEnabled;
 };
 
 

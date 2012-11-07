@@ -50,7 +50,7 @@ public:
 	virtual	bool				HandleKeyUp(const StateView::KeyEvent& event,
 									Command** _command);
 
-	virtual void				Draw(BView* view, BRect updateRect);
+	virtual void				Draw(PlatformDrawContext& drawContext);
 
 	virtual	BRect				Bounds() const;
 
@@ -99,12 +99,12 @@ private:
 			void				_UpdateConfigView() const;
 			void				_UpdateConfigViewSelection() const;
 
-			void				_DrawControls(BView* view);
+			void				_DrawControls(PlatformDrawContext& drawContext);
 
-			void				_DrawCaret(BView* view, int32 textOffset);
-			void				_DrawSelection(BView* view, int32 startOffset,
-									int32 endOffset);
-			void				_DrawInvertedShape(BView* view, BShape& shape);
+			void				_DrawCaret(PlatformDrawContext& drawContext,
+									int32 textOffset);
+			void				_DrawSelection(PlatformDrawContext& drawContext,
+									int32 startOffset, int32 endOffset);
 
 			void				_LineStart(bool select);
 			void				_LineEnd(bool select);
@@ -119,8 +119,9 @@ private:
 									bool lockSelectionAnchor,
 									bool updateSelectionStyle);
 
+			template<typename PolygonBuilder>
 			void				_GetSelectionShape(TextLayout& layout,
-									BShape& shape, int32 start,
+									PolygonBuilder& polygonBuilder, int32 start,
 									int32 end) const;
 
 			bool				_HasSelection() const;
@@ -131,6 +132,8 @@ private:
 			void				_AdoptStyleAtOffset(int32 textOffset);
 
 private:
+			class PlatformDelegate;
+
 			class PickTextState;
 			class CreateTextState;
 			class DragLeftTopState;
@@ -138,6 +141,8 @@ private:
 			class DragCaretState;
 
 			friend class PickTextState;
+
+			PlatformDelegate*	fPlatformDelegate;
 
 			PickTextState*		fPickTextState;
 			CreateTextState*	fCreateTextState;

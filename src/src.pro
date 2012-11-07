@@ -50,6 +50,7 @@ QMAKE_CXXFLAGS += -iquote $$PWD/tools/brush
 QMAKE_CXXFLAGS += -iquote $$PWD/tools/pick
 QMAKE_CXXFLAGS += -iquote $$PWD/tools/pick/qt
 QMAKE_CXXFLAGS += -iquote $$PWD/tools/text
+QMAKE_CXXFLAGS += -iquote $$PWD/tools/text/qt
 QMAKE_CXXFLAGS += -iquote $$PWD/tools/transform
 QMAKE_CXXFLAGS += -iquote $$PWD/tools/transform/qt
 
@@ -454,6 +455,7 @@ HEADERS  += \
 	tools/pick/qt/PickToolStatePlatformDelegate.h \
 	tools/text/TextTool.h \
 	tools/text/TextToolState.h \
+	tools/text/qt/TextToolStatePlatformDelegate.h \
 	tools/transform/ChannelTransform.h \
 	tools/transform/TransformableGroup.h \
 	tools/transform/TransformTool.h \

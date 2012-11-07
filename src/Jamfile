@@ -78,6 +78,7 @@ SubDirHdrs [ FDirName $(TOP) src tools ] ;
 SubDirHdrs [ FDirName $(TOP) src tools brush ] ;
 SubDirHdrs [ FDirName $(TOP) src tools pick ] ;
 SubDirHdrs [ FDirName $(TOP) src tools pick $(WONDERBRUSH_PLATFORM) ] ;
+SubDirHdrs [ FDirName $(TOP) src tools text $(WONDERBRUSH_PLATFORM) ] ;
 SubDirHdrs [ FDirName $(TOP) src tools transform ] ;
 SubDirHdrs [ FDirName $(TOP) src tools transform $(WONDERBRUSH_PLATFORM) ] ;
 SubDirSysHdrs [ FDirName $(TOP) agg/include ] ;
