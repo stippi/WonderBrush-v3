@@ -131,7 +131,7 @@ TransformToolConfigView::_SubpixelsChanged()
 {
 	if (fNotificationsEnabled) {
 		fTool->SetOption(TransformTool::SUBPIXELS,
-			(float)fUi->subpixelsCheckBox->isChecked());
+			fUi->subpixelsCheckBox->isChecked());
 	}
 }
 
