@@ -268,8 +268,8 @@ TextToolState::TextToolState(StateView* view, Document* document,
 	, fText(NULL)
 
 	, fCaretOffset(0)
-	, fCaretAnchorX(0.0)
 	, fShowCaret(true)
+	, fCaretAnchorX(0.0)
 	, fCaretPulseRunner(NULL)
 
 	, fStyle(new(std::nothrow) Style(), true)
