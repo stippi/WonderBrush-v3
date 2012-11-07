@@ -17,6 +17,7 @@
 #include <agg_math.h>
 
 #include "CommandStack.h"
+#include "CompoundCommand.h"
 #include "CurrentColor.h"
 #include "Document.h"
 #include "FontCache.h"
@@ -728,25 +729,33 @@ TextToolState::Insert(int32 textOffset, const char* text,
 	bool setCaretOffset)
 {
 	if (fText != NULL) {
+		Command** commands = NULL;
+
 		if (setCaretOffset && _HasSelection()) {
+			commands = new Command*[2];
 			int32 start = _SelectionStart();
-//			fText->Remove(start, _SelectionLength());
-			View()->PerformCommand(
-				new(std::nothrow) RemoveTextCommand(
-					fText, start, _SelectionLength()
-				)
+			commands[0] = new(std::nothrow) RemoveTextCommand(
+				fText, start, _SelectionLength()
 			);
 			textOffset = start;
 		}
 
-//		fText->Insert(textOffset, text, Font(fFontFamily, fFontStyle, fSize),
-//			fStyle);
-		View()->PerformCommand(
-			new(std::nothrow) InsertTextCommand(
-				fText, textOffset, text, Font(fFontFamily, fFontStyle, fSize),
-				fStyle
-			)
+		Command* insertCommand = new(std::nothrow) InsertTextCommand(
+			fText, textOffset, text, Font(fFontFamily, fFontStyle, fSize),
+			fStyle
 		);
+
+		Command* performCommand;
+		if (commands != NULL) {
+			commands[1] = insertCommand;
+			performCommand = new(std::nothrow) CompoundCommand(
+				commands, 2, "Insert text", -1
+			);
+		} else {
+			performCommand = insertCommand;
+		}
+
+		View()->PerformCommand(performCommand);
 
 		if (setCaretOffset) {
 			_SetCaretOffset(textOffset + BString(text).CountChars(), true,
@@ -763,7 +772,6 @@ void
 TextToolState::Remove(int32 textOffset, int32 length, bool setCaretOffset)
 {
 	if (fText != NULL) {
-//		fText->Remove(textOffset, length);
 		View()->PerformCommand(
 			new(std::nothrow) RemoveTextCommand(fText, textOffset, length)
 		);

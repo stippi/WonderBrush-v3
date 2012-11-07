@@ -18,7 +18,7 @@ class CompoundCommand : public Command {
 												const char* name,
 												int32 nameIndex);
 	virtual						~CompoundCommand();
-	
+
 	virtual	status_t			InitCheck();
 
 	virtual	status_t			Perform();
