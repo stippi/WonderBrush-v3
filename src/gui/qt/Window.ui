@@ -11,7 +11,7 @@
    </rect>
   </property>
   <property name="windowTitle">
-   <string>MainWindow</string>
+   <string>WonderBrush</string>
   </property>
   <widget class="QWidget" name="centralwidget">
    <layout class="QVBoxLayout" name="verticalLayout_5">
@@ -34,7 +34,7 @@
            <property name="title">
             <string>File</string>
            </property>
-           <addaction name="actionNew_Window"/>
+           <addaction name="actionNewWindow"/>
            <addaction name="actionQuit"/>
           </widget>
           <widget class="QMenu" name="menuEdit">
@@ -200,7 +200,7 @@
     </item>
    </layout>
   </widget>
-  <action name="actionNew_Window">
+  <action name="actionNewWindow">
    <property name="text">
     <string>New Window</string>
    </property>

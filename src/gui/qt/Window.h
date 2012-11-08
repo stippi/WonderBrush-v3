@@ -48,6 +48,8 @@ private:
 			void				_ReplaceWidget(QWidget*& toReplace, QWidget* replacement);
 
 private slots:
+			void				_NewWindowActionInvoked();
+			void				_QuitActionInvoked();
 			void				_UndoActionInvoked();
 			void				_RedoActionInvoked();
 

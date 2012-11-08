@@ -148,6 +148,9 @@ exportButton->SetEnabled(false);
 	fDocument->CommandStack()->AddListener(&fCommandStackListener);
 	_ObjectChanged(fDocument->CommandStack());
 
+	connect(fUi->actionNewWindow, SIGNAL(triggered()),
+		SLOT(_NewWindowActionInvoked()));
+	connect(fUi->actionQuit, SIGNAL(triggered()), SLOT(_QuitActionInvoked()));
 	connect(fUi->actionUndo, SIGNAL(triggered()), SLOT(_UndoActionInvoked()));
 	connect(fUi->actionRedo, SIGNAL(triggered()), SLOT(_RedoActionInvoked()));
 }
@@ -311,6 +314,20 @@ Window::_ReplaceWidget(QWidget*& toReplace, QWidget* replacement)
 	} else {
 		debugger("Window::_ReplaceWidget(): Unsupported layout!");
 	}
+}
+
+
+void
+Window::_NewWindowActionInvoked()
+{
+	be_app->PostMessage(MSG_NEW_WINDOW);
+}
+
+
+void
+Window::_QuitActionInvoked()
+{
+	PostMessage(B_QUIT_REQUESTED);
 }
 
 
