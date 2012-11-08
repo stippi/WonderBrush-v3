@@ -23,6 +23,7 @@ BView::BView(BMessage* archive)
 	fPreferredSize(),
 	fAlignment()
 {
+	setMouseTracking(true);
 }
 
 
@@ -36,6 +37,7 @@ BView::BView(const char* name, uint32 flags)
 	fPreferredSize(),
 	fAlignment()
 {
+	setMouseTracking(true);
 }
 
 
