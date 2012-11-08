@@ -182,6 +182,7 @@ protected:
 	virtual	void				mouseReleaseEvent(QMouseEvent* event);
 	virtual	void				mouseMoveEvent(QMouseEvent* event);
 	virtual	void				tabletEvent(QTabletEvent* event);
+	virtual	void				wheelEvent(QWheelEvent* event);
 
 	virtual	void				keyPressEvent(QKeyEvent* event);
 	virtual	void				keyReleaseEvent(QKeyEvent* event);

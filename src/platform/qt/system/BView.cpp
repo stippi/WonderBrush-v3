@@ -78,6 +78,7 @@ BView::MessageReceived(BMessage* message)
 	switch (message->what) {
 		case B_UNMAPPED_KEY_DOWN:
 		case B_UNMAPPED_KEY_UP:
+		case B_MOUSE_WHEEL_CHANGED:
 			fEventMessageWasHandled = false;
 			break;
 
@@ -552,6 +553,33 @@ BView::tabletEvent(QTabletEvent* event)
 	}
 
 	QWidget::tabletEvent(event);
+}
+
+void BView::wheelEvent(QWheelEvent* event)
+{
+	BMessage message(B_MOUSE_WHEEL_CHANGED);
+
+	// event time
+	bigtime_t eventTime = system_time();
+		// TODO: Event timestamps are available with Qt 5.
+	message.AddInt64("when", eventTime);
+
+	// float "be:wheel_delta_x", "be:wheel_delta_y"
+	int horizontalDelta = 0;
+	int verticalDelta = 0;
+	if (event->orientation() == Qt::Horizontal)
+		horizontalDelta = -event->delta() / 120;
+	else
+		verticalDelta = -event->delta() / 120;
+	message.AddFloat("be:wheel_delta_x", horizontalDelta);
+	message.AddFloat("be:wheel_delta_y", verticalDelta);
+
+	// deliver message
+	fEventMessageWasHandled = true;
+	_DeliverMessage(&message);
+
+	if (!fEventMessageWasHandled)
+		QWidget::wheelEvent(event);
 }
 
 
