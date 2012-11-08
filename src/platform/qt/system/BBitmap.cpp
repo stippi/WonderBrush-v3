@@ -7,11 +7,11 @@ BBitmap::BBitmap(BRect bounds, uint32 flags, color_space colorSpace,
 	int32 bytesPerRow, screen_id screenID)
 	:
 	fData(NULL),
+	fOwnsData(false),
 	fSize(0),
 	fBytesPerRow(0),
 	fColorSpace(B_NO_COLOR_SPACE),
-	fImage(NULL),
-	fOwnsData(false)
+	fImage(NULL)
 {
 	_Init(bounds, flags, colorSpace, bytesPerRow, screenID);
 }
@@ -21,11 +21,11 @@ BBitmap::BBitmap(BRect bounds, color_space colorSpace, bool acceptsViews,
 	bool needsContiguous)
 	:
 	fData(NULL),
+	fOwnsData(false),
 	fSize(0),
 	fBytesPerRow(0),
 	fColorSpace(B_NO_COLOR_SPACE),
-	fImage(NULL),
-	fOwnsData(false)
+	fImage(NULL)
 {
 	uint32 flags = (acceptsViews ? B_BITMAP_ACCEPTS_VIEWS : 0)
 		| (needsContiguous ? B_BITMAP_IS_CONTIGUOUS : 0);
@@ -36,11 +36,11 @@ BBitmap::BBitmap(BRect bounds, color_space colorSpace, bool acceptsViews,
 BBitmap::BBitmap(const QImage& _image)
 	:
 	fData(NULL),
+	fOwnsData(false),
 	fSize(0),
 	fBytesPerRow(0),
 	fColorSpace(B_NO_COLOR_SPACE),
-	fImage(NULL),
-	fOwnsData(false)
+	fImage(NULL)
 {
 	QImage image = _image;
 
