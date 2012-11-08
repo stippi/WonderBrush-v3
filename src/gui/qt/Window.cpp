@@ -12,6 +12,7 @@
 #include "TextTool.h"
 #include "ToolConfigView.h"
 #include "TransformTool.h"
+#include "WonderBrush.h"
 
 
 enum {
@@ -37,9 +38,76 @@ Window::Window(BRect frame, const char* title, Document* document, Layer* layer,
 	// TODO: Check error
 	fRenderManager->Init();
 
+	fView = new CanvasView(fDocument, fRenderManager);
+	fUi->canvasScrollView->SetScrollTarget(fView);
+	fView->MakeFocus(true);
+
 	const int iconSize = 16;
 	const BRect toolIconBounds(0, 0, 15, 15);
-//	float iconGroupInset = 3.0f;
+	int iconGroupInset = 3;
+
+	// File icon group
+	IconButton* newButton = new IconButton("new", 0, NULL,
+		new BMessage(MSG_NEW_WINDOW), be_app);
+	newButton->SetIcon(201, iconSize);
+	newButton->TrimIcon(toolIconBounds);
+	IconButton* openButton = new IconButton("open", 0);
+	openButton->SetIcon(202, iconSize);
+	openButton->TrimIcon(toolIconBounds);
+openButton->SetEnabled(false);
+	IconButton* saveButton = new IconButton("save", 0);
+	saveButton->SetIcon(204, iconSize);
+	saveButton->TrimIcon(toolIconBounds);
+saveButton->SetEnabled(false);
+	IconButton* exportButton = new IconButton("export", 0);
+	exportButton->SetIcon(203, iconSize);
+	exportButton->TrimIcon(toolIconBounds);
+exportButton->SetEnabled(false);
+	IconButton* closeButton = new IconButton("close", 0, NULL,
+		new BMessage(B_QUIT_REQUESTED), this);
+	closeButton->SetIcon(205, iconSize);
+	closeButton->TrimIcon(toolIconBounds);
+
+	QBoxLayout* layout = new QHBoxLayout(fUi->fileIconGroup);
+	layout->addWidget(newButton);
+	QFrame* line = new QFrame();
+	line->setFrameShape(QFrame::VLine);
+	layout->addWidget(line);
+	layout->addWidget(openButton);
+	layout->addWidget(saveButton);
+	layout->addWidget(exportButton);
+	line = new QFrame();
+	line->setFrameShape(QFrame::VLine);
+	layout->addWidget(line);
+	layout->addWidget(closeButton);
+	layout->addStretch();
+	layout->setMargin(iconGroupInset);
+
+	// Zoom icon group
+	IconButton* zoomInButton = new IconButton("zoom in", 0, NULL,
+		new BMessage(MSG_ZOOM_IN), fView);
+	zoomInButton->SetIcon(401, iconSize);
+	zoomInButton->TrimIcon(toolIconBounds);
+	IconButton* zoomOutButton = new IconButton("zoom out", 0, NULL,
+		new BMessage(MSG_ZOOM_OUT), fView);
+	zoomOutButton->SetIcon(402, iconSize);
+	zoomOutButton->TrimIcon(toolIconBounds);
+	IconButton* zoomOriginalButton = new IconButton("zoom original", 0, NULL,
+		new BMessage(MSG_ZOOM_ORIGINAL), fView);
+	zoomOriginalButton->SetIcon(403, iconSize);
+	zoomOriginalButton->TrimIcon(toolIconBounds);
+	IconButton* zoomToFit = new IconButton("zoom to fit", 0, NULL,
+		new BMessage(MSG_ZOOM_TO_FIT), fView);
+	zoomToFit->SetIcon(404, iconSize);
+	zoomToFit->TrimIcon(toolIconBounds);
+
+	layout = new QHBoxLayout(fUi->zoomIconGroup);
+	layout->addStretch();
+	layout->addWidget(zoomInButton);
+	layout->addWidget(zoomOutButton);
+	layout->addWidget(zoomOriginalButton);
+	layout->addWidget(zoomToFit);
+	layout->setMargin(iconGroupInset);
 
 	// Undo/Redo icon group
 	fUndoIcon = new IconButton("undo", 0, NULL, new BMessage(MSG_UNDO), this);
@@ -60,22 +128,18 @@ Window::Window(BRect frame, const char* title, Document* document, Layer* layer,
 	fConfirmIcon->SetEnabled(false);
 	fCancelIcon->SetEnabled(false);
 
-	QBoxLayout* layout = new QHBoxLayout(fUi->undoIconControl);
+	layout = new QHBoxLayout(fUi->undoIconControl);
 	layout->addWidget(fUndoIcon);
 	layout->addWidget(fRedoIcon);
-	QFrame* line = new QFrame();
+	line = new QFrame();
 	line->setFrameShape(QFrame::VLine);
 	layout->addWidget(line);
 	layout->addWidget(fConfirmIcon);
 	layout->addWidget(fCancelIcon);
+	layout->setMargin(iconGroupInset);
 
 	_ReplaceWidget(fUi->navigatorViewDummy,
 		new NavigatorView(fDocument, fRenderManager));
-
-	fView = new CanvasView(fDocument, fRenderManager);
-	fUi->canvasScrollView->SetScrollTarget(fView);
-
-	fView->MakeFocus(true);
 
 	_InitTools();
 
