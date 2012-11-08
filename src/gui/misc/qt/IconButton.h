@@ -32,6 +32,9 @@ public:
 	// IconButton
 			bool				IsValid() const;
 
+			void				SetEnabled(bool enabled)
+									{ setEnabled(enabled); }
+
 	virtual	int32				Value() const;
 	virtual	void				SetValue(int32 value);
 
