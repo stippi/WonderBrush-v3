@@ -956,7 +956,7 @@ TextToolState::_DrawCaret(PlatformDrawContext& drawContext, int32 textOffset)
 	TransformObjectToView(&rb, false);
 
 	PlatformDelegate::PolygonBuilder polygonBuilder;
-	polygonBuilder << lt << rt << lb << rb;
+	polygonBuilder << lt << rt << rb << lb;
 
 	fPlatformDelegate->DrawInvertedPolygon(drawContext,
 		polygonBuilder.GetPolygon());
