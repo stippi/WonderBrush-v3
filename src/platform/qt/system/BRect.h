@@ -12,6 +12,7 @@
 #include <math.h>
 
 #include <QRect>
+#include <QRectF>
 
 
 class BRect {
@@ -28,6 +29,7 @@ public:
 								BRect(BPoint leftTop, BPoint rightBottom);
 								BRect(BPoint leftTop, BSize size);
 								BRect(float side);
+								BRect(const QRectF& qtRect);
 
 			BRect&				operator=(const BRect& other);
 			void				Set(float left, float top, float right,
@@ -88,6 +90,8 @@ public:
 
 			QRect				ToQRect() const;
 	static	BRect				FromQRect(const QRect& qRect);
+
+								operator QRectF() const;
 };
 
 
@@ -187,6 +191,17 @@ BRect::BRect(float side)
 }
 
 
+inline
+BRect::BRect(const QRectF& qtRect)
+	:
+	left(qtRect.left()),
+	top(qtRect.top()),
+	right(qtRect.right()),
+	bottom(qtRect.bottom())
+{
+}
+
+
 inline BRect&
 BRect::operator=(const BRect& from)
 {
@@ -269,6 +284,13 @@ BRect::FromQRect(const QRect & qRect)
 	// Note: right() and bottom() are offset by -1, so that they really match
 	// BRect's right and bottom.
 	return BRect(qRect.left(), qRect.top(), qRect.right(), qRect.bottom());
+}
+
+
+inline
+BRect::operator QRectF() const
+{
+	return QRectF(LeftTop(), RightBottom());
 }
 
 
