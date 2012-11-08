@@ -25,7 +25,7 @@ enum {
 Window::Window(BRect frame, const char* title, Document* document, Layer* layer,
 	QWidget* parent)
 	:
-	BWindow(parent),
+	BWindow(parent, title),
 	fUi(new Ui::Window),
 	fView(NULL),
 	fDocument(document),
