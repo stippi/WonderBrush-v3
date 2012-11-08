@@ -167,6 +167,7 @@ SOURCES += \
 	platform/qt/system/BRegion.cpp \
 	platform/qt/system/BRegionSupport.cpp \
 	platform/qt/system/BResources.cpp \
+	platform/qt/system/BShape.cpp \
 	platform/qt/system/BSize.cpp \
 	platform/qt/system/BScreen.cpp \
 	platform/qt/system/BString.cpp \
@@ -344,6 +345,7 @@ HEADERS  += \
 	platform/qt/system/BRegionSupport.h \
 	platform/qt/system/BResources.h \
 	platform/qt/system/BScreen.h \
+	platform/qt/system/BShape.h \
 	platform/qt/system/BSize.h \
 	platform/qt/system/BStorageDefs.h \
 	platform/qt/system/BString.h \
@@ -399,6 +401,7 @@ HEADERS  += \
 	platform/qt/system/include/RegionSupport.h \
 	platform/qt/system/include/Resources.h \
 	platform/qt/system/include/Screen.h \
+	platform/qt/system/include/Shape.h \
 	platform/qt/system/include/Size.h \
 	platform/qt/system/include/StorageDefs.h \
 	platform/qt/system/include/String.h \
