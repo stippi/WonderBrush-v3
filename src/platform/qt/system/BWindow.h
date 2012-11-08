@@ -15,7 +15,8 @@ class BWindow : public QMainWindow, public BLooper {
 	Q_OBJECT
 
 public:
-								BWindow(QWidget* parent = NULL);
+								BWindow(QWidget* parent = NULL,
+									const char* title = NULL);
 	virtual						~BWindow();
 
 	virtual	void				DispatchMessage(BMessage* message,

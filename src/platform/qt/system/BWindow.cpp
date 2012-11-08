@@ -70,7 +70,7 @@ private:
 };
 
 
-BWindow::BWindow(QWidget* parent)
+BWindow::BWindow(QWidget* parent, const char* title)
 	:
 	QMainWindow(parent),
 	BLooper()
@@ -78,6 +78,9 @@ BWindow::BWindow(QWidget* parent)
 	ObjectConstructed(this);
 
 	ViewAncestryTracker::GetTracker()->RegisterWindow(this);
+
+	if (title != NULL)
+		setWindowTitle(QString::fromUtf8(title));
 }
 
 
