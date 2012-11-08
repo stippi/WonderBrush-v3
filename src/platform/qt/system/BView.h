@@ -181,6 +181,9 @@ protected:
 	virtual	void				mouseMoveEvent(QMouseEvent* event);
 	virtual	void				tabletEvent(QTabletEvent* event);
 
+	virtual	void				keyPressEvent(QKeyEvent* event);
+	virtual	void				keyReleaseEvent(QKeyEvent* event);
+
 	virtual void				moveEvent(QMoveEvent* event);
 	virtual void				resizeEvent(QResizeEvent* event);
 
@@ -200,6 +203,8 @@ private:
 			template<typename Event>
 			void				_TranslatePointerDeviceEvent(Event& event,
 									BMessage& message);
+			void				_TranslateKeyEvent(QKeyEvent& event,
+									BMessage& message, bool& _isModifier);
 
 			void				_DeliverMessage(BMessage* message);
 
@@ -213,6 +218,8 @@ private:
 
 			BPoint				fMousePosition;
 			int32				fMouseButtons;
+
+			bool				fEventMessageWasHandled;
 };
 
 

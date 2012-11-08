@@ -348,10 +348,11 @@ FrameMoved(origin);
 				target->MessageReceived(msg);
 			break;
 		}
+#endif
 
 		case B_KEY_DOWN:
 		{
-			if (!_HandleKeyDown(msg)) {
+//			if (!_HandleKeyDown(msg)) {
 				if (BView* view = dynamic_cast<BView*>(target)) {
 					// TODO: cannot use "string" here if we support having
 					// different font encoding per view (it's supposed to be
@@ -364,7 +365,7 @@ FrameMoved(origin);
 					}
 				} else
 					target->MessageReceived(msg);
-			}
+//			}
 			break;
 		}
 
@@ -385,11 +386,10 @@ FrameMoved(origin);
 
 		case B_UNMAPPED_KEY_DOWN:
 		{
-			if (!_HandleUnmappedKeyDown(msg))
+//			if (!_HandleUnmappedKeyDown(msg))
 				target->MessageReceived(msg);
 			break;
 		}
-#endif
 
 		case B_MOUSE_DOWN:
 		{
