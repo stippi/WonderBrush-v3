@@ -533,7 +533,7 @@ public:
 	{
 		if (fObject != NULL)
 			return BCursor(B_CURSOR_ID_FOLLOW_LINK);
-		return BCursor(B_CURSOR_SYSTEM_DEFAULT);
+		return BCursor(B_CURSOR_ID_SYSTEM_DEFAULT);
 	}
 
 	virtual const char* CommandName() const
