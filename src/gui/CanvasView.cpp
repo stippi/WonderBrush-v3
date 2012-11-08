@@ -420,10 +420,12 @@ CanvasView::SetScrollOffset(BPoint newOffset)
 	if (!fScrollTracking) {
 #if CANVAS_VIEW_USE_DELAYED_SCROLLING
 		MouseMoved(fMouseInfo.position, fMouseInfo.transit, NULL);
-#else
+#elif CANVAS_VIEW_USE_NATIVE_SCROLLING
 		BPoint mouseOffset = newOffset - ScrollOffset();
 		MouseMoved(fMouseInfo.position + mouseOffset, fMouseInfo.transit,
 			NULL);
+#else
+		MouseMoved(fMouseInfo.position, fMouseInfo.transit, NULL);
 #endif
 	}
 
