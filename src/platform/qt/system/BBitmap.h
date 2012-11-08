@@ -58,6 +58,7 @@ public:
 								BBitmap(const BBitmap* source,
 									bool acceptsViews = false,
 									bool needsContiguous = false);
+	explicit					BBitmap(const QImage& image);
 	virtual						~BBitmap();
 
 	// Archiving
@@ -121,6 +122,7 @@ private:
 
 private:
 			uint8*				fData;
+			bool				fOwnsData;
 			int32				fSize;
 			int32				fBytesPerRow;
 			color_space			fColorSpace;
