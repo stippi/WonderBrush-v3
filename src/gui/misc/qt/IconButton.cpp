@@ -392,6 +392,9 @@ IconButton::_MakeBitmaps(const BBitmap* bitmap)
 				|| fClickedIcon == NULL || fDisabledClickedIcon == NULL) {
 				status = B_NO_MEMORY;
 				_DeleteBitmaps();
+			} else {
+				setIconSize(QSize(fNormalBitmap->Bounds().IntegerWidth() + 1,
+					fNormalBitmap->Bounds().IntegerHeight() + 1));
 			}
 		}
 	} else
