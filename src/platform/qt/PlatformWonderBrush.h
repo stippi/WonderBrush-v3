@@ -82,4 +82,13 @@ protected:
 };
 
 
+inline BLooper*
+_PlatformBeApp()
+{
+	return dynamic_cast<BLooper*>(QApplication::instance());
+}
+
+#define be_app _PlatformBeApp()
+
+
 #endif	// PLATFORM_HAIKU_WONDER_BRUSH_H
