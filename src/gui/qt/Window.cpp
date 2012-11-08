@@ -43,6 +43,8 @@ Window::Window(BRect frame, const char* title, Document* document, Layer* layer,
 	fView = new CanvasView(fDocument, fRenderManager);
 	fUi->canvasScrollView->SetScrollTarget(fView);
 
+	fView->MakeFocus(true);
+
 	_InitTools();
 
 	fView->SetCommandStack(fDocument->CommandStack());
