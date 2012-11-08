@@ -127,13 +127,13 @@ Application WonderBrush :
 	TransformToolConfigView.cpp
 
 	# gui (WonderBrush specific)
+	CanvasView.cpp
 	InspectorView.cpp
 	ObjectTreeView.cpp
 	ResourceTreeView.cpp
 	ToolConfigView.cpp
 
 	# gui/<platform>
-	CanvasView.cpp
 	Window.cpp
 
 	# model

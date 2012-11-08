@@ -2,6 +2,7 @@
 #define CANVAS_VIEW_H
 
 
+#include "BuildSupport.h"
 #include "StateView.h"
 #include "Scrollable.h"
 
@@ -9,6 +10,18 @@
 class BMessageRunner;
 class Document;
 class RenderManager;
+
+
+#define CANVAS_VIEW_AUTO_SCROLL_DELAY		40000 // 40 ms
+#define CANVAS_VIEW_USE_DELAYED_SCROLLING	0
+#define CANVAS_VIEW_USE_NATIVE_SCROLLING	1
+
+// native scrolling is Haiku only
+#ifdef WONDERBRUSH_PLATFORM_QT
+#	undef CANVAS_VIEW_USE_NATIVE_SCROLLING
+#	define CANVAS_VIEW_USE_NATIVE_SCROLLING	0
+#endif
+
 
 enum {
 	MSG_ZOOM_SET		= 'zmst',
@@ -18,16 +31,14 @@ enum {
 	MSG_ZOOM_TO_FIT		= 'zmft'
 };
 
+
 class CanvasView : public StateView, public Scrollable {
 public:
 								CanvasView(BRect frame,
 									Document* document,
 									RenderManager* manager);
-
-#ifdef __HAIKU__
 								CanvasView(Document* document,
 									RenderManager* manager);
-#endif // __HAIKU__
 
 	virtual						~CanvasView();
 
@@ -37,10 +48,8 @@ public:
 	virtual	void				FrameResized(float width, float height);
 	virtual	void				GetPreferredSize(float* _width,
 									float* _height);
-#ifdef __HAIKU__
 	virtual	BSize				MaxSize();
-#endif
-	virtual	void				Draw(BRect updateRect);
+	virtual void				PlatformDraw(PlatformDrawContext& drawContext);
 
 	virtual	void				MouseDown(BPoint where);
 	virtual	void				MouseUp(BPoint where);
@@ -94,6 +103,9 @@ protected:
 	virtual	bool				_HandleKeyUp(const StateView::KeyEvent& event,
 									BHandler* originalHandler);
 
+private:
+			class PlatformDelegate;
+
 	//CanvasView
 private:
 			BRect				_CanvasRect() const;
@@ -104,6 +116,8 @@ private:
 			void				_UpdateToolCursor();
 
 private:
+			PlatformDelegate*	fPlatformDelegate;
+
 			Document*			fDocument;
 			RenderManager*		fRenderManager;
 

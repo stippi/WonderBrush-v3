@@ -26,7 +26,7 @@ Window::Window(BRect frame, const char* title, Document* document, Layer* layer,
 	:
 	BWindow(parent),
 	fUi(new Ui::Window),
-	fView(new CanvasView()),
+	fView(NULL),
 	fDocument(document),
 	fRenderManager(NULL),
 	fCommandStackListener(this)
@@ -40,7 +40,7 @@ Window::Window(BRect frame, const char* title, Document* document, Layer* layer,
 	_ReplaceWidget(fUi->navigatorViewDummy,
 		new NavigatorView(fDocument, fRenderManager));
 
-	fView->Init(fDocument, fRenderManager);
+	fView = new CanvasView(fDocument, fRenderManager);
 	fUi->canvasScrollView->SetScrollTarget(fView);
 
 	_InitTools();

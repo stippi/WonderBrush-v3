@@ -1,12 +1,11 @@
 #include "CanvasView.h"
+#include "CanvasViewPlatformDelegate.h"
 
 #include <stdio.h>
 
 #include <Bitmap.h>
 #include <Cursor.h>
-#ifdef __HAIKU__
-#	include <LayoutUtils.h>
-#endif
+#include <LayoutUtils.h>
 #include <Message.h>
 #include <MessageRunner.h>
 #include <Messenger.h>
@@ -21,10 +20,6 @@
 #include "RenderManager.h"
 
 
-#define AUTO_SCROLL_DELAY		40000 // 40 ms
-#define USE_DELAYED_SCROLLING	0
-#define USE_NATIVE_SCROLLING	1
-
 enum {
 	MSG_AUTO_SCROLL	= 'ascr'
 };
@@ -33,6 +28,7 @@ enum {
 CanvasView::CanvasView(BRect frame, Document* document, RenderManager* manager)
 	: StateView(frame, "canvas view", B_FOLLOW_NONE,
 		B_WILL_DRAW | B_FRAME_EVENTS)
+	, fPlatformDelegate(new PlatformDelegate(this))
 	, fDocument(document)
 	, fRenderManager(manager)
 
@@ -48,19 +44,14 @@ CanvasView::CanvasView(BRect frame, Document* document, RenderManager* manager)
 
 	, fAutoScroller(NULL)
 {
-	SetViewColor(B_TRANSPARENT_32_BIT);
-	SetHighColor(kStripesHigh);
-	SetLowColor(kStripesLow);
-		// used for drawing the stripes pattern
-
 	SetLocker(fDocument);
 }
 
-#ifdef __HAIKU__
 
 // constructor
 CanvasView::CanvasView(Document* document, RenderManager* manager)
 	: StateView("canvas view", B_WILL_DRAW | B_FRAME_EVENTS)
+	, fPlatformDelegate(new PlatformDelegate(this))
 	, fDocument(document)
 	, fRenderManager(manager)
 
@@ -76,20 +67,15 @@ CanvasView::CanvasView(Document* document, RenderManager* manager)
 
 	, fAutoScroller(NULL)
 {
-	SetViewColor(B_TRANSPARENT_32_BIT);
-	SetHighColor(kStripesHigh);
-	SetLowColor(kStripesLow);
-		// used for drawing the stripes pattern
-
 	SetLocker(fDocument);
 }
 
-#endif // __HAIKU__
 
 // destructor
 CanvasView::~CanvasView()
 {
 	delete fAutoScroller;
+	delete fPlatformDelegate;
 }
 
 // MessageReceived
@@ -126,7 +112,7 @@ CanvasView::MessageReceived(BMessage* message)
 			}
 			break;
 		case MSG_BITMAP_CLEAN: {
-#if USE_DELAYED_SCROLLING
+#if CANVAS_VIEW_USE_DELAYED_SCROLLING
 			bool scrollingDelayed;
 			if (message->FindBool("scrolling delayed",
 				&scrollingDelayed) == B_OK) {
@@ -220,7 +206,6 @@ CanvasView::GetPreferredSize(float* _width, float* _height)
 		*_height = 100;
 }
 
-#ifdef __HAIKU__
 
 BSize
 CanvasView::MaxSize()
@@ -229,32 +214,24 @@ CanvasView::MaxSize()
 		BSize(B_SIZE_UNLIMITED, B_SIZE_UNLIMITED));
 }
 
-#endif // __HAIKU__
 
-
-// Draw
 void
-CanvasView::Draw(BRect updateRect)
+CanvasView::PlatformDraw(PlatformDrawContext& drawContext)
 {
 	BRect canvas(_CanvasRect());
 
 	// draw document bitmap
 	if (fRenderManager->LockDisplay()) {
-
 		const BBitmap* bitmap = fRenderManager->DisplayBitmap();
-		DrawBitmap(bitmap, bitmap->Bounds(), canvas);
-
+		fPlatformDelegate->DrawCanvas(drawContext, bitmap, canvas);
 		fRenderManager->UnlockDisplay();
-	} else {
-		FillRect(canvas);
-	}
+	} else
+		fPlatformDelegate->DrawCanvas(drawContext, NULL, canvas);
 
 	// outside canvas
-	BRegion outside(Bounds() & updateRect);
-	outside.Exclude(canvas);
-	FillRegion(&outside, kStripes);
+	fPlatformDelegate->DrawStripes(drawContext, canvas);
 
-	StateView::Draw(this, updateRect);
+	StateView::Draw(drawContext);
 }
 
 // #pragma mark -
@@ -373,7 +350,7 @@ CanvasView::ConvertFromCanvas(BPoint* point) const
 {
 	point->x *= fZoomLevel;
 	point->y *= fZoomLevel;
-#if !USE_NATIVE_SCROLLING
+#if !CANVAS_VIEW_USE_NATIVE_SCROLLING
 	*point -= ScrollOffset();
 #endif
 }
@@ -382,7 +359,7 @@ CanvasView::ConvertFromCanvas(BPoint* point) const
 void
 CanvasView::ConvertToCanvas(BPoint* point) const
 {
-#if !USE_NATIVE_SCROLLING
+#if !CANVAS_VIEW_USE_NATIVE_SCROLLING
 	*point += ScrollOffset();
 #endif
 	point->x /= fZoomLevel;
@@ -402,7 +379,7 @@ CanvasView::ConvertFromCanvas(BRect* r) const
 	r->right--;
 	r->bottom--;
 
-#if !USE_NATIVE_SCROLLING
+#if !CANVAS_VIEW_USE_NATIVE_SCROLLING
 	r->OffsetBy(-ScrollOffset());
 #endif
 }
@@ -411,7 +388,7 @@ CanvasView::ConvertFromCanvas(BRect* r) const
 void
 CanvasView::ConvertToCanvas(BRect* r) const
 {
-#if !USE_NATIVE_SCROLLING
+#if !CANVAS_VIEW_USE_NATIVE_SCROLLING
 	r->OffsetBy(ScrollOffset());
 #endif
 
@@ -438,13 +415,13 @@ CanvasView::SetScrollOffset(BPoint newOffset)
 		return;
 
 	fInScrollTo = true;
-#if USE_DELAYED_SCROLLING
+#if CANVAS_VIEW_USE_DELAYED_SCROLLING
 	fDelayedScrolling = true;
 #endif
 
 	newOffset = ValidScrollOffsetFor(newOffset);
 	if (!fScrollTracking) {
-#if USE_DELAYED_SCROLLING
+#if CANVAS_VIEW_USE_DELAYED_SCROLLING
 		MouseMoved(fMouseInfo.position, fMouseInfo.transit, NULL);
 #else
 		BPoint mouseOffset = newOffset - ScrollOffset();
@@ -469,16 +446,12 @@ CanvasView::ScrollOffsetChanged(BPoint oldOffset, BPoint newOffset)
 		return;
 	}
 
-#if USE_DELAYED_SCROLLING
+#if CANVAS_VIEW_USE_DELAYED_SCROLLING
 	fDelayedScrolling = fRenderManager->ScrollBy(offset);
 	if (!fDelayedScrolling)
 		Invalidate();
 #else
-#	if USE_NATIVE_SCROLLING
-	ScrollBy(offset.x, offset.y);
-#	else
-	Invalidate();
-#	endif
+	fPlatformDelegate->ScrollBy(offset);
 #endif
 	// TODO: Move delayed scrolling stuff into this method:
 	fRenderManager->SetCanvasLayout(DataRect(), VisibleRect());
@@ -591,7 +564,7 @@ CanvasView::SetZoomLevel(double zoomLevel, bool mouseIsAnchor)
 	offset.x = roundf(offset.x + canvasAnchor.x - anchor.x);
 	offset.y = roundf(offset.y + canvasAnchor.y - anchor.y);
 
-#if USE_NATIVE_SCROLLING
+#if CANVAS_VIEW_USE_NATIVE_SCROLLING
 	Invalidate();
 		// Cause the (Haiku) app_server to skip visual scrolling
 #endif
@@ -627,7 +600,7 @@ CanvasView::SetAutoScrolling(bool scroll)
 			message.AddInt32("buttons", 1);
 			fAutoScroller = new BMessageRunner(messenger,
 											   &message,
-											   AUTO_SCROLL_DELAY);
+											   CANVAS_VIEW_AUTO_SCROLL_DELAY);
 		}
 	} else {
 		delete fAutoScroller;
@@ -639,7 +612,7 @@ CanvasView::SetAutoScrolling(bool scroll)
 void
 CanvasView::InvalidateCanvas(const BRect& bounds)
 {
-#if USE_DELAYED_SCROLLING
+#if CANVAS_VIEW_USE_DELAYED_SCROLLING
 	if (fDelayedScrolling)
 		return;
 #endif

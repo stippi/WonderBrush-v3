@@ -66,6 +66,7 @@ SOURCES += \
 	commands/MoveObjectsCommand.cpp \
 	commands/ObjectAddedCommand.cpp \
 	commands/SetPropertiesCommand.cpp \
+	gui/CanvasView.cpp \
 	gui/ToolConfigView.cpp \
 	gui/misc/NavigatorView.cpp \
 	gui/misc/qt/DualSlider.cpp \
@@ -73,7 +74,6 @@ SOURCES += \
 	gui/misc/qt/IconButton.cpp \
 	gui/misc/qt/IconOptionsControl.cpp \
 	gui/misc/qt/NavigatorViewPlatformDelegate.cpp \
-	gui/qt/CanvasView.cpp \
 	gui/qt/Window.cpp \
 	gui/stateview/StateView.cpp \
 	gui/stateview/ViewState.cpp \
@@ -224,6 +224,7 @@ HEADERS  += \
 	commands/ObjectAddedCommand.h \
 	commands/RemoveTextCommand.h \
 	commands/SetPropertiesCommand.h \
+	gui/CanvasView.h \
 	gui/ToolConfigView.h \
 	gui/misc/NavigatorView.h \
 	gui/misc/qt/DualSlider.h \
@@ -232,7 +233,7 @@ HEADERS  += \
 	gui/misc/qt/IconOptionsControl.h \
 	gui/misc/qt/ListModel.h \
 	gui/misc/qt/NavigatorViewPlatformDelegate.h \
-	gui/qt/CanvasView.h \
+	gui/qt/CanvasViewPlatformDelegate.h \
 	gui/qt/Window.h \
 	gui/icons/BrushIcon.h \
 	gui/icons/PathPropertyIcon.h \
