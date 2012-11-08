@@ -9,6 +9,8 @@
 #include <Archivable.h>
 #include <InterfaceDefs.h>
 
+#include <QCursor>
+
 
 enum BCursorID {
 	B_CURSOR_ID_SYSTEM_DEFAULT					= 1,
@@ -47,7 +49,7 @@ enum BCursorID {
 class BCursor /*: BArchivable*/ {
 public:
 								BCursor(const void* cursorData);
-//								BCursor(const BCursor& other);
+								BCursor(const BCursor& other);
 								BCursor(BCursorID id);
 //								BCursor(BMessage* data);
 	virtual						~BCursor();
@@ -56,9 +58,15 @@ public:
 //									bool deep = true) const;
 //	static	BArchivable*		Instantiate(BMessage* archive);
 
-//			BCursor&			operator=(const BCursor& other);
+			BCursor&			operator=(const BCursor& other);
 //			bool				operator==(const BCursor& other) const;
 //			bool				operator!=(const BCursor& other) const;
+
+			const QCursor&		GetQCursor() const
+									{ return fCursor; }
+
+private:
+			QCursor				fCursor;
 };
 
 

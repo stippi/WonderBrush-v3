@@ -16,8 +16,12 @@ extern const unsigned char B_I_BEAM_CURSOR[];
 // New-style cursors
 #ifdef  __cplusplus
 class BCursor;
-extern const BCursor *B_CURSOR_SYSTEM_DEFAULT;
+//extern const BCursor *B_CURSOR_SYSTEM_DEFAULT;
 extern const BCursor *B_CURSOR_I_BEAM;
+
+const BCursor* _PlatformSystemDefaultCursor();
+#define B_CURSOR_SYSTEM_DEFAULT _PlatformSystemDefaultCursor()
+
 #endif
 
 

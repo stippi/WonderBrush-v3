@@ -1,5 +1,6 @@
 #include "BView.h"
 
+#include <Cursor.h>
 #include <LayoutUtils.h>
 #include <Region.h>
 #include <Screen.h>
@@ -175,7 +176,8 @@ BView::ConvertFromScreen(BPoint pt) const
 void
 BView::SetViewCursor(const BCursor* cursor, bool sync)
 {
-	// TODO:...
+	if (cursor != NULL)
+		setCursor(cursor->GetQCursor());
 }
 
 
