@@ -314,7 +314,7 @@ StyleRunList::PrintToStream() const
 	for (int32 i = 0; i < fRuns.CountItems(); i++) {
 		StyleRun* run = (StyleRun*)fRuns.ItemAtFast(i);
 		const Font& font = run->GetStyle()->GetFont();
-		printf("  [%ld] %s/%s %.1f - %ld\n", i,
+		printf("  [%" B_PRId32 "] %s/%s %.1f - %" B_PRId32 "\n", i,
 			font.getFamily(), font.getStyle(), font.getSize(),
 			run->GetLength());
 	}
