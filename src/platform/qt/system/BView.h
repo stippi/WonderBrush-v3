@@ -77,6 +77,8 @@ public:
 									uint32 resizeMask, uint32 flags);
 	virtual						~BView();
 
+	virtual	void				MessageReceived(BMessage* message);
+
 			BWindow*			Window() const
 									{ return fWindow; }
 

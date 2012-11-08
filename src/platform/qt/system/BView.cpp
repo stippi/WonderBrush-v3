@@ -72,6 +72,21 @@ BView::~BView()
 }
 
 
+void
+BView::MessageReceived(BMessage* message)
+{
+	switch (message->what) {
+		case B_UNMAPPED_KEY_DOWN:
+		case B_UNMAPPED_KEY_UP:
+			fEventMessageWasHandled = false;
+			break;
+
+		default:
+			BHandler::MessageReceived(message);
+	}
+}
+
+
 BRect
 BView::Bounds() const
 {
