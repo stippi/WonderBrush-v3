@@ -39,7 +39,6 @@ CanvasView::CanvasView(BRect frame, Document* document, RenderManager* manager)
 	, fScrollTracking(false)
 	, fInScrollTo(false)
 	, fScrollTrackingStart(0.0, 0.0)
-	, fScrollOffsetStart(0.0, 0.0)
 	, fDelayedScrolling(false)
 
 	, fAutoScroller(NULL)
@@ -62,7 +61,6 @@ CanvasView::CanvasView(Document* document, RenderManager* manager)
 	, fScrollTracking(false)
 	, fInScrollTo(false)
 	, fScrollTrackingStart(0.0, 0.0)
-	, fScrollOffsetStart(0.0, 0.0)
 	, fDelayedScrolling(false)
 
 	, fAutoScroller(NULL)
@@ -256,8 +254,8 @@ CanvasView::MouseDown(BPoint where)
 		fScrollTracking = true;
 		where.x = roundf(where.x);
 		where.y = roundf(where.y);
-		fScrollOffsetStart = ScrollOffset();
-		fScrollTrackingStart = where - fScrollOffsetStart;
+		fScrollTrackingStart = where;
+		ConvertToCanvas(&fScrollTrackingStart);
 		_UpdateToolCursor();
 		SetMouseEventMask(B_POINTER_EVENTS,
 						  B_LOCK_WINDOW_FOCUS | B_SUSPEND_VIEW_FOCUS);
@@ -298,9 +296,8 @@ CanvasView::MouseMoved(BPoint where, uint32 transit, const BMessage* dragMessage
 		}
 		where.x = roundf(where.x);
 		where.y = roundf(where.y);
-		where -= ScrollOffset();
-		BPoint offset = where - fScrollTrackingStart;
-		SetScrollOffset(fScrollOffsetStart - offset);
+		ConvertToCanvas(&where);
+		SetScrollOffset(ScrollOffset() + fScrollTrackingStart - where);
 	} else {
 		// normal mouse movement handled by StateView
 //		if (!fSpaceHeldDown)

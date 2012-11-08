@@ -128,7 +128,6 @@ private:
 			bool				fScrollTracking;
 			bool				fInScrollTo;
 			BPoint				fScrollTrackingStart;
-			BPoint				fScrollOffsetStart;
 			bool				fDelayedScrolling;
 
 			BMessageRunner*		fAutoScroller;
