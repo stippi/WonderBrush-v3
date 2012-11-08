@@ -138,7 +138,6 @@ StateView::StateView(BRect frame, const char* name, uint32 resizingMode,
 {
 }
 
-#ifdef __HAIKU__
 
 // constructor
 StateView::StateView(const char* name, uint32 flags)
@@ -161,7 +160,6 @@ StateView::StateView(const char* name, uint32 flags)
 {
 }
 
-#endif // __HAIKU__
 
 // destructor
 StateView::~StateView()
