@@ -77,7 +77,7 @@ public:
 	}
 
 	void DrawInvertedPolygon(PlatformDrawContext& drawContext,
-		const Polygon& shape)
+		Polygon& shape)
 	{
 		BView* view = drawContext.View();
 		view->PushState();

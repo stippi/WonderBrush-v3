@@ -20,7 +20,7 @@ class BackBufferedStateView : public StateView {
 	// StateView interface
 	virtual	void				AttachedToWindow();
 	virtual	void				FrameResized(float width, float height);
-	virtual	void				Draw(BRect updateRect);
+	virtual void				PlatformDraw(PlatformDrawContext& drawContext);
 
 	// BackBufferedStateView
  protected:

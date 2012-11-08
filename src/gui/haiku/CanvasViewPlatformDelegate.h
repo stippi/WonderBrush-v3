@@ -3,6 +3,7 @@
 
 
 #include <Bitmap.h>
+#include <Region.h>
 
 #include "CanvasView.h"
 #include "ui_defines.h"

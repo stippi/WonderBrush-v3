@@ -60,8 +60,10 @@ BackBufferedStateView::FrameResized(float width, float height)
 
 // Draw
 void
-BackBufferedStateView::Draw(BRect updateRect)
+BackBufferedStateView::PlatformDraw(PlatformDrawContext& drawContext)
 {
+	BRect updateRect = drawContext.UpdateRect();
+
 	if (!fOffscreenView) {
 		DrawInto(this, updateRect);
 	} else {
@@ -111,7 +113,8 @@ BackBufferedStateView::DrawBackgroundInto(BView* view, BRect updateRect)
 void
 BackBufferedStateView::DrawInto(BView* view, BRect updateRect)
 {
-	StateView::Draw(view, updateRect);
+	PlatformDrawContext drawContext(view, updateRect);
+	StateView::Draw(drawContext);
 }
 
 // SyncGraphicsState

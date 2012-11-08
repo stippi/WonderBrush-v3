@@ -135,6 +135,12 @@ protected:
 
 			BHandler*			fUpdateTarget;
 			uint32				fUpdateCommand;
+
+private:
+	// prevent warning about Draw() being hidden
+	#ifdef __HAIKU__
+		using PlatformViewMixin<BView>::Draw;
+	#endif
 };
 
 class StateView::KeyEvent {

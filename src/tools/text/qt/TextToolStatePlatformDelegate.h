@@ -55,7 +55,7 @@ public:
 
 
 	void DrawInvertedPolygon(PlatformDrawContext& drawContext,
-		const Polygon& shape)
+		Polygon& shape)
 	{
 		QPainter painter(drawContext.View());
 		painter.setRenderHint(QPainter::Antialiasing, true);
