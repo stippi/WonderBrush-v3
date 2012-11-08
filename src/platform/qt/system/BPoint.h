@@ -23,6 +23,7 @@ public:
 								BPoint();
 								BPoint(float x, float y);
 								BPoint(const BPoint& p);
+								BPoint(const QPointF& qPoint);
 		
 			BPoint&				operator=(const BPoint& other);
 			void				Set(float x, float y);
@@ -73,6 +74,15 @@ BPoint::BPoint(const BPoint& other)
 	:
 	x(other.x),
 	y(other.y)
+{
+}
+
+
+inline
+BPoint::BPoint(const QPointF& qPoint)
+	:
+	x(qPoint.x()),
+	y(qPoint.y())
 {
 }
 
