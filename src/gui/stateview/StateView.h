@@ -4,6 +4,8 @@
 #include <Message.h>
 #include <View.h>
 
+#include "PlatformViewMixin.h"
+
 class BMessageFilter;
 class Command;
 class CommandStack;
@@ -26,21 +28,19 @@ struct MouseInfo {
 			BMessage			dragMessage;
 };
 
-class StateView : public BView {
+class StateView : public PlatformViewMixin<BView> {
 public:
 	class KeyEvent;
 
 								StateView(BRect frame, const char* name,
 									uint32 resizingMode, uint32 flags);
-#ifdef __HAIKU__
 								StateView(const char* name, uint32 flags);
-#endif
 	virtual						~StateView();
 
 	// BView interface
 	virtual	void				AttachedToWindow();
 	virtual	void				DetachedFromWindow();
-	virtual	void				Draw(BRect updateRect);
+	virtual void				PlatformDraw(PlatformDrawContext& drawContext);
 	virtual	void				MessageReceived(BMessage* message);
 
 	virtual	void				MouseDown(BPoint where);
@@ -57,7 +57,7 @@ public:
 			BRect				ViewStateBounds();
 	virtual	void				ViewStateBoundsChanged();
 
-			void				Draw(BView* into, BRect updateRect);
+			void				Draw(PlatformDrawContext& drawContext);
 
 	virtual	bool				MouseWheelChanged(BPoint where,
 									float x, float y);
@@ -135,6 +135,12 @@ protected:
 
 			BHandler*			fUpdateTarget;
 			uint32				fUpdateCommand;
+
+private:
+	// prevent warning about Draw() being hidden
+	#ifdef __HAIKU__
+		using PlatformViewMixin<BView>::Draw;
+	#endif
 };
 
 class StateView::KeyEvent {

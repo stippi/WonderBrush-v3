@@ -21,8 +21,11 @@ BView::BView(BMessage* archive)
 	fMinSize(),
 	fMaxSize(),
 	fPreferredSize(),
-	fAlignment()
+	fAlignment(),
+	fMousePosition(0, 0),
+	fMouseButtons(0)
 {
+	setMouseTracking(true);
 }
 
 
@@ -34,8 +37,11 @@ BView::BView(const char* name, uint32 flags)
 	fMinSize(),
 	fMaxSize(),
 	fPreferredSize(),
-	fAlignment()
+	fAlignment(),
+	fMousePosition(0, 0),
+	fMouseButtons(0)
 {
+	setMouseTracking(true);
 }
 
 
@@ -47,8 +53,11 @@ BView::BView(BRect frame, const char* name, uint32 resizeMask, uint32 flags)
 	fMinSize(),
 	fMaxSize(),
 	fPreferredSize(),
-	fAlignment()
+	fAlignment(),
+	fMousePosition(0, 0),
+	fMouseButtons(0)
 {
+	setMouseTracking(true);
 }
 
 
@@ -114,7 +123,16 @@ BView::InvalidateLayout(bool descendants)
 	}
 
 	updateGeometry();
-// TODO: Handle descendants!
+	// TODO: Handle descendants!
+}
+
+
+void
+BView::MakeFocus(bool focusState)
+{
+	if (focusState)
+		setFocus();
+	// NOTE: With Qt we can't really unfocus.
 }
 
 
@@ -151,6 +169,26 @@ BView::SetMouseEventMask(uint32 mask, uint32 options)
 {
 	// TODO:...
 	return B_ERROR;
+}
+
+
+void
+BView::GetMouse(BPoint* _location, uint32* _buttons, bool checkMessageQueue)
+{
+	if (_location == NULL && _buttons == NULL)
+		return;
+
+	if (checkMessageQueue) {
+		if (_location != NULL)
+			*_location = BPoint::FromQPoint(mapFromGlobal(QCursor::pos()));
+		if (_buttons != NULL)
+			*_buttons = FromQtMouseButtons(QApplication::mouseButtons());
+	} else {
+		if (_location != NULL)
+			*_location = fMousePosition;
+		if (_buttons != NULL)
+			*_buttons = fMouseButtons;
+	}
 }
 
 
@@ -358,6 +396,20 @@ BView::GetHeightForWidth(float width, float* min, float* max, float* preferred)
 
 
 int32
+BView::FromQtMouseButtons(Qt::MouseButtons qtButtons)
+{
+	int32 buttons = 0;
+	if ((qtButtons & Qt::LeftButton) != 0)
+		buttons |= B_PRIMARY_MOUSE_BUTTON;
+	if ((qtButtons & Qt::RightButton) != 0)
+		buttons |= B_SECONDARY_MOUSE_BUTTON;
+	if ((qtButtons & Qt::MiddleButton) != 0)
+		buttons |= B_TERTIARY_MOUSE_BUTTON;
+	return buttons;
+}
+
+
+int32
 BView::FromQtModifiers(Qt::KeyboardModifiers qtModifiers)
 {
 	// TODO: We assume Control == COMMAND, Alt == Control (i.e. standard Haiku
@@ -535,18 +587,14 @@ BView::_TranslateMouseEvent(QMouseEvent& event, BMessage& message)
 	_TranslatePointerDeviceEvent(event, message);
 
 	// mouse buttons
-	Qt::MouseButtons qtButtons = event.buttons();
-	int32 buttons = 0;
-	if ((qtButtons & Qt::LeftButton) != 0)
-		buttons |= B_PRIMARY_MOUSE_BUTTON;
-	if ((qtButtons & Qt::RightButton) != 0)
-		buttons |= B_SECONDARY_MOUSE_BUTTON;
-	if ((qtButtons & Qt::MiddleButton) != 0)
-		buttons |= B_TERTIARY_MOUSE_BUTTON;
+	int32 buttons = FromQtMouseButtons(event.buttons());
 	message.AddInt32("buttons", buttons);
 
 	// mouse clicks
 	// TODO: int32 "clicks"!
+
+	// cache mouse buttons
+	fMouseButtons = buttons;
 }
 
 
@@ -579,11 +627,15 @@ BView::_TranslatePointerDeviceEvent(Event& event, BMessage& message)
 	message.AddInt64("when", eventTime);
 
 	// mouse position
-	message.AddPoint("be:view_where", BPoint::FromQPoint(event.pos()));
+	BPoint position = BPoint::FromQPoint(event.pos());
+	message.AddPoint("be:view_where", position);
 	message.AddPoint("screen_where", BPoint::FromQPoint(event.globalPos()));
 
 	// keyboard modifiers
 	message.AddInt32("modifiers", FromQtModifiers(event.modifiers()));
+
+	// cache mouse position
+	fMousePosition = position;
 }
 
 

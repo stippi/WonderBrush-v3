@@ -41,14 +41,18 @@ QMAKE_CXXFLAGS += -iquote $$PWD/model/objects
 QMAKE_CXXFLAGS += -iquote $$PWD/model/property
 QMAKE_CXXFLAGS += -iquote $$PWD/model/property/specific_properties
 QMAKE_CXXFLAGS += -iquote $$PWD/model/snapshots
+QMAKE_CXXFLAGS += -iquote $$PWD/model/text
 QMAKE_CXXFLAGS += -iquote $$PWD/render
 QMAKE_CXXFLAGS += -iquote $$PWD/render/text
 QMAKE_CXXFLAGS += -iquote $$PWD/support
 QMAKE_CXXFLAGS += -iquote $$PWD/tools
 QMAKE_CXXFLAGS += -iquote $$PWD/tools/brush
 QMAKE_CXXFLAGS += -iquote $$PWD/tools/pick
+QMAKE_CXXFLAGS += -iquote $$PWD/tools/pick/qt
 QMAKE_CXXFLAGS += -iquote $$PWD/tools/text
+QMAKE_CXXFLAGS += -iquote $$PWD/tools/text/qt
 QMAKE_CXXFLAGS += -iquote $$PWD/tools/transform
+QMAKE_CXXFLAGS += -iquote $$PWD/tools/transform/qt
 
 LIBS += -Lagg -lagg -Lgui/scrollview -lscrollview -Licon -licon -ldl -lfreetype
 
@@ -62,19 +66,23 @@ SOURCES += \
 	commands/MoveObjectsCommand.cpp \
 	commands/ObjectAddedCommand.cpp \
 	commands/SetPropertiesCommand.cpp \
+	gui/CanvasView.cpp \
 	gui/ToolConfigView.cpp \
 	gui/misc/NavigatorView.cpp \
 	gui/misc/qt/DualSlider.cpp \
+	gui/misc/qt/FontPopup.cpp \
 	gui/misc/qt/IconButton.cpp \
 	gui/misc/qt/IconOptionsControl.cpp \
 	gui/misc/qt/NavigatorViewPlatformDelegate.cpp \
-	gui/qt/CanvasView.cpp \
 	gui/qt/Window.cpp \
 	gui/stateview/StateView.cpp \
 	gui/stateview/ViewState.cpp \
 	gui/tools/qt/BrushToolConfigView.cpp \
+	gui/tools/qt/TextToolConfigView.cpp \
+	gui/tools/qt/TransformToolConfigView.cpp \
 	model/property/CommonPropertyIDs.cpp \
 	model/BaseObject.cpp \
+	model/CurrentColor.cpp \
 	model/Selectable.cpp \
 	model/Selection.cpp \
 	model/document/Document.cpp \
@@ -111,6 +119,10 @@ SOURCES += \
 	model/snapshots/ShapeSnapshot.cpp \
 	model/snapshots/StyleableSnapshot.cpp \
 	model/snapshots/TextSnapshot.cpp \
+	model/text/CharacterStyle.cpp \
+	model/text/Font.cpp \
+	model/text/StyleRun.cpp \
+	model/text/StyleRunList.cpp \
 	platform/qt/platform_bitmap_support.cpp \
 	platform/qt/platform_support.cpp \
 	platform/qt/platform_support_ui.cpp \
@@ -144,6 +156,7 @@ SOURCES += \
 	platform/qt/system/BMessage.cpp \
 	platform/qt/system/BMessageAdapter.cpp \
 	platform/qt/system/BMessageFilter.cpp \
+	platform/qt/system/BMessageRunner.cpp \
 	platform/qt/system/BMessageUtils.cpp \
 	platform/qt/system/BMessenger.cpp \
 	platform/qt/system/BOS.cpp \
@@ -159,7 +172,6 @@ SOURCES += \
 	platform/qt/system/BString.cpp \
 	platform/qt/system/BView.cpp \
 	platform/qt/system/BWindow.cpp \
-	render/Font.cpp \
 	render/FontCache.cpp \
 	render/GaussFilter.cpp \
 	render/LayoutContext.cpp \
@@ -193,36 +205,45 @@ SOURCES += \
 	tools/TransformViewState.cpp \
 	tools/brush/BrushTool.cpp \
 	tools/brush/BrushToolState.cpp \
-#	tools/brush/pick/PickTool.cpp \
-#	tools/brush/pick/PickToolState.cpp \
-#	tools/brush/transform/ChannelTransform.cpp \
-#	tools/text/TextTool.cpp \
-#	tools/text/TextToolState.cpp \
-#	tools/brush/transform/TransformableGroup.cpp \
-#	tools/brush/transform/TransformTool.cpp \
-#	tools/brush/transform/TransformToolState.cpp
+	tools/pick/PickTool.cpp \
+	tools/pick/PickToolState.cpp \
+	tools/text/TextTool.cpp \
+	tools/text/TextToolState.cpp \
+	tools/transform/ChannelTransform.cpp \
+	tools/transform/TransformableGroup.cpp \
+	tools/transform/TransformTool.cpp \
+	tools/transform/TransformToolState.cpp
 
 HEADERS  += \
 	WonderBrush.h \
 	cimg/CImg.h \
 	commands/AddObjectsCommand.h \
+	commands/ChangeAreaCommand.h \
+	commands/InsertTextCommand.h \
 	commands/MoveObjectsCommand.h \
 	commands/ObjectAddedCommand.h \
+	commands/RemoveTextCommand.h \
 	commands/SetPropertiesCommand.h \
+	gui/CanvasView.h \
 	gui/ToolConfigView.h \
 	gui/misc/NavigatorView.h \
 	gui/misc/qt/DualSlider.h \
+	gui/misc/qt/FontPopup.h \
 	gui/misc/qt/IconButton.h \
 	gui/misc/qt/IconOptionsControl.h \
+	gui/misc/qt/ListModel.h \
 	gui/misc/qt/NavigatorViewPlatformDelegate.h \
-	gui/qt/CanvasView.h \
+	gui/qt/CanvasViewPlatformDelegate.h \
 	gui/qt/Window.h \
 	gui/icons/BrushIcon.h \
 	gui/icons/PathPropertyIcon.h \
 	gui/stateview/StateView.h \
 	gui/stateview/ViewState.h \
 	gui/tools/qt/BrushToolConfigView.h \
+	gui/tools/qt/TextToolConfigView.h \
+	gui/tools/qt/TransformToolConfigView.h \
 	model/BaseObject.h \
+	model/CurrentColor.h \
 	model/Selectable.h \
 	model/Selection.h \
 	model/document/Document.h \
@@ -264,6 +285,10 @@ HEADERS  += \
 	model/snapshots/ShapeSnapshot.h \
 	model/snapshots/StyleableSnapshot.h \
 	model/snapshots/TextSnapshot.h \
+	model/text/CharacterStyle.h \
+	model/text/Font.h \
+	model/text/StyleRun.h \
+	model/text/StyleRunList.h \
 	platform/qt/platform_support_ui.h \
 	platform/qt/PlatformMessageEvent.h \
 	platform/qt/PlatformResourceParser.h \
@@ -292,6 +317,7 @@ HEADERS  += \
 	platform/qt/system/BErrors.h \
 	platform/qt/system/BFile.h \
 	platform/qt/system/BFlattenable.h \
+	platform/qt/system/BFont.h \
 	platform/qt/system/BGradient.h \
 	platform/qt/system/BGraphicsDefs.h \
 	platform/qt/system/BHandler.h \
@@ -306,6 +332,7 @@ HEADERS  += \
 	platform/qt/system/BMessageAdapter.h \
 	platform/qt/system/BMessageFilter.h \
 	platform/qt/system/BMessagePrivate.h \
+	platform/qt/system/BMessageRunner.h \
 	platform/qt/system/BMessageUtils.h \
 	platform/qt/system/BMessenger.h \
 	platform/qt/system/BObjectList.h \
@@ -345,6 +372,7 @@ HEADERS  += \
 	platform/qt/system/include/Errors.h \
 	platform/qt/system/include/File.h \
 	platform/qt/system/include/Flattenable.h \
+	platform/qt/system/include/Font.h \
 	platform/qt/system/include/Gradient.h \
 	platform/qt/system/include/GraphicsDefs.h \
 	platform/qt/system/include/Handler.h \
@@ -359,6 +387,7 @@ HEADERS  += \
 	platform/qt/system/include/MessageAdapter.h \
 	platform/qt/system/include/MessageFilter.h \
 	platform/qt/system/include/MessagePrivate.h \
+	platform/qt/system/include/MessageRunner.h \
 	platform/qt/system/include/MessageUtils.h \
 	platform/qt/system/include/Messenger.h \
 	platform/qt/system/include/ObjectList.h \
@@ -380,7 +409,6 @@ HEADERS  += \
 	platform/qt/system/include/View.h \
 	platform/qt/system/include/Window.h \
 	render/FauxWeight.h \
-	render/Font.h \
 	render/FontCache.h \
 	render/GaussFilter.h \
 	render/LayoutContext.h \
@@ -403,6 +431,7 @@ HEADERS  += \
 	support/Command.h \
 	support/CommandStack.h \
 	support/CompoundCommand.h \
+	support/cursors.h \
 	support/Debug.h \
 	support/DLList.h \
 	support/HashString.h \
@@ -422,18 +451,24 @@ HEADERS  += \
 	tools/TransformViewState.h \
 	tools/brush/BrushTool.h \
 	tools/brush/BrushToolState.h \
-#	tools/pick/PickTool.h \
-#	tools/pick/PickToolState.h \
-#	tools/text/TextTool.h \
-#	tools/text/TextToolState.h \
-#	tools/transform/ChannelTransform.h \
-#	tools/transform/TransformableGroup.h \
-#	tools/transform/TransformTool.h \
-#	tools/transform/TransformToolState.h
+	tools/pick/PickTool.h \
+	tools/pick/PickToolState.h \
+	tools/pick/qt/PickToolStatePlatformDelegate.h \
+	tools/text/TextTool.h \
+	tools/text/TextToolState.h \
+	tools/text/qt/TextToolStatePlatformDelegate.h \
+	tools/transform/ChannelTransform.h \
+	tools/transform/TransformableGroup.h \
+	tools/transform/TransformTool.h \
+	tools/transform/TransformToolState.h \
+	tools/transform/qt/TransformToolStatePlatformDelegate.h
 
 FORMS += \
+	gui/misc/qt/FontPopup.ui \
 	gui/qt/Window.ui \
-    gui/tools/qt/BrushToolConfigView.ui
+    gui/tools/qt/BrushToolConfigView.ui \
+	gui/tools/qt/TextToolConfigView.ui \
+	gui/tools/qt/TransformToolConfigView.ui
 
 RESOURCES += \
     wonderbrush2.qrc

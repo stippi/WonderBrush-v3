@@ -52,16 +52,16 @@ SubDirHdrs [ FDirName $(TOP) src commands ] ;
 SubDirHdrs [ FDirName $(TOP) src gui ] ;
 SubDirHdrs [ FDirName $(TOP) src gui colorpicker ] ;
 SubDirHdrs [ FDirName $(TOP) src gui columntreeview ] ;
-SubDirHdrs [ FDirName $(TOP) src gui haiku ] ;
+SubDirHdrs [ FDirName $(TOP) src gui $(WONDERBRUSH_PLATFORM) ] ;
 SubDirHdrs [ FDirName $(TOP) src gui icons ] ;
 SubDirHdrs [ FDirName $(TOP) src gui misc ] ;
-SubDirHdrs [ FDirName $(TOP) src gui misc haiku ] ;
+SubDirHdrs [ FDirName $(TOP) src gui misc $(WONDERBRUSH_PLATFORM) ] ;
 SubDirHdrs [ FDirName $(TOP) src gui popupcontrol ] ;
 SubDirHdrs [ FDirName $(TOP) src gui propertylistview ] ;
 SubDirHdrs [ FDirName $(TOP) src gui propertylistview
 	specific_properties ] ;
 SubDirHdrs [ FDirName $(TOP) src gui scrollview ] ;
-SubDirHdrs [ FDirName $(TOP) src gui scrollview haiku ] ;
+SubDirHdrs [ FDirName $(TOP) src gui scrollview $(WONDERBRUSH_PLATFORM) ] ;
 SubDirHdrs [ FDirName $(TOP) src gui stateview ] ;
 SubDirHdrs [ FDirName $(TOP) src model ] ;
 SubDirHdrs [ FDirName $(TOP) src model document ] ;
@@ -77,7 +77,10 @@ SubDirHdrs [ FDirName $(TOP) src support ] ;
 SubDirHdrs [ FDirName $(TOP) src tools ] ;
 SubDirHdrs [ FDirName $(TOP) src tools brush ] ;
 SubDirHdrs [ FDirName $(TOP) src tools pick ] ;
+SubDirHdrs [ FDirName $(TOP) src tools pick $(WONDERBRUSH_PLATFORM) ] ;
+SubDirHdrs [ FDirName $(TOP) src tools text $(WONDERBRUSH_PLATFORM) ] ;
 SubDirHdrs [ FDirName $(TOP) src tools transform ] ;
+SubDirHdrs [ FDirName $(TOP) src tools transform $(WONDERBRUSH_PLATFORM) ] ;
 SubDirSysHdrs [ FDirName $(TOP) agg/include ] ;
 SubDirSysHdrs [ FDirName $(TOP) agg/font_freetype ] ;
 SubDirSysHdrs [ FDirName $(TOP) cimg ] ;
@@ -118,21 +121,19 @@ Application WonderBrush :
 	LabelPopup.cpp
 	NavigatorViewPlatformDelegate.cpp
 
-	# gui/tools
+	# gui/tools/<platform>
+	BrushToolConfigView.cpp
 	TextToolConfigView.cpp
 	TransformToolConfigView.cpp
 
-	# gui/tools/<platform>
-	BrushToolConfigView.cpp
-
 	# gui (WonderBrush specific)
+	CanvasView.cpp
 	InspectorView.cpp
 	ObjectTreeView.cpp
 	ResourceTreeView.cpp
 	ToolConfigView.cpp
 
 	# gui/<platform>
-	CanvasView.cpp
 	Window.cpp
 
 	# model

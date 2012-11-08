@@ -142,7 +142,7 @@ BrushToolState::MouseUp()
 
 // Draw
 void
-BrushToolState::Draw(BView* view, BRect updateRect)
+BrushToolState::Draw(PlatformDrawContext& drawContext)
 {
 //	double scaleX;
 //	double scaleY;

@@ -22,7 +22,11 @@ public:
 
 			void				AddOption(IconButton* icon);
 
+	virtual	void				AllAttached();
 	virtual	void				MessageReceived(BMessage* message);
+
+	virtual	void				SetValue(int32 value);
+	virtual	void				SetEnabled(bool enable);
 
 private:
 			void				_Init(enum orientation orientation);
@@ -32,6 +36,8 @@ private:
 private:
 			QWidget*			fIconGroup;
 			QBoxLayout*			fIconGroupLayout;
+			QList<IconButton*>	fIconButtons;
+			BHandler*			fTargetCache;
 };
 
 

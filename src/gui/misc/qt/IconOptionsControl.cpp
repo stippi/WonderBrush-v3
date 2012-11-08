@@ -8,7 +8,8 @@
 
 IconOptionsControl::IconOptionsControl(QWidget* parent)
 	:
-	BControl(NULL, NULL, NULL, 0)
+	BControl(NULL, NULL, NULL, 0),
+	fTargetCache(NULL)
 {
 	setParent(parent);
 	_Init(B_HORIZONTAL);
@@ -18,7 +19,8 @@ IconOptionsControl::IconOptionsControl(QWidget* parent)
 IconOptionsControl::IconOptionsControl(const char* name, const char* label,
 	BMessage* message, BHandler* target, enum orientation orientation)
 	:
-	BControl(name, label, message, 0)
+	BControl(name, label, message, 0),
+	fTargetCache(target)
 {
 	_Init(orientation);
 }
@@ -33,8 +35,19 @@ IconOptionsControl::AddOption(IconButton* icon)
 	// first icon added, mark it
 	icon->SetPressed(!_FindIcon(0));
 
+	fIconButtons.append(icon);
 	fIconGroupLayout->addWidget(icon);
 	icon->SetTarget(this);
+}
+
+
+void
+IconOptionsControl::AllAttached()
+{
+	for (int32 i = 0; IconButton* button = _FindIcon(i); i++)
+		button->SetTarget(this);
+	if (fTargetCache != NULL)
+		SetTarget(fTargetCache);
 }
 
 
@@ -62,6 +75,29 @@ IconOptionsControl::MessageReceived(BMessage* message)
 
 
 void
+IconOptionsControl::SetValue(int32 value)
+{
+	if (IconButton* valueButton = _FindIcon(value)) {
+		for (int32 i = 0; IconButton* button = _FindIcon(i); i++) {
+			button->SetPressed(button == valueButton);
+		}
+	}
+	BControl::SetValueNoUpdate(value);
+}
+
+
+void
+IconOptionsControl::SetEnabled(bool enable)
+{
+	for (int32 i = 0; IconButton* button = _FindIcon(i); i++) {
+		button->setEnabled(enable);
+	}
+	BControl::SetEnabled(enable);
+	Invalidate();
+}
+
+
+void
 IconOptionsControl::_Init(enum orientation orientation)
 {
 	QBoxLayout* layout = new QHBoxLayout(this);
@@ -79,5 +115,5 @@ IconOptionsControl::_Init(enum orientation orientation)
 IconButton*
 IconOptionsControl::_FindIcon(int32 index) const
 {
-	return dynamic_cast<IconButton*>(fIconGroup->children().value(index));
+	return fIconButtons.value(index, NULL);
 }

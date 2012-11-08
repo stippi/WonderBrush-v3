@@ -9,6 +9,7 @@
 #include <SupportDefs.h>
 
 #include <QPoint>
+#include <QPointF>
 
 
 class BRect;
@@ -40,6 +41,8 @@ public:
 
 			QPoint				ToQPoint() const;
 	static	BPoint				FromQPoint(const QPoint& qPoint);
+
+								operator QPointF() const;
 };
 
 
@@ -103,6 +106,14 @@ BPoint::FromQPoint(const QPoint& qPoint)
 {
 	return BPoint(qPoint.x(), qPoint.y());
 }
+
+
+inline
+BPoint::operator QPointF() const
+{
+	return QPointF(x, y);
+}
+
 
 
 #endif // _POINT_H

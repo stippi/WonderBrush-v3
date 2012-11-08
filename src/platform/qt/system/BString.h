@@ -10,6 +10,8 @@
 #include <SupportDefs.h>
 #include <string.h>
 
+#include <QString>
+
 
 class BStringRef;
 
@@ -320,6 +322,9 @@ public:
 			// float/double output hardcodes %.2f style formatting
 			BString&		operator<<(float value);
 			BString&		operator<<(double value);
+
+			QString			ToQString() const
+								{ return QString::fromUtf8(String()); }
 
 public:
 			class Private;

@@ -147,6 +147,72 @@ setText(QString::fromUtf8("ToolButton"));
 }
 
 
+status_t
+IconButton::SetIcon(const unsigned char* bitsFromQuickRes,
+	uint32 width, uint32 height, color_space format, bool convertToBW)
+{
+	status_t status = B_BAD_VALUE;
+	if (bitsFromQuickRes && width > 0 && height > 0) {
+		BBitmap* quickResBitmap = new(std::nothrow) BBitmap(
+			BRect(0.0, 0.0, width - 1.0, height - 1.0), format);
+		status = quickResBitmap ? quickResBitmap->InitCheck() : B_ERROR;
+		if (status >= B_OK) {
+			// It doesn't look right to copy BitsLength() bytes, but bitmaps
+			// exported from QuickRes still contain their padding, so it is alright.
+			memcpy(quickResBitmap->Bits(), bitsFromQuickRes, quickResBitmap->BitsLength());
+			if (format != B_RGB32 && format != B_RGBA32 && format != B_RGB32_BIG && format != B_RGBA32_BIG) {
+				// colorspace needs conversion
+				BBitmap* bitmap = new(std::nothrow) BBitmap(
+					quickResBitmap->Bounds(), B_RGB32, true);
+				if (bitmap && bitmap->IsValid()) {
+// TODO:...
+debugger("IconButton::SetIcon(): color space conversion not supported");
+#if 0
+					BView* helper = new BView(bitmap->Bounds(), "helper",
+											  B_FOLLOW_NONE, B_WILL_DRAW);
+					if (bitmap->Lock()) {
+						bitmap->AddChild(helper);
+						helper->SetHighColor(ui_color(B_PANEL_BACKGROUND_COLOR));
+						helper->FillRect(helper->Bounds());
+						helper->SetDrawingMode(B_OP_OVER);
+						helper->DrawBitmap(quickResBitmap, BPoint(0.0, 0.0));
+						helper->Sync();
+						bitmap->Unlock();
+					}
+					status = _MakeBitmaps(bitmap);
+#endif
+				} else
+					printf("IconButton::SetIcon() - B_RGB32 bitmap is not valid\n");
+				delete bitmap;
+			} else {
+				// native colorspace (32 bits)
+				if (convertToBW) {
+					// convert to gray scale icon
+					uint8* bits = (uint8*)quickResBitmap->Bits();
+					uint32 bpr = quickResBitmap->BytesPerRow();
+					for (uint32 y = 0; y < height; y++) {
+						uint8* handle = bits;
+						uint8 gray;
+						for (uint32 x = 0; x < width; x++) {
+							gray = uint8((116 * handle[0] + 600 * handle[1] + 308 * handle[2]) / 1024);
+							handle[0] = gray;
+							handle[1] = gray;
+							handle[2] = gray;
+							handle += 4;
+						}
+						bits += bpr;
+					}
+				}
+				status = _MakeBitmaps(quickResBitmap);
+			}
+		} else
+			printf("IconButton::SetIcon() - error allocating bitmap: %s\n", strerror(status));
+		delete quickResBitmap;
+	}
+	return status;
+}
+
+
 void
 IconButton::TrimIcon(BRect trimmed)
 {

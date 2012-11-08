@@ -181,8 +181,10 @@ TransformToolConfigView::SetEnabled(bool enable)
 {
 	fTranslationX->SetEnabled(enable);
 	fTranslationY->SetEnabled(enable);
+	fRotate->SetEnabled(enable);
 	fScaleX->SetEnabled(enable);
 	fScaleY->SetEnabled(enable);
+	fSubpixels->SetEnabled(enable);
 }
 
 // #pragma mark - private

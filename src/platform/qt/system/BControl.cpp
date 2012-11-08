@@ -158,10 +158,10 @@ BControl::AttachedToWindow()
 
 	SetViewColor(color);
 	SetLowColor(color);
+#endif
 
 	if (!Messenger().IsValid())
 		SetTarget(Window());
-#endif
 
 	BView::AttachedToWindow();
 }

@@ -16,7 +16,7 @@ public:
 	virtual	void				Init();
 	virtual	void				Cleanup();
 
-	virtual	void				Draw(BView* into, BRect updateRect);
+	virtual	void				Draw(PlatformDrawContext& drawContext);
 	virtual	bool				MessageReceived(BMessage* message,
 									Command** _command);
 

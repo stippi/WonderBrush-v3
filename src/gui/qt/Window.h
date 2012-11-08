@@ -4,6 +4,7 @@
 
 #include <Window.h>
 
+#include "CurrentColor.h"
 #include "ListenerAdapter.h"
 #include "Selection.h"
 
@@ -29,6 +30,8 @@ public:
 									QWidget* parent = 0);
 								~Window();
 
+	virtual	void				MessageReceived(BMessage* message);
+
 			void				AddTool(Tool* tool);
 
 			status_t			StoreSettings(BMessage& settings) const;
@@ -43,6 +46,10 @@ private:
 
 			void				_ReplaceWidget(QWidget*& toReplace, QWidget* replacement);
 
+private slots:
+			void				_UndoActionInvoked();
+			void				_RedoActionInvoked();
+
 private:
 			Ui::Window*			fUi;
 
@@ -52,6 +59,7 @@ private:
 			RenderManager*		fRenderManager;
 			ListenerAdapter		fCommandStackListener;
 			Selection			fSelection;
+			CurrentColor		fCurrentColor;
 
 			BList				fTools;
 };

@@ -66,6 +66,8 @@ const uint32 _B_RESERVED7_ 				= 0x00200000UL;	/* 22 */
 const uint32 B_SUPPORTS_LAYOUT			= 0x00100000UL;	/* 21 */
 const uint32 B_INVALIDATE_AFTER_LAYOUT	= 0x00080000UL;	/* 20 */
 
+#define B_FOLLOW_NONE 0
+
 
 class BView : public QWidget, public BHandler {
 public:
@@ -101,6 +103,10 @@ public:
 			void				ResizeTo(BSize size)
 									{ ResizeTo(size.width, size.height); }
 
+	virtual	void				MakeFocus(bool focusState = true);
+			bool				IsFocus() const
+									{ return hasFocus(); }
+
 			void				ConvertToScreen(BPoint* pt) const
 									{ *pt = ConvertToScreen(*pt); }
 			BPoint				ConvertToScreen(BPoint pt) const;
@@ -118,6 +124,9 @@ public:
 
 			status_t			SetMouseEventMask(uint32 mask,
 									uint32 options = 0);
+
+			void				GetMouse(BPoint* _location, uint32* _buttons,
+									bool checkMessageQueue = true);
 
 	virtual	void				AttachedToWindow();
 	virtual	void				DetachedFromWindow();
@@ -159,6 +168,7 @@ public:
 	virtual	void				GetHeightForWidth(float width, float* min,
 									float* max, float* preferred);
 
+	static	int32				FromQtMouseButtons(Qt::MouseButtons  qtButtons);
 	static	int32				FromQtModifiers(
 									Qt::KeyboardModifiers qtModifiers);
 
@@ -200,6 +210,9 @@ private:
 			BSize				fMaxSize;
 			BSize				fPreferredSize;
 			BAlignment			fAlignment;
+
+			BPoint				fMousePosition;
+			int32				fMouseButtons;
 };
 
 

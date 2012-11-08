@@ -147,7 +147,7 @@ private:
 struct BLooper::Manager {
 	Manager()
 		:
-		fMutex(),
+		fMutex(QMutex::Recursive),
 		fLoopersByToken()
 	{
 	}

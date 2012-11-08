@@ -120,7 +120,7 @@ private:
 StateView::StateView(BRect frame, const char* name, uint32 resizingMode,
 		uint32 flags)
 	:
-	BView(frame, name, resizingMode, flags),
+	PlatformViewMixin<BView>(frame, name, resizingMode, flags),
 	fCurrentState(NULL),
 	fDropAnticipatingState(NULL),
 
@@ -138,12 +138,11 @@ StateView::StateView(BRect frame, const char* name, uint32 resizingMode,
 {
 }
 
-#ifdef __HAIKU__
 
 // constructor
 StateView::StateView(const char* name, uint32 flags)
 	:
-	BView(name, flags),
+	PlatformViewMixin<BView>(name, flags),
 	fCurrentState(NULL),
 	fDropAnticipatingState(NULL),
 
@@ -161,7 +160,6 @@ StateView::StateView(const char* name, uint32 flags)
 {
 }
 
-#endif // __HAIKU__
 
 // destructor
 StateView::~StateView()
@@ -191,9 +189,9 @@ StateView::DetachedFromWindow()
 
 // Draw
 void
-StateView::Draw(BRect updateRect)
+StateView::PlatformDraw(PlatformDrawContext& drawContext)
 {
-	Draw(this, updateRect);
+	Draw(drawContext);
 }
 
 // MessageReceived
@@ -498,17 +496,17 @@ StateView::ViewStateBoundsChanged()
 
 // Draw
 void
-StateView::Draw(BView* into, BRect updateRect)
+StateView::Draw(PlatformDrawContext& drawContext)
 {
 	if (fLocker != NULL && !fLocker->ReadLock()) {
 		return;
 	}
 
 	if (fCurrentState != NULL)
-		fCurrentState->Draw(into, updateRect);
+		fCurrentState->Draw(drawContext);
 
 	if (fDropAnticipatingState != NULL)
-		fDropAnticipatingState->Draw(into, updateRect);
+		fDropAnticipatingState->Draw(drawContext);
 
 	if (fLocker != NULL)
 		fLocker->ReadUnlock();
