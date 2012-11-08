@@ -11,6 +11,7 @@
 
 class CanvasView;
 class Document;
+class IconButton;
 class Layer;
 class RenderManager;
 class Tool;
@@ -60,6 +61,11 @@ private:
 			ListenerAdapter		fCommandStackListener;
 			Selection			fSelection;
 			CurrentColor		fCurrentColor;
+
+			IconButton*			fUndoIcon;
+			IconButton*			fRedoIcon;
+			IconButton*			fConfirmIcon;
+			IconButton*			fCancelIcon;
 
 			BList				fTools;
 };

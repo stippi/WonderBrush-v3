@@ -37,6 +37,38 @@ Window::Window(BRect frame, const char* title, Document* document, Layer* layer,
 	// TODO: Check error
 	fRenderManager->Init();
 
+	const int iconSize = 16;
+	const BRect toolIconBounds(0, 0, 15, 15);
+//	float iconGroupInset = 3.0f;
+
+	// Undo/Redo icon group
+	fUndoIcon = new IconButton("undo", 0, NULL, new BMessage(MSG_UNDO), this);
+	fUndoIcon->SetIcon(301, iconSize);
+	fUndoIcon->TrimIcon(toolIconBounds);
+	fRedoIcon = new IconButton("redo", 0, NULL, new BMessage(MSG_REDO), this);
+	fRedoIcon->SetIcon(302, iconSize);
+	fRedoIcon->TrimIcon(toolIconBounds);
+	fConfirmIcon = new IconButton("confirm", 0);
+	fConfirmIcon->SetIcon(303, iconSize);
+	fConfirmIcon->TrimIcon(toolIconBounds);
+	fCancelIcon = new IconButton("cancel", 0);
+	fCancelIcon->SetIcon(304, iconSize);
+	fCancelIcon->TrimIcon(toolIconBounds);
+
+	fUndoIcon->SetEnabled(false);
+	fRedoIcon->SetEnabled(false);
+	fConfirmIcon->SetEnabled(false);
+	fCancelIcon->SetEnabled(false);
+
+	QBoxLayout* layout = new QHBoxLayout(fUi->undoIconControl);
+	layout->addWidget(fUndoIcon);
+	layout->addWidget(fRedoIcon);
+	QFrame* line = new QFrame();
+	line->setFrameShape(QFrame::VLine);
+	layout->addWidget(line);
+	layout->addWidget(fConfirmIcon);
+	layout->addWidget(fCancelIcon);
+
 	_ReplaceWidget(fUi->navigatorViewDummy,
 		new NavigatorView(fDocument, fRenderManager));
 
@@ -184,7 +216,7 @@ Window::_ObjectChanged(const Notifier* object)
 		BString label("Undo");
 		fUi->actionUndo->setEnabled(
 			fDocument->CommandStack()->GetUndoName(label));
-//		fUndoIcon->SetEnabled(fUndoMI->IsEnabled());
+		fUndoIcon->SetEnabled(fUi->actionUndo->isEnabled());
 		if (fUi->actionUndo->isEnabled())
 			fUi->actionUndo->setText(label.ToQString());
 		else
@@ -194,7 +226,7 @@ Window::_ObjectChanged(const Notifier* object)
 		label.SetTo("Redo");
 		fUi->actionRedo->setEnabled(
 			fDocument->CommandStack()->GetRedoName(label));
-//		fRedoIcon->SetEnabled(fRedoMI->IsEnabled());
+		fRedoIcon->SetEnabled(fUi->actionRedo->isEnabled());
 		if (fUi->actionRedo->isEnabled())
 			fUi->actionRedo->setText(label.ToQString());
 		else
