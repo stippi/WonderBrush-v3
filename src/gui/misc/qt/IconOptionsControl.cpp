@@ -32,6 +32,8 @@ IconOptionsControl::AddOption(IconButton* icon)
 	if (icon == NULL)
 		return;
 
+	icon->SetRadioMode(true);
+
 	// first icon added, mark it
 	icon->SetPressed(!_FindIcon(0));
 

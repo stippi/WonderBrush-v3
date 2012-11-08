@@ -33,10 +33,11 @@ IconButton::IconButton(const char* name, uint32 id, const char* label,
 	fDisabledClickedIcon(NULL)
 {
 	setAutoRaise(true);
-	setCheckable(true);
-// TODO:...
 
-	connect(this, SIGNAL(toggled(bool)), SLOT(_CheckedChanged()));
+	SetRadioMode(false);
+
+	connect(this, SIGNAL(pressed()), SLOT(_UpdateIcon()));
+	connect(this, SIGNAL(released()), SLOT(_UpdateIcon()));
 }
 
 
@@ -72,6 +73,29 @@ IconButton::IsValid() const
 		&& !fDisabledIcon->isNull()
 		&& !fClickedIcon->isNull()
 		&& !fDisabledClickedIcon->isNull();
+}
+
+
+bool
+IconButton::HasRadioMode() const
+{
+	return isCheckable();
+}
+
+
+void
+IconButton::SetRadioMode(bool radioMode)
+{
+	setCheckable(radioMode);
+	setAutoExclusive(radioMode);
+
+	disconnect(SIGNAL(toggled(bool)), this, SLOT(_CheckedChanged()));
+	disconnect(SIGNAL(clicked()), this, SLOT(_Clicked()));
+
+	if (radioMode)
+		connect(this, SIGNAL(toggled(bool)), SLOT(_CheckedChanged()));
+	else
+		connect(this, SIGNAL(clicked()), SLOT(_Clicked()));
 }
 
 
@@ -238,15 +262,6 @@ IconButton::TrimIcon(BRect trimmed)
 }
 
 
-void IconButton::_CheckedChanged()
-{
-	_UpdateIcon();
-
-	if (isChecked() && isEnabled())
-		Invoke();
-}
-
-
 status_t
 IconButton::_MakeBitmaps(const BBitmap* bitmap)
 {
@@ -402,14 +417,29 @@ IconButton::_DeleteBitmaps()
 }
 
 
+void IconButton::_CheckedChanged()
+{
+	if (isChecked() && isEnabled())
+		Invoke();
+}
+
+
+void
+IconButton::_Clicked()
+{
+	if (isEnabled())
+		Invoke();
+}
+
+
 void
 IconButton::_UpdateIcon()
 {
 	QIcon* icon;
 	if (isEnabled())
-		icon = isChecked() ? fClickedIcon : fNormalIcon;
+		icon = isDown() ? fClickedIcon : fNormalIcon;
 	else
-		icon = isChecked() ? fDisabledClickedIcon : fDisabledIcon;
+		icon = isDown() ? fDisabledClickedIcon : fDisabledIcon;
 
 	if (icon != NULL)
 		setIcon(*icon);

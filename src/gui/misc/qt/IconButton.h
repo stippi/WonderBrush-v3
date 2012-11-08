@@ -35,6 +35,9 @@ public:
 			void				SetEnabled(bool enabled)
 									{ setEnabled(enabled); }
 
+			bool				HasRadioMode() const;
+			void				SetRadioMode(bool radioMode);
+
 	virtual	int32				Value() const;
 	virtual	void				SetValue(int32 value);
 
@@ -51,13 +54,13 @@ public:
 
 			void				TrimIcon(BRect bounds);
 
-private slots:
-			void				_CheckedChanged();
-
 private:
 			status_t			_MakeBitmaps(const BBitmap* bitmap);
 			void				_DeleteBitmaps();
 
+private slots:
+			void				_CheckedChanged();
+			void				_Clicked();
 			void				_UpdateIcon();
 
 private:
