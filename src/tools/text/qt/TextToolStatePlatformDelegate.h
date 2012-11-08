@@ -4,27 +4,10 @@
 
 #include "TextToolState.h"
 
+#include <Shape.h>
+
 
 class TextToolState::PlatformDelegate {
-public:
-	typedef QPolygonF Polygon;
-
-	struct PolygonBuilder {
-		PolygonBuilder& operator<<(const BPoint& point)
-		{
-			fPolygon << point;
-			return *this;
-		}
-
-		Polygon& GetPolygon()
-		{
-			return fPolygon;
-		}
-
-	private:
-		Polygon	fPolygon;
-	};
-
 public:
 	PlatformDelegate(TextToolState* state)
 		:
@@ -54,15 +37,14 @@ public:
 	}
 
 
-	void DrawInvertedPolygon(PlatformDrawContext& drawContext,
-		Polygon& shape)
+	void DrawInvertedShape(PlatformDrawContext& drawContext, BShape& shape)
 	{
 		QPainter painter(drawContext.View());
 		painter.setRenderHint(QPainter::Antialiasing, true);
 		painter.setCompositionMode(QPainter::RasterOp_SourceXorDestination);
 		painter.setPen(Qt::NoPen);
 		painter.setBrush(QColor(255, 255, 255));
-		painter.drawPolygon(shape);
+		painter.drawPath(shape.PainterPath());
 	}
 
 private:

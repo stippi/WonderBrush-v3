@@ -9,38 +9,6 @@
 
 class TextToolState::PlatformDelegate {
 public:
-	typedef BShape Polygon;
-
-	struct PolygonBuilder {
-		PolygonBuilder()
-			:
-			fInitialPoint(true)
-		{
-		}
-
-		PolygonBuilder& operator<<(const BPoint& point)
-		{
-			if (fInitialPoint) {
-				fPolygon.MoveTo(point);
-				fInitialPoint = false;
-			} else
-				fPolygon.LineTo(point);
-
-			return *this;
-		}
-
-		Polygon& GetPolygon()
-		{
-			fPolygon.Close();
-			return fPolygon;
-		}
-
-	private:
-		Polygon	fPolygon;
-		bool	fInitialPoint;
-	};
-
-public:
 	PlatformDelegate(TextToolState* state)
 		:
 		fState(state)
@@ -76,8 +44,7 @@ public:
 			widthOffset.x + size + 1, widthOffset.y + size + 1));
 	}
 
-	void DrawInvertedPolygon(PlatformDrawContext& drawContext,
-		Polygon& shape)
+	void DrawInvertedShape(PlatformDrawContext& drawContext, BShape& shape)
 	{
 		BView* view = drawContext.View();
 		view->PushState();

@@ -13,6 +13,7 @@
 #include "Style.h"
 
 class BMessageRunner;
+class BShape;
 class CurrentColor;
 class Document;
 class Layer;
@@ -119,9 +120,8 @@ private:
 									bool lockSelectionAnchor,
 									bool updateSelectionStyle);
 
-			template<typename PolygonBuilder>
 			void				_GetSelectionShape(TextLayout& layout,
-									PolygonBuilder& polygonBuilder, int32 start,
+									BShape& shape, int32 start,
 									int32 end) const;
 
 			bool				_HasSelection() const;

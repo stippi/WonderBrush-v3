@@ -11,6 +11,7 @@
 
 #include <Cursor.h>
 #include <MessageRunner.h>
+#include <Shape.h>
 
 #include <new>
 
@@ -955,11 +956,14 @@ TextToolState::_DrawCaret(PlatformDrawContext& drawContext, int32 textOffset)
 	TransformObjectToView(&lb, false);
 	TransformObjectToView(&rb, false);
 
-	PlatformDelegate::PolygonBuilder polygonBuilder;
-	polygonBuilder << lt << rt << rb << lb;
+	BShape shape;
+	shape.MoveTo(lt);
+	shape.LineTo(rt);
+	shape.LineTo(rb);
+	shape.LineTo(lb);
+	shape.Close();
 
-	fPlatformDelegate->DrawInvertedPolygon(drawContext,
-		polygonBuilder.GetPolygon());
+	fPlatformDelegate->DrawInvertedShape(drawContext, shape);
 }
 
 // _DrawSelection
@@ -967,11 +971,9 @@ void
 TextToolState::_DrawSelection(PlatformDrawContext& drawContext,
 	int32 startOffset, int32 endOffset)
 {
-	PlatformDelegate::PolygonBuilder polygonBuilder;
-	_GetSelectionShape(fText->getTextLayout(), polygonBuilder, startOffset,
-		endOffset);
-	fPlatformDelegate->DrawInvertedPolygon(drawContext,
-		polygonBuilder.GetPolygon());
+	BShape shape;
+	_GetSelectionShape(fText->getTextLayout(), shape, startOffset, endOffset);
+	fPlatformDelegate->DrawInvertedShape(drawContext, shape);
 }
 
 // #pragma mark -
@@ -1081,10 +1083,9 @@ TextToolState::_SetCaretOffset(int32 offset, bool updateAnchor,
 }
 
 // _GetSelectionShape
-template<typename PolygonBuilder>
 void
-TextToolState::_GetSelectionShape(TextLayout& layout,
-	PolygonBuilder& polygonBuilder, int32 start, int32 end) const
+TextToolState::_GetSelectionShape(TextLayout& layout, BShape& shape,
+	int32 start, int32 end) const
 {
 	double startX1;
 	double startY1;
@@ -1113,41 +1114,47 @@ TextToolState::_GetSelectionShape(TextLayout& layout,
 		TransformObjectToView(&rb, false);
 		TransformObjectToView(&lb, false);
 
-		polygonBuilder <<  lt << rt << rb << lb;
+		shape.MoveTo(lt);
+		shape.MoveTo(rt);
+		shape.MoveTo(rb);
+		shape.MoveTo(lb);
+		shape.Close();
 	} else {
 		// Selection over multiple lines
 		BPoint p;
 		p = BPoint(startX1, startY1);
 		TransformObjectToView(&p, false);
-		polygonBuilder << p;
+		shape.MoveTo(p);
 
 		p = BPoint(layout.getWidth(), startY1);
 		TransformObjectToView(&p, false);
-		polygonBuilder << p;
+		shape.LineTo(p);
 
 		p = BPoint(layout.getWidth(), endY1);
 		TransformObjectToView(&p, false);
-		polygonBuilder << p;
+		shape.LineTo(p);
 
 		p = BPoint(endX1, endY1);
 		TransformObjectToView(&p, false);
-		polygonBuilder << p;
+		shape.LineTo(p);
 
 		p = BPoint(endX1, endY2);
 		TransformObjectToView(&p, false);
-		polygonBuilder << p;
+		shape.LineTo(p);
 
 		p = BPoint(0, endY2);
 		TransformObjectToView(&p, false);
-		polygonBuilder << p;
+		shape.LineTo(p);
 
 		p = BPoint(0, startY2);
 		TransformObjectToView(&p, false);
-		polygonBuilder << p;
+		shape.LineTo(p);
 
 		p = BPoint(startX1, startY2);
 		TransformObjectToView(&p, false);
-		polygonBuilder << p;
+		shape.LineTo(p);
+
+		shape.Close();
 	}
 }
 
