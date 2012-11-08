@@ -1115,9 +1115,9 @@ TextToolState::_GetSelectionShape(TextLayout& layout, BShape& shape,
 		TransformObjectToView(&lb, false);
 
 		shape.MoveTo(lt);
-		shape.MoveTo(rt);
-		shape.MoveTo(rb);
-		shape.MoveTo(lb);
+		shape.LineTo(rt);
+		shape.LineTo(rb);
+		shape.LineTo(lb);
 		shape.Close();
 	} else {
 		// Selection over multiple lines
