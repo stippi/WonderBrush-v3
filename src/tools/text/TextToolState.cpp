@@ -1120,7 +1120,7 @@ TextToolState::_GetSelectionShape(TextLayout& layout, BShape& shape,
 		shape.LineTo(lb);
 		shape.Close();
 	} else if (startLineIndex == endLineIndex - 1
-		&& endX2 <= startX1) {
+		&& endX1 <= startX1) {
 		// Selection on two lines, with gap:
 		// ---------
 		// ------###
