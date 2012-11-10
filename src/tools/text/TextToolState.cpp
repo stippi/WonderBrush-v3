@@ -1119,6 +1119,44 @@ TextToolState::_GetSelectionShape(TextLayout& layout, BShape& shape,
 		shape.LineTo(rb);
 		shape.LineTo(lb);
 		shape.Close();
+	} else if (startLineIndex == endLineIndex - 1
+		&& endX2 <= startX1) {
+		// Selection on two lines, with gap:
+		// ---------
+		// ------###
+		// ##-------
+		// ---------
+		BPoint lt(startX1, startY1);
+		BPoint rt(layout.getWidth(), startY1);
+		BPoint rb(layout.getWidth(), startY2);
+		BPoint lb(startX1, startY2);
+
+		TransformObjectToView(&lt, false);
+		TransformObjectToView(&rt, false);
+		TransformObjectToView(&rb, false);
+		TransformObjectToView(&lb, false);
+
+		shape.MoveTo(lt);
+		shape.LineTo(rt);
+		shape.LineTo(rb);
+		shape.LineTo(lb);
+		shape.Close();
+
+		lt = BPoint(0, endY1);
+		rt = BPoint(endX1, endY1);
+		rb = BPoint(endX1, endY2);
+		lb = BPoint(0, endY2);
+
+		TransformObjectToView(&lt, false);
+		TransformObjectToView(&rt, false);
+		TransformObjectToView(&rb, false);
+		TransformObjectToView(&lb, false);
+
+		shape.MoveTo(lt);
+		shape.LineTo(rt);
+		shape.LineTo(rb);
+		shape.LineTo(lb);
+		shape.Close();
 	} else {
 		// Selection over multiple lines
 		BPoint p;
