@@ -116,6 +116,12 @@ public:
 	virtual	void				DispatchMessage(BMessage* message,
 									BHandler* handler);
 
+signals:
+			void				PlatformWindowClosing();
+
+protected:
+			void				closeEvent(QCloseEvent* event);
+
 private:
 			struct ViewAncestryTracker;
 

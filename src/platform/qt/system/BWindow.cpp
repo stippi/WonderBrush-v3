@@ -763,6 +763,15 @@ FrameMoved(origin);
 
 
 void
+BWindow::closeEvent(QCloseEvent* event)
+{
+	emit PlatformWindowClosing();
+
+	QMainWindow::closeEvent(event);
+}
+
+
+void
 BWindow::_WidgetAdded(QWidget* widget)
 {
 	BView* view = dynamic_cast<BView*>(widget);
