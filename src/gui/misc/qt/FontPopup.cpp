@@ -88,7 +88,7 @@ struct FontPopup::FamilyListModel : public ListModel<Family*> {
 
 	virtual QString ItemText(Family* const& item) const
 	{
-		return item->Name().ToQString();
+		return item->Name();
 	}
 };
 
@@ -102,7 +102,7 @@ struct FontPopup::StyleListModel : public ListModel<Style*> {
 
 	virtual QString ItemText(Style* const& item) const
 	{
-		return item->Name().ToQString();
+		return item->Name();
 	}
 };
 

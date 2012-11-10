@@ -285,7 +285,7 @@ Window::_ObjectChanged(const Notifier* object)
 			fDocument->CommandStack()->GetUndoName(label));
 		fUndoIcon->SetEnabled(fUi->actionUndo->isEnabled());
 		if (fUi->actionUndo->isEnabled())
-			fUi->actionUndo->setText(label.ToQString());
+			fUi->actionUndo->setText(label);
 		else
 			fUi->actionUndo->setText(QString::fromUtf8("<nothing to undo>"));
 
@@ -295,7 +295,7 @@ Window::_ObjectChanged(const Notifier* object)
 			fDocument->CommandStack()->GetRedoName(label));
 		fRedoIcon->SetEnabled(fUi->actionRedo->isEnabled());
 		if (fUi->actionRedo->isEnabled())
-			fUi->actionRedo->setText(label.ToQString());
+			fUi->actionRedo->setText(label);
 		else
 			fUi->actionRedo->setText(QString::fromUtf8("<nothing to redo>"));
 	}

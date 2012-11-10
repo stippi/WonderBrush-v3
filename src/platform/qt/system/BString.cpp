@@ -249,6 +249,13 @@ BString::BString(const char* string, int32 maxLength)
 }
 
 
+BString::BString(const QString& string)
+{
+	QByteArray bytes(string.toUtf8());
+	_Init(bytes.data(), bytes.length());
+}
+
+
 BString::~BString()
 {
 	if (!_IsShareable() || atomic_add(&_ReferenceCount(), -1) == 1)

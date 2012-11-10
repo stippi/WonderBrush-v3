@@ -22,6 +22,7 @@ public:
 							BString(const char* string);
 							BString(const BString& string);
 							BString(const char* string, int32 maxLength);
+							BString(const QString& string);
 							~BString();
 
 			// Access
@@ -323,7 +324,7 @@ public:
 			BString&		operator<<(float value);
 			BString&		operator<<(double value);
 
-			QString			ToQString() const
+							operator QString() const
 								{ return QString::fromUtf8(String()); }
 
 public:
