@@ -2,6 +2,8 @@
 
 #include <typeinfo>
 
+#include <LayoutUtils.h>
+#include <Screen.h>
 #include <View.h>
 
 #include <QCoreApplication>
@@ -70,17 +72,29 @@ private:
 };
 
 
-BWindow::BWindow(QWidget* parent, const char* title)
+BWindow::BWindow(BRect frame, const char* title, window_type type, uint32 flags,
+	uint32 workspace)
 	:
-	QMainWindow(parent),
-	BLooper()
+	fShowLevel(0)
 {
 	ObjectConstructed(this);
 
 	ViewAncestryTracker::GetTracker()->RegisterWindow(this);
 
-	if (title != NULL)
-		setWindowTitle(QString::fromUtf8(title));
+	SetTitle(title);
+}
+
+
+BWindow::BWindow(BRect frame, const char* title, window_look look,
+	window_feel feel, uint32 flags, uint32 workspace)
+	:
+	fShowLevel(0)
+{
+	ObjectConstructed(this);
+
+	ViewAncestryTracker::GetTracker()->RegisterWindow(this);
+
+	SetTitle(title);
 }
 
 
@@ -89,6 +103,58 @@ BWindow::~BWindow()
 	ViewAncestryTracker::GetTracker()->RegisterWindow(this);
 
 	ObjectAboutToBeDestroyed(this);
+}
+
+
+void
+BWindow::SetTitle(const char* title)
+{
+	if (title != NULL)
+		setWindowTitle(QString::fromUtf8(title));
+}
+
+
+void
+BWindow::Activate(bool active)
+{
+	if (active)
+		activateWindow();
+}
+
+
+void
+BWindow::CenterIn(const BRect& rect)
+{
+	// Set size limits now if needed
+//	UpdateSizeLimits();
+
+	MoveTo(BLayoutUtils::AlignInFrame(rect, Size(),
+		BAlignment(B_ALIGN_HORIZONTAL_CENTER,
+			B_ALIGN_VERTICAL_CENTER)).LeftTop());
+}
+
+
+void
+BWindow::CenterOnScreen()
+{
+	BScreen screen(this);
+	CenterIn(screen.Frame());
+}
+
+
+void
+BWindow::Show()
+{
+	if (++fShowLevel == 1)
+		show();
+}
+
+
+void
+BWindow::Hide()
+{
+	if (--fShowLevel == 0)
+		hide();
 }
 
 
