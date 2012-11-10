@@ -425,8 +425,6 @@ FrameMoved(origin);
 		case B_MOUSE_MOVED:
 		{
 			if (BView* view = dynamic_cast<BView*>(target)) {
-// TODO:...
-uint32 transit = B_INSIDE_VIEW;
 #if 0
 				uint32 eventOptions = view->fEventOptions
 					| view->fMouseEventOptions;
@@ -436,9 +434,11 @@ uint32 transit = B_INSIDE_VIEW;
 				bigtime_t eventTime;
 				if (msg->FindInt64("when", (int64*)&eventTime) < B_OK)
 					eventTime = system_time();
+#endif
 
 				uint32 transit;
 				msg->FindInt32("be:transit", (int32*)&transit);
+#if 0
 				// don't drop late messages with these important transit values
 				if (transit == B_ENTERED_VIEW || transit == B_EXITED_VIEW)
 					dropIfLate = false;

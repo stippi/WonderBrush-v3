@@ -43,6 +43,7 @@ BView::BView(const char* name, uint32 flags)
 	fAlignment(),
 	fMousePosition(0, 0),
 	fMouseButtons(0),
+	fMouseInsideView(false),
 	fEventMessageWasHandled(false)
 {
 	setMouseTracking(true);
@@ -528,6 +529,61 @@ BView::mouseMoveEvent(QMouseEvent* event)
 
 
 void
+BView::leaveEvent(QEvent* event)
+{
+	if (!fMouseInsideView)
+		return;
+
+	// We have to fake a mouse message, since Qt sends only the leave event,
+	// when the mouse leaves the view (and no button has been pressed).
+	BMessage message(B_MOUSE_MOVED);
+	fMouseInsideView = false;
+
+	// event time
+	bigtime_t eventTime = system_time();
+		// TODO: Event timestamps are available with Qt 5.
+	message.AddInt64("when", eventTime);
+
+	// mouse position
+	QPoint position = mapFromGlobal(QCursor::pos());
+	if (rect().contains(position)) {
+		// We can send a B_EXITED_VIEW message with a mouse position inside the
+		// view, so move the position outside.
+		QRect bounds = rect();
+		int x = position.x();
+		int y = position.y();
+		int dx = std::min(x - bounds.left(), bounds.right() - x);
+		int dy = std::min(y - bounds.top(), bounds.bottom() - y);
+		if (dx <= dy) {
+			position.setX(x - bounds.left() < bounds.right() - x
+				? bounds.left() - 1 : bounds.right() + 1);
+
+		} else {
+			position.setY(y - bounds.top() < bounds.bottom() - y
+				? bounds.top() - 1 : bounds.bottom() + 1);
+		}
+	}
+	message.AddPoint("be:view_where", BPoint::FromQPoint(position));
+	message.AddPoint("screen_where", BPoint::FromQPoint(mapToGlobal(position)));
+
+	// mouse buttons
+	int32 buttons = FromQtMouseButtons(QApplication::mouseButtons());
+	message.AddInt32("buttons", buttons);
+
+	// keyboard modifiers
+	message.AddInt32("modifiers",
+		FromQtModifiers(QApplication::keyboardModifiers()));
+
+	// transit
+	message.AddInt32("be:transit", B_EXITED_VIEW);
+
+	_DeliverMessage(&message);
+
+	QWidget::leaveEvent(event);
+}
+
+
+void
 BView::tabletEvent(QTabletEvent* event)
 {
 	uint32 messageWhat = 0;
@@ -753,8 +809,25 @@ BView::_TranslatePointerDeviceEvent(Event& event, BMessage& message)
 	// keyboard modifiers
 	message.AddInt32("modifiers", FromQtModifiers(event.modifiers()));
 
+	// transit
+	int32 transit;
+	bool mouseInsideView = rect().contains(event.pos());
+	if (fMouseInsideView) {
+		if (mouseInsideView)
+			transit = B_INSIDE_VIEW;
+		else
+			transit = B_EXITED_VIEW;
+	} else {
+		if (mouseInsideView)
+			transit = B_ENTERED_VIEW;
+		else
+			transit = B_OUTSIDE_VIEW;
+	}
+	message.AddInt32("be:transit", transit);
+
 	// cache mouse position
 	fMousePosition = position;
+	fMouseInsideView = mouseInsideView;
 }
 
 
