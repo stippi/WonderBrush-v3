@@ -8,8 +8,8 @@ BCursor::BCursor(const void* cursorData)
 	uint8* data = (uint8*)cursorData;
 	int size = data[0];
 	int depth = data[1];
-	int hotspotX = data[2];
-	int hotspotY = data[3];
+	int hotspotY = data[2];
+	int hotspotX = data[3];
 	if (size != 16 || depth != 1 || hotspotX >= 16 || hotspotY >= 16)
 		debugger("BCursor::BCursor(): Invalid/unsupported cursor data!");
 
