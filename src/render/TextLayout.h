@@ -37,24 +37,16 @@ private:
 		double						descent;
 		double						width;
 
-		int							fgRed;
-		int							fgGreen;
-		int							fgBlue;
+		Color						fgColor;
 
-		int							bgRed;
-		int							bgGreen;
-		int							bgBlue;
+		Color						bgColor;
 
 		bool						strikeOut;
-		int							strikeRed;
-		int							strikeGreen;
-		int							strikeBlue;
+		Color						strikeOutColor;
 
 		bool						underline;
 		unsigned					underlineStyle;
-		int							underlineRed;
-		int							underlineGreen;
-		int							underlineBlue;
+		Color						underlineColor;
 
 		// TODO: Probably needs metrics as well to define custom gaps in the
 		// text where the client can paint images that are wrapped like
@@ -127,11 +119,9 @@ public:
 	void clearStyleRuns();
 	bool addStyleRun(int start, const Font& font,
 		double metricsAscent, double metricsDescent, double metricsWidth,
-		int fgRed, int fgGreen, int fgBlue,
-		int bgRed, int bgGreen, int bgBlue,
-		bool strikeOut, int strikeRed, int strikeGreen, int strikeBlue,
-		bool underline, unsigned underlineStyle,
-		int underlineRed, int underlineGreen, int underlineBlue);
+		const Color& fgColor, const Color& bgColor,
+		bool strikeOut, const Color& strikeOutColor,
+		bool underline, unsigned underlineStyle, const Color& underlineColor);
 
 	void layout();
 
@@ -157,37 +147,22 @@ public:
 		StyleRun* style = fGlyphInfoBuffer[index].styleRun;
 		if (style != NULL) {
 			font = style->font;
-			if (style->fgRed >= 0) {
-				fgColor.r = style->fgRed;
-				fgColor.g = style->fgGreen;
-				fgColor.b = style->fgBlue;
-			} else {
-				fgColor.r = 0;
-				fgColor.g = 0;
-				fgColor.b = 0;
-			}
-			fgColor.a = 255;
-			if (style->strikeOut && style->strikeRed >= 0) {
+			fgColor = style->fgColor;
+			if (style->strikeOut) {
 				strikeOut = true;
-				strikeColor.r = style->strikeRed;
-				strikeColor.g = style->strikeGreen;
-				strikeColor.b = style->strikeBlue;
-				strikeColor.a = 255;
+				strikeColor = style->strikeOutColor;
 			}
-			if (style->underline && style->underlineRed >= 0) {
+			if (style->underline) {
 				underline = true;
 				underlineStyle = style->underlineStyle;
-				underlineColor.r = style->underlineRed;
-				underlineColor.g = style->underlineGreen;
-				underlineColor.b = style->underlineBlue;
-				underlineColor.a = 255;
+				underlineColor = style->underlineColor;
 			}
 		} else {
 			font = fFont;
 			fgColor.r = 0;
 			fgColor.g = 0;
 			fgColor.b = 0;
-			fgColor.a = 255;
+			fgColor.a = (255 << 8) | 255;
 			strikeOut = false;
 			underline = false;
 		}
@@ -208,25 +183,15 @@ public:
 		StyleRun* style = fGlyphInfoBuffer[index].styleRun;
 		if (style != NULL) {
 			*height = style->font.getSize();
-			if (style->fgRed >= 0) {
-				fgColor.r = style->fgRed;
-				fgColor.g = style->fgGreen;
-				fgColor.b = style->fgBlue;
-			}
-			if (style->strikeOut && style->strikeRed >= 0) {
+			fgColor = style->fgColor;
+			if (style->strikeOut) {
 				strikeOut = true;
-				strikeColor.r = style->strikeRed;
-				strikeColor.g = style->strikeGreen;
-				strikeColor.b = style->strikeBlue;
-				strikeColor.a = 255;
+				strikeColor = style->strikeOutColor;
 			}
-			if (style->underline && style->underlineRed >= 0) {
+			if (style->underline) {
 				underline = true;
 				underlineStyle = style->underlineStyle;
-				underlineColor.r = style->underlineRed;
-				underlineColor.g = style->underlineGreen;
-				underlineColor.b = style->underlineBlue;
-				underlineColor.a = 255;
+				underlineColor = style->underlineColor;
 			}
 			if (style->width > 0.0) {
 				// Client provided metrics for this glyph, do not draw the
@@ -252,11 +217,7 @@ public:
 
 		StyleRun* style = fGlyphInfoBuffer[index].styleRun;
 		if (style != NULL) {
-			if (style->bgRed >= 0) {
-				bgColor.r = style->bgRed;
-				bgColor.g = style->bgGreen;
-				bgColor.b = style->bgBlue;
-			}
+			bgColor = style->bgColor;
 		}
 	}
 

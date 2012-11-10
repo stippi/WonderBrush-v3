@@ -405,11 +405,9 @@ TextLayout::clearStyleRuns()
 bool
 TextLayout::addStyleRun(int start, const Font& font,
 	double metricsAscent, double metricsDescent, double metricsWidth,
-	int fgRed, int fgGreen, int fgBlue,
-	int bgRed, int bgGreen, int bgBlue,
-	bool strikeOut, int strikeRed, int strikeGreen, int strikeBlue,
-	bool underline, unsigned underlineStyle,
-	int underlineRed, int underlineGreen, int underlineBlue)
+	const Color& fgColor, const Color& bgColor,
+	bool strikeOut, const Color& strikeOutColor,
+	bool underline, unsigned underlineStyle, const Color& underlineColor)
 {
 //printf("TextLayout::addStyleRun(%d, font('%s', %.1f, %u), "
 //	"color(%d, %d, %d)) (index: %u)\n",
@@ -429,8 +427,8 @@ TextLayout::addStyleRun(int start, const Font& font,
 	}
 
 //	printf("adding style: %d, %s, %.1f, fg(%d, %d, %d), bg(%d, %d, %d)\n",
-//		start, fontPath, fontSize, fgRed, fgGreen, fgBlue, bgRed, bgGreen,
-//		bgBlue);
+//		start, fontPath, fontSize, fgColor.r, fgColor.g, fgColor.b,
+//		bgColor.r, bgColor.g, bgColor.b);
 //	fflush(stdout);
 
 	// Store given information
@@ -442,24 +440,15 @@ TextLayout::addStyleRun(int start, const Font& font,
 	fStyleRunBuffer[fStyleRunCount].descent = metricsDescent;
 	fStyleRunBuffer[fStyleRunCount].width = metricsWidth;
 
-	fStyleRunBuffer[fStyleRunCount].fgRed = fgRed;
-	fStyleRunBuffer[fStyleRunCount].fgGreen = fgGreen;
-	fStyleRunBuffer[fStyleRunCount].fgBlue = fgBlue;
-
-	fStyleRunBuffer[fStyleRunCount].bgRed = bgRed;
-	fStyleRunBuffer[fStyleRunCount].bgGreen = bgGreen;
-	fStyleRunBuffer[fStyleRunCount].bgBlue = bgBlue;
+	fStyleRunBuffer[fStyleRunCount].fgColor = fgColor;
+	fStyleRunBuffer[fStyleRunCount].bgColor = bgColor;
 
 	fStyleRunBuffer[fStyleRunCount].strikeOut = strikeOut;
-	fStyleRunBuffer[fStyleRunCount].strikeRed = strikeRed;
-	fStyleRunBuffer[fStyleRunCount].strikeGreen = strikeGreen;
-	fStyleRunBuffer[fStyleRunCount].strikeBlue = strikeBlue;
+	fStyleRunBuffer[fStyleRunCount].strikeOutColor = strikeOutColor;
 
 	fStyleRunBuffer[fStyleRunCount].underline = underline;
 	fStyleRunBuffer[fStyleRunCount].underlineStyle = underlineStyle;
-	fStyleRunBuffer[fStyleRunCount].underlineRed = underlineRed;
-	fStyleRunBuffer[fStyleRunCount].underlineGreen = underlineGreen;
-	fStyleRunBuffer[fStyleRunCount].underlineBlue = underlineBlue;
+	fStyleRunBuffer[fStyleRunCount].underlineColor = underlineColor;
 
 	fStyleRunCount++;
 

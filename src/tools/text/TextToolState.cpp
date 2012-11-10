@@ -280,6 +280,8 @@ TextToolState::TextToolState(StateView* view, Document* document,
 	, fFontFamily("DejaVu Serif")
 	, fFontStyle("Book")
 	, fSize(12.0)
+
+	, fIgnoreColorColorNotifiactions(false)
 {
 	// TODO: Find a way to change this later...
 	SetInsertionInfo(fDocument->RootLayer(),
@@ -601,7 +603,7 @@ TextToolState::ObjectChanged(const Notifier* object)
 		UpdateDragState();
 		_UpdateConfigView();
 	}
-	if (object == fCurrentColor) {
+	if (object == fCurrentColor && !fIgnoreColorColorNotifiactions) {
 		SetColor(fCurrentColor->Color());
 	}
 }
@@ -1257,6 +1259,17 @@ TextToolState::_AdoptStyleAtOffset(int32 textOffset)
 
 		_UpdateConfigView();
 	}
+
+	fgColor.demultiply();
+	rgb_color color;
+	color.red = RenderEngine::LinearToGamma(fgColor.r);
+	color.green = RenderEngine::LinearToGamma(fgColor.g);
+	color.blue = RenderEngine::LinearToGamma(fgColor.b);
+	color.alpha = fgColor.a >> 8;
+	
+	fIgnoreColorColorNotifiactions = true;
+	fCurrentColor->SetColor(color);
+	fIgnoreColorColorNotifiactions = false;
 }
 
 
