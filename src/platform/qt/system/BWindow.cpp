@@ -49,9 +49,9 @@ protected:
 				BWindow* newWindow = dynamic_cast<BWindow*>(widget->window());
 				if (oldWindow != newWindow) {
 					if (newWindow == NULL)
-						fWidgets.remove(widget);
+						_RemoveWidgetFromMap(widget);
 					else
-						fWidgets.insert(widget, newWindow);
+						_AddWidgetToMap(widget, newWindow);
 					mutexLocker.unlock();
 
 					if (oldWindow != NULL)
@@ -63,6 +63,27 @@ protected:
 		}
 
 		return false;
+	}
+
+private:
+	void _AddWidgetToMap(QWidget* widget, BWindow* window)
+	{
+		fWidgets.insert(widget, window);
+
+		foreach (QObject* child, widget->children()) {
+			if (QWidget* childWidget = dynamic_cast<QWidget*>(child))
+				_AddWidgetToMap(childWidget, window);
+		}
+	}
+
+	void _RemoveWidgetFromMap(QWidget* widget)
+	{
+		fWidgets.remove(widget);
+
+		foreach (QObject* child, widget->children()) {
+			if (QWidget* childWidget = dynamic_cast<QWidget*>(child))
+				_RemoveWidgetFromMap(childWidget);
+		}
 	}
 
 private:
@@ -100,7 +121,14 @@ BWindow::BWindow(BRect frame, const char* title, window_look look,
 
 BWindow::~BWindow()
 {
-	ViewAncestryTracker::GetTracker()->RegisterWindow(this);
+	foreach (QObject* child, children()) {
+		if (QWidget* childWidget = dynamic_cast<QWidget*>(child)) {
+			childWidget->setParent(NULL);
+			delete childWidget;
+		}
+	}
+
+	ViewAncestryTracker::GetTracker()->UnregisterWindow(this);
 
 	ObjectAboutToBeDestroyed(this);
 }
