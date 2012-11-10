@@ -81,6 +81,14 @@ typedef struct rgb_color {
 	{
 		return QColor(red, green, blue, alpha);
 	}
+
+	static rgb_color FromQColor(const QColor& qtColor)
+	{
+		rgb_color color = {qtColor.red(), qtColor.green(), qtColor.blue(),
+			qtColor.alpha()};
+		return color;
+	}
+
 #endif
 } rgb_color;
 
@@ -238,6 +246,33 @@ typedef enum {
 	B_BIG_RGB_16_BIT	= B_RGB15_BIG
 } color_space;
 
+
+// Drawing Modes
+enum drawing_mode {
+	B_OP_COPY,
+	B_OP_OVER,
+	B_OP_ERASE,
+	B_OP_INVERT,
+	B_OP_ADD,
+	B_OP_SUBTRACT,
+	B_OP_BLEND,
+	B_OP_MIN,
+	B_OP_MAX,
+	B_OP_SELECT,
+	B_OP_ALPHA
+};
+
+
+enum source_alpha {
+	B_PIXEL_ALPHA = 0,
+	B_CONSTANT_ALPHA
+};
+
+
+enum alpha_function {
+	B_ALPHA_OVERLAY = 0,
+	B_ALPHA_COMPOSITE
+};
 
 
 #endif // GRAPHICS_DEFS_H

@@ -90,6 +90,14 @@ enum {
 };
 
 
+// View orientation/alignment/style
+
+enum border_style {
+	B_PLAIN_BORDER,
+	B_FANCY_BORDER,
+	B_NO_BORDER
+};
+
 enum orientation {
 	B_HORIZONTAL,
 	B_VERTICAL
@@ -172,9 +180,30 @@ enum color_which {
 };
 
 
+// Color tinting
+
+const float B_LIGHTEN_MAX_TINT	= 0.0f;		// 216 --> 255.0 (255)
+const float B_LIGHTEN_2_TINT	= 0.385f;	// 216 --> 240.0 (240)
+const float B_LIGHTEN_1_TINT	= 0.590f;	// 216 --> 232.0 (232)
+
+const float B_NO_TINT			= 1.0f;		// 216 --> 216.0 (216)
+
+const float B_DARKEN_1_TINT		= 1.147f;	// 216 --> 184.2 (184)
+const float B_DARKEN_2_TINT		= 1.295f;	// 216 --> 152.3 (152)
+const float B_DARKEN_3_TINT		= 1.407f;	// 216 --> 128.1 (128)
+const float B_DARKEN_4_TINT		= 1.555f;	// 216 -->  96.1  (96)
+const float B_DARKEN_MAX_TINT	= 2.0f;		// 216 -->   0.0   (0)
+											// effects on standard gray level
+
+const float B_DISABLED_LABEL_TINT		= B_DARKEN_3_TINT;
+const float B_HIGHLIGHT_BACKGROUND_TINT	= B_DARKEN_2_TINT;
+const float B_DISABLED_MARK_TINT		= B_LIGHTEN_2_TINT;
+
+
 uint32			modifiers();
 
 rgb_color		ui_color(color_which which);
+rgb_color		tint_color(rgb_color color, float tint);
 
 
 #endif // INTERFACE_DEFS_H
