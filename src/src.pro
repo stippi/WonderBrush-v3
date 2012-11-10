@@ -131,6 +131,7 @@ SOURCES += \
 	platform/qt/PlatformScrollArea.cpp \
 	platform/qt/PlatformSemaphoreManager.cpp \
 	platform/qt/PlatformThread.cpp \
+	platform/qt/system/BApplication.cpp \
 	platform/qt/system/ArchivingManagers.cpp \
 	platform/qt/system/BAlignment.cpp \
 	platform/qt/system/BAppDefs.cpp \
@@ -301,6 +302,7 @@ HEADERS  += \
 	platform/qt/system/ArchivingManagers.h \
 	platform/qt/system/BAlignment.h \
 	platform/qt/system/BAppDefs.h \
+	platform/qt/system/BApplication.h \
 	platform/qt/system/BArchivable.h \
 	platform/qt/system/BAutoDeleter.h \
 	platform/qt/system/BAutolock.h \
@@ -357,6 +359,7 @@ HEADERS  += \
 	platform/qt/system/BWindow.h \
 	platform/qt/system/include/Alignment.h \
 	platform/qt/system/include/AppDefs.h \
+	platform/qt/system/include/Application.h \
 	platform/qt/system/include/Archivable.h \
 	platform/qt/system/include/AutoDeleter.h \
 	platform/qt/system/include/Autolock.h \

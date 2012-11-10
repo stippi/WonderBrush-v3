@@ -5,6 +5,7 @@
 #include <stdio.h>
 #include <string.h>
 
+#include <Application.h>
 #include <File.h>
 
 #include <QApplication>
@@ -80,15 +81,6 @@ protected:
 		return B_OK;
 	}
 };
-
-
-inline BLooper*
-_PlatformBeApp()
-{
-	return dynamic_cast<BLooper*>(QApplication::instance());
-}
-
-#define be_app _PlatformBeApp()
 
 
 #endif	// PLATFORM_HAIKU_WONDER_BRUSH_H

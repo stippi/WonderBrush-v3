@@ -11,12 +11,10 @@
 
 #include <limits.h>
 
+#include <Application.h>
+
 #include <QMutex>
 #include <QObject>
-
-
-// TODO:...
-static BMessenger be_app_messenger;
 
 
 struct BMessageRunner::Timer : QObject {
