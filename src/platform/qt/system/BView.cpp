@@ -1,5 +1,6 @@
 #include "BView.h"
 
+#include <Bitmap.h>
 #include <Cursor.h>
 #include <LayoutUtils.h>
 #include <Region.h>
@@ -216,6 +217,141 @@ BView::GetMouse(BPoint* _location, uint32* _buttons, bool checkMessageQueue)
 		if (_buttons != NULL)
 			*_buttons = fMouseButtons;
 	}
+}
+
+
+void
+BView::DragMessage(BMessage* message, BRect dragRect, BHandler* replyTo)
+{
+	if (!message)
+		return;
+
+//	_CheckOwnerLock();
+
+	// calculate the offset
+	BPoint offset;
+	uint32 buttons;
+	BMessage* current = Window()->CurrentMessage();
+	if (!current || current->FindPoint("be:view_where", &offset) != B_OK)
+		GetMouse(&offset, &buttons, false);
+	offset -= dragRect.LeftTop();
+
+	if (!dragRect.IsValid()) {
+		DragMessage(message, NULL, B_OP_BLEND, offset, replyTo);
+		return;
+	}
+
+	// TODO: that's not really what should happen - the app_server should take
+	// the chance *NOT* to need to drag a whole bitmap around but just a frame.
+
+	// create a drag bitmap for the rect
+	BBitmap* bitmap = new(std::nothrow) BBitmap(dragRect, B_RGBA32);
+	if (bitmap == NULL)
+		return;
+
+	uint32* bits = (uint32*)bitmap->Bits();
+	uint32 bytesPerRow = bitmap->BytesPerRow();
+	uint32 width = dragRect.IntegerWidth() + 1;
+	uint32 height = dragRect.IntegerHeight() + 1;
+	uint32 lastRow = (height - 1) * width;
+
+	memset(bits, 0x00, height * bytesPerRow);
+
+	// top
+	for (uint32 i = 0; i < width; i += 2)
+		bits[i] = 0xff000000;
+
+	// bottom
+	for (uint32 i = (height % 2 == 0 ? 1 : 0); i < width; i += 2)
+		bits[lastRow + i] = 0xff000000;
+
+	// left
+	for (uint32 i = 0; i < lastRow; i += width * 2)
+		bits[i] = 0xff000000;
+
+	// right
+	for (uint32 i = (width % 2 == 0 ? width : 0); i < lastRow; i += width * 2)
+		bits[width - 1 + i] = 0xff000000;
+
+	DragMessage(message, bitmap, B_OP_BLEND, offset, replyTo);
+}
+
+
+void
+BView::DragMessage(BMessage* message, BBitmap* image, BPoint offset,
+	BHandler* replyTo)
+{
+	DragMessage(message, image, B_OP_COPY, offset, replyTo);
+}
+
+
+void
+BView::DragMessage(BMessage* message, BBitmap* image,
+	drawing_mode dragMode, BPoint offset, BHandler* replyTo)
+{
+	if (message == NULL)
+		return;
+
+	if (image == NULL) {
+		// TODO: workaround for drags without a bitmap - should not be necessary if
+		//	we move the rectangle dragging into the app_server
+		image = new(std::nothrow) BBitmap(BRect(0, 0, 0, 0), B_RGBA32);
+		if (image == NULL)
+			return;
+	}
+
+	if (replyTo == NULL)
+		replyTo = this;
+
+	if (replyTo->Looper() == NULL)
+		debugger("DragMessage: warning - the Handler needs a looper");
+
+//	_CheckOwnerLock();
+
+	if (!message->HasInt32("buttons")) {
+		BMessage* msg = Window()->CurrentMessage();
+		uint32 buttons;
+
+		if (msg == NULL
+			|| msg->FindInt32("buttons", (int32*)&buttons) != B_OK) {
+			BPoint point;
+			GetMouse(&point, &buttons, false);
+		}
+
+		message->AddInt32("buttons", buttons);
+	}
+
+#if 0
+	BMessage::Private privateMessage(message);
+	privateMessage.SetReply(BMessenger(replyTo, replyTo->Looper()));
+
+	int32 bufferSize = message->FlattenedSize();
+	char* buffer = new(std::nothrow) char[bufferSize];
+	if (buffer != NULL) {
+		message->Flatten(buffer, bufferSize);
+
+		fOwner->fLink->StartMessage(AS_VIEW_DRAG_IMAGE);
+		fOwner->fLink->Attach<int32>(image->_ServerToken());
+		fOwner->fLink->Attach<int32>((int32)dragMode);
+		fOwner->fLink->Attach<BPoint>(offset);
+		fOwner->fLink->Attach<int32>(bufferSize);
+		fOwner->fLink->Attach(buffer, bufferSize);
+
+		// we need to wait for the server
+		// to actually process this message
+		// before we can delete the bitmap
+		int32 code;
+		fOwner->fLink->FlushWithReply(code);
+
+		delete [] buffer;
+	} else {
+		fprintf(stderr, "BView::DragMessage() - no memory to flatten drag "
+			"message\n");
+	}
+#endif
+// TODO:...
+
+	delete image;
 }
 
 

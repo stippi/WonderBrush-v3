@@ -154,6 +154,14 @@ public:
 			void				GetMouse(BPoint* _location, uint32* _buttons,
 									bool checkMessageQueue = true);
 
+			void				DragMessage(BMessage* message, BRect dragRect,
+									BHandler* replyTo = NULL);
+			void				DragMessage(BMessage* message, BBitmap* bitmap,
+									BPoint offset, BHandler* replyTo = NULL);
+			void				DragMessage(BMessage* message, BBitmap* bitmap,
+									drawing_mode dragMode, BPoint offset,
+									BHandler* replyTo = NULL);
+
 	virtual	void				AttachedToWindow();
 	virtual	void				DetachedFromWindow();
 	virtual	void				AllAttached();
