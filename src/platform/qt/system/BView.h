@@ -66,7 +66,31 @@ const uint32 _B_RESERVED7_ 				= 0x00200000UL;	/* 22 */
 const uint32 B_SUPPORTS_LAYOUT			= 0x00100000UL;	/* 21 */
 const uint32 B_INVALIDATE_AFTER_LAYOUT	= 0x00080000UL;	/* 20 */
 
+#define _RESIZE_MASK_ (0xffff)
+
+const uint32 _VIEW_TOP_				 	= 1UL;
+const uint32 _VIEW_LEFT_ 				= 2UL;
+const uint32 _VIEW_BOTTOM_			 	= 3UL;
+const uint32 _VIEW_RIGHT_ 				= 4UL;
+const uint32 _VIEW_CENTER_ 				= 5UL;
+
+inline uint32 _rule_(uint32 r1, uint32 r2, uint32 r3, uint32 r4)
+	{ return ((r1 << 12) | (r2 << 8) | (r3 << 4) | r4); }
+
 #define B_FOLLOW_NONE 0
+#define B_FOLLOW_ALL_SIDES	_rule_(_VIEW_TOP_, _VIEW_LEFT_, _VIEW_BOTTOM_, \
+								_VIEW_RIGHT_)
+#define B_FOLLOW_ALL  		B_FOLLOW_ALL_SIDES
+
+#define B_FOLLOW_LEFT		_rule_(0, _VIEW_LEFT_, 0, _VIEW_LEFT_)
+#define B_FOLLOW_RIGHT		_rule_(0, _VIEW_RIGHT_, 0, _VIEW_RIGHT_)
+#define B_FOLLOW_LEFT_RIGHT	_rule_(0, _VIEW_LEFT_, 0, _VIEW_RIGHT_)
+#define B_FOLLOW_H_CENTER	_rule_(0, _VIEW_CENTER_, 0, _VIEW_CENTER_)
+
+#define B_FOLLOW_TOP		_rule_(_VIEW_TOP_, 0, _VIEW_TOP_, 0)
+#define B_FOLLOW_BOTTOM		_rule_(_VIEW_BOTTOM_, 0, _VIEW_BOTTOM_, 0)
+#define B_FOLLOW_TOP_BOTTOM	_rule_(_VIEW_TOP_, 0, _VIEW_BOTTOM_, 0)
+#define B_FOLLOW_V_CENTER	_rule_(_VIEW_CENTER_, 0, _VIEW_CENTER_, 0)
 
 
 class BView : public QWidget, public BHandler {
