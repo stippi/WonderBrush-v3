@@ -20,7 +20,7 @@ public:
 	}
 
 	void DrawBackground(PlatformDrawContext& drawContext, BRect bounds,
-		BBitmap* bitmap, border_style borderStyle)
+		BBitmap* bitmap, border_style borderStyle, enum orientation orientation)
 	{
 		QPainter& painter = drawContext.Painter();
 
@@ -36,13 +36,9 @@ public:
 				painter.drawImage(bounds.LeftTop().ToQPoint(), *image);
 		} else
 			painter.fillRect(bounds.ToQRect(), QColor(255, 0, 0));
-	}
 
-	void FillRectWithBackgroundColor(PlatformDrawContext& drawContext,
-		const BRect& rect)
-	{
-		drawContext.Painter().fillRect(rect.ToQRect(),
-			fView->palette().color(fView->backgroundRole()));
+		// Marker background
+		// Nothing to do, since we can just keep the window background.
 	}
 
 	void DrawLine(PlatformDrawContext& drawContext, const BPoint& from,

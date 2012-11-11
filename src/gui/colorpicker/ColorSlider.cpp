@@ -12,7 +12,6 @@
 #include <stdio.h>
 
 #include <Bitmap.h>
-//#include <ControlLook.h>
 #include <LayoutUtils.h>
 #include <OS.h>
 #include <Window.h>
@@ -146,23 +145,15 @@ ColorSlider::PlatformDraw(PlatformDrawContext& drawContext)
 	}
 
 	BRect bounds = _BitmapRect();
+	if (fBorderStyle == B_FANCY_BORDER)
+		bounds.InsetBy(-2, -2);
 	fPlatformDelegate->DrawBackground(drawContext, bounds, fBitmap,
-		fBorderStyle);
+		fBorderStyle, fOrientation);
 
 	// marker
 	if (fOrientation == B_VERTICAL) {
 		// draw the triangle markers
 		BRect r = Bounds();
-		
-		fPlatformDelegate->FillRectWithBackgroundColor(drawContext,
-			BRect(r.left, r.top, bounds.left - 1, r.bottom));
-		fPlatformDelegate->FillRectWithBackgroundColor(drawContext,
-			BRect(bounds.right + 1, r.top, r.right, r.bottom));
-		fPlatformDelegate->FillRectWithBackgroundColor(drawContext,
-			BRect(bounds.left, r.top, bounds.right, bounds.top - 1));
-		fPlatformDelegate->FillRectWithBackgroundColor(drawContext,
-			BRect(bounds.left, bounds.bottom + 1, bounds.right, r.bottom));
-		
 		float value = Value();
 		fPlatformDelegate->DrawTriangle(drawContext,
 			BPoint(r.left, value),

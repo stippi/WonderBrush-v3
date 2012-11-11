@@ -25,7 +25,7 @@ public:
 	}
 
 	void DrawBackground(PlatformDrawContext& drawContext, BRect bounds,
-		BBitmap* bitmap, border_style borderStyle)
+		BBitmap* bitmap, border_style borderStyle, enum orientation orientation)
 	{
 		BView* view = drawContext.View();
 
@@ -44,12 +44,21 @@ public:
 			view->SetHighColor(255, 0, 0);
 			view->FillRect(bounds);
 		}
-	}
 
-	void FillRectWithBackgroundColor(PlatformDrawContext& drawContext,
-		const BRect& rect)
-	{
-		drawContext.View()->FillRect(rect, B_SOLID_LOW);
+		// Marker background
+		if (orientation == B_VERTICAL) {
+			BRect r = view->Bounds();
+			view->FillRect(BRect(r.left, r.top, bounds.left - 1, r.bottom),
+				B_SOLID_LOW);
+			view->FillRect(BRect(bounds.right + 1, r.top, r.right, r.bottom),
+				B_SOLID_LOW);
+			view->FillRect(
+				BRect(bounds.left, r.top, bounds.right, bounds.top - 1),
+				B_SOLID_LOW);
+			view->FillRect(
+				BRect(bounds.left, bounds.bottom + 1, bounds.right, r.bottom),
+				B_SOLID_LOW);
+		}
 	}
 
 	void DrawLine(PlatformDrawContext& drawContext, const BPoint& from,
