@@ -145,7 +145,7 @@ BEntry::_SetTo(const QDir& directory, const QString& fileName, bool traverse)
 		}
 	}
 
-	return B_OK;
+	return fInitStatus = B_OK;
 }
 
 
