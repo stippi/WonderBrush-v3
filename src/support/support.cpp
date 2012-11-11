@@ -29,9 +29,8 @@ point_point_distance(BPoint a, BPoint b)
 
 // point_line_distance
 double
-point_line_distance(double x1, double y1,
-					double x2, double y2,
-					double x,  double y)
+point_line_distance(double x1, double y1, double x2, double y2,
+	double x,  double y)
 {
 	double dx = x2 - x1;
 	double dy = y2 - y1;
@@ -61,6 +60,24 @@ point_line_distance(BPoint point, BPoint pa, BPoint pb)
 
 	return currentDist;
 }
+
+// point_stroke_distance
+float
+point_stroke_distance(BPoint start, BPoint end, BPoint p, float radius)
+{
+	BRect r(min_c(start.x, end.x), min_c(start.y, end.y),
+		max_c(start.x, end.x), max_c(start.y, end.y));
+	r.InsetBy(-radius, -radius);
+
+	if (r.Contains(p)) {
+		return fabs(point_line_distance(start.x, start.y, end.x, end.y,
+			p.x, p.y));
+	}
+
+	return min_c(point_point_distance(start, p),
+		point_point_distance(end, p));
+}
+
 
 // calc_angle
 double
