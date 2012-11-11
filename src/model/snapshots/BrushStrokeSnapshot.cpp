@@ -68,10 +68,10 @@ BrushStrokeSnapshot::Render(RenderEngine& engine, RenderBuffer* bitmap,
 	// traverse lines
 	float stepDistLeftOver = 0.0f;
 	const StrokePoint* previous = fStroke.ObjectAt(0);
-	uint32 count = fStroke.CountObjects();
+	int32 count = fStroke.CountObjects();
 	bool drawnAnything = false;
 	if (count > 1) {
-		for (uint32 i = 1; i < count; i++) {
+		for (int32 i = 1; i < count; i++) {
 			const StrokePoint* current = fStroke.ObjectAt(i);
 			drawnAnything |= _StrokeLine(previous, current, dest, bpr,
 				area, stepDistLeftOver);
