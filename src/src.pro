@@ -130,6 +130,7 @@ SOURCES += \
 	platform/qt/PlatformResourceParser.cpp \
 	platform/qt/PlatformScrollArea.cpp \
 	platform/qt/PlatformSemaphoreManager.cpp \
+	platform/qt/PlatformSignalMessageAdapter.cpp \
 	platform/qt/PlatformThread.cpp \
 	platform/qt/system/BApplication.cpp \
 	platform/qt/system/ArchivingManagers.cpp \
@@ -296,6 +297,7 @@ HEADERS  += \
 	platform/qt/PlatformResourceParser.h \
 	platform/qt/PlatformScrollArea.h \
 	platform/qt/PlatformSemaphoreManager.h \
+	platform/qt/PlatformSignalMessageAdapter.h \
 	platform/qt/PlatformThread.h \
 	platform/qt/PlatformViewMixin.h \
 	platform/qt/PlatformWonderBrush.h \
