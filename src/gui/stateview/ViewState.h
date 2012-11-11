@@ -15,6 +15,7 @@ public:
 	// ViewState interface
 	virtual	void				Init();
 	virtual	void				Cleanup();
+			bool				IsActive() const;
 
 	virtual	void				Draw(PlatformDrawContext& drawContext);
 	virtual	bool				MessageReceived(BMessage* message,
@@ -83,6 +84,7 @@ protected:
 			const MouseInfo*	fMouseInfo;
 
 			BRect				fBounds;
+			bool				fIsActive;
 };
 
 #endif // VIEW_STATE_H
