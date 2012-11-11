@@ -11,13 +11,14 @@
 
 #include <Control.h>
 
+#include "PlatformViewMixin.h"
 #include "SelectedColorMode.h"
 
 #define	MSG_COLOR_SLIDER	'ColS'
 
 class BBitmap;
 
-class ColorSlider : public BControl {
+class ColorSlider : public PlatformViewMixin<BControl> {
 public:
 								ColorSlider(SelectedColorMode mode,
 									float value1, float value2,
@@ -39,7 +40,7 @@ public:
 
 	virtual	status_t			Invoke(BMessage* message = NULL);
 
-	virtual	void				Draw(BRect updateRect);
+	virtual	void				PlatformDraw(PlatformDrawContext& drawContext);
 	virtual	void				FrameResized(float width, float height);
 
 	virtual	void				MouseDown(BPoint where);
@@ -62,6 +63,9 @@ public:
 			void				SetMarkerToColor(rgb_color color);
 
 private:
+			class PlatformDelegate;
+
+private:
 			void				_Init(SelectedColorMode mode,
 						 			float value1, float value2,
 						 			orientation dir, border_style border);
@@ -82,6 +86,8 @@ private:
 			void				_TrackMouse(BPoint where);
 
 private:
+	PlatformDelegate*			fPlatformDelegate;
+
 	SelectedColorMode			fMode;
 	float						fFixedValue1;
 	float						fFixedValue2;

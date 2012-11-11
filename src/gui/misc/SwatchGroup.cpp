@@ -4,12 +4,9 @@
  */
 
 #include "SwatchGroup.h"
+#include "SwatchGroupPlatformDelegate.h"
 
 #include <stdio.h>
-
-#include <GroupLayout.h>
-#include <GroupLayoutBuilder.h>
-#include <SeparatorView.h>
 
 #include "support_ui.h"
 #include "ui_defines.h"
@@ -36,6 +33,7 @@ enum {
 
 SwatchGroup::SwatchGroup(const char* name)
 	: BView(name, 0)
+	, fPlatformDelegate(new PlatformDelegate(this))
 	, fCurrentColor(NULL)
 	, fIgnoreNotifications(false)
 
@@ -43,13 +41,6 @@ SwatchGroup::SwatchGroup(const char* name)
 	, fColorPickerMode(H_SELECTED)
 	, fColorPickerFrame(100.0, 100.0, 200.0, 200.0)
 {
-	const float spacing = 0.0f;
-
-	SetViewColor(ui_color(B_PANEL_BACKGROUND_COLOR));
-
-	BGroupLayout* layout = new BGroupLayout(B_VERTICAL, spacing);
-	SetLayout(layout);
-
 	// create swatch views with rainbow default palette
 	float h = 0;
 	float s = 1.0;
@@ -92,45 +83,7 @@ SwatchGroup::SwatchGroup(const char* name)
 	fAlphaSlider = new AlphaSlider(B_HORIZONTAL,
 		new BMessage(MSG_ALPHA_SLIDER), B_NO_BORDER);
 
-	// layout UI
-	BGroupLayoutBuilder(layout)
-		.AddGroup(B_HORIZONTAL, 0.0f)
-			.Add(fCurrentColorSV)
-			.AddGroup(B_VERTICAL, 0.0f)
-				.AddGroup(B_HORIZONTAL, 0.0f)
-					.Add(fSwatchViews[0])
-					.Add(fSwatchViews[1])
-					.Add(fSwatchViews[2])
-					.Add(fSwatchViews[3])
-					.Add(fSwatchViews[4])
-					.Add(fSwatchViews[5])
-					.Add(fSwatchViews[6])
-					.Add(fSwatchViews[7])
-					.Add(fSwatchViews[8])
-					.Add(fSwatchViews[9])
-				.End()
-				.AddGroup(B_HORIZONTAL, 0.0f)
-					.Add(fSwatchViews[10])
-					.Add(fSwatchViews[11])
-					.Add(fSwatchViews[12])
-					.Add(fSwatchViews[13])
-					.Add(fSwatchViews[14])
-					.Add(fSwatchViews[15])
-					.Add(fSwatchViews[16])
-					.Add(fSwatchViews[17])
-					.Add(fSwatchViews[18])
-					.Add(fSwatchViews[19])
-				.End()
-			.End()
-		.End()
-		.Add(new BSeparatorView(B_HORIZONTAL))
-		.Add(fColorField, 3.0f)
-		.Add(new BSeparatorView(B_HORIZONTAL))
-		.Add(fColorSlider, 1.0f)
-		.Add(new BSeparatorView(B_HORIZONTAL))
-		.Add(fAlphaSlider, 1.0f)
-		.SetInsets(spacing, spacing, spacing, spacing)
-	;
+	fPlatformDelegate->Init(0);
 
 	_AdoptColor((rgb_color){ 0, 0, 0, 255 });
 }
@@ -139,6 +92,8 @@ SwatchGroup::SwatchGroup(const char* name)
 SwatchGroup::~SwatchGroup()
 {
 	SetCurrentColor(NULL);
+
+	delete fPlatformDelegate;
 }
 
 

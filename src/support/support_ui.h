@@ -23,10 +23,7 @@ class BString;
 class BView;
 class BWindow;
 
-// looper of view must be locked!
-void stroke_frame(BView* view, BRect frame,
-				  rgb_color left, rgb_color top,
-				  rgb_color right, rgb_color bottom);
+class PlatformDrawContext;
 
 
 status_t store_color_in_message(BMessage* message, rgb_color color);
@@ -68,5 +65,13 @@ operator!=(const rgb_color& a, const rgb_color& b)
 }
 
 #endif // B_BEOS_VERSION <= ...
+
+
+// platform dependent
+
+// looper of view must be locked!
+void stroke_frame(PlatformDrawContext& drawContext, BRect frame,
+	rgb_color left, rgb_color top, rgb_color right, rgb_color bottom);
+
 
 #endif // SUPPORT_UI_H

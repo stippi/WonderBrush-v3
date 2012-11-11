@@ -25,6 +25,8 @@ INCLUDEPATH += icon/include
 
 QMAKE_CXXFLAGS += -iquote $$PWD/commands
 QMAKE_CXXFLAGS += -iquote $$PWD/gui
+QMAKE_CXXFLAGS += -iquote $$PWD/gui/colorpicker
+QMAKE_CXXFLAGS += -iquote $$PWD/gui/colorpicker/qt
 QMAKE_CXXFLAGS += -iquote $$PWD/gui/icons
 QMAKE_CXXFLAGS += -iquote $$PWD/gui/misc
 QMAKE_CXXFLAGS += -iquote $$PWD/gui/misc/qt
@@ -68,7 +70,16 @@ SOURCES += \
 	commands/SetPropertiesCommand.cpp \
 	gui/CanvasView.cpp \
 	gui/ToolConfigView.cpp \
+	gui/colorpicker/AlphaSlider.cpp \
+	gui/colorpicker/ColorField.cpp \
+	gui/colorpicker/ColorPickerPanel.cpp \
+	gui/colorpicker/ColorPickerView.cpp \
+	gui/colorpicker/ColorPreview.cpp \
+	gui/colorpicker/ColorSlider.cpp \
 	gui/misc/NavigatorView.cpp \
+	gui/misc/Panel.cpp \
+	gui/misc/SwatchGroup.cpp \
+	gui/misc/SwatchView.cpp \
 	gui/misc/qt/DualSlider.cpp \
 	gui/misc/qt/FontPopup.cpp \
 	gui/misc/qt/IconButton.cpp \
@@ -202,6 +213,7 @@ SOURCES += \
 	support/Referenceable.cpp \
 	support/RWLocker.cpp \
 	support/support.cpp \
+	support/support_ui.cpp \
 	support/Transformable.cpp \
 	tools/DragStateViewState.cpp \
 	tools/Tool.cpp \
@@ -229,13 +241,31 @@ HEADERS  += \
 	commands/SetPropertiesCommand.h \
 	gui/CanvasView.h \
 	gui/ToolConfigView.h \
+	gui/colorpicker/AlphaSlider.h \
+	gui/colorpicker/ColorField.h \
+	gui/colorpicker/ColorPickerPanel.h \
+	gui/colorpicker/ColorPickerView.h \
+	gui/colorpicker/ColorPreview.h \
+	gui/colorpicker/ColorSlider.h \
+	gui/colorpicker/SelectedColorMode.h \
+	gui/colorpicker/qt/AlphaSliderPlatformDelegate.h \
+	gui/colorpicker/qt/ColorFieldPlatformDelegate.h
+	gui/colorpicker/qt/ColorPickerPanelPlatformDelegate.h \
+	gui/colorpicker/qt/ColorPickerViewPlatformDelegate.h \
+	gui/colorpicker/qt/ColorPreviewPlatformDelegate.h \
+	gui/colorpicker/qt/ColorSliderPlatformDelegate.h \
 	gui/misc/NavigatorView.h \
+	gui/misc/Panel.h \
+	gui/misc/SwatchGroup.h \
+	gui/misc/SwatchView.h \
 	gui/misc/qt/DualSlider.h \
 	gui/misc/qt/FontPopup.h \
 	gui/misc/qt/IconButton.h \
 	gui/misc/qt/IconOptionsControl.h \
 	gui/misc/qt/ListModel.h \
 	gui/misc/qt/NavigatorViewPlatformDelegate.h \
+	gui/misc/qt/SwatchGroupPlatformDelegate.h \
+	gui/misc/qt/SwatchViewPlatformDelegate.h \
 	gui/qt/CanvasViewPlatformDelegate.h \
 	gui/qt/Window.h \
 	gui/icons/BrushIcon.h \
@@ -449,6 +479,7 @@ HEADERS  += \
 	support/ObjectCache.h \
 	support/ObjectTracker.h \
 	support/Referenceable.h \
+	support/rgb_hsv.h \
 	support/RWLocker.h \
 	support/support.h \
 	support/support_ui.h \

@@ -14,6 +14,12 @@
 class ColorPickerView;
 
 class ColorPickerPanel : public Panel {
+private:
+	enum {
+		MSG_CANCEL					= 'cncl',
+		MSG_DONE					= 'done'
+	};
+
 public:
 								ColorPickerPanel(BRect frame,
 												 rgb_color color,
@@ -40,7 +46,13 @@ public:
 	static	ColorPickerPanel*	DefaultPanel();
 
 private:
+			class PlatformDelegate;
+			friend class PlatformDelegate;
+
+private:
 	static	ColorPickerPanel*	sDefaultPanel;
+
+			PlatformDelegate*	fPlatformDelegate;
 
 			ColorPickerView*	fColorPickerView;
 			BWindow*			fWindow;

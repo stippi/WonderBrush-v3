@@ -184,6 +184,7 @@ Application WonderBrush :
 	# platform/<platform>
 	platform_bitmap_support.cpp
 	platform_support.cpp
+	platform_support_ui.cpp
 
 	# render
 	FontCache.cpp

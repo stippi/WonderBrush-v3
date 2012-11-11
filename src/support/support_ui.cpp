@@ -15,30 +15,11 @@
 #include <DataIO.h>
 #include <Directory.h>
 #include <File.h>
-#include <FindDirectory.h>
 #include <Screen.h>
 #include <String.h>
 #include <Path.h>
 #include <View.h>
 
-// stroke_frame
-void
-stroke_frame(BView* v, BRect r, rgb_color left, rgb_color top,
-			 rgb_color right, rgb_color bottom)
-{
-	if (v && r.IsValid()) {
-		v->BeginLineArray(4);
-			v->AddLine(BPoint(r.left, r.bottom),
-					   BPoint(r.left, r.top), left);
-			v->AddLine(BPoint(r.left + 1.0, r.top),
-					   BPoint(r.right, r.top), top);
-			v->AddLine(BPoint(r.right, r.top + 1.0),
-					   BPoint(r.right, r.bottom), right);
-			v->AddLine(BPoint(r.right - 1.0, r.bottom),
-					   BPoint(r.left + 1.0, r.bottom), bottom);
-		v->EndLineArray();
-	}
-}
 
 // store_color_in_message
 status_t

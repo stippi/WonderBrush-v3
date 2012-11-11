@@ -9,22 +9,27 @@
 #ifndef _COLOR_PREVIEW_H
 #define _COLOR_PREVIEW_H
 
+
 #include <Control.h>
+
+#include "PlatformViewMixin.h"
+
 
 #define	MSG_COLOR_PREVIEW	'ColP'
 #define MSG_MESSAGERUNNER 	'MsgR'
 
 class BMessageRunner;
 
-class ColorPreview : public BControl {
+class ColorPreview : public PlatformViewMixin<BControl> {
  public:
 
 								ColorPreview(BRect frame,
 											 rgb_color color);
+								~ColorPreview();
 
 	// BControl interface
 	virtual	void				AttachedToWindow();
-	virtual	void				Draw(BRect updateRect);
+	virtual	void				PlatformDraw(PlatformDrawContext& drawContext);
 
 	virtual	void				MessageReceived(BMessage* message);
 
@@ -41,7 +46,11 @@ class ColorPreview : public BControl {
 			void				SetNewColor(rgb_color color);
 									// changes also the old color
 
- private:
+private:
+			class PlatformDelegate;
+
+private:
+			PlatformDelegate*	fPlatformDelegate;
 
 			void				_DragColor(BPoint where);
 

@@ -7,11 +7,12 @@
  */
 
 #include "ColorSlider.h"
+#include "ColorSliderPlatformDelegate.h"
 
 #include <stdio.h>
 
 #include <Bitmap.h>
-#include <ControlLook.h>
+//#include <ControlLook.h>
 #include <LayoutUtils.h>
 #include <OS.h>
 #include <Window.h>
@@ -33,8 +34,8 @@ enum {
 // constructor
 ColorSlider::ColorSlider(SelectedColorMode mode,
 	float value1, float value2, orientation dir, border_style border)
-	:  BControl("ColorSlider", "", new BMessage(MSG_COLOR_SLIDER),
-		B_WILL_DRAW | B_FRAME_EVENTS)
+	:  PlatformViewMixin<BControl>("ColorSlider", "",
+		new BMessage(MSG_COLOR_SLIDER), B_WILL_DRAW | B_FRAME_EVENTS)
 {
 	_Init(mode, value1, value2, dir, border);
 }
@@ -42,7 +43,8 @@ ColorSlider::ColorSlider(SelectedColorMode mode,
 // constructor
 ColorSlider::ColorSlider(BPoint offsetPoint, SelectedColorMode mode,
 	float value1, float value2, orientation dir, border_style border)
-	:  BControl(BRect(0.0, 0.0, 35.0, 265.0).OffsetToCopy(offsetPoint),
+	:  PlatformViewMixin<BControl>(
+		BRect(0.0, 0.0, 35.0, 265.0).OffsetToCopy(offsetPoint),
 		"ColorSlider", "", new BMessage(MSG_COLOR_SLIDER),
 		B_FOLLOW_LEFT | B_FOLLOW_TOP, B_WILL_DRAW | B_FRAME_EVENTS)
 {
@@ -53,6 +55,7 @@ ColorSlider::ColorSlider(BPoint offsetPoint, SelectedColorMode mode,
 ColorSlider::~ColorSlider()
 {
 	delete fBitmap;
+	delete fPlatformDelegate;
 }
 
 // MinSize
@@ -132,70 +135,52 @@ ColorSlider::Invoke(BMessage* message)
 	return BControl::Invoke(message);
 }
 
-// Draw
+// PlatformDraw
 void
-ColorSlider::Draw(BRect updateRect)
+ColorSlider::PlatformDraw(PlatformDrawContext& drawContext)
 {
 	if (fBitmapDirty && fBitmap != NULL) {
 		_FillBitmap(fBitmap, fMode, fFixedValue1, fFixedValue2, fOrientation);
 		fBitmapDirty = false;
 	}
 
-	BRect bounds = _BitmapRect();
-
-	// Frame
-	if (fBorderStyle == B_FANCY_BORDER) {
-		bounds.InsetBy(-2, -2);
-		rgb_color color = LowColor();
-		be_control_look->DrawTextControlBorder(this, bounds, updateRect,
-			color);
-	}
-
-	// Color slider fill
-	if (fBitmap != NULL)
-		DrawBitmap(fBitmap, bounds.LeftTop());
-	else {
-		SetHighColor(255, 0, 0);
-		FillRect(bounds);
-	}
+	fPlatformDelegate->DrawBackground(drawContext, _BitmapRect(), fBitmap,
+		fBorderStyle);
 
 	// marker
+	BRect bounds = Bounds();
 	if (fOrientation == B_VERTICAL) {
 		// draw the triangle markers
-		bounds = Bounds();
-		SetHighColor(0, 0, 0);
 		float value = Value();
-		StrokeLine(BPoint(bounds.left, value),
-			BPoint(bounds.left + 5.0, value + 5.0));
-		StrokeLine(BPoint(bounds.left, value + 10.0));
-		StrokeLine(BPoint(bounds.left, value));
+		fPlatformDelegate->DrawTriangle(drawContext, BPoint(bounds.left, value),
+			BPoint(bounds.left + 5.0, value + 5.0),
+			BPoint(bounds.left, value + 10.0), make_color(0, 0, 0));
 
-		StrokeLine(BPoint(bounds.right, value),
-			BPoint(bounds.right - 5.0, value + 5.0));
-		StrokeLine(BPoint(bounds.right, value + 10.0));
-		StrokeLine(BPoint(bounds.right, value));
+		fPlatformDelegate->DrawTriangle(drawContext,
+			BPoint(bounds.right, value),
+			BPoint(bounds.right - 5.0, value + 5.0),
+			BPoint(bounds.right, value + 10.0), make_color(0, 0, 0));
 	} else {
 		BRect r = bounds;
 		float x = bounds.left - 2 + (255 - Value()) * bounds.Width() / 255.0;
 		if (x > r.left) {
-			SetHighColor(255, 255, 255);
-			StrokeLine(BPoint(x, bounds.top),
-				BPoint(x, bounds.bottom));
+			fPlatformDelegate->DrawLine(drawContext, BPoint(x, bounds.top),
+				BPoint(x, bounds.bottom), make_color(255, 255, 255));
 		}
 		if (x + 1 > r.left) {
-			SetHighColor(0, 0, 0);
-			StrokeLine(BPoint(x + 1, bounds.top),
-				BPoint(x + 1, bounds.bottom));
+			fPlatformDelegate->DrawLine(drawContext,
+				BPoint(x + 1, bounds.top), BPoint(x + 1, bounds.bottom),
+				make_color(0, 0, 0));
 		}
 		if (x + 3 < r.right) {
-			SetHighColor(0, 0, 0);
-			StrokeLine(BPoint(x + 3, bounds.top),
-				BPoint(x + 3, bounds.bottom));
+			fPlatformDelegate->DrawLine(drawContext,
+				BPoint(x + 3, bounds.top), BPoint(x + 3, bounds.bottom),
+				make_color(0, 0, 0));
 		}
 		if (x + 4 < r.right) {
-			SetHighColor(255, 255, 255);
-			StrokeLine(BPoint(x + 4, bounds.top),
-				BPoint(x + 4, bounds.bottom));
+			fPlatformDelegate->DrawLine(drawContext,
+				BPoint(x + 4, bounds.top), BPoint(x + 4, bounds.bottom),
+				make_color(255, 255, 255));
 		}
 	}
 }
@@ -395,8 +380,7 @@ ColorSlider::_Init(SelectedColorMode mode, float value1, float value2,
 	fOrientation = dir;
 	fBorderStyle = border;
 
-	SetViewColor(B_TRANSPARENT_COLOR);
-	SetLowColor(ui_color(B_PANEL_BACKGROUND_COLOR));
+	fPlatformDelegate = new PlatformDelegate(this);
 }
 
 // _AllocBitmap

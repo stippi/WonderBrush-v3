@@ -14,6 +14,7 @@ class Document;
 class IconButton;
 class Layer;
 class RenderManager;
+class SwatchGroup;
 class Tool;
 
 
@@ -27,8 +28,7 @@ class Window : public BWindow
 	
 public:
 	explicit					Window(BRect frame, const char* title,
-									Document* document, Layer* layer,
-									QWidget* parent = 0);
+									Document* document, Layer* layer);
 								~Window();
 
 	virtual	void				MessageReceived(BMessage* message);
@@ -63,6 +63,8 @@ private:
 			ListenerAdapter		fCommandStackListener;
 			Selection			fSelection;
 			CurrentColor		fCurrentColor;
+
+			SwatchGroup*		fSwatchGroup;
 
 			IconButton*			fUndoIcon;
 			IconButton*			fRedoIcon;

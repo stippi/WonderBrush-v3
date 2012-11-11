@@ -7,6 +7,7 @@
  */
 
 #include "ColorPreview.h"
+#include "ColorPreviewPlatformDelegate.h"
 
 #include <stdio.h>
 
@@ -21,8 +22,10 @@
 
 // constructor
 ColorPreview::ColorPreview(BRect frame, rgb_color color)
-	: BControl(frame, "colorpreview", "", new BMessage(MSG_COLOR_PREVIEW),
-			   B_FOLLOW_TOP|B_FOLLOW_LEFT, B_WILL_DRAW),
+	: PlatformViewMixin<BControl>(frame, "colorpreview", "",
+		new BMessage(MSG_COLOR_PREVIEW), B_FOLLOW_TOP|B_FOLLOW_LEFT,
+		B_WILL_DRAW),
+	  fPlatformDelegate(new PlatformDelegate(this)),
 	  fColor(color),
 	  fOldColor(color),
 
@@ -32,17 +35,23 @@ ColorPreview::ColorPreview(BRect frame, rgb_color color)
 {
 }
 
+
+ColorPreview::~ColorPreview()
+{
+	delete fPlatformDelegate;
+}
+
+
 // AttachedToWindow
 void
 ColorPreview::AttachedToWindow()
 {
 	BControl::AttachedToWindow();
-	SetViewColor(B_TRANSPARENT_COLOR);
 }
 
-// Draw
+// PlatformDraw
 void
-ColorPreview::Draw(BRect updateRect)
+ColorPreview::PlatformDraw(PlatformDrawContext& drawContext)
 {
 	rgb_color background = ui_color(B_PANEL_BACKGROUND_COLOR);
 	rgb_color shadow = tint_color(background, B_DARKEN_1_TINT);
@@ -50,19 +59,18 @@ ColorPreview::Draw(BRect updateRect)
 	rgb_color light = tint_color(background, B_LIGHTEN_MAX_TINT);
 
 	BRect r(Bounds());
-	stroke_frame(this, r, shadow, shadow, light, light);
+	stroke_frame(drawContext, r, shadow, shadow, light, light);
 	r.InsetBy(1.0, 1.0);
-	stroke_frame(this, r, darkShadow, darkShadow, background, background);
+	stroke_frame(drawContext, r, darkShadow, darkShadow, background,
+		background);
 	r.InsetBy(1.0, 1.0);
 
 	r.bottom = r.top + r.Height() / 2.0;
-	SetHighColor(fColor);
-	FillRect(r);
+	fPlatformDelegate->FillRect(drawContext, r, fColor);
 
 	r.top = r.bottom + 1;
 	r.bottom = Bounds().bottom - 2.0;
-	SetHighColor(fOldColor);
-	FillRect(r);
+	fPlatformDelegate->FillRect(drawContext, r, fOldColor);
 }
 
 // MessageReceived
@@ -131,7 +139,7 @@ ColorPreview::MouseDown(BPoint where)
 	
 	if (rect.Contains( where ) ) {
 		fColor = fOldColor;
-		Draw( Bounds() );
+		Invalidate();
 		Invoke();
 	}
 	

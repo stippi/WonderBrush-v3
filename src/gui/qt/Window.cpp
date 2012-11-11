@@ -9,6 +9,7 @@
 #include "NavigatorView.h"
 #include "PickTool.h"
 #include "RenderManager.h"
+#include "SwatchGroup.h"
 #include "TextTool.h"
 #include "ToolConfigView.h"
 #include "TransformTool.h"
@@ -22,10 +23,10 @@ enum {
 };
 
 
-Window::Window(BRect frame, const char* title, Document* document, Layer* layer,
-	QWidget* parent)
+Window::Window(BRect frame, const char* title, Document* document, Layer* layer)
 	:
-	BWindow(parent, title),
+	BWindow(frame, title, B_DOCUMENT_WINDOW_LOOK, B_NORMAL_WINDOW_FEEL,
+		B_ASYNCHRONOUS_CONTROLS | B_AUTO_UPDATE_SIZE_LIMITS),
 	fUi(new Ui::Window),
 	fView(NULL),
 	fDocument(document),
@@ -141,6 +142,10 @@ exportButton->SetEnabled(false);
 	_ReplaceWidget(fUi->navigatorViewDummy,
 		new NavigatorView(fDocument, fRenderManager));
 
+	fSwatchGroup = new SwatchGroup("swatch group");
+	_ReplaceWidget(fUi->swatchGroupDummy, fSwatchGroup);
+	fSwatchGroup->SetCurrentColor(&fCurrentColor);
+
 	_InitTools();
 
 	fView->SetCommandStack(fDocument->CommandStack());
@@ -158,6 +163,16 @@ exportButton->SetEnabled(false);
 
 Window::~Window()
 {
+	fDocument->CommandStack()->RemoveListener(&fCommandStackListener);
+	delete fRenderManager;
+//	delete fLayerTreeModel;
+
+	fSwatchGroup->SetCurrentColor(NULL);
+
+	fView->SetState(NULL);
+	for (int32 i = fTools.CountItems() - 1; i >= 0; i--)
+		delete (Tool*)fTools.ItemAtFast(i);
+
 	delete fUi;
 }
 

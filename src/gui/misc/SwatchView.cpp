@@ -7,6 +7,7 @@
  */
 
 #include "SwatchView.h"
+#include "SwatchViewPlatformDelegate.h"
 
 #include <stdio.h>
 
@@ -28,8 +29,9 @@
 SwatchView::SwatchView(const char* name, BMessage* message,
 	BHandler* target, rgb_color color, float width, float height,
 	border_style border)
-	: BView(BRect(0.0, 0.0, width, height), name,
+	: PlatformViewMixin<BView>(BRect(0.0, 0.0, width, height), name,
 			B_FOLLOW_NONE, B_WILL_DRAW),
+	  fPlatformDelegate(new PlatformDelegate(this)),
 	  fColor(color),
 	  fTrackingStart(-1.0, -1.0),
 	  fActive(false),
@@ -41,8 +43,6 @@ SwatchView::SwatchView(const char* name, BMessage* message,
 	  fHeight(height),
 	  fBorderStyle(border)
 {
-	SetViewColor(B_TRANSPARENT_COLOR);
-	SetHighColor(fColor);
 }
 
 // destructor
@@ -50,6 +50,7 @@ SwatchView::~SwatchView()
 {
 	delete fClickMessage;
 	delete fDroppedMessage;
+	delete fPlatformDelegate;
 }
 
 inline void
@@ -61,9 +62,9 @@ blend_color(rgb_color& a, const rgb_color& b, float alpha)
 	a.blue = (uint8)(b.blue * alphaInv + a.blue * alpha);
 }
 
-// Draw
+// PlatformDraw
 void
-SwatchView::Draw(BRect updateRect)
+SwatchView::PlatformDraw(PlatformDrawContext& drawContext)
 {
 	BRect r(Bounds());
 
@@ -80,27 +81,16 @@ SwatchView::Draw(BRect updateRect)
 		blend_color(l, kAlphaLow, alpha);
 
 		if (fBorderStyle == B_PLAIN_BORDER) {
-			SetHighColor(h);
-			SetLowColor(l);
+			rgb_color leftTopHighColor = h;
+			rgb_color leftTopLowColor = l;
 
-			StrokeLine(BPoint(r.left, r.bottom - 1),
-					   BPoint(r.left, r.top), kDottedBig);
-			StrokeLine(BPoint(r.left + 1, r.top),
-					   BPoint(r.right, r.top), kDottedBig);
-
-			// right/bottom
 			h = colorShadow;
 			blend_color(h, kAlphaHigh, alpha);
 			l = colorShadow;
 			blend_color(l, kAlphaLow, alpha);
 
-			SetHighColor(h);
-			SetLowColor(l);
-
-			StrokeLine(BPoint(r.right, r.top + 1),
-					   BPoint(r.right, r.bottom), kDottedBig);
-			StrokeLine(BPoint(r.right - 1, r.bottom),
-					   BPoint(r.left, r.bottom), kDottedBig);
+			fPlatformDelegate->DrawDottedBorder(drawContext, r,
+				leftTopHighColor, leftTopLowColor, h, l);
 
 			r.InsetBy(1.0, 1.0);
 		}
@@ -111,17 +101,14 @@ SwatchView::Draw(BRect updateRect)
 		l = fColor;
 		blend_color(l, kAlphaLow, alpha);
 
-		SetHighColor(h);
-		SetLowColor(l);
-
-		FillRect(r, kDottedBig);
+		fPlatformDelegate->FillDottedRect(drawContext, r, h, l);
 	} else {
 		if (fBorderStyle == B_PLAIN_BORDER) {
-			_StrokeRect(r, colorLight, colorShadow);
+			fPlatformDelegate->DrawPlainBorder(drawContext, r, colorLight,
+				colorShadow);
 			r.InsetBy(1.0, 1.0);
 		}
-		SetHighColor(fColor);
-		FillRect(r);
+		fPlatformDelegate->FillPlainRect(drawContext, r, fColor);
 	}
 }
 
@@ -188,7 +175,7 @@ void
 SwatchView::SetColor(rgb_color color)
 {
 	fColor = color;
-	SetHighColor(fColor);
+	fPlatformDelegate->ColorChanged(fColor);
 	Invalidate();
 }
 
@@ -225,23 +212,6 @@ SwatchView::_Invoke(const BMessage* _message)
 			looper->PostMessage(&message, target);
 		}
 	}
-}
-
-// _StrokeRect
-void
-SwatchView::_StrokeRect(BRect r, rgb_color leftTop,
-						rgb_color rightBottom)
-{
-	BeginLineArray(4);
-		AddLine(BPoint(r.left, r.bottom - 1),
-				BPoint(r.left, r.top), leftTop);
-		AddLine(BPoint(r.left + 1, r.top),
-				BPoint(r.right, r.top), leftTop);
-		AddLine(BPoint(r.right, r.top + 1),
-				BPoint(r.right, r.bottom), rightBottom);
-		AddLine(BPoint(r.right - 1, r.bottom),
-				BPoint(r.left, r.bottom), rightBottom);
-	EndLineArray();
 }
 
 // _DragColor

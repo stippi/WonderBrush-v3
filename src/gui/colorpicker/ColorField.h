@@ -11,7 +11,9 @@
 
 #include <Control.h>
 
+#include "PlatformViewMixin.h"
 #include "SelectedColorMode.h"
+
 
 enum {
 	MSG_COLOR_FIELD		= 'ColF',
@@ -19,7 +21,7 @@ enum {
 
 class BBitmap;
 
-class ColorField : public BControl {
+class ColorField : public PlatformViewMixin<BControl> {
 public:
 								ColorField(BPoint offset_point,
 									SelectedColorMode mode, float fixedValue,
@@ -41,7 +43,7 @@ public:
 	virtual	status_t			Invoke(BMessage* message = NULL);
 
 	virtual	void				AttachedToWindow();
-	virtual	void				Draw(BRect updateRect);
+	virtual	void				PlatformDraw(PlatformDrawContext& drawContext);
 	virtual	void				FrameResized(float width, float height);
 
 	virtual	void				MouseDown(BPoint where);
@@ -65,6 +67,9 @@ public:
 									{ return fMouseDown; }
 
 private:
+			class PlatformDelegate;
+
+private:
 			void				_Init(SelectedColorMode mode,
 									float fixedValue, orientation orient,
 									border_style border);
@@ -77,6 +82,8 @@ private:
 									float fixedValue, orientation orient) const;
 
 private:
+	PlatformDelegate*			fPlatformDelegate;
+
 	SelectedColorMode			fMode;
 	float						fFixedValue;
 	orientation					fOrientation;

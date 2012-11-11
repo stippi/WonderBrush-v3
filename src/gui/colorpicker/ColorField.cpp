@@ -7,11 +7,11 @@
  */
 
 #include "ColorField.h"
+#include "ColorFieldPlatformDelegate.h"
 
 #include <stdio.h>
 
 #include <Bitmap.h>
-#include <ControlLook.h>
 #include <LayoutUtils.h>
 #include <OS.h>
 #include <Region.h>
@@ -33,8 +33,8 @@ enum {
 // constructor
 ColorField::ColorField(BPoint offsetPoint, SelectedColorMode mode,
 	float fixedValue, orientation orient, border_style border)
-	: BControl(BRect(0.0, 0.0, MAX_X + 4.0, MAX_Y + 4.0)
-			.OffsetToCopy(offsetPoint),
+	: PlatformViewMixin<BControl>(
+		BRect(0.0, 0.0, MAX_X + 4.0, MAX_Y + 4.0).OffsetToCopy(offsetPoint),
 		"ColorField", "", new BMessage(MSG_COLOR_FIELD),
 		B_FOLLOW_LEFT | B_FOLLOW_TOP, B_WILL_DRAW | B_FRAME_EVENTS)
 {
@@ -45,8 +45,8 @@ ColorField::ColorField(BPoint offsetPoint, SelectedColorMode mode,
 // constructor
 ColorField::ColorField(SelectedColorMode mode, float fixedValue,
 	orientation orient, border_style border)
-	: BControl("ColorField", "", new BMessage(MSG_COLOR_FIELD),
-		B_WILL_DRAW | B_FRAME_EVENTS)
+	: PlatformViewMixin<BControl>("ColorField", "",
+		new BMessage(MSG_COLOR_FIELD), B_WILL_DRAW | B_FRAME_EVENTS)
 {
 	_Init(mode, fixedValue, orient, border);
 }
@@ -55,6 +55,7 @@ ColorField::ColorField(SelectedColorMode mode, float fixedValue,
 ColorField::~ColorField()
 {
 	delete fBitmap;
+	delete fPlatformDelegate;
 }
 
 // MinSize
@@ -140,37 +141,17 @@ ColorField::AttachedToWindow()
 {
 }
 
-// Draw
+// PlatformDraw
 void
-ColorField::Draw(BRect updateRect)
+ColorField::PlatformDraw(PlatformDrawContext& drawContext)
 {
 	if (fBitmapDirty && fBitmap != NULL) {
 		_FillBitmap(fBitmap, fMode, fFixedValue, fOrientation);
 		fBitmapDirty = false;
 	}
 
-	BRect bounds = Bounds();
-
-	// Frame
-	if (fBorderStyle == B_FANCY_BORDER) {
-		rgb_color color = LowColor();
-		be_control_look->DrawTextControlBorder(this, bounds, updateRect,
-			color);
-	}
-
-	// Color field fill
-	if (fBitmap != NULL)
-		DrawBitmap(fBitmap, bounds.LeftTop());
-	else {
-		SetHighColor(255, 0, 0);
-		FillRect(bounds);
-	}
-
-	// Marker
-	SetHighColor(0, 0, 0);
-	StrokeEllipse(fMarkerPosition + bounds.LeftTop(), 5.0, 5.0);
-	SetHighColor(255.0, 255.0, 255.0);
-	StrokeEllipse(fMarkerPosition + bounds.LeftTop(), 4.0, 4.0);
+	fPlatformDelegate->Draw(drawContext, Bounds(), fBorderStyle, fBitmap,
+		fMarkerPosition);
 }
 
 // FrameResized
@@ -400,8 +381,7 @@ ColorField::_Init(SelectedColorMode mode, float fixedValue,
 	fBitmap = NULL;
 	fBitmapDirty = true;
 
-	SetViewColor(B_TRANSPARENT_COLOR);
-	SetLowColor(ui_color(B_PANEL_BACKGROUND_COLOR));
+	fPlatformDelegate = new PlatformDelegate(this);
 }
 
 // _AllocBitmap

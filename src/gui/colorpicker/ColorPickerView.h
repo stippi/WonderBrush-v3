@@ -15,11 +15,13 @@
 #  include <layout.h>
 #endif
 
+#include "PlatformViewMixin.h"
 #include "SelectedColorMode.h"
 
-#define	MSG_RADIOBUTTON		'Rad0'
-#define	MSG_TEXTCONTROL		'Txt0'
-#define MSG_HEXTEXTCONTROL	'HTxt'
+#define	MSG_RADIOBUTTON					'Rad0'
+#define	MSG_TEXTCONTROL					'Txt0'
+#define MSG_HEXTEXTCONTROL				'HTxt'
+#define MSG_UPDATE_COLOR_PICKER_VIEW	'UpCp'
 
 class ColorField;
 class ColorSlider;
@@ -32,7 +34,7 @@ class ColorPickerView :
 						#if LIB_LAYOUT
 						public MView,
 						#endif
-						public BView {
+						public PlatformViewMixin<BView> {
  public:
 								ColorPickerView(const char* name,
 												rgb_color color,
@@ -49,8 +51,7 @@ class ColorPickerView :
 	virtual	void				AttachedToWindow();
 	virtual	void				MessageReceived(BMessage *message);
 
-	virtual	void				Draw(BRect updateRect);
-	virtual	void				Pulse();
+	virtual	void				PlatformDraw(PlatformDrawContext& drawContext);
 
 								// ColorPickerView
 			void				SetColorMode(SelectedColorMode mode,
@@ -60,16 +61,19 @@ class ColorPickerView :
 			SelectedColorMode	Mode() const
 									{ return fSelectedColorMode; }
 
- private:
+private:
+			class PlatformDelegate;
+			friend class PlatformDelegate;
+
+private:
 			int32				_NumForMode(SelectedColorMode mode) const;
 
 			void				_UpdateColor(float value, float value1,
 											 float value2);
 			void				_UpdateTextControls();
-			void				_SetText(BTextControl* control,
-										 const char* text,
-										 bool* requiresUpdate);
 
+private:
+			PlatformDelegate*	fPlatformDelegate;
 
 	SelectedColorMode			fSelectedColorMode;
 
@@ -81,10 +85,6 @@ class ColorPickerView :
 	ColorField*					fColorField;
 	ColorSlider*				fColorSlider;
 	ColorPreview*				fColorPreview;
-
-	BRadioButton*				fRadioButton[6];
-	BTextControl*				fTextControl[6];
-	BTextControl*				fHexTextControl;
 };
 
 #endif // COLOR_PICKER_VIEW_H

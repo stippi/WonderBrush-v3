@@ -4,13 +4,13 @@
  */
 
 #include "AlphaSlider.h"
+#include "AlphaSliderPlatformDelegate.h"
 
 #include <stdio.h>
 #include <string.h>
 
 #include <AppDefs.h>
 #include <Bitmap.h>
-#include <ControlLook.h>
 #include <LayoutUtils.h>
 #include <Message.h>
 #include <Window.h>
@@ -20,8 +20,9 @@
 // constructor
 AlphaSlider::AlphaSlider(orientation dir, BMessage* message,
 	border_style border)
-	: BControl("alpha slider", NULL, message,
+	: PlatformViewMixin<BControl>("alpha slider", (const char*)NULL, message,
 		B_WILL_DRAW | B_FRAME_EVENTS | B_NAVIGABLE)
+	, fPlatformDelegate(new PlatformDelegate(this))
 	, fBitmap(NULL)
 	, fColor(kBlack)
 	, fDragging(false)
@@ -30,9 +31,6 @@ AlphaSlider::AlphaSlider(orientation dir, BMessage* message,
 {
 	FrameResized(Bounds().Width(), Bounds().Height());
 
-	SetViewColor(B_TRANSPARENT_COLOR);
-	SetLowColor(ui_color(B_PANEL_BACKGROUND_COLOR));
-
 	SetValue(255);
 }
 
@@ -40,6 +38,7 @@ AlphaSlider::AlphaSlider(orientation dir, BMessage* message,
 AlphaSlider::~AlphaSlider()
 {
 	delete fBitmap;
+	delete fPlatformDelegate;
 }
 
 // WindowActivated
@@ -157,65 +156,63 @@ AlphaSlider::KeyDown(const char* bytes, int32 numBytes)
 	}
 }
 
-// Draw
+// PlatformDraw
 void
-AlphaSlider::Draw(BRect updateRect)
+AlphaSlider::PlatformDraw(PlatformDrawContext& drawContext)
 {
 	BRect b = Bounds();
-	bool isFocus = IsFocus() && Window()->IsActive();
-
-	if (fBorderStyle == B_FANCY_BORDER) {
-		rgb_color bg = LowColor();
-		uint32 flags = 0;
-
-		if (!IsEnabled())
-			flags |= BControlLook::B_DISABLED;
-		if (isFocus)
-			flags |= BControlLook::B_FOCUSED;
-
-		be_control_look->DrawTextControlBorder(this, b, updateRect, bg, flags);
-	}
-
-	DrawBitmap(fBitmap, b.LeftTop());
+	fPlatformDelegate->DrawBackground(drawContext, Bounds(), fBorderStyle,
+		fBitmap, fPlatformDelegate->BackgroundColor(), IsEnabled(),
+		IsFocus() && Window()->IsActive());
 
 	// value marker
 	if (fOrientation == B_HORIZONTAL) {
-		float pos = floorf(b.left + Value() * b.Width() / 255.0 + 0.5);
+		float pos = floorf(
+			b.left + Value() * b.Width() / 255.0 + 0.5);
 
 		if (pos - 2 >= b.left) {
-			SetHighColor(kWhite);
-			StrokeLine(BPoint(pos - 2, b.top), BPoint(pos - 2, b.bottom));
+			fPlatformDelegate->DrawLine(drawContext,
+				BPoint(pos - 2, b.top),
+				BPoint(pos - 2, b.bottom), kWhite);
 		}
 		if (pos - 1 >= b.left) {
-			SetHighColor(kBlack);
-			StrokeLine(BPoint(pos - 1, b.top), BPoint(pos - 1, b.bottom));
+			fPlatformDelegate->DrawLine(drawContext,
+				BPoint(pos - 1, b.top),
+				BPoint(pos - 1, b.bottom), kBlack);
 		}
 		if (pos + 1 <= b.right) {
-			SetHighColor(kBlack);
-			StrokeLine(BPoint(pos + 1, b.top), BPoint(pos + 1, b.bottom));
+			fPlatformDelegate->DrawLine(drawContext,
+				BPoint(pos + 1, b.top),
+				BPoint(pos + 1, b.bottom), kBlack);
 		}
 		if (pos + 2 <= b.right) {
-			SetHighColor(kWhite);
-			StrokeLine(BPoint(pos + 2, b.top), BPoint(pos + 2, b.bottom));
+			fPlatformDelegate->DrawLine(drawContext,
+				BPoint(pos + 2, b.top),
+				BPoint(pos + 2, b.bottom), kWhite);
 		}
 	} else {
-		float pos = floorf(b.top + Value() * b.Height() / 255.0 + 0.5);
+		float pos = floorf(
+			b.top + Value() * b.Height() / 255.0 + 0.5);
 
 		if (pos - 2 >= b.top) {
-			SetHighColor(kWhite);
-			StrokeLine(BPoint(b.left, pos - 2), BPoint(b.right, pos - 2));
+			fPlatformDelegate->DrawLine(drawContext,
+				BPoint(b.left, pos - 2),
+				BPoint(b.right, pos - 2), kWhite);
 		}
 		if (pos - 1 >= b.top) {
-			SetHighColor(kBlack);
-			StrokeLine(BPoint(b.left, pos - 1), BPoint(b.right, pos - 1));
+			fPlatformDelegate->DrawLine(drawContext,
+				BPoint(b.left, pos - 1),
+				BPoint(b.right, pos - 1), kBlack);
 		}
 		if (pos + 1 <= b.bottom) {
-			SetHighColor(kBlack);
-			StrokeLine(BPoint(b.left, pos + 1), BPoint(b.right, pos + 1));
+			fPlatformDelegate->DrawLine(drawContext,
+				BPoint(b.left, pos + 1),
+				BPoint(b.right, pos + 1), kBlack);
 		}
 		if (pos + 2 <= b.bottom) {
-			SetHighColor(kWhite);
-			StrokeLine(BPoint(b.left, pos + 2), BPoint(b.right, pos + 2));
+			fPlatformDelegate->DrawLine(drawContext,
+				BPoint(b.left, pos + 2),
+				BPoint(b.right, pos + 2), kWhite);
 		}
 	}
 }
@@ -304,7 +301,7 @@ AlphaSlider::_UpdateColors()
 	rgb_color color = fColor;
 	if (!IsEnabled()) {
 		// blend low color and color to give disabled look
-		rgb_color bg = LowColor();
+		rgb_color bg = fPlatformDelegate->BackgroundColor();
 		color.red = (uint8)(((uint32)bg.red + color.red) / 2);
 		color.green = (uint8)(((uint32)bg.green + color.green) / 2);
 		color.blue = (uint8)(((uint32)bg.blue + color.blue) / 2);

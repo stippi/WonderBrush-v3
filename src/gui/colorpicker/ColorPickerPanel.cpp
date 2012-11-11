@@ -5,6 +5,7 @@
  */
 
 #include "ColorPickerPanel.h"
+#include "ColorPickerPanelPlatformDelegate.h"
 
 #include <stdio.h>
 
@@ -12,25 +13,10 @@
 #include <Application.h>
 #include <Locker.h>
 
-#if LIB_LAYOUT
-#  include <MBorder.h>
-#  include <HGroup.h>
-#  include <Space.h>
-#  include <MButton.h>
-#  include <VGroup.h>
-#else
-#  include <Box.h>
-#  include <Button.h>
-#endif
-
 #include "support_ui.h"
 
 #include "ColorPickerView.h"
 
-enum {
-	MSG_CANCEL					= 'cncl',
-	MSG_DONE					= 'done',
-};
 
 ColorPickerPanel*
 ColorPickerPanel::sDefaultPanel = NULL;
@@ -44,6 +30,7 @@ ColorPickerPanel::ColorPickerPanel(BRect frame, rgb_color color,
 			B_FLOATING_WINDOW_LOOK, B_FLOATING_SUBSET_WINDOW_FEEL,
 			B_ASYNCHRONOUS_CONTROLS |
 			B_NOT_RESIZABLE | B_NOT_ZOOMABLE | B_NOT_CLOSABLE),
+	  fPlatformDelegate(new PlatformDelegate(this)),
 	  fWindow(window),
 	  fMessage(message),
 	  fTarget(target)
@@ -52,73 +39,7 @@ ColorPickerPanel::ColorPickerPanel(BRect frame, rgb_color color,
 
 	fColorPickerView = new ColorPickerView("color picker", color, mode);
 
-#if LIB_LAYOUT
-	MButton* defaultButton = new MButton("Ok", new BMessage(MSG_DONE), this);
-
-	// interface layout
-	BView* topView = new VGroup (
-		fColorPickerView,
-		new MBorder (
-			M_RAISED_BORDER, 5, "buttons",
-			new HGroup (
-				new Space(minimax(0.0, 0.0, 10000.0, 10000.0, 5.0)),
-				new MButton("Cancel", new BMessage(MSG_CANCEL), this),
-				new Space(minimax(5.0, 0.0, 10.0, 10000.0, 1.0)),
-				defaultButton,
-				new Space(minimax(2.0, 0.0, 2.0, 10000.0, 0.0)),
-				0
-			)
-		),
-		0
-	);
-#else // LIB_LAYOUT
-	frame = BRect(0, 0, 40, 15);
-	BButton* defaultButton = new BButton(frame, "ok button", "Ok",
-										 new BMessage(MSG_DONE),
-										 B_FOLLOW_RIGHT | B_FOLLOW_TOP);
-	defaultButton->ResizeToPreferred();
-	BButton* cancelButton = new BButton(frame, "cancel button", "Cancel",
-										new BMessage(MSG_CANCEL),
-										B_FOLLOW_RIGHT | B_FOLLOW_TOP);
-	cancelButton->ResizeToPreferred();
-
-	frame.bottom = frame.top + (defaultButton->Frame().Height() + 16);
-	frame.right = frame.left + fColorPickerView->Frame().Width();
-	BBox* buttonBox = new BBox(frame, "button group",
-							   B_FOLLOW_LEFT_RIGHT | B_FOLLOW_BOTTOM,
-							   B_WILL_DRAW | B_FRAME_EVENTS | B_NAVIGABLE_JUMP,
-							   B_PLAIN_BORDER);
-
-	ResizeTo(frame.Width(),
-			 fColorPickerView->Frame().Height() + frame.Height() + 1);
-
-	frame = Bounds();
-	BView* topView = new BView(frame, "bg", B_FOLLOW_ALL, 0);
-	topView->SetViewColor(ui_color(B_PANEL_BACKGROUND_COLOR));
-
-	buttonBox->MoveTo(frame.left, frame.bottom - buttonBox->Frame().Height());
-
-	defaultButton->MoveTo(frame.right - defaultButton->Frame().Width() - 10,
-						  frame.top + 8);
-	buttonBox->AddChild(defaultButton);
-
-	cancelButton->MoveTo(defaultButton->Frame().left - 10
-							- cancelButton->Frame().Width(),
-						 frame.top + 8);
-	buttonBox->AddChild(cancelButton);
-
-	topView->AddChild(fColorPickerView);
-	topView->AddChild(buttonBox);
-#endif // LIB_LAYOUT
-
-	SetDefaultButton(defaultButton);
-
-	if (fWindow)
-		AddToSubset(fWindow);
-	else
-		SetFeel(B_FLOATING_APP_WINDOW_FEEL);
-
-	AddChild(topView);
+	fPlatformDelegate->Init();
 }
 
 // destructor
@@ -129,6 +50,8 @@ ColorPickerPanel::~ColorPickerPanel()
 		sDefaultPanel = NULL;
 
 	delete fMessage;
+
+	delete fPlatformDelegate;
 }
 
 // Cancel

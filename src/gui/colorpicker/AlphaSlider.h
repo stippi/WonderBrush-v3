@@ -8,7 +8,10 @@
 
 #include <Control.h>
 
-class AlphaSlider : public BControl {
+#include "PlatformViewMixin.h"
+
+
+class AlphaSlider : public PlatformViewMixin<BControl> {
 public:
 								AlphaSlider(orientation dir = B_HORIZONTAL,
 									BMessage* message = NULL,
@@ -30,7 +33,7 @@ public:
 
 	virtual	void				KeyDown(const char* bytes, int32 numBytes);
 
-	virtual	void				Draw(BRect updateRect);
+	virtual	void				PlatformDraw(PlatformDrawContext& drawContext);
 	virtual	void				FrameResized(float width, float height);
 
 	virtual	void				SetValue(int32 value);
@@ -43,12 +46,16 @@ public:
 									{ return fDragging; }
 
 private:
+			class PlatformDelegate;
+
+private:
 			void				_UpdateColors();
 			void				_AllocBitmap(int32 width, int32 height);
 			BRect				_BitmapRect() const;
 			int32				_ValueFor(BPoint where) const;
 
 private:
+			PlatformDelegate*	fPlatformDelegate;
 			BBitmap*			fBitmap;
 			rgb_color			fColor;
 			bool				fDragging;

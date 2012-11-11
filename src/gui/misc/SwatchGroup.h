@@ -34,12 +34,17 @@ public:
 			void				SetCurrentColor(CurrentColor* color);
 
 private:
+			class PlatformDelegate;
+			friend class PlatformDelegate;
+
+private:
 			void				_SetColor(rgb_color color);
 			void				_AdoptColor(rgb_color color);
 			void				_AdoptColor(float h, float s, float v,
 									uint8 a);
 
 private:
+			PlatformDelegate*	fPlatformDelegate;
 			SwatchView*			fCurrentColorSV;
 			SwatchView*			fSwatchViews[20];
 			ColorField*			fColorField;

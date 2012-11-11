@@ -9,9 +9,13 @@
 #ifndef SWATCH_VIEW_H
 #define SWATCH_VIEW_H
 
+
 #include <View.h>
 
-class SwatchView : public BView {
+#include "PlatformViewMixin.h"
+
+
+class SwatchView : public PlatformViewMixin<BView> {
 public:
 								SwatchView(const char* name, BMessage* message,
 									BHandler* target, rgb_color color,
@@ -20,7 +24,7 @@ public:
 	virtual						~SwatchView();
 
 								// BView
-	virtual	void				Draw(BRect updateRect);
+	virtual	void				PlatformDraw(PlatformDrawContext& drawContext);
 	virtual	void				MessageReceived(BMessage* message);
 
 	virtual	void				MouseDown(BPoint where);
@@ -37,12 +41,15 @@ public:
 			void				SetDroppedMessage(BMessage* message);
 
 private:
+			class PlatformDelegate;
+
+private:
 			void				_Invoke(const BMessage* message);
-			void				_StrokeRect(BRect frame, rgb_color leftTop,
-									rgb_color rightBottom);
 			void				_DragColor();
 
 private:
+			PlatformDelegate*	fPlatformDelegate;
+
 			rgb_color			fColor;
 			BPoint				fTrackingStart;
 			bool				fActive;
