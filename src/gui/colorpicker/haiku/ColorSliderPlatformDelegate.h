@@ -31,7 +31,6 @@ public:
 
 		// Frame
 		if (borderStyle == B_FANCY_BORDER) {
-			bounds.InsetBy(-2, -2);
 			rgb_color color = view->LowColor();
 			be_control_look->DrawTextControlBorder(view, bounds,
 				drawContext.UpdateRect(), color);
@@ -47,6 +46,7 @@ public:
 
 		// Marker background
 		if (orientation == B_VERTICAL) {
+			bounds.InsetBy(-2, -2);
 			BRect r = view->Bounds();
 			view->FillRect(BRect(r.left, r.top, bounds.left - 1, r.bottom),
 				B_SOLID_LOW);
