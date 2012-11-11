@@ -13,11 +13,10 @@
 #include <Message.h>
 #include <RadioButton.h>
 #include <Screen.h>
+#include <String.h>
 #include <TextControl.h>
 
-
 #include "ColorPickerView.h"
-#include "PlatformSignalMessageAdapter.h"
 
 
 class ColorPickerView::PlatformDelegate {
@@ -31,17 +30,14 @@ public:
 
 	PlatformDelegate()
 	{
-		for (int i = 0; i < 6; i++)
-			fTextControlAdapters[i].DisconnectAll();
-		fHexTextControlAdapter.DisconnectAll();
 	}
 
 
 	void Init(int32 selectedRadioButton)
 	{
 		fView->AddChild(fView->fColorField);
-		AddChild(fView->fColorSlider);
-		AddChild(fView->fColorPreview);
+		fView->AddChild(fView->fColorSlider);
+		fView->AddChild(fView->fColorPreview);
 
 		BFont font(be_plain_font);
 		font.SetSize(10.0);

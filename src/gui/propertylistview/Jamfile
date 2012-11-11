@@ -9,6 +9,7 @@ SubDirHdrs $(TOP) src gui scrollview ;
 SubDirHdrs $(TOP) src gui scrollview $(WONDERBRUSH_PLATFORM) ;
 SubDirHdrs $(TOP) src model property ;
 SubDirHdrs $(TOP) src model property specific_properties ;
+SubDirHdrs $(TOP) src platform $(WONDERBRUSH_PLATFORM) ;
 SubDirHdrs $(TOP) src support ;
 # </pe-inc>
 

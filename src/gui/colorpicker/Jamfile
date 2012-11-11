@@ -3,7 +3,9 @@ SubDir TOP src gui colorpicker ;
 # <pe-inc>
 SubDirHdrs $(TOP) src gui ;
 SubDirHdrs $(TOP) src gui colorpicker ;
+SubDirHdrs $(TOP) src gui colorpicker $(WONDERBRUSH_PLATFORM) ;
 SubDirHdrs $(TOP) src gui misc ;
+SubDirHdrs $(TOP) src platform $(WONDERBRUSH_PLATFORM) ;
 SubDirHdrs $(TOP) src support ;
 # </pe-inc>
 

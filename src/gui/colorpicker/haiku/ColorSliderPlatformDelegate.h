@@ -9,6 +9,8 @@
 #define COLOR_SLIDER_PLATFORM_DELEGATE_H
 
 
+#include <ControlLook.h>
+
 #include "ColorSlider.h"
 
 
@@ -30,7 +32,7 @@ public:
 		// Frame
 		if (borderStyle == B_FANCY_BORDER) {
 			bounds.InsetBy(-2, -2);
-			rgb_color color = LowColor();
+			rgb_color color = view->LowColor();
 			be_control_look->DrawTextControlBorder(view, bounds,
 				drawContext.UpdateRect(), color);
 		}

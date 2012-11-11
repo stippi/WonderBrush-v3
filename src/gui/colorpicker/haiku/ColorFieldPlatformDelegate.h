@@ -32,8 +32,8 @@ public:
 		// Frame
 		if (borderStyle == B_FANCY_BORDER) {
 			rgb_color color = view->LowColor();
-			be_control_look->DrawTextControlBorder(view, bounds, updateRect,
-				color);
+			be_control_look->DrawTextControlBorder(view, bounds,
+				drawContext.UpdateRect(), color);
 		}
 
 		// Color field fill

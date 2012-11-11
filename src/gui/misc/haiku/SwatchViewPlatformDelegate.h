@@ -26,7 +26,7 @@ public:
 
 	void ColorChanged(const rgb_color& color)
 	{
-		fView->SetHighColor(fColor);
+		fView->SetHighColor(color);
 	}
 
 	void DrawDottedBorder(PlatformDrawContext& drawContext, const BRect& rect,

@@ -10,13 +10,8 @@
 #include <Box.h>
 #include <Button.h>
 
-#include <QDialogButtonBox>
-#include <QPushButton>
-#include <QVBoxLayout>
-
 #include "ColorPickerPanel.h"
 #include "ColorPickerView.h"
-#include "PlatformSignalMessageAdapter.h"
 
 
 class ColorPickerPanel::PlatformDelegate {
@@ -29,7 +24,7 @@ public:
 
 	void Init()
 	{
-		frame = BRect(0, 0, 40, 15);
+		BRect frame = BRect(0, 0, 40, 15);
 		BButton* defaultButton = new BButton(frame, "ok button", "Ok",
 											 new BMessage(MSG_DONE),
 											 B_FOLLOW_RIGHT | B_FOLLOW_TOP);
