@@ -596,7 +596,6 @@ TransformToolState::TransformToolState(StateView* view, const BRect& box,
 
 	, fIgnoreObjectEvents(false)
 {
-	fSelection->AddListener(this);
 }
 
 // destructor
@@ -619,6 +618,25 @@ TransformToolState::~TransformToolState()
 	delete fDragBState;
 
 	delete fPlatformDelegate;
+}
+
+// Init()
+void
+TransformToolState::Init()
+{
+	if (!fSelection->IsEmpty())
+		ObjectSelected(fSelection->SelectableAt(0), NULL);
+	fSelection->AddListener(this);
+	DragStateViewState::Init();
+}
+
+// Cleanup()
+void
+TransformToolState::Cleanup()
+{
+	SetObject(NULL);
+	DragStateViewState::Cleanup();
+	fSelection->RemoveListener(this);
 }
 
 // MessageReceived

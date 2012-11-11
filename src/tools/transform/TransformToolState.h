@@ -33,6 +33,9 @@ public:
 	virtual						~TransformToolState();
 
 	// ViewState interface
+	virtual	void				Init();
+	virtual	void				Cleanup();
+
 	virtual	bool				MessageReceived(BMessage* message,
 									Command** _command);
 

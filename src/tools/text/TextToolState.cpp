@@ -288,7 +288,6 @@ TextToolState::TextToolState(StateView* view, Document* document,
 	SetInsertionInfo(fDocument->RootLayer(),
 		fDocument->RootLayer()->CountObjects());
 
-	fSelection->AddListener(this);
 	fCurrentColor->AddListener(this);
 
 	fStyle.Get()->SetFillPaint(Paint(fCurrentColor->Color()));
@@ -318,6 +317,9 @@ TextToolState::~TextToolState()
 void
 TextToolState::Init()
 {
+	if (!fSelection->IsEmpty())
+		ObjectSelected(fSelection->SelectableAt(0), NULL);
+	fSelection->AddListener(this);
 	DragStateViewState::Init();
 
 	if (fCaretPulseRunner == NULL) {
@@ -334,7 +336,9 @@ TextToolState::Cleanup()
 	delete fCaretPulseRunner;
 	fCaretPulseRunner = NULL;
 
+	SetText(NULL);
 	DragStateViewState::Cleanup();
+	fSelection->RemoveListener(this);
 }
 
 // MessageReceived
