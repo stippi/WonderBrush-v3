@@ -19,6 +19,7 @@
 #include "Document.h"
 #include "Layer.h"
 #include "Rect.h"
+#include "TransformObjectCommand.h"
 #include "Shape.h"
 #include "support.h"
 
@@ -1085,7 +1086,8 @@ TransformToolState::UpdateAdditionalTransformation()
 		newTransformation.MultiplyInverse(fParentGlobalTransformation);
 
 		fIgnoreObjectEvents = true;
-		fObject->SetTransformable(newTransformation);
+		View()->PerformCommand(new(std::nothrow) TransformObjectCommand(
+			fObject, newTransformation));
 		fIgnoreObjectEvents = false;
 
 		fDocument->WriteUnlock();
