@@ -866,6 +866,7 @@ BView::_AttachToWindow(BWindow* window)
 	fWindow = window;
 	fWindow->AddHandler(this);
 
+	InvalidateLayout();
 	AttachedToWindow();
 }
 
