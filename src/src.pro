@@ -180,6 +180,7 @@ SOURCES += \
 	platform/qt/system/BSize.cpp \
 	platform/qt/system/BScreen.cpp \
 	platform/qt/system/BString.cpp \
+	platform/qt/system/BTranslationUtils.cpp \
 	platform/qt/system/BView.cpp \
 	platform/qt/system/BWindow.cpp \
 	render/FontCache.cpp \
@@ -369,6 +370,7 @@ HEADERS  += \
 	platform/qt/system/BString.h \
 	platform/qt/system/BStringPrivate.h \
 	platform/qt/system/BSupportDefs.h \
+	platform/qt/system/BTranslationUtils.h \
 	platform/qt/system/BTypeConstants.h \
 	platform/qt/system/Butf8_functions.h \
 	platform/qt/system/BView.h \
@@ -426,6 +428,7 @@ HEADERS  += \
 	platform/qt/system/include/String.h \
 	platform/qt/system/include/StringPrivate.h \
 	platform/qt/system/include/SupportDefs.h \
+	platform/qt/system/include/TranslationUtils.h \
 	platform/qt/system/include/TypeConstants.h \
 	platform/qt/system/include/utf8_functions.h \
 	platform/qt/system/include/View.h \
