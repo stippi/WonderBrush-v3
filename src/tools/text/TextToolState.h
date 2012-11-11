@@ -173,6 +173,8 @@ private:
 			BString				fFontFamily;
 			BString				fFontStyle;
 			double				fSize;
+
+			bool				fIgnoreColorColorNotifiactions;
 };
 
 #endif // TEXT_TOOL_STATE_H

@@ -422,14 +422,20 @@ Text::UpdateLayout()
 
 		fTextLayout.addStyleRun(
 			start, font, 0.0, 0.0, 0.0,
-			RenderEngine::GammaToLinear(color.red),
-			RenderEngine::GammaToLinear(color.green),
-			RenderEngine::GammaToLinear(color.blue),
-			RenderEngine::GammaToLinear(255),
-			RenderEngine::GammaToLinear(255),
-			RenderEngine::GammaToLinear(255),
-			false, 0, 0, 0,
-			false, 0, 0, 0, 0
+			Color(
+				RenderEngine::GammaToLinear(color.red),
+				RenderEngine::GammaToLinear(color.green),
+				RenderEngine::GammaToLinear(color.blue),
+				(color.alpha << 8) | 255
+			).premultiply(),
+			Color(
+				RenderEngine::GammaToLinear(255),
+				RenderEngine::GammaToLinear(255),
+				RenderEngine::GammaToLinear(255),
+				(255 << 8) | 255
+			).premultiply(),
+			false, Color(0, 0, 0, 0),
+			false, 0, Color(0, 0, 0, 0)
 		);
 
 		start += run->GetLength();

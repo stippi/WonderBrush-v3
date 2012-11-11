@@ -280,6 +280,8 @@ TextToolState::TextToolState(StateView* view, Document* document,
 	, fFontFamily("DejaVu Serif")
 	, fFontStyle("Book")
 	, fSize(12.0)
+
+	, fIgnoreColorColorNotifiactions(false)
 {
 	// TODO: Find a way to change this later...
 	SetInsertionInfo(fDocument->RootLayer(),
@@ -601,7 +603,7 @@ TextToolState::ObjectChanged(const Notifier* object)
 		UpdateDragState();
 		_UpdateConfigView();
 	}
-	if (object == fCurrentColor) {
+	if (object == fCurrentColor && !fIgnoreColorColorNotifiactions) {
 		SetColor(fCurrentColor->Color());
 	}
 }
@@ -1119,6 +1121,44 @@ TextToolState::_GetSelectionShape(TextLayout& layout, BShape& shape,
 		shape.LineTo(rb);
 		shape.LineTo(lb);
 		shape.Close();
+	} else if (startLineIndex == endLineIndex - 1
+		&& endX1 <= startX1) {
+		// Selection on two lines, with gap:
+		// ---------
+		// ------###
+		// ##-------
+		// ---------
+		BPoint lt(startX1, startY1);
+		BPoint rt(layout.getWidth(), startY1);
+		BPoint rb(layout.getWidth(), startY2);
+		BPoint lb(startX1, startY2);
+
+		TransformObjectToView(&lt, false);
+		TransformObjectToView(&rt, false);
+		TransformObjectToView(&rb, false);
+		TransformObjectToView(&lb, false);
+
+		shape.MoveTo(lt);
+		shape.LineTo(rt);
+		shape.LineTo(rb);
+		shape.LineTo(lb);
+		shape.Close();
+
+		lt = BPoint(0, endY1);
+		rt = BPoint(endX1, endY1);
+		rb = BPoint(endX1, endY2);
+		lb = BPoint(0, endY2);
+
+		TransformObjectToView(&lt, false);
+		TransformObjectToView(&rt, false);
+		TransformObjectToView(&rb, false);
+		TransformObjectToView(&lb, false);
+
+		shape.MoveTo(lt);
+		shape.LineTo(rt);
+		shape.LineTo(rb);
+		shape.LineTo(lb);
+		shape.Close();
 	} else {
 		// Selection over multiple lines
 		BPoint p;
@@ -1219,6 +1259,17 @@ TextToolState::_AdoptStyleAtOffset(int32 textOffset)
 
 		_UpdateConfigView();
 	}
+
+	fgColor.demultiply();
+	rgb_color color;
+	color.red = RenderEngine::LinearToGamma(fgColor.r);
+	color.green = RenderEngine::LinearToGamma(fgColor.g);
+	color.blue = RenderEngine::LinearToGamma(fgColor.b);
+	color.alpha = fgColor.a >> 8;
+	
+	fIgnoreColorColorNotifiactions = true;
+	fCurrentColor->SetColor(color);
+	fIgnoreColorColorNotifiactions = false;
 }
 
 

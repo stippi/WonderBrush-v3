@@ -38,6 +38,13 @@ public:
 			painter.fillRect(bounds.ToQRect(), QColor(255, 0, 0));
 	}
 
+	void FillRectWithBackgroundColor(PlatformDrawContext& drawContext,
+		const BRect& rect)
+	{
+		drawContext.Painter().fillRect(rect.ToQRect(),
+			fView->palette().color(fView->backgroundRole()));
+	}
+
 	void DrawLine(PlatformDrawContext& drawContext, const BPoint& from,
 		const BPoint& to, const rgb_color& color)
 	{

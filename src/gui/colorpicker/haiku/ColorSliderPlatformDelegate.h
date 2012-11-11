@@ -46,6 +46,12 @@ public:
 		}
 	}
 
+	void FillRectWithBackgroundColor(PlatformDrawContext& drawContext,
+		const BRect& rect)
+	{
+		drawContext.View()->FillRect(rect, B_SOLID_LOW);
+	}
+
 	void DrawLine(PlatformDrawContext& drawContext, const BPoint& from,
 		const BPoint& to, const rgb_color& color)
 	{

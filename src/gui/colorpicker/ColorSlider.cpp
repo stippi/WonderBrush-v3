@@ -1,7 +1,7 @@
 /*
  * Copyright 2001 Werner Freytag - please read to the LICENSE file
  *
- * Copyright 2002-2006, Stephan Aßmus <superstippi@gmx.de>
+ * Copyright 2002-2012, Stephan Aßmus <superstippi@gmx.de>
  * All rights reserved.
  *
  */
@@ -49,6 +49,7 @@ ColorSlider::ColorSlider(BPoint offsetPoint, SelectedColorMode mode,
 		B_FOLLOW_LEFT | B_FOLLOW_TOP, B_WILL_DRAW | B_FRAME_EVENTS)
 {
 	_Init(mode, value1, value2, dir, border);
+	FrameResized(Bounds().Width(), Bounds().Height());
 }
 
 // destructor
@@ -144,22 +145,34 @@ ColorSlider::PlatformDraw(PlatformDrawContext& drawContext)
 		fBitmapDirty = false;
 	}
 
-	fPlatformDelegate->DrawBackground(drawContext, _BitmapRect(), fBitmap,
+	BRect bounds = _BitmapRect();
+	fPlatformDelegate->DrawBackground(drawContext, bounds, fBitmap,
 		fBorderStyle);
 
 	// marker
-	BRect bounds = Bounds();
 	if (fOrientation == B_VERTICAL) {
 		// draw the triangle markers
+		BRect r = Bounds();
+		
+		fPlatformDelegate->FillRectWithBackgroundColor(drawContext,
+			BRect(r.left, r.top, bounds.left - 1, r.bottom));
+		fPlatformDelegate->FillRectWithBackgroundColor(drawContext,
+			BRect(bounds.right + 1, r.top, r.right, r.bottom));
+		fPlatformDelegate->FillRectWithBackgroundColor(drawContext,
+			BRect(bounds.left, r.top, bounds.right, bounds.top - 1));
+		fPlatformDelegate->FillRectWithBackgroundColor(drawContext,
+			BRect(bounds.left, bounds.bottom + 1, bounds.right, r.bottom));
+		
 		float value = Value();
-		fPlatformDelegate->DrawTriangle(drawContext, BPoint(bounds.left, value),
-			BPoint(bounds.left + 5.0, value + 5.0),
-			BPoint(bounds.left, value + 10.0), make_color(0, 0, 0));
+		fPlatformDelegate->DrawTriangle(drawContext,
+			BPoint(r.left, value),
+			BPoint(r.left + 5.0, value + 5.0),
+			BPoint(r.left, value + 10.0), make_color(0, 0, 0));
 
 		fPlatformDelegate->DrawTriangle(drawContext,
-			BPoint(bounds.right, value),
-			BPoint(bounds.right - 5.0, value + 5.0),
-			BPoint(bounds.right, value + 10.0), make_color(0, 0, 0));
+			BPoint(r.right, value),
+			BPoint(r.right - 5.0, value + 5.0),
+			BPoint(r.right, value + 10.0), make_color(0, 0, 0));
 	} else {
 		BRect r = bounds;
 		float x = bounds.left - 2 + (255 - Value()) * bounds.Width() / 255.0;
@@ -410,7 +423,7 @@ ColorSlider::_BitmapRect() const
 {
 	BRect r = Bounds();
 	if (fOrientation == B_VERTICAL)
-		r.InsetBy(17, 0);
+		r.InsetBy(7, 3);
 	if (fBorderStyle == B_FANCY_BORDER)
 		r.InsetBy(2, 2);
 	return r;
@@ -557,7 +570,7 @@ ColorSlider::_DrawColorLineY(uint8* bits, int width, int r, int g, int b)
 		bits[1] = g;
 		bits[2] = r;
 		bits[3] = 255;
-		bits++;
+		bits += 4;
 	}
 }
 
