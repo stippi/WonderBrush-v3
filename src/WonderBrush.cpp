@@ -3,11 +3,9 @@
 #include "BuildSupport.h"
 
 #include <Bitmap.h>
+#include <Path.h>
 #include <String.h>
-
-#ifdef	WONDERBRUSH_PLATFORM_HAIKU
-#	include <TranslationUtils.h>
-#endif
+#include <TranslationUtils.h>
 
 #include "BrushStroke.h"
 #include "Document.h"
@@ -21,6 +19,9 @@
 #include "Shape.h"
 #include "Text.h"
 #include "Window.h"
+
+
+static const char* sFontsDirectory = NULL;
 
 
 // #pragma mark - WonderBrushBase
@@ -55,9 +56,15 @@ WonderBrushBase::WonderBrushBase(BRect bounds)
 	fDocument->RootLayer()->AddObject(new Rect(BRect(200, 10, 280, 70),
 		(rgb_color){ 255, 200, 50, 80 }));
 
-#ifdef	WONDERBRUSH_PLATFORM_HAIKU
 	BBitmap* bitmap = BTranslationUtils::GetBitmap(
 		"/boot/home/Desktop/gamma_dalai_lama_gray.jpg");
+	if (bitmap == NULL && sFontsDirectory != NULL) {
+		// A font directory is given. If it's the one in the sources, it is a
+		// subdir of the data directory which contains our image.
+		BPath filePath(sFontsDirectory, "../gamma_dalai_lama_gray.jpg");
+		bitmap = BTranslationUtils::GetBitmap(filePath.Path());
+	}
+
 	if (bitmap != NULL) {
 		RenderBuffer* buffer = new RenderBuffer(bitmap);
 		Image* image = new Image(buffer);
@@ -71,7 +78,6 @@ WonderBrushBase::WonderBrushBase(BRect bounds)
 		delete bitmap;
 	} else
 		printf("Test bitmap file not found or failed to load.\n");
-#endif	// WONDERBRUSH_PLATFORM_HAIKU
 
 	Text* text = new Text((rgb_color){ 0, 0, 0, 255 });
 	text->TranslateBy(BPoint(522, 31));
@@ -297,20 +303,23 @@ WonderBrush::_NotifyFontsLoaded(Layer* layer)
 int
 main(int argc, char* argv[])
 {
+	for (int i = 1; i < argc; i++) {
+		if (strcmp(argv[i], "--fonts") == 0 && i < argc - 1) {
+			sFontsDirectory = argv[i + 1];
+			printf("Using font folder: '%s'\n", sFontsDirectory);
+			break;
+		}
+	}
+
 	// Create app already here. For Qt this must be the first event loop
 	// created and FontRegistry is a BLooper which uses an event loop, too.
 	WonderBrush app(argc, argv, BRect(0, 0, 799, 599));
 
-	for (int i = 1; i < argc; i++) {
-		if (strcmp(argv[i], "--fonts") == 0 && i < argc - 1) {
-			printf("Using font folder: '%s'\n", argv[i + 1]);
-
-			FontRegistry* registry = FontRegistry::Default();
-			if (registry->Lock()) {
-				registry->AddFontDirectory(argv[i + 1]);
-				registry->Unlock();
-			}
-			break;
+	if (sFontsDirectory != NULL) {
+		FontRegistry* registry = FontRegistry::Default();
+		if (registry->Lock()) {
+			registry->AddFontDirectory(sFontsDirectory);
+			registry->Unlock();
 		}
 	}
 
