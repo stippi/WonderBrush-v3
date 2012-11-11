@@ -56,6 +56,9 @@ public:
 									const BString& utf8String,
 									const StyleRunList& styleRuns);
 
+			void				ReplaceStyles(int32 textOffset, int32 length,
+									const StyleRunList& styleRuns);
+
 			void				Remove(int32 textOffset, int32 length);
 
 			BString				GetSubString(int32 textOffset,
