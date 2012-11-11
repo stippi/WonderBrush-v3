@@ -249,7 +249,7 @@ HEADERS  += \
 	gui/colorpicker/ColorSlider.h \
 	gui/colorpicker/SelectedColorMode.h \
 	gui/colorpicker/qt/AlphaSliderPlatformDelegate.h \
-	gui/colorpicker/qt/ColorFieldPlatformDelegate.h
+	gui/colorpicker/qt/ColorFieldPlatformDelegate.h \
 	gui/colorpicker/qt/ColorPickerPanelPlatformDelegate.h \
 	gui/colorpicker/qt/ColorPickerViewPlatformDelegate.h \
 	gui/colorpicker/qt/ColorPreviewPlatformDelegate.h \
