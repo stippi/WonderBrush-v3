@@ -56,7 +56,8 @@ QMAKE_CXXFLAGS += -iquote $$PWD/tools/text/qt
 QMAKE_CXXFLAGS += -iquote $$PWD/tools/transform
 QMAKE_CXXFLAGS += -iquote $$PWD/tools/transform/qt
 
-LIBS += -Lagg -lagg -Lgui/scrollview -lscrollview -Licon -licon -ldl -lfreetype
+LIBS += -Lagg -lagg -Lgui/colorpicker -lcolorpicker \
+	-Lgui/scrollview -lscrollview -Licon -licon -ldl -lfreetype
 
 # Weirdly we need to explicitly add libX11, since otherwise the linker complains
 # about symbol XGetWindowAttributes not being defined.
@@ -70,12 +71,6 @@ SOURCES += \
 	commands/SetPropertiesCommand.cpp \
 	gui/CanvasView.cpp \
 	gui/ToolConfigView.cpp \
-	gui/colorpicker/AlphaSlider.cpp \
-	gui/colorpicker/ColorField.cpp \
-	gui/colorpicker/ColorPickerPanel.cpp \
-	gui/colorpicker/ColorPickerView.cpp \
-	gui/colorpicker/ColorPreview.cpp \
-	gui/colorpicker/ColorSlider.cpp \
 	gui/misc/NavigatorView.cpp \
 	gui/misc/Panel.cpp \
 	gui/misc/SwatchGroup.cpp \
@@ -242,19 +237,6 @@ HEADERS  += \
 	commands/SetPropertiesCommand.h \
 	gui/CanvasView.h \
 	gui/ToolConfigView.h \
-	gui/colorpicker/AlphaSlider.h \
-	gui/colorpicker/ColorField.h \
-	gui/colorpicker/ColorPickerPanel.h \
-	gui/colorpicker/ColorPickerView.h \
-	gui/colorpicker/ColorPreview.h \
-	gui/colorpicker/ColorSlider.h \
-	gui/colorpicker/SelectedColorMode.h \
-	gui/colorpicker/qt/AlphaSliderPlatformDelegate.h \
-	gui/colorpicker/qt/ColorFieldPlatformDelegate.h \
-	gui/colorpicker/qt/ColorPickerPanelPlatformDelegate.h \
-	gui/colorpicker/qt/ColorPickerViewPlatformDelegate.h \
-	gui/colorpicker/qt/ColorPreviewPlatformDelegate.h \
-	gui/colorpicker/qt/ColorSliderPlatformDelegate.h \
 	gui/misc/NavigatorView.h \
 	gui/misc/Panel.h \
 	gui/misc/SwatchGroup.h \
