@@ -130,6 +130,7 @@ private:
 			int32				_SelectionLength() const;
 
 			void				_AdoptStyleAtOffset(int32 textOffset);
+			void				_SetStyle(const rgb_color& color);
 
 private:
 			class PlatformDelegate;

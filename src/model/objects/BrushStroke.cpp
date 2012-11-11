@@ -5,6 +5,8 @@
 
 #include "BrushStroke.h"
 
+#include "support.h"
+
 #include "BrushStrokeSnapshot.h"
 #include "RenderBuffer.h"
 #include "RenderEngine.h"
@@ -127,7 +129,32 @@ BrushStroke::SetToPropertyObject(const PropertyObject* object, uint32 flags)
 bool
 BrushStroke::HitTest(const BPoint& canvasPoint)
 {
-	// TODO
+	int32 count = fStroke.CountObjects();
+	if (count == 0 || !TransformedBounds().Contains(canvasPoint))
+		return false;
+
+	BPoint objectPoint(canvasPoint);
+	Transformation().InverseTransform(&objectPoint);
+
+	const StrokePoint* previous = fStroke.ObjectAt(0);
+	const float radius = max_c(fBrush->MinRadius(), fBrush->MaxRadius());
+	if (count > 1) {
+		for (int32 i = 1; i < count; i++) {
+			const StrokePoint* current = fStroke.ObjectAt(i);
+
+			float dist = point_stroke_distance(previous->point, current->point,
+				objectPoint, radius);
+			if (dist < radius)
+				return true;
+
+			previous = current;
+		}
+	} else if (previous != NULL) {
+		float dist = point_point_distance(previous->point, objectPoint);
+		if (dist < radius)
+			return true;
+	}
+
 	return false;
 }
 

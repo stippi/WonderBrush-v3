@@ -98,6 +98,10 @@ point_line_distance(double x1, double y1, double x2, double y2,
 double
 point_line_distance(BPoint point, BPoint a, BPoint b);
 
+// point_stroke_distance
+float
+point_stroke_distance(BPoint start, BPoint end, BPoint p, float radius);
+
 // calc_angle
 double
 calc_angle(BPoint origin, BPoint from, BPoint to, bool degree = true);

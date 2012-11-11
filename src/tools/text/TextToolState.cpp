@@ -27,6 +27,7 @@
 #include "ObjectAddedCommand.h"
 #include "RemoveTextCommand.h"
 #include "support.h"
+#include "SetTextStyleCommand.h"
 #include "Text.h"
 #include "ui_defines.h"
 
@@ -287,7 +288,6 @@ TextToolState::TextToolState(StateView* view, Document* document,
 	SetInsertionInfo(fDocument->RootLayer(),
 		fDocument->RootLayer()->CountObjects());
 
-	fSelection->AddListener(this);
 	fCurrentColor->AddListener(this);
 
 	fStyle.Get()->SetFillPaint(Paint(fCurrentColor->Color()));
@@ -317,6 +317,9 @@ TextToolState::~TextToolState()
 void
 TextToolState::Init()
 {
+	if (!fSelection->IsEmpty())
+		ObjectSelected(fSelection->SelectableAt(0), NULL);
+	fSelection->AddListener(this);
 	DragStateViewState::Init();
 
 	if (fCaretPulseRunner == NULL) {
@@ -333,7 +336,9 @@ TextToolState::Cleanup()
 	delete fCaretPulseRunner;
 	fCaretPulseRunner = NULL;
 
+	SetText(NULL);
 	DragStateViewState::Cleanup();
+	fSelection->RemoveListener(this);
 }
 
 // MessageReceived
@@ -794,8 +799,8 @@ TextToolState::SetFont(const char* family, const char* style)
 	fFontFamily = family;
 	fFontStyle = style;
 	if (_HasSelection()) {
-		fText->SetFont(_SelectionStart(), _SelectionLength(),
-			family, style);
+		View()->PerformCommand(new(std::nothrow) SetTextStyleCommand(
+			fText, _SelectionStart(), _SelectionLength(), family, style));
 		UpdateBounds();
 	}
 }
@@ -806,7 +811,8 @@ TextToolState::SetSize(float size)
 {
 	fSize = size;
 	if (_HasSelection()) {
-		fText->SetSize(_SelectionStart(), _SelectionLength(), size);
+		View()->PerformCommand(new(std::nothrow) SetTextStyleCommand(
+			fText, _SelectionStart(), _SelectionLength(), size));
 		UpdateBounds();
 	}
 }
@@ -825,15 +831,11 @@ TextToolState::SetWidth(float width)
 void
 TextToolState::SetColor(const rgb_color& color)
 {
-	::Style* style = new(std::nothrow) ::Style();
-	if (style == NULL)
-		return;
-
-	style->SetFillPaint(Paint(color));
-	fStyle.SetTo(style, true);
+	_SetStyle(color);
 
 	if (_HasSelection()) {
-		fText->SetColor(_SelectionStart(), _SelectionLength(), color);
+		View()->PerformCommand(new(std::nothrow) SetTextStyleCommand(
+			fText, _SelectionStart(), _SelectionLength(), color));
 		UpdateBounds();
 	}
 }
@@ -1266,11 +1268,24 @@ TextToolState::_AdoptStyleAtOffset(int32 textOffset)
 	color.green = RenderEngine::LinearToGamma(fgColor.g);
 	color.blue = RenderEngine::LinearToGamma(fgColor.b);
 	color.alpha = fgColor.a >> 8;
-	
+
 	fIgnoreColorColorNotifiactions = true;
 	fCurrentColor->SetColor(color);
 	fIgnoreColorColorNotifiactions = false;
+
+	_SetStyle(color);
 }
 
+// _SetStyle
+void
+TextToolState::_SetStyle(const rgb_color& color)
+{
+	::Style* style = new(std::nothrow) ::Style();
+	if (style == NULL)
+		return;
+
+	style->SetFillPaint(Paint(color));
+	fStyle.SetTo(style, true);
+}
 
 #endif	// _TEXTTOOLSTATE_CPP_

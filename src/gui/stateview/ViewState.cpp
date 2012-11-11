@@ -7,7 +7,8 @@ ViewState::ViewState(StateView* view)
 	:
 	fView(view),
 	fMouseInfo(view->MouseInfo()),
-	fBounds(0, 0, -1, -1)
+	fBounds(0, 0, -1, -1),
+	fIsActive(false)
 {
 }
 
@@ -16,7 +17,8 @@ ViewState::ViewState(const ViewState& other)
 	:
 	fView(other.fView),
 	fMouseInfo(other.fMouseInfo),
-	fBounds(other.fBounds)
+	fBounds(other.fBounds),
+	fIsActive(false)
 {
 }
 
@@ -32,13 +34,22 @@ void
 ViewState::Init()
 {
 	UpdateBounds();
+	fIsActive = true;
 }
 
 // Cleanup
 void
 ViewState::Cleanup()
 {
+	fIsActive = false;
 	UpdateBounds();
+}
+
+// IsActive
+bool
+ViewState::IsActive() const
+{
+	return fIsActive;
 }
 
 // #pragma mark -

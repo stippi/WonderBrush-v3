@@ -199,6 +199,20 @@ Text::Insert(int32 textOffset, const BString& utf8String,
 	UpdateLayout();
 }
 
+// ReplaceStyles
+void
+Text::ReplaceStyles(int32 textOffset, int32 length,
+	const StyleRunList& styleRuns)
+{
+	if (textOffset < 0 || textOffset > fCharCount)
+		return;
+
+	fStyleRuns->Remove(textOffset, length);
+	fStyleRuns->Insert(textOffset, styleRuns);
+
+	UpdateLayout();
+}
+
 // Remove
 void
 Text::Remove(int32 textOffset, int32 length)

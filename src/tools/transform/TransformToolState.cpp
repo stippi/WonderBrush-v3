@@ -19,6 +19,7 @@
 #include "Document.h"
 #include "Layer.h"
 #include "Rect.h"
+#include "TransformObjectCommand.h"
 #include "Shape.h"
 #include "support.h"
 
@@ -80,7 +81,7 @@ public:
 	virtual void DragTo(BPoint current, uint32 modifiers)
 	{
 		BPoint pivotOffset = current - fDragStart;
-		
+
 		BPoint objectCurrent = current;
 		fParent->TransformCanvasToObject(&objectCurrent);
 		BPoint boxOffset = objectCurrent - fOrigin;
@@ -452,7 +453,7 @@ public:
 	virtual void DragTo(BPoint current, uint32 modifiers)
 	{
 		double angle = calc_angle(fPivot, fOrigin, current);
-	
+
 		if (modifiers & B_SHIFT_KEY) {
 			if (angle < 0.0)
 				angle -= 22.5;
@@ -460,7 +461,7 @@ public:
 				angle += 22.5;
 			angle = 45.0 * ((int32)angle / 45);
 		}
-	
+
 		fParent->SetLocalRotation(fOldAngle + angle);
 	}
 
@@ -469,7 +470,7 @@ public:
 		BPoint pivot(fParent->Pivot());
 		BPoint from = pivot + BPoint(sin(22.5 * 180.0 / M_PI) * 50.0,
 			-cos(22.5 * 180.0 / M_PI) * 50.0);
-	
+
 		double rotation = calc_angle(pivot, from, current) + 180.0;
 
 		if (rotation < 45.0)
@@ -595,7 +596,6 @@ TransformToolState::TransformToolState(StateView* view, const BRect& box,
 
 	, fIgnoreObjectEvents(false)
 {
-	fSelection->AddListener(this);
 }
 
 // destructor
@@ -618,6 +618,25 @@ TransformToolState::~TransformToolState()
 	delete fDragBState;
 
 	delete fPlatformDelegate;
+}
+
+// Init()
+void
+TransformToolState::Init()
+{
+	if (!fSelection->IsEmpty())
+		ObjectSelected(fSelection->SelectableAt(0), NULL);
+	fSelection->AddListener(this);
+	DragStateViewState::Init();
+}
+
+// Cleanup()
+void
+TransformToolState::Cleanup()
+{
+	SetObject(NULL);
+	DragStateViewState::Cleanup();
+	fSelection->RemoveListener(this);
 }
 
 // MessageReceived
@@ -689,72 +708,54 @@ TransformToolState::StartTransaction(const char* commandName)
 	return NULL;
 }
 
-// point_line_dist
-float
-point_line_dist(BPoint start, BPoint end, BPoint p, float radius)
-{
-	BRect r(min_c(start.x, end.x),
-			min_c(start.y, end.y),
-			max_c(start.x, end.x),
-			max_c(start.y, end.y));
-	r.InsetBy(-radius, -radius);
-	if (r.Contains(p)) {
-		return fabs(agg::calc_line_point_distance(start.x, start.y,
-												  end.x, end.y,
-												  p.x, p.y));
-	}
-	return min_c(point_point_distance(start, p),
-				 point_point_distance(end, p));
-}
-
 // DragStateFor
 TransformToolState::DragState*
 TransformToolState::DragStateFor(BPoint canvasWhere, float zoomLevel) const
 {
 	if (fObject != NULL) {
 		float inset = 7.0 / zoomLevel;
-		
+
 		// First priority has the pivot
 		BRect pR(Pivot(), Pivot());
-		
+
 		pR.InsetBy(-inset, -inset);
 		if (pR.Contains(canvasWhere))
 			return fDragPivotState;
-		
+
 		BPoint where = canvasWhere;
 		TransformCanvasToObject(&where);
-		
+
 		// Second priority has the inside of the box, checked with some inset
 		// so that the user can drag the whole box when the box is very small
 		// and the click is otherwise near enough to a corner.
-		
+
 		BRect iR(fModifiedBox);
 		float hInset = min_c(inset, max_c(0, (iR.Width() - inset) / 2.0));
 		float vInset = min_c(inset, max_c(0, (iR.Height() - inset) / 2.0));
-		
+
 		iR.InsetBy(hInset, vInset);
 		if (iR.Contains(where))
 			return fDragBoxState;
-		
+
 		// Next priority have the corners.
-		
+
 		BPoint lt(fModifiedBox.LeftTop());
 		BPoint rt(fModifiedBox.RightTop());
 		BPoint rb(fModifiedBox.RightBottom());
 		BPoint lb(fModifiedBox.LeftBottom());
-		
+
 		TransformObjectToCanvas(&lt);
 		TransformObjectToCanvas(&rt);
 		TransformObjectToCanvas(&rb);
 		TransformObjectToCanvas(&lb);
-		
+
 		float dLT = point_point_distance(canvasWhere, lt);
 		float dRT = point_point_distance(canvasWhere, rt);
 		float dRB = point_point_distance(canvasWhere, rb);
 		float dLB = point_point_distance(canvasWhere, lb);
-		
+
 		float dist = min4(dLT, dRT, dRB, dLB);
-		
+
 		if (dist < inset) {
 			if (dist == dLT)
 				return fDragLTState;
@@ -765,13 +766,13 @@ TransformToolState::DragStateFor(BPoint canvasWhere, float zoomLevel) const
 			if (dist == dLB)
 				return fDragLBState;
 		}
-		
+
 		// Next priority have the sides.
-		
-		float dL = point_line_dist(lt, lb, canvasWhere, inset);
-		float dR = point_line_dist(rt, rb, canvasWhere, inset);
-		float dT = point_line_dist(lt, rt, canvasWhere, inset);
-		float dB = point_line_dist(lb, rb, canvasWhere, inset);
+
+		float dL = point_stroke_distance(lt, lb, canvasWhere, inset);
+		float dR = point_stroke_distance(rt, rb, canvasWhere, inset);
+		float dT = point_stroke_distance(lt, rt, canvasWhere, inset);
+		float dB = point_stroke_distance(lb, rb, canvasWhere, inset);
 		dist = min4(dL, dR, dT, dB);
 		if (dist < inset) {
 			if (dist == dL)
@@ -783,11 +784,11 @@ TransformToolState::DragStateFor(BPoint canvasWhere, float zoomLevel) const
 			else if (dist == dB)
 				return fDragBState;
 		}
-		
+
 		// Check inside of the box again.
 		if (fModifiedBox.Contains(where))
 			return fDragBoxState;
-		
+
 		// Check outside perimeter for rotation.
 		BRect rotationRect(fModifiedBox);
 		rotationRect.InsetBy(-inset * 3, -inset * 3);
@@ -842,7 +843,7 @@ TransformToolState::ObjectChanged(const Notifier* object)
 {
 	if (fIgnoreObjectEvents)
 		return;
-	
+
 	if (fObject != NULL && object == fObject) {
 		AdoptObject();
 	}
@@ -856,14 +857,14 @@ TransformToolState::SetObject(Object* object, bool modifySelection)
 {
 	if (fObject == object)
 		return;
-	
+
 	if (fObject != NULL) {
 		fObject->RemoveListener(this);
 		fObject->RemoveReference();
 	}
-	
+
 	fObject = object;
-	
+
 	if (fObject != NULL) {
 		fObject->AddReference();
 		fObject->AddListener(this);
@@ -894,10 +895,10 @@ TransformToolState::AdoptObject()
 			// arrows like in Maya.
 			box = BRect(0, 0, 100, 100);
 		}
-	
+
 		fOriginalTransformation = *fObject;
 		fParentGlobalTransformation.Reset();
-	
+
 		SetObjectToCanvasTransformation(fObject->Transformation());
 		Object* parent = fObject->Parent();
 		if (parent != NULL)
@@ -1101,9 +1102,10 @@ TransformToolState::UpdateAdditionalTransformation()
 		newTransformation.Multiply(fParentGlobalTransformation);
 		newTransformation.Multiply(additionalTransform);
 		newTransformation.MultiplyInverse(fParentGlobalTransformation);
-		
+
 		fIgnoreObjectEvents = true;
-		fObject->SetTransformable(newTransformation);
+		View()->PerformCommand(new(std::nothrow) TransformObjectCommand(
+			fObject, newTransformation));
 		fIgnoreObjectEvents = false;
 
 		fDocument->WriteUnlock();
