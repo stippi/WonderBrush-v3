@@ -14,6 +14,68 @@
 #include <QLayout>
 #include <QMouseEvent>
 
+#include "AutoDeleter.h"
+#include "PlatformMimeDataManager.h"
+
+
+struct BView::StartDragEvent : public QEvent {
+	StartDragEvent(const BMessage& message, const BMessenger& replyTarget,
+		BBitmap* bitmap, const BPoint& hotSpot)
+		:
+		QEvent(EventType()),
+		fMessage(new BMessage(message)),
+		fReplyTarget(replyTarget),
+		fBitmap(bitmap),
+		fHotSpot(hotSpot)
+	{
+	}
+
+	~StartDragEvent()
+	{
+		delete fMessage;
+		delete fBitmap;
+	}
+
+	BMessage* Message()
+	{
+		return fMessage;
+	}
+
+	BMessage* DetachMessage()
+	{
+		BMessage* message = fMessage;
+		fMessage = NULL;
+		return message;
+	}
+
+	const BMessenger& ReplyTarget() const
+	{
+		return fReplyTarget;
+	}
+
+	BBitmap* Bitmap() const
+	{
+		return fBitmap;
+	}
+
+	const BPoint& HotSpot() const
+	{
+		return fHotSpot;
+	}
+
+	static QEvent::Type EventType()
+	{
+		static QEvent::Type type = (QEvent::Type)QEvent::registerEventType();
+		return type;
+	}
+
+private:
+	BMessage*	fMessage;
+	BMessenger	fReplyTarget;
+	BBitmap*	fBitmap;
+	BPoint		fHotSpot;
+};
+
 
 BView::BView(BMessage* archive)
 	:
@@ -30,6 +92,7 @@ BView::BView(BMessage* archive)
 {
 	setMouseTracking(true);
 	setFocusPolicy(Qt::StrongFocus);
+	setAcceptDrops(true);
 }
 
 
@@ -49,6 +112,7 @@ BView::BView(const char* name, uint32 flags)
 {
 	setMouseTracking(true);
 	setFocusPolicy(Qt::StrongFocus);
+	setAcceptDrops(true);
 }
 
 
@@ -67,6 +131,7 @@ BView::BView(BRect frame, const char* name, uint32 resizeMask, uint32 flags)
 {
 	setMouseTracking(true);
 	setFocusPolicy(Qt::StrongFocus);
+	setAcceptDrops(true);
 
 	ResizeTo(frame.Size());
 }
@@ -351,7 +416,8 @@ BView::DragMessage(BMessage* message, BBitmap* image,
 #endif
 // TODO:...
 
-	delete image;
+	QCoreApplication::postEvent(this, new StartDragEvent(*message,
+		BMessenger(replyTo), image, offset));
 }
 
 
@@ -669,54 +735,7 @@ BView::mouseMoveEvent(QMouseEvent* event)
 void
 BView::leaveEvent(QEvent* event)
 {
-	if (!fMouseInsideView)
-		return;
-
-	// We have to fake a mouse message, since Qt sends only the leave event,
-	// when the mouse leaves the view (and no button has been pressed).
-	BMessage message(B_MOUSE_MOVED);
-	fMouseInsideView = false;
-
-	// event time
-	bigtime_t eventTime = system_time();
-		// TODO: Event timestamps are available with Qt 5.
-	message.AddInt64("when", eventTime);
-
-	// mouse position
-	QPoint position = mapFromGlobal(QCursor::pos());
-	if (rect().contains(position)) {
-		// We can send a B_EXITED_VIEW message with a mouse position inside the
-		// view, so move the position outside.
-		QRect bounds = rect();
-		int x = position.x();
-		int y = position.y();
-		int dx = std::min(x - bounds.left(), bounds.right() - x);
-		int dy = std::min(y - bounds.top(), bounds.bottom() - y);
-		if (dx <= dy) {
-			position.setX(x - bounds.left() < bounds.right() - x
-				? bounds.left() - 1 : bounds.right() + 1);
-
-		} else {
-			position.setY(y - bounds.top() < bounds.bottom() - y
-				? bounds.top() - 1 : bounds.bottom() + 1);
-		}
-	}
-	message.AddPoint("be:view_where", BPoint::FromQPoint(position));
-	message.AddPoint("screen_where", BPoint::FromQPoint(mapToGlobal(position)));
-
-	// mouse buttons
-	int32 buttons = FromQtMouseButtons(QApplication::mouseButtons());
-	message.AddInt32("buttons", buttons);
-
-	// keyboard modifiers
-	message.AddInt32("modifiers",
-		FromQtModifiers(QApplication::keyboardModifiers()));
-
-	// transit
-	message.AddInt32("be:transit", B_EXITED_VIEW);
-
-	_DeliverMessage(&message);
-
+	_HandleMouseLeaveEvent();
 	QWidget::leaveEvent(event);
 }
 
@@ -861,6 +880,67 @@ BView::resizeEvent(QResizeEvent* event)
 
 
 void
+BView::dragEnterEvent(QDragEnterEvent* event)
+{
+	if (Looper() == NULL)
+		return;
+
+	BMessage message(B_MOUSE_MOVED);
+	_TranslateDropEvent(*event, message);
+	_DeliverMessage(&message);
+
+	// We always need to accept the event. Otherwise it cannot be dropped on
+	// this widget;
+	event->acceptProposedAction();
+}
+
+
+void
+BView::dragLeaveEvent(QDragLeaveEvent* event)
+{
+	_HandleMouseLeaveEvent();
+}
+
+
+void
+BView::dragMoveEvent(QDragMoveEvent* event)
+{
+	if (Looper() == NULL)
+		return;
+
+	BMessage message(B_MOUSE_MOVED);
+	_TranslateDropEvent(*event, message);
+	_DeliverMessage(&message);
+
+	// We always need to accept the event. Otherwise it cannot be dropped on
+	// this widget;
+	event->acceptProposedAction();
+}
+
+
+void
+BView::dropEvent(QDropEvent* event)
+{
+	if (Looper() == NULL)
+		return;
+
+	BMessage* dragMessage = PlatformMimeDataManager::Manager()->MessageFor(
+		event->mimeData());
+	if (dragMessage != NULL)
+		_DeliverMessage(dragMessage);
+
+	event->acceptProposedAction();
+}
+
+
+void
+BView::customEvent(QEvent* event)
+{
+	if (event->type() == StartDragEvent::EventType())
+		_DoDrag(dynamic_cast<StartDragEvent*>(event));
+}
+
+void
 BView::_AttachToWindow(BWindow* window)
 {
 	fWindow = window;
@@ -892,6 +972,59 @@ BView::_AllDetachedFromWindow()
 
 	fWindow->RemoveHandler(this);
 	fWindow = NULL;
+}
+
+
+void
+BView::_HandleMouseLeaveEvent()
+{
+	if (!fMouseInsideView || Looper() == NULL)
+		return;
+
+	// We have to fake a mouse message, since Qt sends only the leave event,
+	// when the mouse leaves the view (and no button has been pressed).
+	BMessage message(B_MOUSE_MOVED);
+	fMouseInsideView = false;
+
+	// event time
+	bigtime_t eventTime = system_time();
+		// TODO: Event timestamps are available with Qt 5.
+	message.AddInt64("when", eventTime);
+
+	// mouse position
+	QPoint position = mapFromGlobal(QCursor::pos());
+	if (rect().contains(position)) {
+		// We can send a B_EXITED_VIEW message with a mouse position inside the
+		// view, so move the position outside.
+		QRect bounds = rect();
+		int x = position.x();
+		int y = position.y();
+		int dx = std::min(x - bounds.left(), bounds.right() - x);
+		int dy = std::min(y - bounds.top(), bounds.bottom() - y);
+		if (dx <= dy) {
+			position.setX(x - bounds.left() < bounds.right() - x
+				? bounds.left() - 1 : bounds.right() + 1);
+
+		} else {
+			position.setY(y - bounds.top() < bounds.bottom() - y
+				? bounds.top() - 1 : bounds.bottom() + 1);
+		}
+	}
+	message.AddPoint("be:view_where", BPoint::FromQPoint(position));
+	message.AddPoint("screen_where", BPoint::FromQPoint(mapToGlobal(position)));
+
+	// mouse buttons
+	int32 buttons = FromQtMouseButtons(QApplication::mouseButtons());
+	message.AddInt32("buttons", buttons);
+
+	// keyboard modifiers
+	message.AddInt32("modifiers",
+		FromQtModifiers(QApplication::keyboardModifiers()));
+
+	// transit
+	message.AddInt32("be:transit", B_EXITED_VIEW);
+
+	_DeliverMessage(&message);
 }
 
 
@@ -931,9 +1064,40 @@ BView::_TranslateTabletEvent(QTabletEvent& event, BMessage& message)
 }
 
 
+void
+BView::_TranslateDropEvent(QDropEvent& event, BMessage& message)
+{
+	_TranslatePointerDeviceEvent(event.pos(), mapToGlobal(event.pos()),
+		event.keyboardModifiers(), message);
+
+	// mouse buttons
+	int32 buttons = FromQtMouseButtons(event.mouseButtons());
+	message.AddInt32("buttons", buttons);
+
+	// drag message
+	BMessage* dragMessage = PlatformMimeDataManager::Manager()->MessageFor(
+		event.mimeData());
+	if (dragMessage != NULL)
+		message.AddMessage("be:drag_message", dragMessage);
+
+	// cache mouse buttons
+	fMouseButtons = buttons;
+}
+
+
 template<typename Event>
 void
 BView::_TranslatePointerDeviceEvent(Event& event, BMessage& message)
+{
+	_TranslatePointerDeviceEvent(event.pos(), event.globalPos(),
+		event.modifiers(), message);
+}
+
+
+void
+BView::_TranslatePointerDeviceEvent(const QPoint& qtPosition,
+	const QPoint& globalPosition, Qt::KeyboardModifiers modifiers,
+	BMessage& message)
 {
 	// event time
 	bigtime_t eventTime = system_time();
@@ -941,16 +1105,16 @@ BView::_TranslatePointerDeviceEvent(Event& event, BMessage& message)
 	message.AddInt64("when", eventTime);
 
 	// mouse position
-	BPoint position = BPoint::FromQPoint(event.pos());
+	BPoint position = BPoint::FromQPoint(qtPosition);
 	message.AddPoint("be:view_where", position);
-	message.AddPoint("screen_where", BPoint::FromQPoint(event.globalPos()));
+	message.AddPoint("screen_where", BPoint::FromQPoint(globalPosition));
 
 	// keyboard modifiers
-	message.AddInt32("modifiers", FromQtModifiers(event.modifiers()));
+	message.AddInt32("modifiers", FromQtModifiers(modifiers));
 
 	// transit
 	int32 transit;
-	bool mouseInsideView = rect().contains(event.pos());
+	bool mouseInsideView = rect().contains(qtPosition);
 	if (fMouseInsideView) {
 		if (mouseInsideView)
 			transit = B_INSIDE_VIEW;
@@ -1779,4 +1943,30 @@ BView::_DeliverMessage(BMessage* message)
 {
 	BMessage::Private(message).GetMessageHeader()->target = Token();
 	Looper()->_DispatchMessage(message);
+}
+
+
+void
+BView::_DoDrag(BView::StartDragEvent* event)
+{
+	QMimeData* mimeData = PlatformMimeDataManager::Manager()->CreateMimeData(
+		event->DetachMessage());
+	if (mimeData == NULL)
+		return;
+	ObjectDeleter<QMimeData> mimeDataDeleter(mimeData);
+
+	QDrag* drag = new(std::nothrow) QDrag(this);
+	if (drag == NULL)
+		return;
+
+	drag->setMimeData(mimeDataDeleter.Detach());
+
+	if (BBitmap* bitmap = event->Bitmap()) {
+		if (QImage* image = bitmap->GetQImage()) {
+			drag->setPixmap(QPixmap::fromImage(*image));
+			drag->setHotSpot(event->HotSpot().ToQPoint());
+		}
+	}
+
+	drag->exec();
 }

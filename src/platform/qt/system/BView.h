@@ -223,7 +223,16 @@ protected:
 	virtual void				moveEvent(QMoveEvent* event);
 	virtual void				resizeEvent(QResizeEvent* event);
 
+	virtual	void				dragEnterEvent(QDragEnterEvent* event);
+	virtual	void				dragLeaveEvent(QDragLeaveEvent* event);
+	virtual	void				dragMoveEvent(QDragMoveEvent* event);
+	virtual	void				dropEvent(QDropEvent* event);
+
+	virtual	void				customEvent(QEvent* event);
+
 private:
+			struct StartDragEvent;
+
 			friend class BWindow;
 
 private:
@@ -232,17 +241,27 @@ private:
 			void				_AllAttachedToWindow();
 			void				_AllDetachedFromWindow();
 
+			void				_HandleMouseLeaveEvent();
 			void				_TranslateMouseEvent(QMouseEvent& event,
 									BMessage& message);
 			void				_TranslateTabletEvent(QTabletEvent& event,
 									BMessage& message);
-			template<typename Event>
-			void				_TranslatePointerDeviceEvent(Event& event,
+			void				_TranslateDropEvent(QDropEvent& event,
+									BMessage& message);
+	template<typename Event>
+	inline	void				_TranslatePointerDeviceEvent(Event& event,
+									BMessage& message);
+			void				_TranslatePointerDeviceEvent(
+									const QPoint& position,
+									const QPoint& globalPosition,
+									Qt::KeyboardModifiers modifiers,
 									BMessage& message);
 			void				_TranslateKeyEvent(QKeyEvent& event,
 									BMessage& message, bool& _isModifier);
 
 			void				_DeliverMessage(BMessage* message);
+
+			void				_DoDrag(StartDragEvent* event);
 
 private:
 			BWindow*			fWindow;

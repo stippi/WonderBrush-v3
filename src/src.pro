@@ -138,6 +138,7 @@ SOURCES += \
 	platform/qt/platform_support.cpp \
 	platform/qt/platform_support_ui.cpp \
 	platform/qt/PlatformMessageEvent.cpp \
+	platform/qt/PlatformMimeDataManager.cpp \
 	platform/qt/PlatformResourceParser.cpp \
 	platform/qt/PlatformScrollArea.cpp \
 	platform/qt/PlatformSemaphoreManager.cpp \
@@ -324,6 +325,7 @@ HEADERS  += \
 	model/text/StyleRunList.h \
 	platform/qt/platform_support_ui.h \
 	platform/qt/PlatformMessageEvent.h \
+	platform/qt/PlatformMimeDataManager.h \
 	platform/qt/PlatformResourceParser.h \
 	platform/qt/PlatformScrollArea.h \
 	platform/qt/PlatformSemaphoreManager.h \
