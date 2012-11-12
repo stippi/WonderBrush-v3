@@ -385,7 +385,9 @@ IconRenderer::_Render(const BRect& r)
 
 		// if this is not the first shape, and the style contains
 		// transparency, commit a render pass of previous shapes
-		if (i > 0 && style->HasTransparency())
+// TODO: Hack to make icons be rendered correctly. Completely ununderstood.
+//		if (i > 0 && style->HasTransparency())
+		if (i > 0/* && style->HasTransparency()*/)
 			_CommitRenderPass(styleHandler);
 
 		fRasterizer.styles(styleIndex, -1);
