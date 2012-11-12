@@ -63,6 +63,9 @@ LIBS += -Lagg -lagg -Lgui/colorpicker -lcolorpicker \
 # about symbol XGetWindowAttributes not being defined.
 LIBS += -lX11
 
+TARGETDEPS += agg/libagg.a gui/colorpicker/libcolorpicker.a icon/libicon.a \
+	gui/scrollview/libscrollview.a
+
 SOURCES += \
 	WonderBrush.cpp \
 	commands/AddObjectsCommand.cpp \
