@@ -38,14 +38,17 @@ struct ObjectTreeView::TreeModel : AbstractTreeModel {
 	};
 
 public:
-	TreeModel(Document* document, QObject* parent = NULL)
+	TreeModel(Document* document, Selection* selection, QObject* parent = NULL)
 		:
 		AbstractTreeModel(parent),
-		fDocument(document)
+		fDocument(document),
+		fSelection(selection)
 	{
 		SetHeaderName(NAME_COLUMN, Qt::Horizontal, QString::fromUtf8("Name"));
 // TODO: Icon column -- better use decoration?
 //		SetHeaderName(1, Qt::Horizontal, QString::fromUtf8(""));
+
+		SetDragSortable(true);
 	}
 
 	QModelIndex AddObject(const QModelIndex& parentIndex, int32 childIndex,
@@ -120,7 +123,14 @@ public:
 	}
 
 protected:
-	bool SetNodeData(Node* node, int column, const QVariant& value)
+	virtual Qt::ItemFlags NodeFlags(Node* node, int column) const
+	{
+		if (node == fRootNode)
+			return Qt::ItemIsEnabled | Qt::ItemIsDropEnabled;
+		return node->Flags(column);
+	}
+
+	virtual bool SetNodeData(Node* node, int column, const QVariant& value)
 	{
 		ObjectNode* objectNode = dynamic_cast<ObjectNode*>(node);
 		if (objectNode == NULL || column != NAME_COLUMN)
@@ -153,11 +163,53 @@ protected:
 		return true;
 	}
 
+	virtual bool DropNodes(Node* _parentNode, int row,
+		const QList<Node*>& nodes)
+	{
+		if (nodes.isEmpty())
+			return false;
+
+		// get the insertion layer
+		ObjectNode* parentNode = dynamic_cast<ObjectNode*>(_parentNode);
+		Layer* insertionLayer = parentNode != NULL
+			? dynamic_cast<Layer*>(parentNode->GetObject())
+			: fDocument->RootLayer();
+		if (insertionLayer == NULL)
+			return false;
+
+		// dropping onto the layer item shall insert at the beginning
+		if (row < 0)
+			row = 0;
+
+		int32 count = nodes.count();
+		Object** objects = new(std::nothrow) Object*[count];
+		if (objects == NULL)
+			return false;
+		ArrayDeleter<Object*> objectsDeleter(objects);
+
+		for (int32 i = 0; i < count; i++) {
+			ObjectNode* node = dynamic_cast<ObjectNode*>(nodes.at(i));
+			if (node == NULL)
+				return false;
+			objects[i] = node->GetObject();
+		}
+
+		MoveObjectsCommand* command = new(std::nothrow) MoveObjectsCommand(
+			objects, count, insertionLayer, row, fSelection);
+		if (command == NULL)
+			return false;
+		objectsDeleter.Detach();
+
+		fDocument->CommandStack()->Perform(command);
+		return true;
+	}
+
 private:
 	struct ObjectNode : ContainerNode {
 		ObjectNode(Object* object)
 			:
-			fObject(object)
+			fObject(object),
+			fIsLayer(dynamic_cast<Layer*>(object) != NULL)
 		{
 			Update();
 		}
@@ -180,6 +232,7 @@ private:
 		void Update()
 		{
 			fName = QString::fromUtf8(fObject->Name());
+			fIsLayer = dynamic_cast<Layer*>(fObject.Get()) != NULL;
 		}
 
 		virtual QVariant Data(int column) const
@@ -203,17 +256,23 @@ private:
 
 		virtual Qt::ItemFlags Flags(int /*column*/) const
 		{
-			return Qt::ItemIsEnabled | Qt::ItemIsSelectable | Qt::ItemIsEditable;
+			Qt::ItemFlags flags = Qt::ItemIsEnabled | Qt::ItemIsSelectable
+				| Qt::ItemIsEditable | Qt::ItemIsDragEnabled;
+			if (fIsLayer)
+				flags |= Qt::ItemIsDropEnabled;
+			return flags;
 		}
 
 	private:
 		Reference<Object>	fObject;
 		QString				fName;
+		bool				fIsLayer;
 	};
 
 private:
 	QHash<Object*, ObjectNode*>	fObjectNodes;
 	Document*					fDocument;
+	Selection*					fSelection;
 };
 
 
@@ -222,7 +281,7 @@ ObjectTreeView::ObjectTreeView(Document* document, Selection* selection)
 	:
 	BView("object tree view", 0),
 	fTree(new QTreeView(this)),
-	fTreeModel(new TreeModel(document, this)),
+	fTreeModel(new TreeModel(document, selection, this)),
 	fDocument(document),
 	fSelection(selection),
 	fLayerObserver(this),
@@ -230,6 +289,9 @@ ObjectTreeView::ObjectTreeView(Document* document, Selection* selection)
 {
 	fTree->setModel(fTreeModel);
 	fTree->setSelectionMode(QAbstractItemView::ExtendedSelection);
+	fTree->setDragEnabled(true);
+	fTree->setDragDropMode(QAbstractItemView::InternalMove);
+	fTree->setDropIndicatorShown(true);
 
 	QVBoxLayout* layout = new QVBoxLayout(this);
 	layout->setMargin(0);
