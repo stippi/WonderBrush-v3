@@ -78,6 +78,7 @@ SOURCES += \
 	gui/misc/Panel.cpp \
 	gui/misc/SwatchGroup.cpp \
 	gui/misc/SwatchView.cpp \
+	gui/misc/qt/AbstractTreeModel.cpp \
 	gui/misc/qt/DualSlider.cpp \
 	gui/misc/qt/FontPopup.cpp \
 	gui/misc/qt/IconButton.cpp \
@@ -245,6 +246,7 @@ HEADERS  += \
 	gui/misc/Panel.h \
 	gui/misc/SwatchGroup.h \
 	gui/misc/SwatchView.h \
+	gui/misc/qt/AbstractTreeModel.h \
 	gui/misc/qt/DualSlider.h \
 	gui/misc/qt/FontPopup.h \
 	gui/misc/qt/IconButton.h \
