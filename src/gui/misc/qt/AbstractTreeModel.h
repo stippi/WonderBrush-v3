@@ -72,6 +72,10 @@ protected:
 protected:
 	virtual	Qt::ItemFlags		NodeFlags(Node* node, int column) const;
 
+	virtual	QVariant			NodeData(Node* node, int column) const;
+	virtual	bool				SetNodeData(Node* node, int column,
+									const QVariant& value);
+
 	virtual	bool				IsNodeChecked(Node* node) const;
 	virtual	bool				SetNodeChecked(Node* node, bool checked);
 

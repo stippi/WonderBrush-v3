@@ -156,7 +156,7 @@ AbstractTreeModel::data(const QModelIndex& index, int role) const
 	}
 
 	if (role == Qt::DisplayRole || role == Qt::EditRole)
-		return node->Data(index.column());
+		return NodeData(node, index.column());
 
 	return QVariant();
 }
@@ -180,7 +180,7 @@ AbstractTreeModel::setData(const QModelIndex& index, const QVariant& value,
 	}
 
 	if (role == Qt::EditRole)
-		return node->SetData(index.column(), value);
+		return SetNodeData(node, index.column(), value);
 
 	return false;
 }
@@ -268,6 +268,21 @@ Qt::ItemFlags
 AbstractTreeModel::NodeFlags(Node* node, int column) const
 {
 	return node->Flags(column);
+}
+
+
+QVariant
+AbstractTreeModel::NodeData(AbstractTreeModel::Node* node, int column) const
+{
+	return node->Data(column);
+}
+
+
+bool
+AbstractTreeModel::SetNodeData(AbstractTreeModel::Node* node, int column,
+	const QVariant& value)
+{
+	return node->SetData(column, value);
 }
 
 
