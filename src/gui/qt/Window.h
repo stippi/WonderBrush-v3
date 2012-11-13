@@ -13,6 +13,7 @@ class CanvasView;
 class Document;
 class IconButton;
 class Layer;
+class ObjectTreeView;
 class RenderManager;
 class SwatchGroup;
 class Tool;
@@ -65,6 +66,7 @@ private:
 			CurrentColor		fCurrentColor;
 
 			SwatchGroup*		fSwatchGroup;
+			ObjectTreeView*		fLayerTreeView;
 
 			IconButton*			fUndoIcon;
 			IconButton*			fRedoIcon;

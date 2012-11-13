@@ -84,6 +84,7 @@ SOURCES += \
 	gui/misc/qt/IconButton.cpp \
 	gui/misc/qt/IconOptionsControl.cpp \
 	gui/misc/qt/NavigatorViewPlatformDelegate.cpp \
+	gui/qt/ObjectTreeView.cpp \
 	gui/qt/Window.cpp \
 	gui/stateview/StateView.cpp \
 	gui/stateview/ViewState.cpp \
@@ -239,6 +240,7 @@ HEADERS  += \
 	commands/MoveObjectsCommand.h \
 	commands/ObjectAddedCommand.h \
 	commands/RemoveTextCommand.h \
+	commands/RenameObjectCommand.h \
 	commands/SetPropertiesCommand.h \
 	gui/CanvasView.h \
 	gui/ToolConfigView.h \
@@ -256,6 +258,7 @@ HEADERS  += \
 	gui/misc/qt/SwatchGroupPlatformDelegate.h \
 	gui/misc/qt/SwatchViewPlatformDelegate.h \
 	gui/qt/CanvasViewPlatformDelegate.h \
+	gui/qt/ObjectTreeView.h \
 	gui/qt/Window.h \
 	gui/icons/BrushIcon.h \
 	gui/icons/PathPropertyIcon.h \

@@ -7,6 +7,7 @@
 #include "Document.h"
 #include "IconButton.h"
 #include "NavigatorView.h"
+#include "ObjectTreeView.h"
 #include "PickTool.h"
 #include "RenderManager.h"
 #include "SwatchGroup.h"
@@ -141,6 +142,10 @@ exportButton->SetEnabled(false);
 
 	_ReplaceWidget(fUi->navigatorViewDummy,
 		new NavigatorView(fDocument, fRenderManager));
+
+	fLayerTreeView = new ObjectTreeView(fDocument, &fSelection);
+	layout = new QHBoxLayout(fUi->objectsTab);
+	layout->addWidget(fLayerTreeView);
 
 	fSwatchGroup = new SwatchGroup("swatch group");
 	_ReplaceWidget(fUi->swatchGroupDummy, fSwatchGroup);
