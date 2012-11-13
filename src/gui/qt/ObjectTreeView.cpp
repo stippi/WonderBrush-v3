@@ -125,7 +125,7 @@ private:
 
 		Object* GetObject() const
 		{
-			return fObject;
+			return fObject.Get();
 		}
 
 		void Update()
@@ -146,8 +146,8 @@ private:
 		}
 
 	private:
-		Object*	fObject;
 		QString	fName;
+		Reference<Object>	fObject;
 	};
 
 private:
