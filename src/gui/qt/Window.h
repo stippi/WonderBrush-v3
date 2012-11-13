@@ -15,6 +15,7 @@ class IconButton;
 class Layer;
 class ObjectTreeView;
 class RenderManager;
+class ResourceTreeView;
 class SwatchGroup;
 class Tool;
 
@@ -67,6 +68,7 @@ private:
 
 			SwatchGroup*		fSwatchGroup;
 			ObjectTreeView*		fLayerTreeView;
+			ResourceTreeView*	fResourceTreeView;
 
 			IconButton*			fUndoIcon;
 			IconButton*			fRedoIcon;

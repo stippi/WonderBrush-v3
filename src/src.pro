@@ -85,6 +85,7 @@ SOURCES += \
 	gui/misc/qt/IconOptionsControl.cpp \
 	gui/misc/qt/NavigatorViewPlatformDelegate.cpp \
 	gui/qt/ObjectTreeView.cpp \
+	gui/qt/ResourceTreeView.cpp \
 	gui/qt/Window.cpp \
 	gui/stateview/StateView.cpp \
 	gui/stateview/ViewState.cpp \
@@ -259,6 +260,7 @@ HEADERS  += \
 	gui/misc/qt/SwatchViewPlatformDelegate.h \
 	gui/qt/CanvasViewPlatformDelegate.h \
 	gui/qt/ObjectTreeView.h \
+	gui/qt/ResourceTreeView.h \
 	gui/qt/Window.h \
 	gui/icons/BrushIcon.h \
 	gui/icons/PathPropertyIcon.h \

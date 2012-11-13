@@ -10,6 +10,7 @@
 #include "ObjectTreeView.h"
 #include "PickTool.h"
 #include "RenderManager.h"
+#include "ResourceTreeView.h"
 #include "SwatchGroup.h"
 #include "TextTool.h"
 #include "ToolConfigView.h"
@@ -146,6 +147,10 @@ exportButton->SetEnabled(false);
 	fLayerTreeView = new ObjectTreeView(fDocument, &fSelection);
 	layout = new QHBoxLayout(fUi->objectsTab);
 	layout->addWidget(fLayerTreeView);
+
+	fResourceTreeView = new ResourceTreeView(fDocument, &fSelection);
+	layout = new QHBoxLayout(fUi->resourcesTab);
+	layout->addWidget(fResourceTreeView);
 
 	fSwatchGroup = new SwatchGroup("swatch group");
 	_ReplaceWidget(fUi->swatchGroupDummy, fSwatchGroup);

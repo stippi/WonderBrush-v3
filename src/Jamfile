@@ -129,11 +129,11 @@ Application WonderBrush :
 	# gui (WonderBrush specific)
 	CanvasView.cpp
 	InspectorView.cpp
-	ResourceTreeView.cpp
 	ToolConfigView.cpp
 
 	# gui/<platform>
 	ObjectTreeView.cpp
+	ResourceTreeView.cpp
 	Window.cpp
 
 	# model
