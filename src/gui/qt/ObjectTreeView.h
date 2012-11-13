@@ -50,7 +50,6 @@ private:
 
 private:
 			void				_HandleRenameSelectedItem();
-			void				_HandleRenameItem(int32 index);
 
 			void				_ObjectAdded(Layer* layer, Object* object,
 									int32 index);

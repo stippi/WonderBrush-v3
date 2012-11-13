@@ -26,7 +26,6 @@
 
 
 enum {
-	MSG_RENAME_OBJECT			= 'rnoj',
 	MSG_RENAME_SELECTED_ITEM	= 'rnit',
 	MSG_DRAG_SORT_OBJECTS		= 'drgo',
 	MSG_OBJECT_SELECTED			= 'objs'
@@ -34,11 +33,17 @@ enum {
 
 
 struct ObjectTreeView::TreeModel : AbstractTreeModel {
-	TreeModel(QObject* parent = NULL)
+	enum {
+		NAME_COLUMN = 0
+	};
+
+public:
+	TreeModel(Document* document, QObject* parent = NULL)
 		:
-		AbstractTreeModel(parent)
+		AbstractTreeModel(parent),
+		fDocument(document)
 	{
-		SetHeaderName(0, Qt::Horizontal, QString::fromUtf8("Name"));
+		SetHeaderName(NAME_COLUMN, Qt::Horizontal, QString::fromUtf8("Name"));
 // TODO: Icon column -- better use decoration?
 //		SetHeaderName(1, Qt::Horizontal, QString::fromUtf8(""));
 	}
@@ -114,6 +119,40 @@ struct ObjectTreeView::TreeModel : AbstractTreeModel {
 		return node != NULL ? node->GetObject() : NULL;
 	}
 
+protected:
+	bool SetNodeData(Node* node, int column, const QVariant& value)
+	{
+		ObjectNode* objectNode = dynamic_cast<ObjectNode*>(node);
+		if (objectNode == NULL || column != NAME_COLUMN)
+			return node->SetData(column, value);
+
+		QString oldName = objectNode->Name();
+
+		if (!node->SetData(column, value))
+			return false;
+
+		// The node name has been changed -- new rename the object as well.
+		AutoWriteLocker locker(fDocument);
+
+		Object* object = objectNode->GetObject();
+		BString newName = objectNode->Name();
+
+		if (newName != object->Name()) {
+			// rename via command
+			RenameObjectCommand* command
+				= new (std::nothrow) RenameObjectCommand(object, newName);
+			if (command == NULL) {
+				objectNode->SetName(oldName);
+				return false;
+			}
+
+			fDocument->CommandStack()->Perform(command);
+		}
+
+		locker.Unlock();
+		return true;
+	}
+
 private:
 	struct ObjectNode : ContainerNode {
 		ObjectNode(Object* object)
@@ -128,6 +167,16 @@ private:
 			return fObject.Get();
 		}
 
+		const QString& Name() const
+		{
+			return fName;
+		}
+
+		void SetName(const QString& name)
+		{
+			fName = name;
+		}
+
 		void Update()
 		{
 			fName = QString::fromUtf8(fObject->Name());
@@ -135,23 +184,36 @@ private:
 
 		virtual QVariant Data(int column) const
 		{
-			if (column == 0)
+			if (column == NAME_COLUMN)
 				return fName;
 			return QVariant();
 		}
 
+		virtual bool SetData(int column, const QVariant& value)
+		{
+			if (column != NAME_COLUMN || !value.canConvert<QString>())
+				return false;
+			QString newName = value.toString();
+			if (newName.isEmpty())
+				return false;
+
+			fName = newName;
+			return true;
+		}
+
 		virtual Qt::ItemFlags Flags(int /*column*/) const
 		{
-			return Qt::ItemIsEnabled | Qt::ItemIsSelectable;
+			return Qt::ItemIsEnabled | Qt::ItemIsSelectable | Qt::ItemIsEditable;
 		}
 
 	private:
-		QString	fName;
 		Reference<Object>	fObject;
+		QString				fName;
 	};
 
 private:
 	QHash<Object*, ObjectNode*>	fObjectNodes;
+	Document*					fDocument;
 };
 
 
@@ -160,7 +222,7 @@ ObjectTreeView::ObjectTreeView(Document* document, Selection* selection)
 	:
 	BView("object tree view", 0),
 	fTree(new QTreeView(this)),
-	fTreeModel(new TreeModel(this)),
+	fTreeModel(new TreeModel(document, this)),
 	fDocument(document),
 	fSelection(selection),
 	fLayerObserver(this),
@@ -229,20 +291,6 @@ ObjectTreeView::KeyDown(const char* bytes, int32 numBytes)
 		case 'E':
 //			_HandleRenameSelectedItem();
 			break;
-		case B_FUNCTION_KEY:
-			if (BMessage* message = Window()->CurrentMessage()) {
-				int32 key;
-				if (message->FindInt32("key", &key) == B_OK) {
-					switch (key) {
-						case B_F2_KEY:
-							_HandleRenameSelectedItem();
-							break;
-						default:
-							break;
-					}
-				}
-			}
-			break;
 
 		default:
 			BView::KeyDown(bytes, numBytes);
@@ -258,9 +306,6 @@ ObjectTreeView::MessageReceived(BMessage* message)
 	switch (message->what) {
 		case MSG_RENAME_SELECTED_ITEM:
 			_HandleRenameSelectedItem();
-			break;
-		case MSG_RENAME_OBJECT:
-//			_HandleRenameObject(message);
 			break;
 
 		case LayerObserver::MSG_OBJECT_ADDED:
@@ -386,45 +431,10 @@ ObjectTreeView::SelectItem(Object* object)
 void
 ObjectTreeView::_HandleRenameSelectedItem()
 {
-//	_HandleRenameItem(CurrentSelection(0));
-}
-
-
-// _HandleRenameItem
-void
-ObjectTreeView::_HandleRenameItem(int32 index)
-{
-#if 0
-	ObjectColumnTreeItem* item = dynamic_cast<ObjectColumnTreeItem*>(
-		ItemAt(index));
-
-	if (item == NULL || item->object == NULL)
-		return;
-
-	item->object->AddReference();
-
-	BMessage* message = NULL;
-	try {
-		message = new BMessage(MSG_RENAME_OBJECT);
-		message->AddPointer("object", item->object);
-		message->AddPointer("item", item);
-		message->AddInt32("index", index);
-
-		BRect frame(ItemFrame(index));
-		frame.left += IndentationOf(item) + 9.0;
-		ConvertToScreen(&frame);
-
-		// Hide the current name in order not to irritate during editing.
-		item->SetContent(0, "");
-
-		AutoReadLocker locker(fDocument);
-
-		new TextViewPopup(frame, item->object->Name(), message, this);
-	} catch (...) {
-		delete message;
-		item->object->RemoveReference();
-	}
-#endif
+	QModelIndexList selectedIndices
+		= fTree->selectionModel()->selectedIndexes();
+	if (!selectedIndices.isEmpty())
+		fTree->edit(selectedIndices.first());
 }
 
 
