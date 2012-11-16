@@ -213,6 +213,7 @@ Layer::SetToPropertyObject(const PropertyObject* object, uint32 flags)
 void
 Layer::TransformationChanged()
 {
+	NotifyListeners();
 	// Override the Object version, which invalidates the whole parent,
 	// to invalidate ourselves
 	UpdateChangeCounter();
