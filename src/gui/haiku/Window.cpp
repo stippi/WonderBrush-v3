@@ -30,6 +30,7 @@
 #include "InspectorView.h"
 //#include "LayerTreeModel.h"
 #include "NavigatorView.h"
+#include "ObjectAddedCommand.h"
 #include "ObjectTreeView.h"
 #include "PickTool.h"
 #include "TextTool.h"
@@ -44,7 +45,8 @@
 enum {
 	MSG_UNDO				= 'undo',
 	MSG_REDO				= 'redo',
-	MSG_SET_TOOL			= 'sltl'
+	MSG_SET_TOOL			= 'sltl',
+	MSG_ADD_LAYER			= 'addl',
 };
 
 
@@ -79,7 +81,7 @@ Window::Window(BRect frame, const char* title, Document* document,
 	fEditMenu->AddItem(fRedoMI);
 
 	BMenuBar* objectMenuBar = new BMenuBar("object menu");
-	fObjectMenu = new BMenu("Object");
+	fObjectMenu = _CreateObjectMenu();
 	objectMenuBar->AddItem(fObjectMenu);
 
 	BMenuBar* resourceMenuBar = new BMenuBar("resource menu");
@@ -350,7 +352,8 @@ Window::MessageReceived(BMessage* message)
 			fDocument->CommandStack()->Redo();
 			break;
 
-		case MSG_OBJECT_CHANGED: {
+		case MSG_OBJECT_CHANGED:
+		{
 			Notifier* notifier;
 			if (message->FindPointer("object", (void**)&notifier) == B_OK)
 				_ObjectChanged(notifier);
@@ -368,6 +371,10 @@ Window::MessageReceived(BMessage* message)
 			}
 			break;
 		}
+
+		case MSG_ADD_LAYER:
+			_AddLayer();
+			break;
 
 		default:
 			BWindow::MessageReceived(message);
@@ -502,7 +509,7 @@ Window::_InitTools()
 void
 Window::_ObjectChanged(const Notifier* object)
 {
-	if (!fDocument)
+	if (fDocument == NULL)
 		return;
 
 	if (object == fDocument->CommandStack()) {
@@ -524,4 +531,65 @@ Window::_ObjectChanged(const Notifier* object)
 		else
 			fRedoMI->SetLabel("<nothing to redo>");
 	}
+}
+
+// _CreateObjectMenu
+BMenu*
+Window::_CreateObjectMenu() const
+{
+	BMenu* menu = new BMenu("Object");
+
+	BMenuItem* item = new BMenuItem("Add layer", new BMessage(MSG_ADD_LAYER));
+	menu->AddItem(item);
+
+	return menu;
+}
+
+// _AddLayer
+void
+Window::_AddLayer()
+{
+	if (fDocument == NULL) {
+		fprintf(stderr, "Window::_AddLayer(): No document.\n");
+		return;
+	}
+
+	AutoWriteLocker _(fDocument);
+
+	// Initial parent laye and insertion index, in case there is no selection
+	Layer* parentLayer = fDocument->RootLayer();
+	if (parentLayer == NULL) {
+		fprintf(stderr, "Window::_AddLayer(): No root layer.\n");
+		return;
+	}
+
+	int32 insertIndex = parentLayer->CountObjects();
+
+	if (!fSelection.IsEmpty()) {
+		// Find the last Selectable that represents an Object
+		Object* selected = NULL;
+		int32 selectionCount = fSelection.CountSelected();
+		for (int32 i = 0; i < selectionCount; i++) {
+			const Selectable& selectable = fSelection.SelectableAt(i);
+			Object* object = dynamic_cast<Object*>(selectable.Get());
+			if (object != NULL)
+				selected = object;
+		}
+
+		if (selected != NULL) {
+			parentLayer = selected->Parent();
+			insertIndex = parentLayer->IndexOf(selected) + 1;
+		}
+	}
+
+	Layer* newLayer = new(std::nothrow) Layer(parentLayer->Bounds());
+	if (newLayer == NULL || !parentLayer->AddObject(newLayer, insertIndex)) {
+		fprintf(stderr, "Window::_AddLayer(): Failed to allocate new layer.\n");
+		delete newLayer;
+		return;
+	}
+
+	fSelection.DeselectAll(fLayerTreeView);
+	fDocument->CommandStack()->Perform(new(std::nothrow) ObjectAddedCommand(
+		newLayer, &fSelection));
 }

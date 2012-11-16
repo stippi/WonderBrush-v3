@@ -52,6 +52,10 @@ private:
 
 			void				_ObjectChanged(const Notifier* object);
 
+			BMenu*				_CreateObjectMenu() const;
+
+			void				_AddLayer();
+
 private:
 			CanvasView*			fView;
 			Document*			fDocument;
