@@ -23,6 +23,7 @@
 #include "BrushTool.h"
 #include "CanvasView.h"
 #include "CommandStack.h"
+#include "CompoundCommand.h"
 #include "DefaultColumnTreeModel.h"
 #include "Document.h"
 #include "IconButton.h"
@@ -35,6 +36,7 @@
 #include "PickTool.h"
 #include "TextTool.h"
 #include "ToolConfigView.h"
+#include "TransformObjectCommand.h"
 #include "TransformTool.h"
 #include "RenderManager.h"
 #include "ResourceTreeView.h"
@@ -43,10 +45,11 @@
 #include "WonderBrush.h"
 
 enum {
-	MSG_UNDO				= 'undo',
-	MSG_REDO				= 'redo',
-	MSG_SET_TOOL			= 'sltl',
-	MSG_ADD_LAYER			= 'addl',
+	MSG_UNDO						= 'undo',
+	MSG_REDO						= 'redo',
+	MSG_SET_TOOL					= 'sltl',
+	MSG_ADD_LAYER					= 'addl',
+	MSG_RESET_TRANSFORMATION		= 'rttr',
 };
 
 
@@ -376,6 +379,10 @@ Window::MessageReceived(BMessage* message)
 			_AddLayer();
 			break;
 
+		case MSG_RESET_TRANSFORMATION:
+			_ResetTransformation();
+			break;
+
 		default:
 			BWindow::MessageReceived(message);
 	}
@@ -539,7 +546,12 @@ Window::_CreateObjectMenu() const
 {
 	BMenu* menu = new BMenu("Object");
 
-	BMenuItem* item = new BMenuItem("Add layer", new BMessage(MSG_ADD_LAYER));
+	BMenuItem* item = new BMenuItem("Add layer",
+		new BMessage(MSG_ADD_LAYER));
+	menu->AddItem(item);
+
+	item = new BMenuItem("Reset transformation",
+		new BMessage(MSG_RESET_TRANSFORMATION));
 	menu->AddItem(item);
 
 	return menu;
@@ -592,4 +604,66 @@ Window::_AddLayer()
 	fSelection.DeselectAll(fLayerTreeView);
 	fDocument->CommandStack()->Perform(new(std::nothrow) ObjectAddedCommand(
 		newLayer, &fSelection));
+}
+
+// _ResetTransformation
+void
+Window::_ResetTransformation()
+{
+	if (fDocument == NULL) {
+		fprintf(stderr, "Window::_ResetTransformation(): No document.\n");
+		return;
+	}
+
+	AutoWriteLocker _(fDocument);
+
+	if (fSelection.IsEmpty()) {
+		fprintf(stderr, "Window::_ResetTransformation(): No selection.\n");
+		return;
+	}
+
+	int32 selectionCount = fSelection.CountSelected();
+
+	Command** commands = new(std::nothrow) Command*[selectionCount];
+	if (commands == NULL) {
+		fprintf(stderr, "Window::_ResetTransformation(): No memory.\n");
+		return;
+	}
+
+	int32 objectCount = 0;
+	Transformable identityTransform;
+
+	for (int32 i = 0; i < selectionCount; i++) {
+		const Selectable& selectable = fSelection.SelectableAt(i);
+		Object* object = dynamic_cast<Object*>(selectable.Get());
+		if (object == NULL)
+			continue;
+
+		commands[objectCount] = new(std::nothrow) TransformObjectCommand(
+			object, identityTransform);
+		if (commands[objectCount] == NULL) {
+			// Roll back
+			for (int32 j = 0; j < objectCount; j++)
+				delete commands[j];
+			delete[] commands;
+			fprintf(stderr, "Window::_ResetTransformation(): No memory.\n");
+			return;
+		}
+		objectCount++;
+	}
+
+	CompoundCommand* compoundCommand = new(std::nothrow) CompoundCommand(
+		commands, objectCount, "Reset transformation", -1);
+
+	if (compoundCommand == NULL) {
+		// Roll back
+		// TODO: Code duplication
+		for (int32 j = 0; j < objectCount; j++)
+			delete commands[j];
+		delete[] commands;
+		fprintf(stderr, "Window::_ResetTransformation(): No memory.\n");
+		return;
+	}
+
+	fDocument->CommandStack()->Perform(compoundCommand);
 }

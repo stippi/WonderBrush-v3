@@ -55,6 +55,7 @@ private:
 			BMenu*				_CreateObjectMenu() const;
 
 			void				_AddLayer();
+			void				_ResetTransformation();
 
 private:
 			CanvasView*			fView;
