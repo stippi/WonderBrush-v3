@@ -145,21 +145,21 @@ public:
 			_Resize(fCount - 1);
 	}
 
-	inline ObjectType* ObjectAt(uint32 index) const
+	inline ObjectType* ObjectAt(int32 index) const
 	{
-		if (index > fCount)
+		if (index >= fCount)
 			return NULL;
 		return ObjectAtFast(index);
 	}
 
-	inline ObjectType* ObjectAtFast(uint32 index) const
+	inline ObjectType* ObjectAtFast(int32 index) const
 	{
 		return fItems + index;
 	}
 
 	inline ObjectType* LastObject() const
 	{
-		return ObjectAt(fCount - 1);
+		return ObjectAt((int32)fCount - 1);
 	}
 
 private:
