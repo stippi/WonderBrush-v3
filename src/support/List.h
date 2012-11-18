@@ -104,12 +104,12 @@ public:
 	inline bool Add(const ItemType& copyFrom)
 	{
 		if (_Resize(fCount + 1)) {
-			ItemType* object = LastItem();
+			ItemType* item = fItems + fCount - 1;
 			// Initialize the new object from the original.
 			if (!PlainOldData)
-				new (object) ItemType(copyFrom);
+				new (item) ItemType(copyFrom);
 			else
-				*object = copyFrom;
+				*item = copyFrom;
 			return true;
 		}
 		return false;
@@ -123,14 +123,14 @@ public:
 
 	inline const ItemType& ItemAt(int32 index) const
 	{
-		if (index >= fCount)
+		if (index >= (int32)fCount)
 			return fNullItem;
 		return ItemAtFast(index);
 	}
 
 	inline const ItemType& ItemAtFast(int32 index) const
 	{
-		return fItems + index;
+		return *(fItems + index);
 	}
 
 	inline const ItemType& LastItem() const

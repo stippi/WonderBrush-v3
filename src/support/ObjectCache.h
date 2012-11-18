@@ -104,10 +104,10 @@ public:
 	inline ObjectType* AppendObject()
 	{
 		if (_Resize(fCount + 1)) {
-			ObjectType* object = LastObject();
+			ObjectType* object = fItems + fCount - 1;
 			if (!PlainOldData) {
 				// Initialize the new object
-				new (object) ObjectType;
+				new(object) ObjectType;
 			}
 			return object;
 		}
@@ -147,7 +147,7 @@ public:
 
 	inline ObjectType* ObjectAt(int32 index) const
 	{
-		if (index >= fCount)
+		if (index >= (int32)fCount)
 			return NULL;
 		return ObjectAtFast(index);
 	}
