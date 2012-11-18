@@ -5,10 +5,10 @@
 
 #include "InspectorView.h"
 
-#include "CommandStack.h"
+#include "EditManager.h"
 #include "Property.h"
 #include "PropertyObject.h"
-#include "SetPropertiesCommand.h"
+#include "SetPropertiesEdit.h"
 
 
 // constructor
@@ -16,7 +16,7 @@ InspectorView::InspectorView()
 	:
 	PropertyListView(),
 	fSelection(NULL),
-	fCommandStack(NULL),
+	fEditManager(NULL),
 	fObject(NULL),
 	fIgnoreObjectChange(false)
 {
@@ -71,7 +71,7 @@ void
 InspectorView::PropertyChanged(const Property* previous,
 	const Property* current)
 {
-	if (fCommandStack == NULL || fObject == NULL)
+	if (fEditManager == NULL || fObject == NULL)
 		return;
 
 	PropertyObject* oldObject = new (std::nothrow) PropertyObject();
@@ -86,11 +86,11 @@ InspectorView::PropertyChanged(const Property* previous,
 	if (objects)
 		objects[0] = fObject;
 
-	Command* command = new (std::nothrow) SetPropertiesCommand(objects, 1,
+	UndoableEdit* edit = new(std::nothrow) SetPropertiesEdit(objects, 1,
 		oldObject, newObject);
 
 	fIgnoreObjectChange = true;
-	fCommandStack->Perform(command);
+	fEditManager->Perform(edit);
 	fIgnoreObjectChange = false;
 }
 
@@ -161,11 +161,11 @@ InspectorView::SetSelection(Selection* selection)
 		fSelection->AddListener(this);
 }
 
-// SetCommandStack
+// SetEditManager
 void
-InspectorView::SetCommandStack(CommandStack* stack)
+InspectorView::SetEditManager(EditManager* stack)
 {
-	fCommandStack = stack;
+	fEditManager = stack;
 }
 
 // #pragma mark -

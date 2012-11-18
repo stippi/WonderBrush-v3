@@ -11,7 +11,7 @@
 #include "Selection.h"
 
 class BaseObject;
-class CommandStack;
+class EditManager;
 class Selection;
 
 class InspectorView : public PropertyListView, public Selection::Listener,
@@ -40,13 +40,13 @@ public:
 
 	// InspectorView
 			void				SetSelection(Selection* selection);
-			void				SetCommandStack(CommandStack* stack);
+			void				SetEditManager(EditManager* stack);
 
 private:
 			void				_SetObject(BaseObject* object);
 
 			Selection*			fSelection;
-			CommandStack*		fCommandStack;
+			EditManager*		fEditManager;
 
 			BaseObject*			fObject;
 			bool				fIgnoreObjectChange;

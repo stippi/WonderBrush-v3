@@ -37,14 +37,14 @@ public:
 	virtual	void				Cleanup();
 
 	virtual	bool				MessageReceived(BMessage* message,
-									Command** _command);
+									UndoableEdit** _edit);
 
 	virtual void				Draw(PlatformDrawContext& drawContext);
 
 	virtual	BRect				Bounds() const;
 
 	// DragStateViewState interface
-	virtual	Command*			StartTransaction(const char* commandName);
+	virtual	UndoableEdit*		StartTransaction(const char* editName);
 
 	virtual	DragState*			DragStateFor(BPoint canvasWhere,
 									float zoomLevel) const;

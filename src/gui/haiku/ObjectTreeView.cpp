@@ -14,11 +14,11 @@
 #include "AutoDeleter.h"
 #include "Column.h"
 #include "ColumnTreeViewColors.h"
-#include "CommandStack.h"
+#include "EditManager.h"
 #include "Document.h"
-#include "MoveObjectsCommand.h"
+#include "MoveObjectsEdit.h"
 #include "Object.h"
-#include "RenameObjectCommand.h"
+#include "RenameObjectEdit.h"
 #include "TextViewPopup.h"
 
 using std::nothrow;
@@ -336,7 +336,7 @@ ObjectTreeView::GetDropInfo(BPoint point, const BMessage& dragMessage,
 		int32 subItemCount = CountSubItems(item);
 		if (dynamic_cast<Layer*>(item->object) != NULL
 			&& (subItemCount == 0 || !item->IsExpanded())) {
-	
+
 			BRect frame = ItemFrame(index);
 			if (point.y > frame.top + frame.Height() / 4
 				&& point.y < frame.bottom - frame.Height() / 4) {
@@ -397,14 +397,14 @@ ObjectTreeView::HandleDrop(const BMessage& dragMessage, ColumnTreeItem* super,
 		}
 	}
 
-	MoveObjectsCommand* command = new(std::nothrow) MoveObjectsCommand(
+	MoveObjectsEdit* command = new(std::nothrow) MoveObjectsEdit(
 		objects, count, insertionLayer, subItemIndex, fSelection);
 	if (command == NULL) {
 		delete[] objects;
 		return;
 	}
 
-	fDocument->CommandStack()->Perform(command);
+	fDocument->EditManager()->Perform(command);
 }
 
 // SelectionChanged
@@ -595,9 +595,9 @@ ObjectTreeView::_HandleRenameObject(BMessage* message)
 		}
 	} else {
 		// rename via command
-		RenameObjectCommand* command = new (nothrow) RenameObjectCommand(object,
+		RenameObjectEdit* command = new (nothrow) RenameObjectEdit(object,
 			name);
-		fDocument->CommandStack()->Perform(command);
+		fDocument->EditManager()->Perform(command);
 	}
 	object->RemoveReference();
 

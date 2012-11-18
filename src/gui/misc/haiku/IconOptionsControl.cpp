@@ -464,8 +464,6 @@ IconOptionsControl::_UpdateFrame()
 		BRect labelFrame = fLayoutData->label_layout_item->Frame();
 		BRect iconFrame = fLayoutData->icon_bar_layout_item->Frame();
 
-		BSize oldSize = Bounds().Size();
-
 		// update our frame
 		MoveTo(labelFrame.left, min_c(labelFrame.top, iconFrame.top));
 		ResizeTo(labelFrame.Width() + iconFrame.Width(),

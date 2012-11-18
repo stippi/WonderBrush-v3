@@ -2,19 +2,19 @@
  * Copyright 2012, Stephan Aßmus <superstippi@gmx.de>.
  * All rights reserved. Distributed under the terms of the MIT License.
  */
-#ifndef REMOVE_TEXT_COMMAND_H
-#define REMOVE_TEXT_COMMAND_H
+#ifndef REMOVE_TEXT_EDIT_H
+#define REMOVE_TEXT_EDIT_H
 
 #include <String.h>
 
-#include "Command.h"
+#include "UndoableEdit.h"
 #include "StyleRunList.h"
 #include "Text.h"
 
-class RemoveTextCommand : public Command {
+class RemoveTextEdit : public UndoableEdit {
 public:
-	RemoveTextCommand(Text* text, int32 textOffset, int32 length)
-		: Command()
+	RemoveTextEdit(Text* text, int32 textOffset, int32 length)
+		: UndoableEdit()
 		, fText(text)
 		, fOffset(textOffset)
 		, fLength(length)
@@ -23,7 +23,7 @@ public:
 	{
 	}
 
-	virtual ~RemoveTextCommand()
+	virtual ~RemoveTextEdit()
 	{
 		delete fRemovedStyles;
 	}
@@ -60,10 +60,10 @@ public:
 		name << "Remove text";
 	}
 
-	virtual	bool CombineWithNext(const Command* _next)
+	virtual	bool CombineWithNext(const UndoableEdit* _next)
 	{
-		const RemoveTextCommand* next
-			= dynamic_cast<const RemoveTextCommand*>(_next);
+		const RemoveTextEdit* next
+			= dynamic_cast<const RemoveTextEdit*>(_next);
 
 		if (next == NULL || next->fText != fText
 			|| next->fTimeStamp - fTimeStamp > 500000
@@ -95,4 +95,4 @@ private:
 			StyleRunList*		fRemovedStyles;
 };
 
-#endif // REMOVE_TEXT_COMMAND_H
+#endif // REMOVE_TEXT_EDIT_H

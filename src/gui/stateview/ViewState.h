@@ -4,7 +4,7 @@
 #include "StateView.h"
 
 class BMessage;
-class Command;
+class UndoableEdit;
 
 class ViewState {
 public:
@@ -19,12 +19,12 @@ public:
 
 	virtual	void				Draw(PlatformDrawContext& drawContext);
 	virtual	bool				MessageReceived(BMessage* message,
-									Command** _command);
+									UndoableEdit** _edit);
 
 	// mouse tracking
 	virtual	void				MouseDown(const MouseInfo& info);
 	virtual	void				MouseMoved(const MouseInfo& info);
-	virtual	Command*			MouseUp();
+	virtual	UndoableEdit*			MouseUp();
 
 	// modifiers
 	virtual	void				ModifiersChanged(uint32 modifiers);
@@ -32,9 +32,9 @@ public:
 
 	// TODO: mouse wheel
 	virtual	bool				HandleKeyDown(const StateView::KeyEvent& event,
-									Command** _command);
+									UndoableEdit** _edit);
 	virtual	bool				HandleKeyUp(const StateView::KeyEvent& event,
-									Command** _command);
+									UndoableEdit** _edit);
 
 
 	virtual	bool				UpdateCursor();

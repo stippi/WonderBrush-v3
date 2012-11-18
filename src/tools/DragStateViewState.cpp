@@ -7,7 +7,7 @@
 
 #include <Cursor.h>
 
-#include "Command.h"
+#include "UndoableEdit.h"
 
 // constructor
 DragStateViewState::DragState::DragState(DragStateViewState* parent)
@@ -82,7 +82,7 @@ DragStateViewState::MouseMoved(const MouseInfo& info)
 }
 
 // MouseUp
-Command*
+UndoableEdit*
 DragStateViewState::MouseUp()
 {
 	fDragging = false;
@@ -107,19 +107,19 @@ DragStateViewState::UpdateCursor()
 // #pragma mark -
 
 // StartTransaction
-Command*
+UndoableEdit*
 DragStateViewState::StartTransaction(const char* commandName)
 {
 	return NULL;
 }
 
 // FinishTransaction
-Command*
-DragStateViewState::FinishTransaction(Command* command)
+UndoableEdit*
+DragStateViewState::FinishTransaction(UndoableEdit* edit)
 {
-	command = fCurrentCommand;
+	edit = fCurrentCommand;
 	fCurrentCommand = NULL;
-	return command;
+	return edit;
 }
 
 // SetDragState

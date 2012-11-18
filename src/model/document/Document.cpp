@@ -9,14 +9,12 @@
 
 #include <new>
 
-#include "CommandStack.h"
+#include "EditManager.h"
 #include "Layer.h"
 #include "Object.h"
 #include "Path.h"
 #include "Style.h"
 
-
-using std::nothrow;
 
 // constructor
 Document::Listener::Listener()
@@ -34,8 +32,8 @@ Document::Listener::~Listener()
 Document::Document(const BRect& bounds)
 	:
 	RWLocker("document rw lock"),
-	fCommandStack(new (nothrow) ::CommandStack(this)),
-	fRootLayer(new (nothrow) Layer(bounds)),
+	fEditManager(new(std::nothrow) ::EditManager(this)),
+	fRootLayer(new(std::nothrow) Layer(bounds)),
 	fGlobalResources(),
 	fListeners(8)
 {
@@ -44,7 +42,7 @@ Document::Document(const BRect& bounds)
 // destructor
 Document::~Document()
 {
-	delete fCommandStack;
+	delete fEditManager;
 	delete fRootLayer;
 }
 
@@ -54,7 +52,7 @@ Document::~Document()
 status_t
 Document::InitCheck() const
 {
-	return fCommandStack && fRootLayer ? B_OK : B_NO_MEMORY;
+	return fEditManager && fRootLayer ? B_OK : B_NO_MEMORY;
 }
 
 // Bounds

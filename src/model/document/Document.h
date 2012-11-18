@@ -12,7 +12,7 @@
 #include "RWLocker.h"
 
 class BaseObject;
-class CommandStack;
+class EditManager;
 class Layer;
 class Path;
 class Style;
@@ -31,8 +31,8 @@ public:
 								Document(const BRect& bounds);
 	virtual						~Document();
 
-	inline	::CommandStack*		CommandStack() const
-									{ return fCommandStack; }
+	inline	::EditManager*		EditManager() const
+									{ return fEditManager; }
 
 			status_t			InitCheck() const;
 
@@ -53,7 +53,7 @@ public:
 private:
 			bool				_HasLayer(Layer* parent, Layer* child) const;
 
-			::CommandStack*		fCommandStack;
+			::EditManager*		fEditManager;
 			Layer*				fRootLayer;
 
 			ResourceList		fGlobalResources;

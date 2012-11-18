@@ -8,7 +8,7 @@
 
 #include "TransformViewState.h"
 
-class Command;
+class UndoableEdit;
 
 class DragStateViewState : public TransformViewState {
 public:
@@ -36,13 +36,13 @@ public:
 	// ViewState interface
 	virtual void				MouseDown(const MouseInfo& info);
 	virtual void				MouseMoved(const MouseInfo& info);
-	virtual Command*			MouseUp();
+	virtual UndoableEdit*			MouseUp();
 
 	virtual	bool				UpdateCursor();
 
 	// DragStateViewState
-	virtual	Command*			StartTransaction(const char* commandName);
-	virtual	Command*			FinishTransaction(Command* command);
+	virtual	UndoableEdit*			StartTransaction(const char* commandName);
+	virtual	UndoableEdit*			FinishTransaction(UndoableEdit* edit);
 
 	virtual	DragState*			DragStateFor(BPoint canvasWhere,
 									float zoomLevel) const = 0;
@@ -57,7 +57,7 @@ public:
 private:
 			DragState*			fCurrentState;
 			bool				fDragging;
-			Command*			fCurrentCommand;
+			UndoableEdit*			fCurrentCommand;
 };
 
 #endif // DRAG_STATE_VIEW_STATE_H

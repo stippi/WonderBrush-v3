@@ -2,14 +2,15 @@
 
 #include <new>
 
+#include <string.h>
+
 #include <Message.h>
 #include <MessageFilter.h>
 #include <Messenger.h>
 #include <Screen.h>
 #include <Window.h>
 
-#include "Command.h"
-#include "CommandStack.h"
+#include "EditManager.h"
 #include "RWLocker.h"
 #include "ViewState.h"
 
@@ -127,7 +128,7 @@ StateView::StateView(BRect frame, const char* name, uint32 resizingMode,
 	fMouseInfo(),
 	fLastMouseInfo(),
 
-	fCommandStack(NULL),
+	fEditManager(NULL),
 	fLocker(NULL),
 
 	fEventFilter(NULL),
@@ -149,7 +150,7 @@ StateView::StateView(const char* name, uint32 flags)
 	fMouseInfo(),
 	fLastMouseInfo(),
 
-	fCommandStack(NULL),
+	fEditManager(NULL),
 	fLocker(NULL),
 
 	fEventFilter(NULL),
@@ -204,9 +205,9 @@ StateView::MessageReceived(BMessage* message)
 		if (fLocker && !locker.IsLocked())
 			return;
 
-		Command* command = NULL;
-		if (fCurrentState->MessageReceived(message, &command)) {
-			PerformCommand(command);
+		UndoableEdit* edit = NULL;
+		if (fCurrentState->MessageReceived(message, &edit)) {
+			PerformEdit(edit);
 			return;
 		}
 	}
@@ -352,7 +353,7 @@ StateView::MouseUp(BPoint where)
 		return;
 
 	if (fDropAnticipatingState != NULL) {
-		PerformCommand(fDropAnticipatingState->MouseUp());
+		PerformEdit(fDropAnticipatingState->MouseUp());
 		fDropAnticipatingState->Cleanup();
 		fDropAnticipatingState = NULL;
 
@@ -360,7 +361,7 @@ StateView::MouseUp(BPoint where)
 			fCurrentState->MouseMoved(fMouseInfo);
 	} else {
 		if (fCurrentState != NULL) {
-			PerformCommand(fCurrentState->MouseUp());
+			PerformEdit(fCurrentState->MouseUp());
 			TriggerUpdate();
 		}
 	}
@@ -534,9 +535,9 @@ StateView::HandleKeyDown(const KeyEvent& event, BHandler* originalTarget)
 		return false;
 
 	if (fCurrentState != NULL) {
-		Command* command = NULL;
-		if (fCurrentState->HandleKeyDown(event, &command)) {
-			PerformCommand(command);
+		UndoableEdit* edit = NULL;
+		if (fCurrentState->HandleKeyDown(event, &edit)) {
+			PerformEdit(edit);
 			return true;
 		}
 	}
@@ -552,9 +553,9 @@ StateView::HandleKeyUp(const KeyEvent& event, BHandler* originalTarget)
 		return false;
 
 	if (fCurrentState != NULL) {
-		Command* command = NULL;
-		if (fCurrentState->HandleKeyUp(event, &command)) {
-			PerformCommand(command);
+		UndoableEdit* edit = NULL;
+		if (fCurrentState->HandleKeyUp(event, &edit)) {
+			PerformEdit(edit);
 			return true;
 		}
 	}
@@ -569,11 +570,11 @@ StateView::StateForDragMessage(const BMessage* message)
 	return NULL;
 }
 
-// SetCommandStack
+// SetEditManager
 void
-StateView::SetCommandStack(::CommandStack* stack)
+StateView::SetEditManager(::EditManager* stack)
 {
-	fCommandStack = stack;
+	fEditManager = stack;
 }
 
 // SetLocker
@@ -585,10 +586,10 @@ StateView::SetLocker(RWLocker* locker)
 
 // SetUpdateTarget
 void
-StateView::SetUpdateTarget(BHandler* target, uint32 command)
+StateView::SetUpdateTarget(BHandler* target, uint32 edit)
 {
 	fUpdateTarget = target;
-	fUpdateCommand = command;
+	fUpdateCommand = edit;
 }
 
 // SetCatchAllEvents
@@ -606,16 +607,22 @@ StateView::SetCatchAllEvents(bool catchAll)
 		_RemoveEventFilter();
 }
 
-// PerformCommand
+// PerformEdit
 status_t
-StateView::PerformCommand(Command* command)
+StateView::PerformEdit(UndoableEdit* edit)
 {
-	if (fCommandStack != NULL)
-		return fCommandStack->Perform(command);
+	if (edit != NULL)
+		return PerformEdit(UndoableEditRef(edit, true));
 
-	// if there is no command stack, then nobody
-	// else feels responsible...
-	delete command;
+	return B_BAD_VALUE;
+}
+
+// PerformEdit
+status_t
+StateView::PerformEdit(const UndoableEditRef& edit)
+{
+	if (fEditManager != NULL)
+		return fEditManager->Perform(edit);
 
 	return B_NO_INIT;
 }

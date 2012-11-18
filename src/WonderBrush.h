@@ -21,6 +21,7 @@ class Layer;
 class WonderBrushBase {
 public:
 								WonderBrushBase(BRect bounds);
+	virtual						~WonderBrushBase();
 
 protected:
 	virtual	void				NewWindow() = 0;

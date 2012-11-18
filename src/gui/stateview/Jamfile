@@ -4,6 +4,7 @@ SubDir TOP src gui stateview ;
 SubDirHdrs $(TOP) src gui stateview ;
 SubDirHdrs [ FDirName $(TOP) src platform $(WONDERBRUSH_PLATFORM) ] ;
 SubDirHdrs $(TOP) src support ;
+SubDirHdrs $(TOP) src edits base ;
 # </pe-inc>
 
 # <pe-src>

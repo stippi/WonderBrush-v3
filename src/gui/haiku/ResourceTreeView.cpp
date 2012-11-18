@@ -14,8 +14,8 @@
 #include "AutoDeleter.h"
 #include "Column.h"
 #include "ColumnTreeViewColors.h"
-#include "CommandStack.h"
-#include "RenameObjectCommand.h"
+#include "EditManager.h"
+#include "RenameObjectEdit.h"
 #include "TextViewPopup.h"
 
 using std::nothrow;
@@ -374,10 +374,10 @@ ResourceTreeView::_HandleRenameObject(BMessage* message)
 			InvalidateItem(item);
 		}
 	} else {
-		// rename via command
-		RenameObjectCommand* command = new (nothrow) RenameObjectCommand(object,
+		// rename via edit
+		RenameObjectEdit* edit = new (nothrow) RenameObjectEdit(object,
 			name);
-		fDocument->CommandStack()->Perform(command);
+		fDocument->EditManager()->Perform(edit);
 	}
 	object->RemoveReference();
 

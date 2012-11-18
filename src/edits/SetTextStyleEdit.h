@@ -2,21 +2,21 @@
  * Copyright 2012, Stephan Aßmus <superstippi@gmx.de>.
  * All rights reserved. Distributed under the terms of the MIT License.
  */
-#ifndef SET_TEXT_STYLE_COMMAND_H
-#define SET_TEXT_STYLE_COMMAND_H
+#ifndef SET_TEXT_STYLE_EDIT_H
+#define SET_TEXT_STYLE_EDIT_H
 
 #include <String.h>
 
-#include "Command.h"
+#include "UndoableEdit.h"
 #include "StyleRun.h"
 #include "StyleRunList.h"
 #include "Text.h"
 
-class SetTextStyleCommand : public Command {
+class SetTextStyleEdit : public UndoableEdit {
 public:
-	SetTextStyleCommand(Text* text, int32 textOffset, int32 length,
+	SetTextStyleEdit(Text* text, int32 textOffset, int32 length,
 		const rgb_color& color)
-		: Command()
+		: UndoableEdit()
 		, fCommandName("Change text color")
 	{
 		_Init(text, textOffset, length);
@@ -64,9 +64,9 @@ public:
 		}
 	}
 
-	SetTextStyleCommand(Text* text, int32 textOffset, int32 length,
+	SetTextStyleEdit(Text* text, int32 textOffset, int32 length,
 		double fontSize)
-		: Command()
+		: UndoableEdit()
 		, fCommandName("Change text size")
 	{
 		_Init(text, textOffset, length);
@@ -103,9 +103,9 @@ public:
 		}
 	}
 
-	SetTextStyleCommand(Text* text, int32 textOffset, int32 length,
+	SetTextStyleEdit(Text* text, int32 textOffset, int32 length,
 		const char* family, const char* style)
-		: Command()
+		: UndoableEdit()
 		, fCommandName("Change text font")
 	{
 		_Init(text, textOffset, length);
@@ -141,7 +141,7 @@ public:
 		}
 	}
 
-	virtual ~SetTextStyleCommand()
+	virtual ~SetTextStyleEdit()
 	{
 		delete fOldStyles;
 		delete fNewStyles;
@@ -171,10 +171,10 @@ public:
 		name << fCommandName;
 	}
 
-	virtual	bool CombineWithNext(const Command* _next)
+	virtual	bool CombineWithNext(const UndoableEdit* _next)
 	{
-		const SetTextStyleCommand* next
-			= dynamic_cast<const SetTextStyleCommand*>(_next);
+		const SetTextStyleEdit* next
+			= dynamic_cast<const SetTextStyleEdit*>(_next);
 
 		if (next == NULL || next->fText != fText
 			|| next->fTimeStamp - fTimeStamp > 500000
@@ -214,4 +214,4 @@ private:
 			BString				fCommandName;
 };
 
-#endif // SET_TEXT_STYLE_COMMAND_H
+#endif // SET_TEXT_STYLE_EDIT_H

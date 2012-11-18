@@ -25,10 +25,10 @@ public:
 
 	// ViewState interface
 	virtual	bool				MessageReceived(BMessage* message,
-									Command** _command);
+									UndoableEdit** _edit);
 	virtual void				MouseDown(const MouseInfo& info);
 	virtual void				MouseMoved(const MouseInfo& info);
-	virtual Command*			MouseUp();
+	virtual UndoableEdit*		MouseUp();
 
 	virtual void				Draw(PlatformDrawContext& drawContext);
 

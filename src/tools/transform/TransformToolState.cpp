@@ -13,13 +13,12 @@
 
 #include <agg_math.h>
 
-#include "ChangeAreaCommand.h"
-#include "CommandStack.h"
+#include "EditManager.h"
 #include "cursors.h"
 #include "Document.h"
 #include "Layer.h"
 #include "Rect.h"
-#include "TransformObjectCommand.h"
+#include "TransformObjectEdit.h"
 #include "Shape.h"
 #include "support.h"
 
@@ -641,13 +640,13 @@ TransformToolState::Cleanup()
 
 // MessageReceived
 bool
-TransformToolState::MessageReceived(BMessage* message, Command** _command)
+TransformToolState::MessageReceived(BMessage* message, UndoableEdit** _edit)
 {
 	bool handled = true;
 
 	switch (message->what) {
 		default:
-			handled = ViewState::MessageReceived(message, _command);
+			handled = ViewState::MessageReceived(message, _edit);
 	}
 
 	return handled;
@@ -702,7 +701,7 @@ TransformToolState::Bounds() const
 // #pragma mark -
 
 // StartTransaction
-Command*
+UndoableEdit*
 TransformToolState::StartTransaction(const char* commandName)
 {
 	return NULL;
@@ -1050,7 +1049,7 @@ TransformToolState::UpdateAdditionalTransformation()
 	transform.TranslateBy(Translation());
 
 	if (fObject != NULL && fDocument->WriteLock()) {
-		// TODO: Use Command!
+		// TODO: Use UndoableEdit!
 		// TODO: There will be two different code paths to transform objects.
 		// In the first case, we may transform multiple objects and use their
 		// global bounding box, and generally operate in global coordinate
@@ -1104,7 +1103,7 @@ TransformToolState::UpdateAdditionalTransformation()
 		newTransformation.MultiplyInverse(fParentGlobalTransformation);
 
 		fIgnoreObjectEvents = true;
-		View()->PerformCommand(new(std::nothrow) TransformObjectCommand(
+		View()->PerformEdit(new(std::nothrow) TransformObjectEdit(
 			fObject, newTransformation));
 		fIgnoreObjectEvents = false;
 

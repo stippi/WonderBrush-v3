@@ -3,7 +3,8 @@ SubDir TOP src ;
 # source directories
 local sourceDirs =
 #	alm
-	commands
+	edits
+	edits/base
 	gui
 	gui/$(WONDERBRUSH_PLATFORM)
 	gui/misc
@@ -22,7 +23,6 @@ local sourceDirs =
 	support
 	tools
 	tools/brush
-	tools/pick
 	tools/text
 	tools/transform
 ;
@@ -48,7 +48,8 @@ for sysIncludeDir in $(sysIncludeDirs) {
 
 # <pe-inc>
 SubDirHdrs [ FDirName $(TOP) src columntreeview ] ;
-SubDirHdrs [ FDirName $(TOP) src commands ] ;
+SubDirHdrs [ FDirName $(TOP) src edits ] ;
+SubDirHdrs [ FDirName $(TOP) src edits base ] ;
 SubDirHdrs [ FDirName $(TOP) src gui ] ;
 SubDirHdrs [ FDirName $(TOP) src gui colorpicker ] ;
 SubDirHdrs [ FDirName $(TOP) src gui columntreeview ] ;
@@ -76,8 +77,6 @@ SubDirHdrs [ FDirName $(TOP) src render ] ;
 SubDirHdrs [ FDirName $(TOP) src support ] ;
 SubDirHdrs [ FDirName $(TOP) src tools ] ;
 SubDirHdrs [ FDirName $(TOP) src tools brush ] ;
-SubDirHdrs [ FDirName $(TOP) src tools pick ] ;
-SubDirHdrs [ FDirName $(TOP) src tools pick $(WONDERBRUSH_PLATFORM) ] ;
 SubDirHdrs [ FDirName $(TOP) src tools text $(WONDERBRUSH_PLATFORM) ] ;
 SubDirHdrs [ FDirName $(TOP) src tools transform ] ;
 SubDirHdrs [ FDirName $(TOP) src tools transform $(WONDERBRUSH_PLATFORM) ] ;
@@ -97,11 +96,14 @@ Application WonderBrush :
 #	ALMSpan.cpp
 #	ALMTab.cpp
 
-	# commands
-	AddObjectsCommand.cpp
-	MoveObjectsCommand.cpp
-	ObjectAddedCommand.cpp
-	SetPropertiesCommand.cpp
+	# edits/base
+	CompoundEdit.cpp
+	EditManager.cpp
+	EditStack.cpp
+	UndoableEdit.cpp
+
+	# edits
+	MoveObjectsEdit.cpp
 
 	# gui/misc
 	InputTextView.cpp
@@ -210,9 +212,6 @@ Application WonderBrush :
 	# support
 	AbstractLOAdapter.cpp
 	bitmap_support.cpp
-	Command.cpp
-	CommandStack.cpp
-	CompoundCommand.cpp
 	Debug.cpp
 	HashString.cpp
 	Listener.cpp
@@ -235,10 +234,6 @@ Application WonderBrush :
 	# tools/brush
 	BrushTool.cpp
 	BrushToolState.cpp
-
-	# tools/pick
-	PickTool.cpp
-	PickToolState.cpp
 
 	# tools/text
 	TextTool.cpp

@@ -3,7 +3,7 @@
  * All rights reserved.
  */
 
-#include "MoveObjectsCommand.h"
+#include "MoveObjectsEdit.h"
 
 #include <new>
 
@@ -12,10 +12,10 @@
 #include "Layer.h"
 
 // constructor
-MoveObjectsCommand::MoveObjectsCommand(Object** objects,
+MoveObjectsEdit::MoveObjectsEdit(Object** objects,
 		int32 objectCount, Layer* insertionLayer, int32 insertionIndex,
 		Selection* selection)
-	: Command()
+	: UndoableEdit()
 	, fObjects(objects)
 	, fObjectCount(objectCount)
 
@@ -26,7 +26,7 @@ MoveObjectsCommand::MoveObjectsCommand(Object** objects,
 
 	, fSelection(selection)
 {
-//printf("MoveObjectsCommand::MoveObjectsCommand(%ld, %p, %ld)\n",
+//printf("MoveObjectsEdit::MoveObjectsEdit(%ld, %p, %ld)\n",
 //	objectCount, insertionLayer, insertionIndex);
 
 	if (fInsertionLayer != NULL)
@@ -74,7 +74,7 @@ MoveObjectsCommand::MoveObjectsCommand(Object** objects,
 }
 
 // destructor
-MoveObjectsCommand::~MoveObjectsCommand()
+MoveObjectsEdit::~MoveObjectsEdit()
 {
 	if (fObjects != NULL) {
 		for (int32 i = 0; i < fObjectCount; i++)
@@ -90,7 +90,7 @@ MoveObjectsCommand::~MoveObjectsCommand()
 
 // InitCheck
 status_t
-MoveObjectsCommand::InitCheck()
+MoveObjectsEdit::InitCheck()
 {
 	if (fObjects == NULL || fOldPositions == NULL || fObjectCount <= 0
 		|| fInsertionLayer == NULL) {
@@ -105,7 +105,7 @@ MoveObjectsCommand::InitCheck()
 		newPositions[i].index = index++;
 	}
 	if (memcmp(newPositions, fOldPositions, sizeof(newPositions)) == 0) {
-//printf("MoveObjectsCommand::InitCheck(): no changes!\n");
+//printf("MoveObjectsEdit::InitCheck(): no changes!\n");
 		return B_BAD_VALUE;
 	}
 
@@ -113,14 +113,14 @@ MoveObjectsCommand::InitCheck()
 	// or to itself.
 	for (int32 i = 0; i < fObjectCount; i++) {
 		if (fObjects[i] == fInsertionLayer) {
-//printf("MoveObjectsCommand::InitCheck(): Cannot add layer to itself!\n");
+//printf("MoveObjectsEdit::InitCheck(): Cannot add layer to itself!\n");
 			return B_BAD_VALUE;
 		}
 		Layer* layer = dynamic_cast<Layer*>(fObjects[i]);
 		if (layer == NULL)
 			continue;
 		if (_ObjectIsDistantChildOf(fInsertionLayer, layer)) {
-//printf("MoveObjectsCommand::InitCheck(): Cannot add layer to one of it's "
+//printf("MoveObjectsEdit::InitCheck(): Cannot add layer to one of it's "
 //	"sub-layers!\n");
 			return B_BAD_VALUE;
 		}
@@ -131,7 +131,7 @@ MoveObjectsCommand::InitCheck()
 
 // Perform
 status_t
-MoveObjectsCommand::Perform()
+MoveObjectsEdit::Perform()
 {
 	fInsertionLayer->SuspendUpdates(true);
 
@@ -164,7 +164,7 @@ MoveObjectsCommand::Perform()
 
 // Undo
 status_t
-MoveObjectsCommand::Undo()
+MoveObjectsEdit::Undo()
 {
 	fInsertionLayer->SuspendUpdates(true);
 
@@ -194,7 +194,7 @@ MoveObjectsCommand::Undo()
 
 // GetName
 void
-MoveObjectsCommand::GetName(BString& name)
+MoveObjectsEdit::GetName(BString& name)
 {
 	if (fObjectCount > 1)
 		name << "Move objects";
@@ -206,7 +206,7 @@ MoveObjectsCommand::GetName(BString& name)
 
 // _ObjectIsDistantChildOf
 bool
-MoveObjectsCommand::_ObjectIsDistantChildOf(const Object* object,
+MoveObjectsEdit::_ObjectIsDistantChildOf(const Object* object,
 	const Layer* layer) const
 {
 	int32 count = layer->CountObjects();
@@ -217,7 +217,7 @@ MoveObjectsCommand::_ObjectIsDistantChildOf(const Object* object,
 		const Layer* subLayer = dynamic_cast<const Layer*>(child);
 		if (subLayer != NULL && _ObjectIsDistantChildOf(object, subLayer))
 			return true;
-			
+
 	}
 	return false;
 }

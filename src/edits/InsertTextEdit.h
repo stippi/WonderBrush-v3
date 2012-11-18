@@ -2,21 +2,21 @@
  * Copyright 2012, Stephan Aßmus <superstippi@gmx.de>.
  * All rights reserved. Distributed under the terms of the MIT License.
  */
-#ifndef INSERT_TEXT_COMMAND_H
-#define INSERT_TEXT_COMMAND_H
+#ifndef INSERT_TEXT_EDIT_H
+#define INSERT_TEXT_EDIT_H
 
 #include <String.h>
 
-#include "Command.h"
+#include "UndoableEdit.h"
 #include "Font.h"
 #include "Style.h"
 #include "Text.h"
 
-class InsertTextCommand : public Command {
+class InsertTextEdit : public UndoableEdit {
 public:
-	InsertTextCommand(Text* text, int32 textOffset, const char* utf8String,
+	InsertTextEdit(Text* text, int32 textOffset, const char* utf8String,
 		const Font& font, const StyleRef& style)
-		: Command()
+		: UndoableEdit()
 		, fText(text)
 		, fOffset(textOffset)
 		, fString(utf8String)
@@ -25,7 +25,7 @@ public:
 	{
 	}
 
-	virtual ~InsertTextCommand()
+	virtual ~InsertTextEdit()
 	{
 	}
 
@@ -53,10 +53,10 @@ public:
 		name << "Insert text";
 	}
 
-	virtual	bool CombineWithNext(const Command* _next)
+	virtual	bool CombineWithNext(const UndoableEdit* _next)
 	{
-		const InsertTextCommand* next
-			= dynamic_cast<const InsertTextCommand*>(_next);
+		const InsertTextEdit* next
+			= dynamic_cast<const InsertTextEdit*>(_next);
 
 		if (next == NULL || next->fText != fText
 			|| next->fString == " " || next->fString == "\n"
@@ -81,4 +81,4 @@ private:
 			StyleRef			fStyleRef;
 };
 
-#endif // INSERT_TEXT_COMMAND_H
+#endif // INSERT_TEXT_EDIT_H

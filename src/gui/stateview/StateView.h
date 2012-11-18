@@ -5,10 +5,10 @@
 #include <View.h>
 
 #include "PlatformViewMixin.h"
+#include "UndoableEdit.h"
 
 class BMessageFilter;
-class Command;
-class CommandStack;
+class EditManager;
 class RWLocker;
 class ViewState;
 
@@ -92,16 +92,17 @@ public:
 			RWLocker*			Locker() const
 									{ return fLocker; }
 
-			void				SetCommandStack(::CommandStack* stack);
-			::CommandStack*		CommandStack() const
-									{ return fCommandStack; }
+			void				SetEditManager(::EditManager* manager);
+			::EditManager*		EditManager() const
+									{ return fEditManager; }
 
 			void				SetUpdateTarget(BHandler* target,
-												uint32 command);
+									uint32 command);
 
 			void				SetCatchAllEvents(bool catchAll);
 
-			status_t			PerformCommand(Command* command);
+			status_t			PerformEdit(UndoableEdit* edit);
+			status_t			PerformEdit(const UndoableEditRef& edit);
 
 			void				TriggerUpdate();
 
@@ -127,7 +128,7 @@ protected:
 			::MouseInfo			fMouseInfo;
 			::MouseInfo			fLastMouseInfo;
 
-			::CommandStack*		fCommandStack;
+			::EditManager*		fEditManager;
 			RWLocker*			fLocker;
 
 			BMessageFilter*		fEventFilter;

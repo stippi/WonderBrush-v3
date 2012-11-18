@@ -12,11 +12,11 @@
 #include <agg_math.h>
 
 #include "BrushStroke.h"
-#include "CommandStack.h"
+#include "EditManager.h"
 #include "CurrentColor.h"
 #include "Document.h"
 #include "Layer.h"
-#include "ObjectAddedCommand.h"
+#include "ObjectAddedEdit.h"
 #include "support.h"
 
 // constructor
@@ -44,7 +44,7 @@ BrushToolState::~BrushToolState()
 
 // MessageReceived
 bool
-BrushToolState::MessageReceived(BMessage* message, Command** _command)
+BrushToolState::MessageReceived(BMessage* message, UndoableEdit** _command)
 {
 	bool handled = true;
 
@@ -125,19 +125,19 @@ BrushToolState::MouseMoved(const MouseInfo& info)
 }
 
 // MouseUp
-Command*
+UndoableEdit*
 BrushToolState::MouseUp()
 {
 	if (fBrushStroke == NULL)
 		return NULL;
 
-	Command* command = new(std::nothrow) ObjectAddedCommand(fBrushStroke,
+	UndoableEdit* edit = new(std::nothrow) ObjectAddedEdit(fBrushStroke,
 		fSelection);
 
 	fBrushStroke->RemoveReference();
 	fBrushStroke = NULL;
 
-	return command;
+	return edit;
 }
 
 // Draw

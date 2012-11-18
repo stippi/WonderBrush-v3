@@ -3,22 +3,22 @@
  * All rights reserved.
  */
 
-#ifndef ADD_OBJECTS_COMMAND_H
-#define ADD_OBJECTS_COMMAND_H
+#ifndef MOVE_OBJECTS_EDIT_H
+#define MOVE_OBJECTS_EDIT_H
 
-#include "Command.h"
+#include "UndoableEdit.h"
 #include "Selection.h"
 
 class Layer;
 class Object;
 
-class AddObjectsCommand : public Command, public Selection::Controller {
+class MoveObjectsEdit : public UndoableEdit, public Selection::Controller {
 public:
-								AddObjectsCommand(Object** objects,
+								MoveObjectsEdit(Object** objects,
 									int32 objectCount, Layer* insertionLayer,
 									int32 insertionIndex,
 									Selection* selection);
-	virtual						~AddObjectsCommand();
+	virtual						~MoveObjectsEdit();
 
 	virtual	status_t			InitCheck();
 
@@ -28,13 +28,23 @@ public:
 	virtual void				GetName(BString& name);
 
 private:
+			bool				_ObjectIsDistantChildOf(const Object* object,
+									const Layer* layer) const;
+
+private:
 			Object**			fObjects;
 			int32				fObjectCount;
-		
+
+			struct PositionInfo {
+				Layer*			parent;
+				int32			index;
+			};
+			PositionInfo*		fOldPositions;
+
 			Layer*				fInsertionLayer;
 			int32				fInsertionIndex;
-		
+
 			Selection*			fSelection;
 };
 
-#endif // ADD_OBJECTS_COMMAND_H
+#endif // MOVE_OBJECTS_EDIT_H

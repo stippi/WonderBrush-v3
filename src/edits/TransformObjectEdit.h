@@ -2,26 +2,26 @@
  * Copyright 2012, Stephan Aßmus <superstippi@gmx.de>.
  * All rights reserved. Distributed under the terms of the MIT License.
  */
-#ifndef TRANSFORM_OBJECT_COMMAND_H
-#define TRANSFORM_OBJECT_COMMAND_H
+#ifndef TRANSFORM_OBJECT_EDIT_H
+#define TRANSFORM_OBJECT_EDIT_H
 
 #include <Rect.h>
 
-#include "Command.h"
 #include "Object.h"
+#include "UndoableEdit.h"
 
-class TransformObjectCommand : public Command {
+class TransformObjectEdit : public UndoableEdit {
  public:
-	TransformObjectCommand(Object* object,
+	TransformObjectEdit(Object* object,
 		const Transformable& newTransformation)
-		: Command()
+		: UndoableEdit()
 		, fObject(object)
 		, fTransformation(newTransformation)
 	{
 		fObject->AddReference();
 	}
-	
-	virtual ~TransformObjectCommand()
+
+	virtual ~TransformObjectEdit()
 	{
 		fObject->RemoveReference();
 	}
@@ -36,7 +36,7 @@ class TransformObjectCommand : public Command {
 		Transformable previousTransformation = *fObject;
 		fObject->SetTransformable(fTransformation);
 		fTransformation = previousTransformation;
-	
+
 		return B_OK;
 	}
 
@@ -50,18 +50,18 @@ class TransformObjectCommand : public Command {
 		name << "Change transformation";
 	}
 
-	virtual	bool CombineWithNext(const Command* _next)
+	virtual	bool CombineWithNext(const UndoableEdit* _next)
 	{
-		const TransformObjectCommand* next
-			= dynamic_cast<const TransformObjectCommand*>(_next);
-	
+		const TransformObjectEdit* next
+			= dynamic_cast<const TransformObjectEdit*>(_next);
+
 		if (next == NULL || next->fObject != fObject
 			|| next->fTimeStamp - fTimeStamp > 500000) {
 			return false;
 		}
-	
+
 		fTimeStamp = next->fTimeStamp;
-	
+
 		return true;
 	}
 
@@ -70,4 +70,4 @@ class TransformObjectCommand : public Command {
 			Transformable		fTransformation;
 };
 
-#endif // TRANSFORM_OBJECT_COMMAND_H
+#endif // TRANSFORM_OBJECT_EDIT_H

@@ -2,22 +2,22 @@
  * Copyright 2009, Stephan Aßmus <superstippi@gmx.de>.
  * All rights reserved.
  */
-#ifndef RENAME_OBJECT_ACTION_H
-#define RENAME_OBJECT_ACTION_H
+#ifndef RENAME_OBJECT_EDIT_H
+#define RENAME_OBJECT_EDIT_H
 
 #include "BaseObject.h"
-#include "Command.h"
+#include "UndoableEdit.h"
 
-class RenameObjectCommand : public Command {
+class RenameObjectEdit : public UndoableEdit {
 public:
-	RenameObjectCommand(BaseObject* object, const char* newName)
-		: Command()
+	RenameObjectEdit(BaseObject* object, const char* newName)
+		: UndoableEdit()
 		, fObject(object)
 		, fNextName(newName)
 	{
 	}
 
-	virtual ~RenameObjectCommand()
+	virtual ~RenameObjectEdit()
 	{
 	}
 
@@ -31,7 +31,7 @@ public:
 		BString oldName = fObject->Name();
 		fObject->SetName(fNextName.String());
 		fNextName = oldName;
-	
+
 		return B_OK;
 	}
 
@@ -50,4 +50,4 @@ private:
 			BString				fNextName;
 };
 
-#endif // RENAME_OBJECT_ACTION_H
+#endif // RENAME_OBJECT_EDIT_H

@@ -62,7 +62,7 @@ ViewState::Draw(PlatformDrawContext& drawContext)
 
 // MessageReceived
 bool
-ViewState::MessageReceived(BMessage* message, Command** _command)
+ViewState::MessageReceived(BMessage* message, UndoableEdit** _edit)
 {
 	return false;
 }
@@ -82,7 +82,7 @@ ViewState::MouseMoved(const MouseInfo& info)
 }
 
 // MouseUp
-Command*
+UndoableEdit*
 ViewState::MouseUp()
 {
 	return NULL;
@@ -99,7 +99,7 @@ ViewState::ModifiersChanged(uint32 modifiers)
 // HandleKeyDown
 bool
 ViewState::HandleKeyDown(const StateView::KeyEvent& event,
-						 Command** _command)
+						 UndoableEdit** _edit)
 {
 	return false;
 }
@@ -107,7 +107,7 @@ ViewState::HandleKeyDown(const StateView::KeyEvent& event,
 // HandleKeyUp
 bool
 ViewState::HandleKeyUp(const StateView::KeyEvent& event,
-					   Command** _command)
+					   UndoableEdit** _edit)
 {
 	return false;
 }

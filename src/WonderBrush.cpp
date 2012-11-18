@@ -151,6 +151,12 @@ WonderBrushBase::WonderBrushBase(BRect bounds)
 }
 
 
+WonderBrushBase::~WonderBrushBase()
+{
+	delete fDocument;
+}
+
+
 // #pragma mark - WonderBrush
 
 

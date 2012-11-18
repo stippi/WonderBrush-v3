@@ -22,21 +22,20 @@
 
 #include "BrushTool.h"
 #include "CanvasView.h"
-#include "CommandStack.h"
-#include "CompoundCommand.h"
+#include "CompoundEdit.h"
 #include "DefaultColumnTreeModel.h"
 #include "Document.h"
+#include "EditManager.h"
 #include "IconButton.h"
 #include "IconOptionsControl.h"
 #include "InspectorView.h"
 //#include "LayerTreeModel.h"
 #include "NavigatorView.h"
-#include "ObjectAddedCommand.h"
+#include "ObjectAddedEdit.h"
 #include "ObjectTreeView.h"
-#include "PickTool.h"
 #include "TextTool.h"
 #include "ToolConfigView.h"
-#include "TransformObjectCommand.h"
+#include "TransformObjectEdit.h"
 #include "TransformTool.h"
 #include "RenderManager.h"
 #include "ResourceTreeView.h"
@@ -60,7 +59,7 @@ Window::Window(BRect frame, const char* title, Document* document,
 		B_ASYNCHRONOUS_CONTROLS | B_AUTO_UPDATE_SIZE_LIMITS)
 	, fDocument(document)
 	, fRenderManager(NULL)
-	, fCommandStackListener(this)
+	, fEditManagerListener(this)
 //	, fLayerTreeModel(new LayerTreeModel(fDocument))
 {
 	// TODO: fix for when document == NULL
@@ -230,7 +229,7 @@ exportButton->SetEnabled(false);
 
 	fInspectorView = new InspectorView();
 	fInspectorView->SetMenu(fPropertyMenu);
-	fInspectorView->SetCommandStack(fDocument->CommandStack());
+	fInspectorView->SetEditManager(fDocument->EditManager());
 	fInspectorView->SetSelection(&fSelection);
 
 	ScrollView* inspectorScrollView = new ScrollView(fInspectorView,
@@ -320,10 +319,10 @@ exportButton->SetEnabled(false);
 
 	_InitTools();
 
-	fView->SetCommandStack(fDocument->CommandStack());
+	fView->SetEditManager(fDocument->EditManager());
 
-	fDocument->CommandStack()->AddListener(&fCommandStackListener);
-	_ObjectChanged(fDocument->CommandStack());
+	fDocument->EditManager()->AddListener(&fEditManagerListener);
+	_ObjectChanged(fDocument->EditManager());
 
 	AddShortcut('Z', B_COMMAND_KEY, new BMessage(MSG_UNDO));
 	AddShortcut('Z', B_COMMAND_KEY | B_SHIFT_KEY, new BMessage(MSG_REDO));
@@ -332,7 +331,7 @@ exportButton->SetEnabled(false);
 // destructor
 Window::~Window()
 {
-	fDocument->CommandStack()->RemoveListener(&fCommandStackListener);
+	fDocument->EditManager()->RemoveListener(&fEditManagerListener);
 	delete fRenderManager;
 //	delete fLayerTreeModel;
 
@@ -349,10 +348,10 @@ Window::MessageReceived(BMessage* message)
 {
 	switch (message->what) {
 		case MSG_UNDO:
-			fDocument->CommandStack()->Undo();
+			fDocument->EditManager()->Undo();
 			break;
 		case MSG_REDO:
-			fDocument->CommandStack()->Redo();
+			fDocument->EditManager()->Redo();
 			break;
 
 		case MSG_OBJECT_CHANGED:
@@ -506,7 +505,6 @@ void
 Window::_InitTools()
 {
 	// create canvas tools
-//	AddTool(new(std::nothrow) PickTool());
 	AddTool(new(std::nothrow) TransformTool());
 	AddTool(new(std::nothrow) BrushTool());
 	AddTool(new(std::nothrow) TextTool());
@@ -519,10 +517,10 @@ Window::_ObjectChanged(const Notifier* object)
 	if (fDocument == NULL)
 		return;
 
-	if (object == fDocument->CommandStack()) {
+	if (object == fDocument->EditManager()) {
 		// relable Undo item and update enabled status
 		BString label("Undo");
-		fUndoMI->SetEnabled(fDocument->CommandStack()->GetUndoName(label));
+		fUndoMI->SetEnabled(fDocument->EditManager()->GetUndoName(label));
 		fUndoIcon->SetEnabled(fUndoMI->IsEnabled());
 		if (fUndoMI->IsEnabled())
 			fUndoMI->SetLabel(label.String());
@@ -531,7 +529,7 @@ Window::_ObjectChanged(const Notifier* object)
 
 		// relable Redo item and update enabled status
 		label.SetTo("Redo");
-		fRedoMI->SetEnabled(fDocument->CommandStack()->GetRedoName(label));
+		fRedoMI->SetEnabled(fDocument->EditManager()->GetRedoName(label));
 		fRedoIcon->SetEnabled(fRedoMI->IsEnabled());
 		if (fRedoMI->IsEnabled())
 			fRedoMI->SetLabel(label.String());
@@ -602,8 +600,8 @@ Window::_AddLayer()
 	}
 
 	fSelection.DeselectAll(fLayerTreeView);
-	fDocument->CommandStack()->Perform(new(std::nothrow) ObjectAddedCommand(
-		newLayer, &fSelection));
+	fDocument->EditManager()->Perform(
+		new(std::nothrow) ObjectAddedEdit(newLayer, &fSelection));
 }
 
 // _ResetTransformation
@@ -622,48 +620,32 @@ Window::_ResetTransformation()
 		return;
 	}
 
-	int32 selectionCount = fSelection.CountSelected();
+	CompoundEdit* compoundEdit = new(std::nothrow) CompoundEdit(
+		"Reset transformation");
 
-	Command** commands = new(std::nothrow) Command*[selectionCount];
-	if (commands == NULL) {
+	if (compoundEdit == NULL) {
 		fprintf(stderr, "Window::_ResetTransformation(): No memory.\n");
 		return;
 	}
 
-	int32 objectCount = 0;
 	Transformable identityTransform;
 
+	int32 selectionCount = fSelection.CountSelected();
 	for (int32 i = 0; i < selectionCount; i++) {
 		const Selectable& selectable = fSelection.SelectableAt(i);
 		Object* object = dynamic_cast<Object*>(selectable.Get());
 		if (object == NULL)
 			continue;
 
-		commands[objectCount] = new(std::nothrow) TransformObjectCommand(
+		TransformObjectEdit* edit = new(std::nothrow) TransformObjectEdit(
 			object, identityTransform);
-		if (commands[objectCount] == NULL) {
-			// Roll back
-			for (int32 j = 0; j < objectCount; j++)
-				delete commands[j];
-			delete[] commands;
+
+		if (edit == NULL
+			|| !compoundEdit->AppendEdit(UndoableEditRef(edit, true))) {
 			fprintf(stderr, "Window::_ResetTransformation(): No memory.\n");
 			return;
 		}
-		objectCount++;
 	}
 
-	CompoundCommand* compoundCommand = new(std::nothrow) CompoundCommand(
-		commands, objectCount, "Reset transformation", -1);
-
-	if (compoundCommand == NULL) {
-		// Roll back
-		// TODO: Code duplication
-		for (int32 j = 0; j < objectCount; j++)
-			delete commands[j];
-		delete[] commands;
-		fprintf(stderr, "Window::_ResetTransformation(): No memory.\n");
-		return;
-	}
-
-	fDocument->CommandStack()->Perform(compoundCommand);
+	fDocument->EditManager()->Perform(UndoableEditRef(compoundEdit, true));
 }

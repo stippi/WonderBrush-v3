@@ -17,17 +17,17 @@
 
 #include <agg_math.h>
 
-#include "CommandStack.h"
-#include "CompoundCommand.h"
+#include "EditManager.h"
+#include "CompoundEdit.h"
 #include "CurrentColor.h"
 #include "Document.h"
 #include "FontCache.h"
-#include "InsertTextCommand.h"
+#include "InsertTextEdit.h"
 #include "Layer.h"
-#include "ObjectAddedCommand.h"
-#include "RemoveTextCommand.h"
+#include "ObjectAddedEdit.h"
+#include "RemoveTextEdit.h"
 #include "support.h"
-#include "SetTextStyleCommand.h"
+#include "SetTextStyleEdit.h"
 #include "Text.h"
 #include "ui_defines.h"
 
@@ -343,7 +343,7 @@ TextToolState::Cleanup()
 
 // MessageReceived
 bool
-TextToolState::MessageReceived(BMessage* message, Command** _command)
+TextToolState::MessageReceived(BMessage* message, UndoableEdit** _command)
 {
 	bool handled = true;
 
@@ -371,7 +371,7 @@ TextToolState::ModifiersChanged(uint32 modifiers)
 // HandleKeyDown
 bool
 TextToolState::HandleKeyDown(const StateView::KeyEvent& event,
-	Command** _command)
+	UndoableEdit** _command)
 {
 	if (fText != NULL) {
 		*_command = NULL;
@@ -472,7 +472,7 @@ TextToolState::HandleKeyDown(const StateView::KeyEvent& event,
 // HandleKeyUp
 bool
 TextToolState::HandleKeyUp(const StateView::KeyEvent& event,
-	Command** _command)
+	UndoableEdit** _command)
 {
 	return DragStateViewState::HandleKeyUp(event, _command);
 }
@@ -515,7 +515,7 @@ TextToolState::Bounds() const
 // #pragma mark -
 
 // StartTransaction
-Command*
+UndoableEdit*
 TextToolState::StartTransaction(const char* commandName)
 {
 	return NULL;
@@ -661,7 +661,7 @@ TextToolState::CreateText(BPoint canvasLocation)
 	if (fInsertionIndex > fInsertionLayer->CountObjects())
 		fInsertionIndex = fInsertionLayer->CountObjects();
 
-	// TODO: Use Command
+	// TODO: Use UndoableEdit
 	if (!fInsertionLayer->AddObject(text, fInsertionIndex)) {
 		fprintf(stderr, "TextToolState::CreateText(): Failed to add "
 			"Text to Layer. Out of memory\n");
@@ -675,7 +675,7 @@ TextToolState::CreateText(BPoint canvasLocation)
 
 	// Our reference to this object was transferred to the Layer
 
-	View()->PerformCommand(new(std::nothrow) ObjectAddedCommand(text,
+	View()->PerformEdit(new(std::nothrow) ObjectAddedEdit(text,
 		fSelection));
 
 
@@ -737,33 +737,36 @@ TextToolState::Insert(int32 textOffset, const char* text,
 	bool setCaretOffset)
 {
 	if (fText != NULL) {
-		Command** commands = NULL;
+		CompoundEdit* compoundEdit = NULL;
 
 		if (setCaretOffset && _HasSelection()) {
-			commands = new Command*[2];
 			int32 start = _SelectionStart();
-			commands[0] = new(std::nothrow) RemoveTextCommand(
-				fText, start, _SelectionLength()
-			);
+			UndoableEditRef removeEdit(new(std::nothrow) RemoveTextEdit(
+				fText, start, _SelectionLength()), true);
+			if (removeEdit.Get() == NULL)
+				return;
+
+			compoundEdit = new(std::nothrow) CompoundEdit("Insert text");
+			if (compoundEdit == NULL)
+				return;
+
+			compoundEdit->AppendEdit(removeEdit);
+
 			textOffset = start;
 		}
 
-		Command* insertCommand = new(std::nothrow) InsertTextCommand(
-			fText, textOffset, text, Font(fFontFamily, fFontStyle, fSize),
-			fStyle
-		);
+		UndoableEditRef insertEdit(
+			new(std::nothrow) InsertTextEdit(
+				fText, textOffset, text, Font(fFontFamily, fFontStyle, fSize),
+				fStyle),
+			true);
 
-		Command* performCommand;
-		if (commands != NULL) {
-			commands[1] = insertCommand;
-			performCommand = new(std::nothrow) CompoundCommand(
-				commands, 2, "Insert text", -1
-			);
+		if (compoundEdit != NULL) {
+			compoundEdit->AppendEdit(insertEdit);
+			View()->PerformEdit(compoundEdit);
 		} else {
-			performCommand = insertCommand;
+			View()->PerformEdit(insertEdit);
 		}
-
-		View()->PerformCommand(performCommand);
 
 		if (setCaretOffset) {
 			_SetCaretOffset(textOffset + BString(text).CountChars(), true,
@@ -780,8 +783,8 @@ void
 TextToolState::Remove(int32 textOffset, int32 length, bool setCaretOffset)
 {
 	if (fText != NULL) {
-		View()->PerformCommand(
-			new(std::nothrow) RemoveTextCommand(fText, textOffset, length)
+		View()->PerformEdit(
+			new(std::nothrow) RemoveTextEdit(fText, textOffset, length)
 		);
 		if (setCaretOffset) {
 			_SetCaretOffset(textOffset, true, false, true);
@@ -799,7 +802,7 @@ TextToolState::SetFont(const char* family, const char* style)
 	fFontFamily = family;
 	fFontStyle = style;
 	if (_HasSelection()) {
-		View()->PerformCommand(new(std::nothrow) SetTextStyleCommand(
+		View()->PerformEdit(new(std::nothrow) SetTextStyleEdit(
 			fText, _SelectionStart(), _SelectionLength(), family, style));
 		UpdateBounds();
 	}
@@ -811,7 +814,7 @@ TextToolState::SetSize(float size)
 {
 	fSize = size;
 	if (_HasSelection()) {
-		View()->PerformCommand(new(std::nothrow) SetTextStyleCommand(
+		View()->PerformEdit(new(std::nothrow) SetTextStyleEdit(
 			fText, _SelectionStart(), _SelectionLength(), size));
 		UpdateBounds();
 	}
@@ -834,7 +837,7 @@ TextToolState::SetColor(const rgb_color& color)
 	_SetStyle(color);
 
 	if (_HasSelection()) {
-		View()->PerformCommand(new(std::nothrow) SetTextStyleCommand(
+		View()->PerformEdit(new(std::nothrow) SetTextStyleEdit(
 			fText, _SelectionStart(), _SelectionLength(), color));
 		UpdateBounds();
 	}
