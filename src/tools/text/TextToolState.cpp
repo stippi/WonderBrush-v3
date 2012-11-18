@@ -28,7 +28,9 @@
 #include "RemoveTextEdit.h"
 #include "support.h"
 #include "SetTextStyleEdit.h"
+#include "SetTextWidthEdit.h"
 #include "Text.h"
+#include "TransformObjectEdit.h"
 #include "ui_defines.h"
 
 // DragLeftTopState
@@ -724,10 +726,11 @@ void
 TextToolState::OffsetTextBy(BPoint offset)
 {
 	if (fText != NULL) {
+		Transformable transform(*fText);
 		// TODO: Not correct...
-		fText->TranslateBy(offset);
-		SetObjectToCanvasTransformation(fText->Transformation());
-		UpdateBounds();
+		transform.TranslateBy(offset);
+		View()->PerformEdit(new(std::nothrow) TransformObjectEdit(
+			fText, transform));
 	}
 }
 
@@ -825,8 +828,8 @@ void
 TextToolState::SetWidth(float width)
 {
 	if (fText != NULL) {
-		fText->SetWidth(width);
-		UpdateBounds();
+		View()->PerformEdit(new(std::nothrow) SetTextWidthEdit(
+			fText, width));
 	}
 }
 
@@ -839,7 +842,6 @@ TextToolState::SetColor(const rgb_color& color)
 	if (_HasSelection()) {
 		View()->PerformEdit(new(std::nothrow) SetTextStyleEdit(
 			fText, _SelectionStart(), _SelectionLength(), color));
-		UpdateBounds();
 	}
 }
 
