@@ -445,7 +445,7 @@ ColorSlider::_FillBitmap(BBitmap* bitmap, SelectedColorMode mode,
 			b = round(fixedValue2 * 255);
 			if (orient == B_VERTICAL) {
 				for (int y = 0; y <= height; y++) {
-					r = y * 255 / height;
+					r = 255 - y * 255 / height;
 					_DrawColorLineY(bits, width, r, g, b);
 					bits += bpr;
 				}
@@ -463,13 +463,13 @@ ColorSlider::_FillBitmap(BBitmap* bitmap, SelectedColorMode mode,
 			b = round(fixedValue2 * 255);
 			if (orient == B_VERTICAL) {
 				for (int y = 0; y <= height; y++) {
-					g = y * 255 / height;
+					g = 255 - y * 255 / height;
 					_DrawColorLineY(bits, width, r, g, b);
 					bits += bpr;
 				}
 			} else {
 				for (int x = 0; x <= width; x++) {
-					g = x * 255 / width;
+					g = 255 - x * 255 / width;
 					_DrawColorLineX(bits, height, bpr, r, g, b);
 					bits += 4;
 				}
@@ -481,7 +481,7 @@ ColorSlider::_FillBitmap(BBitmap* bitmap, SelectedColorMode mode,
 			g = round(fixedValue2 * 255);
 			if (orient == B_VERTICAL) {
 				for (int y = 0; y <= height; y++) {
-					b = y * 255 / height;
+					b = 255 - y * 255 / height;
 					_DrawColorLineY(bits, width, r, g, b);
 					bits += bpr;
 				}
@@ -498,7 +498,7 @@ ColorSlider::_FillBitmap(BBitmap* bitmap, SelectedColorMode mode,
 			v = 1.0;//fixedValue2;
 			if (orient == B_VERTICAL) {
 				for (int y = 0; y <= height; y++) {
-					HSV_to_RGB((float)y * 6.0 / height, s, v, r, g, b);
+					HSV_to_RGB(6.0 - (float)y * 6.0 / height, s, v, r, g, b);
 					_DrawColorLineY(bits, width, r * 255, g * 255, b * 255);
 					bits += bpr;
 				}
@@ -517,13 +517,13 @@ ColorSlider::_FillBitmap(BBitmap* bitmap, SelectedColorMode mode,
 			v = 1.0;//fixedValue2;
 			if (orient == B_VERTICAL) {
 				for (int y = 0; y <= height; y++) {
-					HSV_to_RGB(h, (float)y / height, v, r, g, b);
+					HSV_to_RGB(h, 1.0 - (float)y / height, v, r, g, b);
 					_DrawColorLineY(bits, width, r * 255, g * 255, b * 255);
 					bits += bpr;
 				}
 			} else {
 				for (int x = 0; x <= width; x++) {
-					HSV_to_RGB(h, (float)x / width, v, r, g, b);
+					HSV_to_RGB(h, 1.0 - (float)x / width, v, r, g, b);
 					_DrawColorLineX(bits, height, bpr,
 						r * 255, g * 255, b * 255);
 					bits += 4;
@@ -536,7 +536,7 @@ ColorSlider::_FillBitmap(BBitmap* bitmap, SelectedColorMode mode,
 			s = 1.0;//fixedValue2;
 			if (orient == B_VERTICAL) {
 				for (int y = 0; y <= height; y++) {
-					HSV_to_RGB(h, s, (float)y / height, r, g, b);
+					HSV_to_RGB(h, s, 1.0 - (float)y / height, r, g, b);
 					_DrawColorLineY(bits, width, r * 255, g * 255, b * 255);
 					bits += bpr;
 				}
