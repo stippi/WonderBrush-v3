@@ -24,7 +24,7 @@ public:
 		fView->SetLowColor(ui_color(B_PANEL_BACKGROUND_COLOR));
 	}
 
-	void DrawBackground(PlatformDrawContext& drawContext, BRect bounds,
+	void DrawBackground(PlatformDrawContext& drawContext, BRect& bounds,
 		BBitmap* bitmap, border_style borderStyle, enum orientation orientation)
 	{
 		BView* view = drawContext.View();
