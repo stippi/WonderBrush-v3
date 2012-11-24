@@ -11,6 +11,8 @@
 
 #include <ControlLook.h>
 
+#include <Region.h>
+
 #include "ColorField.h"
 
 
@@ -43,6 +45,9 @@ public:
 			view->SetHighColor(255, 0, 0);
 			view->FillRect(bounds);
 		}
+
+		BRegion clipping(bounds);
+		view->ConstrainClippingRegion(&clipping);
 
 		// Marker
 		view->SetHighColor(0, 0, 0);
