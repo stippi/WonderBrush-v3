@@ -1,7 +1,7 @@
 /*
  * Copyright 2001 Werner Freytag - please read to the LICENSE file
  *
- * Copyright 2002-2006, Stephan Aßmus <superstippi@gmx.de>
+ * Copyright 2002-2012, Stephan Aßmus <superstippi@gmx.de>
  * All rights reserved.
  *
  */
