@@ -154,16 +154,16 @@ ColorSlider::PlatformDraw(PlatformDrawContext& drawContext)
 	if (fOrientation == B_VERTICAL) {
 		// draw the triangle markers
 		BRect r = Bounds();
-		float value = Value();
+		float offset = Value() * (r.Height() - 10) / 255.0;
 		fPlatformDelegate->DrawTriangle(drawContext,
-			BPoint(r.left, value),
-			BPoint(r.left + 5.0, value + 5.0),
-			BPoint(r.left, value + 10.0), make_color(0, 0, 0));
+			BPoint(r.left, offset),
+			BPoint(r.left + 5.0, offset + 5.0),
+			BPoint(r.left, offset + 10.0), make_color(0, 0, 0));
 
 		fPlatformDelegate->DrawTriangle(drawContext,
-			BPoint(r.right, value),
-			BPoint(r.right - 5.0, value + 5.0),
-			BPoint(r.right, value + 10.0), make_color(0, 0, 0));
+			BPoint(r.right, offset),
+			BPoint(r.right - 5.0, offset + 5.0),
+			BPoint(r.right, offset + 10.0), make_color(0, 0, 0));
 	} else {
 		BRect r = bounds;
 		float x = bounds.left - 2 + (255 - Value()) * bounds.Width() / 255.0;

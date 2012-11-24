@@ -31,7 +31,7 @@ public:
 									border_style border = B_FANCY_BORDER);
 	virtual						~ColorSlider();
 
-								// BControl
+	// BControl interface
 	virtual	BSize				MinSize();
 	virtual	BSize				PreferredSize();
 	virtual	BSize				MaxSize();
