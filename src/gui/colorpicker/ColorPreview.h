@@ -1,7 +1,7 @@
 /* 
  * Copyright 2001 Werner Freytag - please read to the LICENSE file
  *
- * Copyright 2002-2006, Stephan Aßmus <superstippi@gmx.de>
+ * Copyright 2002-2012, Stephan Aßmus <superstippi@gmx.de>
  * All rights reserved.
  *		
  */
@@ -21,13 +21,17 @@
 class BMessageRunner;
 
 class ColorPreview : public PlatformViewMixin<BControl> {
- public:
+public:
 
-								ColorPreview(BRect frame,
-											 rgb_color color);
-								~ColorPreview();
+								ColorPreview(BRect frame, rgb_color color);
+								ColorPreview(rgb_color color);
+	virtual						~ColorPreview();
 
 	// BControl interface
+	virtual	BSize				MinSize();
+	virtual	BSize				PreferredSize();
+	virtual	BSize				MaxSize();
+
 	virtual	void				AttachedToWindow();
 	virtual	void				PlatformDraw(PlatformDrawContext& drawContext);
 

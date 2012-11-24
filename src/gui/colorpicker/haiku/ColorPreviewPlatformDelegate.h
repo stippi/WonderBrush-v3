@@ -4,6 +4,8 @@
 
 #include "ColorPreview.h"
 
+#include <ControlLook.h>
+
 
 class ColorPreview::PlatformDelegate {
 public:
@@ -12,6 +14,18 @@ public:
 		fView(view)
 	{
 		fView->SetViewColor(B_TRANSPARENT_COLOR);
+	}
+
+	void DrawBackground(PlatformDrawContext& drawContext, BRect& bounds,
+		border_style borderStyle)
+	{
+		// Frame
+		if (borderStyle == B_FANCY_BORDER) {
+			BView* view = drawContext.View();
+			rgb_color color = view->LowColor();
+			be_control_look->DrawTextControlBorder(view, bounds,
+				drawContext.UpdateRect(), color);
+		}
 	}
 
 	void FillRect(PlatformDrawContext& drawContext, BRect rect,

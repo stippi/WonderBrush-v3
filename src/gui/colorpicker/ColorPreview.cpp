@@ -1,7 +1,7 @@
 /* 
  * Copyright 2001 Werner Freytag - please read to the LICENSE file
  *
- * Copyright 2002-2006, Stephan Aßmus <superstippi@gmx.de>
+ * Copyright 2002-2012, Stephan Aßmus <superstippi@gmx.de>
  * All rights reserved.
  *		
  */
@@ -11,8 +11,10 @@
 
 #include <stdio.h>
 
+#include <ControlLook.h>
 #include <Bitmap.h>
 #include <Cursor.h>
+#include <LayoutUtils.h>
 #include <MessageRunner.h>
 #include <String.h>
 #include <Window.h>
@@ -23,7 +25,7 @@
 // constructor
 ColorPreview::ColorPreview(BRect frame, rgb_color color)
 	: PlatformViewMixin<BControl>(frame, "colorpreview", "",
-		new BMessage(MSG_COLOR_PREVIEW), B_FOLLOW_TOP|B_FOLLOW_LEFT,
+		new BMessage(MSG_COLOR_PREVIEW), B_FOLLOW_TOP | B_FOLLOW_LEFT,
 		B_WILL_DRAW),
 	  fPlatformDelegate(new PlatformDelegate(this)),
 	  fColor(color),
@@ -35,12 +37,49 @@ ColorPreview::ColorPreview(BRect frame, rgb_color color)
 {
 }
 
+// constructor
+ColorPreview::ColorPreview(rgb_color color)
+	: PlatformViewMixin<BControl>("colorpreview", "",
+		new BMessage(MSG_COLOR_PREVIEW), B_WILL_DRAW),
+	  fPlatformDelegate(new PlatformDelegate(this)),
+	  fColor(color),
+	  fOldColor(color),
 
+	  fMouseDown(false),
+
+	  fMessageRunner(0)
+{
+}
+
+// destructor
 ColorPreview::~ColorPreview()
 {
 	delete fPlatformDelegate;
 }
 
+// MinSize
+BSize
+ColorPreview::MinSize()
+{
+	BSize minSize(32, 36);
+	return BLayoutUtils::ComposeSize(ExplicitMinSize(), minSize);
+}
+
+// PreferredSize
+BSize
+ColorPreview::PreferredSize()
+{
+	BSize preferredSize(66, 70);
+	return BLayoutUtils::ComposeSize(ExplicitPreferredSize(), preferredSize);
+}
+
+// MaxSize
+BSize
+ColorPreview::MaxSize()
+{
+	BSize maxSize(B_SIZE_UNLIMITED, B_SIZE_UNLIMITED);
+	return BLayoutUtils::ComposeSize(ExplicitMaxSize(), maxSize);
+}
 
 // AttachedToWindow
 void
@@ -53,23 +92,16 @@ ColorPreview::AttachedToWindow()
 void
 ColorPreview::PlatformDraw(PlatformDrawContext& drawContext)
 {
-	rgb_color background = ui_color(B_PANEL_BACKGROUND_COLOR);
-	rgb_color shadow = tint_color(background, B_DARKEN_1_TINT);
-	rgb_color darkShadow = tint_color(background, B_DARKEN_3_TINT);
-	rgb_color light = tint_color(background, B_LIGHTEN_MAX_TINT);
+	BRect bounds(Bounds());
 
-	BRect r(Bounds());
-	stroke_frame(drawContext, r, shadow, shadow, light, light);
-	r.InsetBy(1.0, 1.0);
-	stroke_frame(drawContext, r, darkShadow, darkShadow, background,
-		background);
-	r.InsetBy(1.0, 1.0);
-
-	r.bottom = r.top + r.Height() / 2.0;
+	fPlatformDelegate->DrawBackground(drawContext, bounds, B_FANCY_BORDER);
+	
+	BRect r(bounds.left, bounds.top, bounds.right,
+		bounds.top + bounds.Height() / 2);
 	fPlatformDelegate->FillRect(drawContext, r, fColor);
 
 	r.top = r.bottom + 1;
-	r.bottom = Bounds().bottom - 2.0;
+	r.bottom = bounds.bottom;
 	fPlatformDelegate->FillRect(drawContext, r, fOldColor);
 }
 
