@@ -22,8 +22,6 @@ public:
 		if (borderStyle == B_FANCY_BORDER) {
 			platform_draw_control_widget_frame(drawContext, bounds,
 				fView->isEnabled(), fView->hasFocus());
-			// TODO: Can we know the border width?
-			bounds.InsetBy(2, 2);
 		}
 	}
 
