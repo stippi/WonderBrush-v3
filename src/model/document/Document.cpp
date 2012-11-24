@@ -48,6 +48,15 @@ Document::~Document()
 
 // #pragma mark -
 
+// DefaultName
+const char*
+Document::DefaultName() const
+{
+	return "Unnamed";
+}
+
+// #pragma mark -
+
 // InitCheck
 status_t
 Document::InitCheck() const

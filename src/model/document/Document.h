@@ -8,6 +8,7 @@
 #include <List.h>
 #include <Rect.h>
 
+#include "BaseObject.h"
 #include "NotifyingList.h"
 #include "RWLocker.h"
 
@@ -19,7 +20,7 @@ class Style;
 
 typedef NotifyingList<BaseObject> ResourceList;
 
-class Document : public RWLocker {
+class Document : public BaseObject, public RWLocker {
 public:
 	class Listener {
 	 public:
@@ -31,6 +32,10 @@ public:
 								Document(const BRect& bounds);
 	virtual						~Document();
 
+	// BaseObject interface
+	virtual	const char*			DefaultName() const;
+
+	// Document
 	inline	::EditManager*		EditManager() const
 									{ return fEditManager; }
 
