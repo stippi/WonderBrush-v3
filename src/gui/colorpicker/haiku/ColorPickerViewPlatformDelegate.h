@@ -8,12 +8,15 @@
 #ifndef COLOR_PICKER_VIEW_PLATFORM_DELEGATE_H
 #define COLOR_PICKER_VIEW_PLATFORM_DELEGATE_H
 
-
+#include <ControlLook.h>
 #include <Font.h>
+#include <GroupLayout.h>
+#include <LayoutBuilder.h>
 #include <Message.h>
 #include <RadioButton.h>
 #include <Screen.h>
 #include <String.h>
+#include <StringView.h>
 #include <TextControl.h>
 
 #include "ColorPickerView.h"
@@ -35,108 +38,107 @@ public:
 
 	void Init(int32 selectedRadioButton)
 	{
-		fView->AddChild(fView->fColorField);
-		fView->AddChild(fView->fColorSlider);
-		fView->AddChild(fView->fColorPreview);
+		fView->fColorField->SetExplicitMinSize(BSize(256, 256));
+		fView->fColorField->SetExplicitMaxSize(
+			BSize(B_SIZE_UNLIMITED, B_SIZE_UNLIMITED));
+		fView->fColorSlider->SetExplicitMaxSize(
+			BSize(B_SIZE_UNSET, B_SIZE_UNLIMITED));
+		fView->fColorPreview->SetExplicitMinSize(BSize(B_SIZE_UNSET, 70));
+		
+		const char* title[] = { "H", "S", "V", "R", "G", "B" };
 
-		BFont font(be_plain_font);
-		font.SetSize(10.0);
-		fView->SetFont(&font);
-
-		const char *title[] = { "H", "S", "V", "R", "G", "B" };
-
-		BTextView	*textView;
-
-		for (int i=0; i<6; ++i) {
-
-			fRadioButton[i] = new BRadioButton(
-				BRect(0.0, 0.0, 30.0, 10.0)
-					.OffsetToCopy(320.0, 92.0 + 24.0 * i + (int)i/3 * 8),
-				NULL, title[i], new BMessage(MSG_RADIOBUTTON + i));
-			fRadioButton[i]->SetFont(&font);
-			fView->AddChild(fRadioButton[i]);
-
+		for (int i = 0; i < 6; i++) {
+			fRadioButton[i] = new BRadioButton(NULL, title[i],
+				new BMessage(MSG_RADIOBUTTON + i));
 			fRadioButton[i]->SetTarget(fView);
 
 			if (i == selectedRadioButton)
 				fRadioButton[i]->SetValue(1);
+
+			fTextControl[i] = new BTextControl(NULL, NULL, NULL,
+				new BMessage(MSG_TEXTCONTROL + i));
+
+			fTextControl[i]->TextView()->SetMaxBytes(3);
+			for (int j = 32; j < 255; ++j) {
+				if (j < '0' || j > '9')
+					fTextControl[i]->TextView()->DisallowChar(j);
+			}
 		}
 
-		for (int i=0; i<6; ++i) {
+		fHexTextControl = new BTextControl(NULL, "#", NULL,
+			new BMessage(MSG_HEXTEXTCONTROL));
 
-			fTextControl[i] = new BTextControl(
-				BRect(0.0, 0.0, 32.0, 19.0)
-					.OffsetToCopy(350.0, 90.0 + 24.0 * i + (int)i/3 * 8),
-				NULL, NULL, NULL, new BMessage(MSG_TEXTCONTROL + i));
-
-			textView = fTextControl[i]->TextView();
-			textView->SetMaxBytes(3);
-			for (int j=32; j<255; ++j) {
-				if (j<'0'||j>'9') textView->DisallowChar(j);
+		fHexTextControl->TextView()->SetMaxBytes(6);
+		for (int j = 32; j < 255; ++j) {
+			if (!((j >= '0' && j <= '9') || (j >= 'a' && j <= 'f')
+				|| (j >= 'A' && j <= 'F'))) {
+				fHexTextControl->TextView()->DisallowChar(j);
 			}
+		}
 
-			fTextControl[i]->SetFont(&font);
-			fTextControl[i]->SetDivider(0.0);
-			fView->AddChild(fTextControl[i]);
+		const float inset = be_control_look->DefaultLabelSpacing();
+		BSize separatorSize(B_SIZE_UNSET, inset / 2);
+		BAlignment separatorAlignment(B_ALIGN_LEFT, B_ALIGN_TOP);
 
+		fView->SetLayout(new BGroupLayout(B_HORIZONTAL));
+		BLayoutBuilder::Group<>(fView, B_HORIZONTAL)
+			.AddGroup(B_HORIZONTAL, 0.0f)
+				.Add(fView->fColorField)
+			.SetInsets(3, 3, 0, 3)
+			.End()
+			.Add(fView->fColorSlider)
+			.AddGroup(B_VERTICAL)
+				.Add(fView->fColorPreview)
+				.AddGrid(inset / 2, inset / 2)
+					.Add(fRadioButton[0], 0, 0)
+					.Add(fTextControl[0], 1, 0)
+					.Add(new BStringView(NULL, "°"), 2, 0)
+
+					.Add(fRadioButton[1], 0, 1)
+					.Add(fTextControl[1], 1, 1)
+					.Add(new BStringView(NULL, "%"), 2, 1)
+
+					.Add(fRadioButton[2], 0, 2)
+					.Add(fTextControl[2], 1, 2)
+					.Add(new BStringView(NULL, "%"), 2, 2)
+
+					.Add(new BSpaceLayoutItem(separatorSize, separatorSize,
+						separatorSize, separatorAlignment),
+						0, 3, 3)
+
+					.Add(fRadioButton[3], 0, 4)
+					.Add(fTextControl[3], 1, 4)
+
+					.Add(fRadioButton[4], 0, 5)
+					.Add(fTextControl[4], 1, 5)
+
+					.Add(fRadioButton[5], 0, 6)
+					.Add(fTextControl[5], 1, 6)
+
+					.Add(new BSpaceLayoutItem(separatorSize, separatorSize,
+						separatorSize, separatorAlignment),
+						0, 7, 3)
+					
+					.AddGroup(B_HORIZONTAL, 0.0f, 0, 8, 2)
+						.Add(fHexTextControl->CreateLabelLayoutItem())
+						.Add(fHexTextControl->CreateTextViewLayoutItem())
+					.End()
+				.End()
+			.SetInsets(0, 3, 3, 3)
+			.End()
+			.SetInsets(inset, inset, inset, inset)
+		;
+
+		// After the views are attached, configure their target
+		for (int i = 0; i < 6; i++) {
+			fRadioButton[i]->SetTarget(fView);
 			fTextControl[i]->SetTarget(fView);
 		}
-
-		fHexTextControl = new BTextControl(
-			BRect(0.0, 0.0, 69.0, 19.0).OffsetToCopy(320.0, 248.0),
-			NULL, "#", NULL, new BMessage(MSG_HEXTEXTCONTROL));
-
-		textView = fHexTextControl->TextView();
-		textView->SetMaxBytes(6);
-		for (int j=32; j<255; ++j) {
-			if (!((j>='0' && j<='9') || (j>='a' && j<='f')
-				|| (j>='A' && j<='F'))) {
-				textView->DisallowChar(j);
-			}
-		}
-
-		fHexTextControl->SetFont(&font);
-		fHexTextControl->SetDivider(12.0);
-		fView->AddChild(fHexTextControl);
-
 		fHexTextControl->SetTarget(fView);
 	}
 
 	void Draw(PlatformDrawContext& drawContext)
 	{
-		BView* view = drawContext.View();
-		BRect updateRect = drawContext.UpdateRect();
-
-		// raised border
-		BRect r(view->Bounds());
-		if (updateRect.Intersects(r)) {
-			rgb_color light = tint_color(view->LowColor(), B_LIGHTEN_MAX_TINT);
-			rgb_color shadow = tint_color(view->LowColor(), B_DARKEN_2_TINT);
-
-			view->BeginLineArray(4);
-				view->AddLine(BPoint(r.left, r.bottom),
-						BPoint(r.left, r.top), light);
-				view->AddLine(BPoint(r.left + 1.0, r.top),
-						BPoint(r.right, r.top), light);
-				view->AddLine(BPoint(r.right, r.top + 1.0),
-						BPoint(r.right, r.bottom), shadow);
-				view->AddLine(BPoint(r.right - 1.0, r.bottom),
-						BPoint(r.left + 1.0, r.bottom), shadow);
-			view->EndLineArray();
-			// exclude border from update rect
-			r.InsetBy(1.0, 1.0);
-			updateRect = r & updateRect;
-		}
-
-		// some additional labels
-		font_height fh;
-		view->GetFontHeight(&fh);
-
-		const char *title[] = { "°", "%", "%" };
-		for (int i = 0; i < 3; ++i) {
-			view->DrawString(title[i],
-				BPoint(385.0, 93.0 + 24.0 * i + (int)i / 3 * 8 + fh.ascent));
-		}
 	}
 
 	int TextControlValue(int32 index)

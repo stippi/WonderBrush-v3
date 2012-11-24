@@ -33,8 +33,7 @@
 // constructor
 ColorPickerView::ColorPickerView(const char* name, rgb_color color,
 								 SelectedColorMode mode)
-	: PlatformViewMixin<BView>(BRect(0.0, 0.0, 400.0, 277.0), name,
-			B_FOLLOW_NONE, B_WILL_DRAW),
+	: PlatformViewMixin<BView>(name, 0),
 	  fPlatformDelegate(new PlatformDelegate(this)),
 	  h(0.0),
 	  s(1.0),
@@ -55,27 +54,6 @@ ColorPickerView::~ColorPickerView()
 	delete fPlatformDelegate;
 }
 
-#if LIB_LAYOUT
-// layoutprefs
-minimax
-ColorPickerView::layoutprefs()
-{
-	mpm.mini.x = mpm.maxi.x = Bounds().Width() + 1.0;
-	mpm.mini.y = mpm.maxi.y = Bounds().Height() + 1.0;
-	mpm.weight = 1.0;
-	return mpm;
-}
-
-// layout
-BRect
-ColorPickerView::layout(BRect frame)
-{
-	MoveTo(frame.LeftTop());
-	ResizeTo(frame.Width(), frame.Height());
-	return Frame();
-}
-#endif // LIB_LAYOUT
-
 // AttachedToWindow
 void
 ColorPickerView::AttachedToWindow()
@@ -84,15 +62,15 @@ ColorPickerView::AttachedToWindow()
 
 	BView::AttachedToWindow();
 
-	fColorField = new ColorField(BPoint(10.0, 10.0), fSelectedColorMode, *p);
+	fColorField = new ColorField(fSelectedColorMode, *p);
 	fColorField->SetMarkerToColor(color);
 	fColorField->SetTarget(this);
 
-	fColorSlider = new ColorSlider(BPoint(278.0, 7.0), fSelectedColorMode, *p1, *p2);
+	fColorSlider = new ColorSlider(fSelectedColorMode, *p1, *p2);
 	fColorSlider->SetMarkerToColor(color);
 	fColorSlider->SetTarget(this);
 
-	fColorPreview = new ColorPreview(BRect(0.0, 0.0, 66.0, 70.0).OffsetToCopy(321.0, 10.0), color);
+	fColorPreview = new ColorPreview(color);
 	fColorPreview->SetTarget(this);
 
 	fPlatformDelegate->Init(_NumForMode(fSelectedColorMode));

@@ -9,6 +9,10 @@
 
 #include <Box.h>
 #include <Button.h>
+#include <ControlLook.h>
+#include <GroupView.h>
+#include <LayoutBuilder.h>
+#include <SeparatorView.h>
 
 #include "ColorPickerPanel.h"
 #include "ColorPickerView.h"
@@ -24,47 +28,31 @@ public:
 
 	void Init()
 	{
-		BRect frame = BRect(0, 0, 40, 15);
-		BButton* defaultButton = new BButton(frame, "ok button", "Ok",
-											 new BMessage(MSG_DONE),
-											 B_FOLLOW_RIGHT | B_FOLLOW_TOP);
-		defaultButton->ResizeToPreferred();
-		BButton* cancelButton = new BButton(frame, "cancel button", "Cancel",
-											new BMessage(MSG_CANCEL),
-											B_FOLLOW_RIGHT | B_FOLLOW_TOP);
-		cancelButton->ResizeToPreferred();
+		fPanel->SetLayout(new BGroupLayout(B_VERTICAL));
+		
+		BButton* defaultButton = new BButton("ok button", "Ok",
+			new BMessage(MSG_DONE));
+		BButton* cancelButton = new BButton("cancel button", "Cancel",
+			new BMessage(MSG_CANCEL));
 
-		frame.bottom = frame.top + (defaultButton->Frame().Height() + 16);
-		frame.right = frame.left + fPanel->fColorPickerView->Frame().Width();
-		BBox* buttonBox = new BBox(frame, "button group",
-			B_FOLLOW_LEFT_RIGHT | B_FOLLOW_BOTTOM,
-			B_WILL_DRAW | B_FRAME_EVENTS | B_NAVIGABLE_JUMP, B_PLAIN_BORDER);
+		BView* topView = new BGroupView(B_VERTICAL);
 
-		fPanel->ResizeTo(frame.Width(),
-			fPanel->fColorPickerView->Frame().Height() + frame.Height() + 1);
+		const float inset = be_control_look->DefaultLabelSpacing();
 
-		frame = fPanel->Bounds();
-		BView* topView = new BView(frame, "bg", B_FOLLOW_ALL, 0);
-		topView->SetViewColor(ui_color(B_PANEL_BACKGROUND_COLOR));
-
-		buttonBox->MoveTo(frame.left,
-			frame.bottom - buttonBox->Frame().Height());
-
-		defaultButton->MoveTo(frame.right - defaultButton->Frame().Width() - 10,
-							  frame.top + 8);
-		buttonBox->AddChild(defaultButton);
-
-		cancelButton->MoveTo(defaultButton->Frame().left - 10
-								- cancelButton->Frame().Width(),
-							 frame.top + 8);
-		buttonBox->AddChild(cancelButton);
-
-		topView->AddChild(fPanel->fColorPickerView);
-		topView->AddChild(buttonBox);
+		BLayoutBuilder::Group<>(topView, B_VERTICAL, 0.0f)
+			.Add(fPanel->fColorPickerView)
+			.Add(new BSeparatorView(B_HORIZONTAL))
+			.AddGroup(B_HORIZONTAL)
+				.AddGlue()
+				.Add(cancelButton)
+				.Add(defaultButton)
+				.SetInsets(inset, inset, inset, inset)
+			.End()
+		;
 
 		fPanel->SetDefaultButton(defaultButton);
 
-		if (fPanel->fWindow)
+		if (fPanel->fWindow != NULL)
 			fPanel->AddToSubset(fPanel->fWindow);
 		else
 			fPanel->SetFeel(B_FLOATING_APP_WINDOW_FEEL);

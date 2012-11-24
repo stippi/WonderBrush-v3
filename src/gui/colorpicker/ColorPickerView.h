@@ -11,10 +11,6 @@
 
 #include <View.h>
 
-#if LIB_LAYOUT
-#  include <layout.h>
-#endif
-
 #include "PlatformViewMixin.h"
 #include "SelectedColorMode.h"
 
@@ -30,30 +26,20 @@ class ColorPreview;
 class BRadioButton;
 class BTextControl;
 
-class ColorPickerView :
-						#if LIB_LAYOUT
-						public MView,
-						#endif
-						public PlatformViewMixin<BView> {
+class ColorPickerView : public PlatformViewMixin<BView> {
  public:
 								ColorPickerView(const char* name,
 												rgb_color color,
 												SelectedColorMode mode);
 	virtual						~ColorPickerView();
 
-	#if LIB_LAYOUT
-								// MView
-	virtual	minimax				layoutprefs();
-	virtual	BRect				layout(BRect frame);
-	#endif
-
-								// BView
+	// BView interface
 	virtual	void				AttachedToWindow();
 	virtual	void				MessageReceived(BMessage *message);
 
 	virtual	void				PlatformDraw(PlatformDrawContext& drawContext);
 
-								// ColorPickerView
+	// ColorPickerView
 			void				SetColorMode(SelectedColorMode mode,
 											 bool update = true);
 			void				SetColor(rgb_color color);

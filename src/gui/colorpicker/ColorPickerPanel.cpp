@@ -28,8 +28,9 @@ ColorPickerPanel::ColorPickerPanel(BRect frame, rgb_color color,
 								   BMessage* message, BHandler* target)
 	: Panel(frame, "Pick Color",
 			B_FLOATING_WINDOW_LOOK, B_FLOATING_SUBSET_WINDOW_FEEL,
-			B_ASYNCHRONOUS_CONTROLS |
-			B_NOT_RESIZABLE | B_NOT_ZOOMABLE | B_NOT_CLOSABLE),
+			B_ASYNCHRONOUS_CONTROLS
+				| B_NOT_RESIZABLE | B_NOT_ZOOMABLE | B_NOT_CLOSABLE
+				| B_AUTO_UPDATE_SIZE_LIMITS),
 	  fPlatformDelegate(new PlatformDelegate(this)),
 	  fWindow(window),
 	  fMessage(message),
