@@ -11,6 +11,7 @@
 
 #include <Autolock.h>
 #include <Bitmap.h>
+#include <Cursor.h>
 #include <LayoutUtils.h>
 #include <Messenger.h>
 #include <Region.h>
@@ -38,6 +39,10 @@ NavigatorView::NavigatorView(Document* document, RenderManager* manager)
 
 	, fRescaleLock("rescale bitmap lock")
 	, fRescaleThread(B_BAD_THREAD_ID)
+	
+	, fDragStart(0, 0)
+	, fDragging(false)
+	, fDragMode(IGNORE_CLICK)
 {
 	fPlatformDelegate = new PlatformDelegate(this);
 }
@@ -73,7 +78,7 @@ NavigatorView::MessageReceived(BMessage* message)
 				else
 					fDirtyDisplayArea = area;
 #else
-				Invalidate(_IconBounds());
+				Invalidate(_ImageBounds());
 #endif
 			}
 			break;
@@ -116,7 +121,7 @@ NavigatorView::Pulse()
 		fRenderManager->UnlockDisplay();
 	}
 
-	Invalidate(_IconBounds());
+	Invalidate(_ImageBounds());
 
 	fDirtyDisplayArea = BRect();
 #else
@@ -184,49 +189,30 @@ NavigatorView::PlatformDraw(PlatformDrawContext& drawContext)
 	BRegion outside(bounds);
 
 	// This method needs to be fast, since it will be called often.
-	BRect iconBounds = _IconBounds();
-	if (drawContext.UpdateRect().Intersects(iconBounds)) {
+	BRect imageBounds = _ImageBounds();
+	if (drawContext.UpdateRect().Intersects(imageBounds)) {
 #if NAVIGATOR_VIEW_USE_BEAUTIFUL_DOWN_SCALING
 		if (fScaledBitmap != NULL) {
 			BAutolock _(&fRescaleLock);
 			fPlatformDelegate->DrawBitmap(drawContext, fScaledBitmap,
-				iconBounds);
-			outside.Exclude(iconBounds);
+				imageBounds);
+			outside.Exclude(imageBounds);
 		}
 #else
 		if (fRenderManager->LockDisplay()) {
 			const BBitmap* bitmap = fRenderManager->DisplayBitmap();
-			fPlatformDelegate->DrawBitmap(drawContext, bitmap, iconBounds);
+			fPlatformDelegate->DrawBitmap(drawContext, bitmap, imageBounds);
 			fRenderManager->UnlockDisplay();
-			outside.Exclude(iconBounds);
+			outside.Exclude(imageBounds);
 		}
 #endif
 	}
 
 	fPlatformDelegate->DrawBackground(drawContext, outside);
 
-	// Access to the RenderManager is save like this, since these members
-	// are modified in the window thread only.
-	BRect dataRect = fRenderManager->DataRect();
-	BRect visibleRect = fRenderManager->VisibleRect();
-	// Clip inset
-	dataRect.InsetBy(-dataRect.left, -dataRect.top);
-	visibleRect = dataRect & visibleRect;
-	// Scale rects into iconBounds size.
-	float scaleX = dataRect.Width() / iconBounds.Width();
-	float scaleY = dataRect.Height() / iconBounds.Height();
-	visibleRect.left /= scaleX;
-	visibleRect.right /= scaleX;
-	visibleRect.top /= scaleY;
-	visibleRect.bottom /= scaleY;
-	visibleRect.OffsetBy(iconBounds.left, iconBounds.top);
-	visibleRect.OffsetBy(
-		floorf(visibleRect.left + 0.5f) - visibleRect.left,
-		floorf(visibleRect.top + 0.5f) - visibleRect.top);
-	visibleRect.right = floorf(visibleRect.right + 0.5f);
-	visibleRect.bottom = floorf(visibleRect.bottom + 0.5f);
-	if (!visibleRect.Contains(iconBounds))
-		fPlatformDelegate->DrawRect(drawContext, visibleRect, iconBounds);
+	BRect visibleRect = _VisibleRect(imageBounds);
+	if (!visibleRect.Contains(imageBounds))
+		fPlatformDelegate->DrawRect(drawContext, visibleRect, imageBounds);
 }
 
 
@@ -236,14 +222,34 @@ NavigatorView::PlatformDraw(PlatformDrawContext& drawContext)
 void
 NavigatorView::MouseDown(BPoint where)
 {
-	// TODO: begin tracking
+	if (fDragMode == SET_VISIBLE_RECT) {
+		// Set initial rect location to clicked spot
+		_SetDragMode(DRAG_VISIBLE_RECT);
+		BRect visibleRect = _VisibleRect();
+		fDragStartVisibleRect = fRenderManager->VisibleRect();
+		BPoint center(
+			(visibleRect.left + visibleRect.right) / 2.0f,
+			(visibleRect.top + visibleRect.bottom) / 2.0f
+		);
+		_MoveVisibleRect(where - center);
+	}
+
+	if (fDragMode == DRAG_VISIBLE_RECT) {
+		// begin tracking
+		fDragging = true;
+		fDragStart = where;
+		fDragStartVisibleRect = fRenderManager->VisibleRect();
+
+		SetMouseEventMask(B_POINTER_EVENTS,
+			B_LOCK_WINDOW_FOCUS | B_SUSPEND_VIEW_FOCUS);
+	}
 }
 
 // MouseUp
 void
 NavigatorView::MouseUp(BPoint where)
 {
-	// TODO: stop tracking
+	fDragging = false;
 }
 
 // MouseMoved
@@ -251,7 +257,25 @@ void
 NavigatorView::MouseMoved(BPoint where, uint32 transit,
 	const BMessage* dragMessage)
 {
-	// TODO: if tracked distance threshold, start dragging the document
+	if (fDragging) {
+		// Move the visible rect
+		_MoveVisibleRect(where - fDragStart);
+	} else {
+		// Determine the drag mode for when the user clicks
+		uint32 dragMode = IGNORE_CLICK;
+
+		BRect imageBounds = _ImageBounds();
+		BRect visibleBounds = _VisibleRect(imageBounds);
+		if (visibleBounds.Contains(where)) {
+			if (!visibleBounds.Contains(imageBounds))
+				dragMode = DRAG_VISIBLE_RECT;
+		} else {
+			if (imageBounds.Contains(where))
+				dragMode = SET_VISIBLE_RECT;
+		}
+
+		_SetDragMode(dragMode);
+	}
 }
 
 // #pragma mark -
@@ -316,16 +340,51 @@ NavigatorView::GetHeightForWidth(float width, float* min, float* max,
 
 // #pragma mark - private
 
-// _IconBounds
+// _ImageBounds
 BRect
-NavigatorView::_IconBounds() const
+NavigatorView::_ImageBounds() const
 {
 	BRect viewBounds = Bounds();
-	BRect iconBounds = fBitmapBounds;
-	iconBounds.OffsetTo(
-		floorf((viewBounds.Width() - iconBounds.Width()) / 2),
-		floorf((viewBounds.Height() - iconBounds.Height()) / 2));
-	return iconBounds;
+	BRect imageBounds = fBitmapBounds;
+	imageBounds.OffsetTo(
+		floorf((viewBounds.Width() - imageBounds.Width()) / 2),
+		floorf((viewBounds.Height() - imageBounds.Height()) / 2));
+	return imageBounds;
+}
+
+// _VisibleRect
+BRect
+NavigatorView::_VisibleRect() const
+{
+	return _VisibleRect(_ImageBounds());
+}
+
+// _VisibleRect
+BRect
+NavigatorView::_VisibleRect(const BRect& imageBounds) const
+{
+	// Access to the RenderManager is save like this, since these members
+	// are modified in the window thread only.
+	BRect dataRect = fRenderManager->DataRect();
+	BRect visibleRect = fRenderManager->VisibleRect();
+	// Clip inset
+	dataRect.InsetBy(-dataRect.left, -dataRect.top);
+	visibleRect = dataRect & visibleRect;
+	// Scale rects into imageBounds size.
+	float scaleX = dataRect.Width() / imageBounds.Width();
+	float scaleY = dataRect.Height() / imageBounds.Height();
+	visibleRect.left /= scaleX;
+	visibleRect.right /= scaleX;
+	visibleRect.top /= scaleY;
+	visibleRect.bottom /= scaleY;
+	visibleRect.OffsetBy(imageBounds.left, imageBounds.top);
+	visibleRect.OffsetBy(
+		floorf(visibleRect.left + 0.5f) - visibleRect.left,
+		floorf(visibleRect.top + 0.5f) - visibleRect.top);
+	visibleRect.right = floorf(visibleRect.right + 0.5f);
+	visibleRect.bottom = floorf(visibleRect.bottom + 0.5f);
+
+	return visibleRect;
 }
 
 // _AllocateBitmap
@@ -589,5 +648,73 @@ NavigatorView::_RescaleThread()
 
 	fRescaleThread = B_BAD_THREAD_ID;
 	return 0;
+}
+
+// _SetDragMode
+void
+NavigatorView::_SetDragMode(uint32 mode)
+{
+	if (fDragMode == mode)
+		return;
+	
+	fDragMode = mode;
+
+	// Adopt view cursor according to drag mode
+	BCursorID cursorID;
+
+	switch (mode) {
+		case DRAG_VISIBLE_RECT:
+			cursorID = B_CURSOR_ID_MOVE;
+			break;
+		case SET_VISIBLE_RECT:
+			cursorID = B_CURSOR_ID_FOLLOW_LINK;
+			break;
+		case IGNORE_CLICK:
+		default:
+			cursorID = B_CURSOR_ID_SYSTEM_DEFAULT;
+			break;
+	}
+
+	BCursor cursor(cursorID);
+	SetViewCursor(&cursor);
+}
+
+// _MoveVisibleRect
+void
+NavigatorView::_MoveVisibleRect(BPoint offset)
+{
+	if (offset == B_ORIGIN)
+		return;
+
+	BRect dataRect(fRenderManager->DataRect());
+	BRect visibleRect(fDragStartVisibleRect);
+
+	// Scale offset into dataRect size
+//	dataRect.InsetBy(-dataRect.left, -dataRect.top);
+	BRect imageBounds(_ImageBounds());
+	float scaleX = dataRect.Width() / imageBounds.Width();
+	float scaleY = dataRect.Height() / imageBounds.Height();
+	offset.x *= scaleX;
+	offset.y *= scaleY;
+
+	float maxOffsetX = dataRect.right - visibleRect.right;
+	float minOffsetX = dataRect.left - visibleRect.left;
+	float maxOffsetY = dataRect.bottom - visibleRect.bottom;
+	float minOffsetY = dataRect.top - visibleRect.top;
+	
+	if (offset.x < minOffsetX)
+		offset.x = minOffsetX;
+	if (offset.x > maxOffsetX)
+		offset.x = maxOffsetX;
+	if (offset.y < minOffsetY)
+		offset.y = minOffsetY;
+	if (offset.y > maxOffsetY)
+		offset.y = maxOffsetY;
+
+	if (offset == B_ORIGIN)
+		return;
+
+	visibleRect.OffsetBy(offset);
+	fRenderManager->SetCanvasLayout(dataRect, visibleRect);
 }
 

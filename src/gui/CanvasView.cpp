@@ -132,6 +132,15 @@ CanvasView::MessageReceived(BMessage* message)
 			}
 			break;
 		}
+		
+		case MSG_LAYOUT_CHANGED:
+		{
+			BPoint offset = fRenderManager->VisibleRect().LeftTop()
+				- VisibleRect().LeftTop();
+			if (offset != B_ORIGIN)
+				SetScrollOffset(ScrollOffset() + offset);
+			break;
+		}
 
 		case MSG_ZOOM_SET:
 		{

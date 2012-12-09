@@ -48,7 +48,10 @@ private:
 			class PlatformDelegate;
 
 private:
-			BRect				_IconBounds() const;
+			BRect				_ImageBounds() const;
+			BRect				_VisibleRect() const;
+			BRect				_VisibleRect(const BRect& imageBounds) const;
+			
 			void				_AllocateBitmap(BRect bounds);
 			void				_RescaleBitmap(const BBitmap* source,
 									const BBitmap* dest, BRect area);
@@ -68,6 +71,19 @@ private:
 			thread_id			fRescaleThread;
 
 			PlatformDelegate*	fPlatformDelegate;
+
+			BPoint				fDragStart;
+			BRect				fDragStartVisibleRect;
+			bool				fDragging;
+
+			enum {
+				DRAG_VISIBLE_RECT	= 0,
+				SET_VISIBLE_RECT,
+				IGNORE_CLICK
+			};
+			uint32				fDragMode;
+			void				_SetDragMode(uint32 mode);
+			void				_MoveVisibleRect(BPoint offset);
 };
 
 #endif // NAVIGATOR_VIEW_H
