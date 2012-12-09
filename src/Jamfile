@@ -11,6 +11,7 @@ local sourceDirs =
 	gui/misc/$(WONDERBRUSH_PLATFORM)
 	gui/tools
 	gui/tools/$(WONDERBRUSH_PLATFORM)
+	import_export
 	model
 	model/document
 	model/fills
@@ -64,6 +65,7 @@ SubDirHdrs [ FDirName $(TOP) src gui propertylistview
 SubDirHdrs [ FDirName $(TOP) src gui scrollview ] ;
 SubDirHdrs [ FDirName $(TOP) src gui scrollview $(WONDERBRUSH_PLATFORM) ] ;
 SubDirHdrs [ FDirName $(TOP) src gui stateview ] ;
+SubDirHdrs [ FDirName $(TOP) src import_export ] ;
 SubDirHdrs [ FDirName $(TOP) src model ] ;
 SubDirHdrs [ FDirName $(TOP) src model document ] ;
 SubDirHdrs [ FDirName $(TOP) src model fills ] ;
@@ -137,6 +139,10 @@ Application WonderBrush :
 	ObjectTreeView.cpp
 	ResourceTreeView.cpp
 	Window.cpp
+
+	# import_export
+	Exporter.cpp
+	Importer.cpp
 
 	# model
 	BaseObject.cpp
@@ -270,6 +276,7 @@ Application WonderBrush :
 		$(STDC++LIB)
 		$(SUPC++LIB)
 		translation
+		localestub
 		be
 	:
 		WonderBrush.rdef
