@@ -23,7 +23,8 @@ INCLUDEPATH += icon/include
 #INCLUDEPATH += render
 #INCLUDEPATH += support
 
-QMAKE_CXXFLAGS += -iquote $$PWD/commands
+QMAKE_CXXFLAGS += -iquote $$PWD/edits
+QMAKE_CXXFLAGS += -iquote $$PWD/edits/base
 QMAKE_CXXFLAGS += -iquote $$PWD/gui
 QMAKE_CXXFLAGS += -iquote $$PWD/gui/colorpicker
 QMAKE_CXXFLAGS += -iquote $$PWD/gui/colorpicker/qt
@@ -49,8 +50,6 @@ QMAKE_CXXFLAGS += -iquote $$PWD/render/text
 QMAKE_CXXFLAGS += -iquote $$PWD/support
 QMAKE_CXXFLAGS += -iquote $$PWD/tools
 QMAKE_CXXFLAGS += -iquote $$PWD/tools/brush
-QMAKE_CXXFLAGS += -iquote $$PWD/tools/pick
-QMAKE_CXXFLAGS += -iquote $$PWD/tools/pick/qt
 QMAKE_CXXFLAGS += -iquote $$PWD/tools/text
 QMAKE_CXXFLAGS += -iquote $$PWD/tools/text/qt
 QMAKE_CXXFLAGS += -iquote $$PWD/tools/transform
@@ -68,11 +67,12 @@ TARGETDEPS += agg/libagg.a gui/colorpicker/libcolorpicker.a icon/libicon.a \
 
 SOURCES += \
 	WonderBrush.cpp \
-	commands/AddObjectsCommand.cpp \
-	commands/MoveObjectsCommand.cpp \
-	commands/ObjectAddedCommand.cpp \
-	commands/SetPropertiesCommand.cpp \
-	gui/CanvasView.cpp \
+        edits/MoveObjectsEdit.cpp \
+        edits/base/CompoundEdit.cpp \
+        edits/base/EditManager.cpp \
+        edits/base/EditStack.cpp \
+        edits/base/UndoableEdit.cpp \
+        gui/CanvasView.cpp \
 	gui/ToolConfigView.cpp \
 	gui/misc/NavigatorView.cpp \
 	gui/misc/Panel.cpp \
@@ -204,9 +204,6 @@ SOURCES += \
 	render/VertexSource.cpp \
 	render/text/FontRegistry.cpp \
 	support/AbstractLOAdapter.cpp \
-	support/Command.cpp \
-	support/CommandStack.cpp \
-	support/CompoundCommand.cpp \
 	support/Debug.cpp \
 	support/HashString.cpp \
 	support/Listener.cpp \
@@ -223,8 +220,6 @@ SOURCES += \
 	tools/TransformViewState.cpp \
 	tools/brush/BrushTool.cpp \
 	tools/brush/BrushToolState.cpp \
-	tools/pick/PickTool.cpp \
-	tools/pick/PickToolState.cpp \
 	tools/text/TextTool.cpp \
 	tools/text/TextToolState.cpp \
 	tools/transform/ChannelTransform.cpp \
@@ -235,15 +230,21 @@ SOURCES += \
 HEADERS  += \
 	WonderBrush.h \
 	cimg/CImg.h \
-	commands/AddObjectsCommand.h \
-	commands/ChangeAreaCommand.h \
-	commands/InsertTextCommand.h \
-	commands/MoveObjectsCommand.h \
-	commands/ObjectAddedCommand.h \
-	commands/RemoveTextCommand.h \
-	commands/RenameObjectCommand.h \
-	commands/SetPropertiesCommand.h \
-	gui/CanvasView.h \
+        edits/AddObjectsEdit.h \
+        edits/InsertTextEdit.h \
+        edits/MoveObjectsEdit.h \
+        edits/ObjectAddedEdit.h \
+        edits/RemoveTextEdit.h \
+        edits/RenameObjectEdit.h \
+        edits/SetPropertiesEdit.h \
+        edits/SetTextStyleEdit.h \
+        edits/SetTextWidthEdit.h \
+        edits/TransformObjectEdit.h \
+        edits/base/CompoundEdit.h \
+        edits/base/EditManager.h \
+        edits/base/EditStack.h \
+        edits/base/UndoableEdit.h \
+        gui/CanvasView.h \
 	gui/ToolConfigView.h \
 	gui/misc/NavigatorView.h \
 	gui/misc/Panel.h \
@@ -463,9 +464,6 @@ HEADERS  += \
 	support/AutoLocker.h \
 	support/bitmap_support.h \
 	support/BuildSupport.h \
-	support/Command.h \
-	support/CommandStack.h \
-	support/CompoundCommand.h \
 	support/cursors.h \
 	support/Debug.h \
 	support/DLList.h \
@@ -487,9 +485,6 @@ HEADERS  += \
 	tools/TransformViewState.h \
 	tools/brush/BrushTool.h \
 	tools/brush/BrushToolState.h \
-	tools/pick/PickTool.h \
-	tools/pick/PickToolState.h \
-	tools/pick/qt/PickToolStatePlatformDelegate.h \
 	tools/text/TextTool.h \
 	tools/text/TextToolState.h \
 	tools/text/qt/TextToolStatePlatformDelegate.h \

@@ -4,6 +4,8 @@
 
 #include "ColorPreview.h"
 
+#include "platform_support_ui.h"
+
 
 class ColorPreview::PlatformDelegate {
 public:

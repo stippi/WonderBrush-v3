@@ -11,7 +11,6 @@
 
 #include <stdio.h>
 
-#include <ControlLook.h>
 #include <Bitmap.h>
 #include <Cursor.h>
 #include <LayoutUtils.h>

@@ -17,8 +17,8 @@
 
 #include "AbstractTreeModel.h"
 #include "AutoDeleter.h"
-#include "CommandStack.h"
-#include "RenameObjectCommand.h"
+#include "EditManager.h"
+#include "RenameObjectEdit.h"
 
 
 enum {
@@ -147,14 +147,14 @@ protected:
 
 		if (newName != object->Name()) {
 			// rename via command
-			RenameObjectCommand* command
-				= new (std::nothrow) RenameObjectCommand(object, newName);
-			if (command == NULL) {
+            RenameObjectEdit* edit
+                = new (std::nothrow) RenameObjectEdit(object, newName);
+            if (edit == NULL) {
 				objectNode->SetName(oldName);
 				return false;
 			}
 
-			fDocument->CommandStack()->Perform(command);
+            fDocument->EditManager()->Perform(edit);
 		}
 
 		locker.Unlock();

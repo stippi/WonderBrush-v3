@@ -3,12 +3,11 @@
 
 #include "BrushTool.h"
 #include "CanvasView.h"
-#include "CommandStack.h"
 #include "Document.h"
+#include "EditManager.h"
 #include "IconButton.h"
 #include "NavigatorView.h"
 #include "ObjectTreeView.h"
-#include "PickTool.h"
 #include "RenderManager.h"
 #include "ResourceTreeView.h"
 #include "SwatchGroup.h"
@@ -33,7 +32,7 @@ Window::Window(BRect frame, const char* title, Document* document, Layer* layer)
 	fView(NULL),
 	fDocument(document),
 	fRenderManager(NULL),
-	fCommandStackListener(this)
+    fEditManagerListener(this)
 {
 	fUi->setupUi(this);
 
@@ -158,10 +157,10 @@ exportButton->SetEnabled(false);
 
 	_InitTools();
 
-	fView->SetCommandStack(fDocument->CommandStack());
+    fView->SetEditManager(fDocument->EditManager());
 
-	fDocument->CommandStack()->AddListener(&fCommandStackListener);
-	_ObjectChanged(fDocument->CommandStack());
+    fDocument->EditManager()->AddListener(&fEditManagerListener);
+    _ObjectChanged(fDocument->EditManager());
 
 	connect(fUi->actionNewWindow, SIGNAL(triggered()),
 		SLOT(_NewWindowActionInvoked()));
@@ -173,7 +172,7 @@ exportButton->SetEnabled(false);
 
 Window::~Window()
 {
-	fDocument->CommandStack()->RemoveListener(&fCommandStackListener);
+    fDocument->EditManager()->RemoveListener(&fEditManagerListener);
 	delete fRenderManager;
 //	delete fLayerTreeModel;
 
@@ -192,10 +191,10 @@ Window::MessageReceived(BMessage* message)
 {
 	switch (message->what) {
 		case MSG_UNDO:
-			fDocument->CommandStack()->Undo();
+            fDocument->EditManager()->Undo();
 			break;
 		case MSG_REDO:
-			fDocument->CommandStack()->Redo();
+            fDocument->EditManager()->Redo();
 			break;
 
 		case MSG_OBJECT_CHANGED: {
@@ -303,11 +302,11 @@ Window::_ObjectChanged(const Notifier* object)
 	if (!fDocument)
 		return;
 
-	if (object == fDocument->CommandStack()) {
+    if (object == fDocument->EditManager()) {
 		// relable Undo item and update enabled status
 		BString label("Undo");
 		fUi->actionUndo->setEnabled(
-			fDocument->CommandStack()->GetUndoName(label));
+            fDocument->EditManager()->GetUndoName(label));
 		fUndoIcon->SetEnabled(fUi->actionUndo->isEnabled());
 		if (fUi->actionUndo->isEnabled())
 			fUi->actionUndo->setText(label);
@@ -317,7 +316,7 @@ Window::_ObjectChanged(const Notifier* object)
 		// relable Redo item and update enabled status
 		label.SetTo("Redo");
 		fUi->actionRedo->setEnabled(
-			fDocument->CommandStack()->GetRedoName(label));
+            fDocument->EditManager()->GetRedoName(label));
 		fRedoIcon->SetEnabled(fUi->actionRedo->isEnabled());
 		if (fUi->actionRedo->isEnabled())
 			fUi->actionRedo->setText(label);
@@ -359,12 +358,12 @@ Window::_QuitActionInvoked()
 void
 Window::_UndoActionInvoked()
 {
-	fDocument->CommandStack()->Undo();
+    fDocument->EditManager()->Undo();
 }
 
 
 void
 Window::_RedoActionInvoked()
 {
-	fDocument->CommandStack()->Redo();
+    fDocument->EditManager()->Redo();
 }

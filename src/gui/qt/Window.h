@@ -62,7 +62,7 @@ private:
 
 			Document*			fDocument;
 			RenderManager*		fRenderManager;
-			ListenerAdapter		fCommandStackListener;
+            ListenerAdapter		fEditManagerListener;
 			Selection			fSelection;
 			CurrentColor		fCurrentColor;
 

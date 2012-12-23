@@ -18,11 +18,11 @@
 
 #include "AbstractTreeModel.h"
 #include "AutoDeleter.h"
-#include "CommandStack.h"
 #include "Document.h"
-#include "MoveObjectsCommand.h"
+#include "EditManager.h"
+#include "MoveObjectsEdit.h"
 #include "Object.h"
-#include "RenameObjectCommand.h"
+#include "RenameObjectEdit.h"
 
 
 enum {
@@ -149,14 +149,14 @@ protected:
 
 		if (newName != object->Name()) {
 			// rename via command
-			RenameObjectCommand* command
-				= new (std::nothrow) RenameObjectCommand(object, newName);
-			if (command == NULL) {
+            RenameObjectEdit* edit
+                = new (std::nothrow) RenameObjectEdit(object, newName);
+            if (edit == NULL) {
 				objectNode->SetName(oldName);
 				return false;
 			}
 
-			fDocument->CommandStack()->Perform(command);
+            fDocument->EditManager()->Perform(edit);
 		}
 
 		locker.Unlock();
@@ -194,13 +194,13 @@ protected:
 			objects[i] = node->GetObject();
 		}
 
-		MoveObjectsCommand* command = new(std::nothrow) MoveObjectsCommand(
+        MoveObjectsEdit* edit = new(std::nothrow) MoveObjectsEdit(
 			objects, count, insertionLayer, row, fSelection);
-		if (command == NULL)
+        if (edit == NULL)
 			return false;
 		objectsDeleter.Detach();
 
-		fDocument->CommandStack()->Perform(command);
+        fDocument->EditManager()->Perform(edit);
 		return true;
 	}
 
