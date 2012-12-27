@@ -274,6 +274,7 @@ TextToolState::TextToolState(StateView* view, Document* document,
 	, fInsertionIndex(-1)
 	, fText(NULL)
 
+	, fSelectionAnchorOffset(0)
 	, fCaretOffset(0)
 	, fShowCaret(true)
 	, fCaretAnchorX(0.0)
@@ -674,6 +675,7 @@ TextToolState::CreateText(BPoint canvasLocation)
 	fInsertionIndex++;
 
 	SetText(text, true);
+	_SetCaretOffset(initialText.CountChars(), true, true, false);
 
 	// Our reference to this object was transferred to the Layer
 
@@ -714,6 +716,7 @@ TextToolState::SetText(Text* text, bool modifySelection)
 	}
 
 	fNextText = "";
+	fSelectionAnchorOffset = 0;
 	fCaretOffset = 0;
 	fCaretAnchorX = 0.0;
 
@@ -1230,7 +1233,7 @@ TextToolState::_SelectionEnd() const
 int32
 TextToolState::_SelectionLength() const
 {
-	return fabs(fCaretOffset - fSelectionAnchorOffset);
+	return abs(fCaretOffset - fSelectionAnchorOffset);
 }
 
 // _AdoptStyleAtOffset
