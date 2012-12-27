@@ -24,6 +24,7 @@ local sourceDirs =
 	support
 	tools
 	tools/brush
+	tools/path
 	tools/text
 	tools/transform
 ;
@@ -79,6 +80,8 @@ SubDirHdrs [ FDirName $(TOP) src render ] ;
 SubDirHdrs [ FDirName $(TOP) src support ] ;
 SubDirHdrs [ FDirName $(TOP) src tools ] ;
 SubDirHdrs [ FDirName $(TOP) src tools brush ] ;
+SubDirHdrs [ FDirName $(TOP) src tools path ] ;
+SubDirHdrs [ FDirName $(TOP) src tools path $(WONDERBRUSH_PLATFORM) ] ;
 SubDirHdrs [ FDirName $(TOP) src tools text $(WONDERBRUSH_PLATFORM) ] ;
 SubDirHdrs [ FDirName $(TOP) src tools transform ] ;
 SubDirHdrs [ FDirName $(TOP) src tools transform $(WONDERBRUSH_PLATFORM) ] ;
@@ -127,6 +130,7 @@ Application WonderBrush :
 
 	# gui/tools/<platform>
 	BrushToolConfigView.cpp
+	PathToolConfigView.cpp
 	TextToolConfigView.cpp
 	TransformToolConfigView.cpp
 
@@ -240,6 +244,10 @@ Application WonderBrush :
 	# tools/brush
 	BrushTool.cpp
 	BrushToolState.cpp
+
+	# tools/path
+	PathTool.cpp
+	PathToolState.cpp
 
 	# tools/text
 	TextTool.cpp
