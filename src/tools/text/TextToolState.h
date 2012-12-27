@@ -40,23 +40,23 @@ public:
 	virtual	void				Cleanup();
 
 	virtual	bool				MessageReceived(BMessage* message,
-									UndoableEdit** _command);
+									UndoableEdit** _edit);
 
 	// modifiers
 	virtual	void				ModifiersChanged(uint32 modifiers);
 
 	// TODO: mouse wheel
 	virtual	bool				HandleKeyDown(const StateView::KeyEvent& event,
-									UndoableEdit** _command);
+									UndoableEdit** _edit);
 	virtual	bool				HandleKeyUp(const StateView::KeyEvent& event,
-									UndoableEdit** _command);
+									UndoableEdit** _edit);
 
 	virtual void				Draw(PlatformDrawContext& drawContext);
 
 	virtual	BRect				Bounds() const;
 
 	// DragStateViewState interface
-	virtual	UndoableEdit*			StartTransaction(const char* commandName);
+	virtual	UndoableEdit*		StartTransaction(const char* editName);
 
 	virtual	DragState*			DragStateFor(BPoint canvasWhere,
 									float zoomLevel) const;

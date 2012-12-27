@@ -346,7 +346,7 @@ TextToolState::Cleanup()
 
 // MessageReceived
 bool
-TextToolState::MessageReceived(BMessage* message, UndoableEdit** _command)
+TextToolState::MessageReceived(BMessage* message, UndoableEdit** _edit)
 {
 	bool handled = true;
 
@@ -356,7 +356,7 @@ TextToolState::MessageReceived(BMessage* message, UndoableEdit** _command)
 			UpdateBounds();
 			break;
 		default:
-			handled = TransformViewState::MessageReceived(message, _command);
+			handled = DragStateViewState::MessageReceived(message, _edit);
 	}
 
 	return handled;
@@ -374,10 +374,10 @@ TextToolState::ModifiersChanged(uint32 modifiers)
 // HandleKeyDown
 bool
 TextToolState::HandleKeyDown(const StateView::KeyEvent& event,
-	UndoableEdit** _command)
+	UndoableEdit** _edit)
 {
 	if (fText != NULL) {
-		*_command = NULL;
+		*_edit = NULL;
 
 		bool select = (event.modifiers & B_SHIFT_KEY) != 0;
 
@@ -469,15 +469,15 @@ TextToolState::HandleKeyDown(const StateView::KeyEvent& event,
 		return true;
 	}
 
-	return DragStateViewState::HandleKeyDown(event, _command);
+	return DragStateViewState::HandleKeyDown(event, _edit);
 }
 
 // HandleKeyUp
 bool
 TextToolState::HandleKeyUp(const StateView::KeyEvent& event,
-	UndoableEdit** _command)
+	UndoableEdit** _edit)
 {
-	return DragStateViewState::HandleKeyUp(event, _command);
+	return DragStateViewState::HandleKeyUp(event, _edit);
 }
 
 // #pragma mark -
@@ -519,7 +519,7 @@ TextToolState::Bounds() const
 
 // StartTransaction
 UndoableEdit*
-TextToolState::StartTransaction(const char* commandName)
+TextToolState::StartTransaction(const char* editName)
 {
 	return NULL;
 }
@@ -664,7 +664,6 @@ TextToolState::CreateText(BPoint canvasLocation)
 	if (fInsertionIndex > fInsertionLayer->CountObjects())
 		fInsertionIndex = fInsertionLayer->CountObjects();
 
-	// TODO: Use UndoableEdit
 	if (!fInsertionLayer->AddObject(text, fInsertionIndex)) {
 		fprintf(stderr, "TextToolState::CreateText(): Failed to add "
 			"Text to Layer. Out of memory\n");
