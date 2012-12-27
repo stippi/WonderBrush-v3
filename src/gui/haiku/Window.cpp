@@ -33,6 +33,7 @@
 #include "NavigatorView.h"
 #include "ObjectAddedEdit.h"
 #include "ObjectTreeView.h"
+#include "PathTool.h"
 #include "TextTool.h"
 #include "ToolConfigView.h"
 #include "TransformObjectEdit.h"
@@ -508,6 +509,7 @@ Window::_InitTools()
 	AddTool(new(std::nothrow) TransformTool());
 	AddTool(new(std::nothrow) BrushTool());
 	AddTool(new(std::nothrow) TextTool());
+	AddTool(new(std::nothrow) PathTool());
 }
 
 // _ObjectChanged
