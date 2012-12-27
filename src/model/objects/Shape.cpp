@@ -8,35 +8,9 @@
 #include "ShapeSnapshot.h"
 
 // constructor
-ShapeListener::ShapeListener()
-{
-}
-
-// destructor
-ShapeListener::~ShapeListener()
-{
-}
-
-// AreaChanged
-void
-ShapeListener::AreaChanged(Shape* shape, const BRect& oldArea,
-	const BRect& newArea)
-{
-}
-
-// Deleted
-void
-ShapeListener::Deleted(Shape* shape)
-{
-}
-
-// #pragma mark -
-
-// constructor
 Shape::Shape()
 	: Styleable()
 	, fArea(10, 10, 60, 60)
-	, fListeners(4)
 {
 	InitBounds();
 }
@@ -45,7 +19,6 @@ Shape::Shape()
 Shape::Shape(const BRect& area, const rgb_color& color)
 	: Styleable(color)
 	, fArea(area)
-	, fListeners(4)
 {
 	InitBounds();
 }
@@ -53,7 +26,6 @@ Shape::Shape(const BRect& area, const rgb_color& color)
 // destructor
 Shape::~Shape()
 {
-	_NotifyDeleted();
 }
 
 // #pragma mark -
@@ -108,8 +80,7 @@ Shape::SetArea(const BRect& area)
 	BRect oldArea(fArea);
 	fArea = area;
 
-	_NotifyAreaChanged(oldArea, fArea);
-
+	UpdateChangeCounter();
 	UpdateBounds();
 }
 
@@ -130,56 +101,6 @@ Shape::Bounds()
 }
 
 // #pragma mark -
-
-// AddListener
-bool
-Shape::AddListener(ShapeListener* listener)
-{
-	if (!listener || fListeners.HasItem(listener))
-		return false;
-	return fListeners.AddItem(listener);
-}
-
-// RemoveListener
-void
-Shape::RemoveListener(ShapeListener* listener)
-{
-	fListeners.RemoveItem(listener);
-}
-
-// #pragma mark -
-
-// _NotifyAreaChanged
-void
-Shape::_NotifyAreaChanged(const BRect& oldArea, const BRect& newArea)
-{
-	UpdateChangeCounter();
-
-	int32 count = fListeners.CountItems();
-	if (count == 0)
-		return;
-
-	BList listeners(fListeners);
-	for (int32 i = 0; i < count; i++) {
-		ShapeListener* listener = (ShapeListener*)listeners.ItemAtFast(i);
-		listener->AreaChanged(this, oldArea, newArea);
-	}
-}
-
-// _NotifyDeleted
-void
-Shape::_NotifyDeleted()
-{
-	int32 count = fListeners.CountItems();
-	if (count == 0)
-		return;
-
-	BList listeners(fListeners);
-	for (int32 i = 0; i < count; i++) {
-		ShapeListener* listener = (ShapeListener*)listeners.ItemAtFast(i);
-		listener->Deleted(this);
-	}
-}
 
 // _GetPath
 void

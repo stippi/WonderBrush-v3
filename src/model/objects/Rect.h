@@ -11,20 +11,6 @@
 
 #include "Styleable.h"
 
-class Rect;
-
-class RectListener {
-public:
-								RectListener();
-	virtual						~RectListener();
-
-	virtual	void				AreaChanged(Rect* rect,
-									const BRect& oldArea,
-									const BRect& newArea);
-	virtual	void				Deleted(Rect* rect);
-};
-
-
 class Rect : public Styleable {
 public:
 								Rect();
@@ -44,19 +30,8 @@ public:
 			BRect				Area() const;
 	virtual	BRect				Bounds();
 
-			bool				AddListener(RectListener* listener);
-			void				RemoveListener(RectListener* listener);
-
-private:
-			void				_NotifyAreaChanged(const BRect& oldArea,
-									const BRect& newArea);
-
-			void				_NotifyDeleted();
-
 private:
 			BRect				fArea;
-
-			BList				fListeners;
 };
 
 #endif // RECT_H
