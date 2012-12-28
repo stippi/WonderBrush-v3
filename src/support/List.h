@@ -96,7 +96,7 @@ public:
 		_Resize(0);
 	}
 
-	inline uint32 CountItems() const
+	inline int32 CountItems() const
 	{
 		return fCount;
 	}
