@@ -9,6 +9,8 @@
 #include <Messenger.h>
 
 #include "DragStateViewState.h"
+#include "List.h"
+#include "Path.h"
 #include "Selection.h"
 #include "Style.h"
 
@@ -67,11 +69,21 @@ public:
 	// PathToolState
 			void				SetInsertionInfo(Layer* layer, int32 index);
 			bool				CreateShape(BPoint canvasLocation);
+			bool				CreatePath(BPoint canvasLocation);
 
 			void				SetShape(Shape* shape,
 									bool modifySelection = false);
 private:
 			void				_DrawControls(PlatformDrawContext& drawContext);
+
+public:
+	// PathListener interface
+	virtual	void				PointAdded(Path* path, int32 index);
+	virtual	void				PointRemoved(Path* path, int32 index);
+	virtual	void				PointChanged(Path* path, int32 index);
+	virtual	void				PathChanged(Path* path);
+	virtual	void				PathClosedChanged(Path* path);
+	virtual	void				PathReversed(Path* path);
 
 private:
 			class PlatformDelegate;
@@ -97,6 +109,9 @@ private:
 			int32				fInsertionIndex;
 
 			Shape*				fShape;
+
+			List<PathRef, false> fPaths;
+			PathRef				fCurrentPath;
 
 			StyleRef			fStyle;
 

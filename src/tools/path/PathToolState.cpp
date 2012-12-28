@@ -89,7 +89,7 @@ public:
 	virtual void SetOrigin(BPoint origin)
 	{
 		// Setup tool and switch to drag left/top state
-		if (fParent->CreateShape(origin)) {
+		if (fParent->CreatePath(origin)) {
 //			fParent->SetDragState(fParent->fDragLeftTopState);
 //			fParent->fDragLeftTopState->SetOrigin(origin);
 		}
@@ -138,6 +138,9 @@ PathToolState::PathToolState(StateView* view, Document* document,
 	, fInsertionIndex(-1)
 
 	, fShape(NULL)
+
+	, fPaths()
+	, fCurrentPath()
 
 	, fStyle(new(std::nothrow) Style(), true)
 
@@ -254,9 +257,6 @@ PathToolState::HandleKeyUp(const StateView::KeyEvent& event,
 void
 PathToolState::Draw(PlatformDrawContext& drawContext)
 {
-	if (fShape == NULL)
-		return;
-
 	_DrawControls(drawContext);
 }
 
@@ -264,10 +264,49 @@ PathToolState::Draw(PlatformDrawContext& drawContext)
 BRect
 PathToolState::Bounds() const
 {
-	if (fShape == NULL)
-		return BRect(0, 0, -1, -1);
+	BRect bounds(LONG_MAX, LONG_MAX, LONG_MIN, LONG_MIN);
 
-	BRect bounds = fShape->Bounds();
+	class BoundsIterator : public Path::Iterator {
+	public:
+		BoundsIterator(BRect& bounds)
+			: fBounds(bounds)
+		{
+		}
+
+		virtual void MoveTo(BPoint point)
+		{
+			_Include(point);
+		}
+
+		virtual void LineTo(BPoint point)
+		{
+			_Include(point);
+		}
+
+	private:
+		void _Include(const BPoint& point)
+		{
+			if (fBounds.left > point.x)
+				fBounds.left = point.x;
+			if (fBounds.right < point.x)
+				fBounds.right = point.x;
+			if (fBounds.top > point.y)
+				fBounds.top = point.y;
+			if (fBounds.bottom < point.y)
+				fBounds.bottom = point.y;
+		}
+
+	private:
+		BRect&	fBounds;
+	};
+
+	BoundsIterator iterator(bounds);
+
+	for (int32 i = 0; i < fPaths.CountItems(); i++) {
+		Path* path = fPaths.ItemAtFast(i).Get();
+		path->Iterate(&iterator, 1.0);
+	}
+
 	bounds.InsetBy(-15, -15);
 	TransformObjectToView(&bounds);
 	return bounds;
@@ -356,6 +395,62 @@ PathToolState::ObjectChanged(const Notifier* object)
 
 // #pragma mark -
 
+// PointAdded
+void
+PathToolState::PointAdded(Path* path, int32 index)
+{
+	ObjectChanged(path);
+}
+
+// PointRemoved
+void
+PathToolState::PointRemoved(Path* path, int32 index)
+{
+//	fSelection->Remove(index);
+	ObjectChanged(path);
+}
+
+// PointChanged
+void
+PathToolState::PointChanged(Path* path, int32 index)
+{
+	ObjectChanged(path);
+}
+
+// PathChanged
+void
+PathToolState::PathChanged(Path* path)
+{
+	ObjectChanged(path);
+}
+
+// PathClosedChanged
+void
+PathToolState::PathClosedChanged(Path* path)
+{
+	ObjectChanged(path);
+}
+
+// PathReversed
+void
+PathToolState::PathReversed(Path* path)
+{
+//	// reverse selection along with path
+//	int32 count = fSelection->CountItems();
+//	int32 pointCount = fPath->CountPoints();
+//	if (count > 0) {
+//		Selection temp;
+//		for (int32 i = 0; i < count; i++) {
+//			temp.Add((pointCount - 1) - fSelection->IndexAt(i));
+//		}
+//		*fSelection = temp;
+//	}
+
+	ObjectChanged(path);
+}
+
+// #pragma mark -
+
 // SetInsertionInfo
 void
 PathToolState::SetInsertionInfo(Layer* layer, int32 index)
@@ -414,6 +509,42 @@ PathToolState::CreateShape(BPoint canvasLocation)
 	return true;
 }
 
+// CreatePath
+bool
+PathToolState::CreatePath(BPoint canvasLocation)
+{
+	Path* path = new(std::nothrow) Path();
+	if (path == NULL) {
+		fprintf(stderr, "PathToolState::CreatePath(): Failed to allocate "
+			"Path. Out of memory\n");
+		return false;
+	}
+
+	PathRef pathRef(path, true);
+
+	if (!path->AddPoint(canvasLocation)
+		|| !path->AddPoint(canvasLocation + BPoint(30, 40))) {
+		fprintf(stderr, "PathToolState::CreatePath(): Failed to add "
+			"path point. Out of memory\n");
+		return false;
+	}
+
+	if (!fPaths.Add(pathRef)) {
+		fprintf(stderr, "PathToolState::CreatePath(): Failed to add "
+			"path to list. Out of memory\n");
+		return false;
+	}
+
+//	View()->PerformEdit(new(std::nothrow) ObjectAddedEdit(shape,
+//		fSelection));
+	fCurrentPath.SetTo(path);
+
+	UpdateBounds();
+
+	return true;
+}
+
+
 // SetShape
 void
 PathToolState::SetShape(Shape* shape, bool modifySelection)
@@ -450,23 +581,29 @@ PathToolState::SetShape(Shape* shape, bool modifySelection)
 void
 PathToolState::_DrawControls(PlatformDrawContext& drawContext)
 {
-	double scaleX;
-	double scaleY;
-	if (!EffectiveTransformation().GetAffineParameters(NULL, NULL, NULL,
-		&scaleX, &scaleY, NULL, NULL)) {
-		return;
+	for (int32 i = 0; i < fPaths.CountItems(); i++) {
+		Path* path = fPaths.ItemAtFast(i).Get();
+		fPlatformDelegate->DrawPath(*path, drawContext, *this,
+			fView->ZoomLevel());
 	}
 
-	scaleX *= fView->ZoomLevel();
-	scaleY *= fView->ZoomLevel();
-
-	BPoint origin(0.0f, -10.0f / scaleY);
-	TransformObjectToView(&origin, true);
-
-	BPoint widthOffset(0.0f, -10.0f / scaleY);
-	TransformObjectToView(&widthOffset, true);
-
-	fPlatformDelegate->DrawControls(drawContext, origin, widthOffset);
+//	double scaleX;
+//	double scaleY;
+//	if (!EffectiveTransformation().GetAffineParameters(NULL, NULL, NULL,
+//		&scaleX, &scaleY, NULL, NULL)) {
+//		return;
+//	}
+//
+//	scaleX *= fView->ZoomLevel();
+//	scaleY *= fView->ZoomLevel();
+//
+//	BPoint origin(0.0f, -10.0f / scaleY);
+//	TransformObjectToView(&origin, true);
+//
+//	BPoint widthOffset(0.0f, -10.0f / scaleY);
+//	TransformObjectToView(&widthOffset, true);
+//
+//	fPlatformDelegate->DrawControls(drawContext, origin, widthOffset);
 }
 
 #endif	// _PATHTOOLSTATE_CPP_
