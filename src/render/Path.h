@@ -182,4 +182,6 @@ private:
 	mutable	BRect				fCachedBounds;
 };
 
+typedef Reference<Path>	PathRef;
+
 #endif	// PATH_H
