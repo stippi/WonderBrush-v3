@@ -17,9 +17,7 @@
 #include "BaseObject.h"
 #include "Transformable.h"
 
-class BBitmap;
 class BMessage;
-class BView;
 
 
 class Path : public BArchivable, public BaseObject {
