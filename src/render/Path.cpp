@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2009, Stephan Aßmus <superstippi@gmx.de>.
+ * Copyright 2006-2012, Stephan Aßmus <superstippi@gmx.de>.
  * Distributed under the terms of the MIT License.
  */
 
@@ -59,10 +59,10 @@ Path::Path()
 }
 
 // constructor
-Path::Path(const Path& from)
+Path::Path(const Path& other)
 	:
 	BArchivable(),
-	BaseObject(from),
+	BaseObject(other),
 	fListeners(20),
 	fPath(NULL),
 	fClosed(false),
@@ -70,7 +70,7 @@ Path::Path(const Path& from)
 	fAllocCount(0),
 	fCachedBounds(0.0, 0.0, -1.0, -1.0)
 {
-	*this = from;
+	*this = other;
 }
 
 // constructor
@@ -238,13 +238,13 @@ Path::SetToPropertyObject(const PropertyObject* object, uint32 flags)
 
 // operator=
 Path&
-Path::operator=(const Path& from)
+Path::operator=(const Path& other)
 {
-	_SetPointCount(from.fPointCount);
-	fClosed = from.fClosed;
+	_SetPointCount(other.fPointCount);
+	fClosed = other.fClosed;
 	if (fPath) {
-		memcpy(fPath, from.fPath, fPointCount * sizeof(control_point));
-		fCachedBounds = from.fCachedBounds;
+		memcpy(fPath, other.fPath, fPointCount * sizeof(control_point));
+		fCachedBounds = other.fCachedBounds;
 	} else {
 		fprintf(stderr, "Path() -> allocation failed in operator=!\n");
 		fAllocCount = 0;
@@ -986,7 +986,7 @@ Path::_GetAGGPathStorage(agg::path_storage& path,
 						points[i].point.y);
 		}
 		if (closed) {
-			// curve from last to first control point
+			// curve other last to first control point
 			path.curve4(points[count - 1].point_out.x,
 						points[count - 1].point_out.y,
 						points[0].point_in.x,
@@ -1072,7 +1072,7 @@ Path::_NotifyPointAdded(int32 index) const
 	int32 count = listeners.CountItems();
 	for (int32 i = 0; i < count; i++) {
 		Listener* listener = (Listener*)listeners.ItemAtFast(i);
-		listener->PointAdded(index);
+		listener->PointAdded(this, index);
 	}
 }
 
@@ -1084,7 +1084,7 @@ Path::_NotifyPointChanged(int32 index) const
 	int32 count = listeners.CountItems();
 	for (int32 i = 0; i < count; i++) {
 		Listener* listener = (Listener*)listeners.ItemAtFast(i);
-		listener->PointChanged(index);
+		listener->PointChanged(this, index);
 	}
 }
 
@@ -1096,7 +1096,7 @@ Path::_NotifyPointRemoved(int32 index) const
 	int32 count = listeners.CountItems();
 	for (int32 i = 0; i < count; i++) {
 		Listener* listener = (Listener*)listeners.ItemAtFast(i);
-		listener->PointRemoved(index);
+		listener->PointRemoved(this, index);
 	}
 }
 
@@ -1108,7 +1108,7 @@ Path::_NotifyPathChanged() const
 	int32 count = listeners.CountItems();
 	for (int32 i = 0; i < count; i++) {
 		Listener* listener = (Listener*)listeners.ItemAtFast(i);
-		listener->PathChanged();
+		listener->PathChanged(this);
 	}
 }
 
@@ -1120,7 +1120,7 @@ Path::_NotifyClosedChanged() const
 	int32 count = listeners.CountItems();
 	for (int32 i = 0; i < count; i++) {
 		Listener* listener = (Listener*)listeners.ItemAtFast(i);
-		listener->PathClosedChanged();
+		listener->PathClosedChanged(this);
 	}
 }
 
@@ -1132,6 +1132,6 @@ Path::_NotifyPathReversed() const
 	int32 count = listeners.CountItems();
 	for (int32 i = 0; i < count; i++) {
 		Listener* listener = (Listener*)listeners.ItemAtFast(i);
-		listener->PathReversed();
+		listener->PathReversed(this);
 	}
 }

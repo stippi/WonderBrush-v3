@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2010, Stephan Aßmus <superstippi@gmx.de>.
+ * Copyright 2006-2012, Stephan Aßmus <superstippi@gmx.de>.
  * All rights reserved. Distributed under the terms of the MIT License.
  */
 
@@ -30,12 +30,12 @@ public:
 								Listener();
 		virtual					~Listener();
 
-		virtual	void			PointAdded(int32 index) = 0;
-		virtual	void			PointRemoved(int32 index) = 0;
-		virtual	void			PointChanged(int32 index) = 0;
-		virtual	void			PathChanged() = 0;
-		virtual	void			PathClosedChanged() = 0;
-		virtual	void			PathReversed() = 0;
+		virtual	void			PointAdded(const Path* path, int32 index) = 0;
+		virtual	void			PointRemoved(const Path* path, int32 index) = 0;
+		virtual	void			PointChanged(const Path* path, int32 index) = 0;
+		virtual	void			PathChanged(const Path* path) = 0;
+		virtual	void			PathClosedChanged(const Path* path) = 0;
+		virtual	void			PathReversed(const Path* path) = 0;
 	};
 
 	class Iterator {
@@ -48,7 +48,7 @@ public:
 	};
 
 								Path();
-								Path(const Path& from);
+								Path(const Path& other);
 								Path(BMessage* archive);
 
 	virtual						~Path();
@@ -66,9 +66,9 @@ public:
 									uint32 flags = 0);
 
 	// Path
-			Path&				operator=(const Path& from);
-			bool				operator==(const Path& from) const;
-			bool				operator!=(const Path& from) const;
+			Path&				operator=(const Path& other);
+			bool				operator==(const Path& other) const;
+			bool				operator!=(const Path& other) const;
 
 			void				MakeEmpty();
 
@@ -117,7 +117,7 @@ public:
 								// this function can be used to get a point
 								// directly on the segment indicated by "index"
 								// "scale" is on [0..1] indicating the distance
-								// from the start of the segment to the end
+								// other the start of the segment to the end
 			bool				GetPoint(int32 index, double scale,
 									BPoint& point) const;
 
