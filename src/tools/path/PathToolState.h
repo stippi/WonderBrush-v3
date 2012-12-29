@@ -9,7 +9,7 @@
 #include <Messenger.h>
 
 #include "DragStateViewState.h"
-//#include "HashSetHugo.h"
+#include "HashSetHugo.h"
 #include "List.h"
 #include "Path.h"
 #include "Selection.h"
@@ -141,9 +141,9 @@ private:
 					return fIndex;
 				}
 
-				uint32 GetHashCode() const
+				size_t GetHashCode() const
 				{
-					return (uint32)fPath ^ fIndex;
+					return (size_t)fPath ^ fIndex;
 				}
 
 			private:
@@ -151,7 +151,7 @@ private:
 				int32			fIndex;
 			};
 
-//			typedef HashSet<SelectedPoint> PointSelection;
+			typedef HashSet<SelectedPoint> PointSelection;
 
 private:
 			PlatformDelegate*	fPlatformDelegate;
@@ -172,7 +172,7 @@ private:
 
 			List<PathRef, false> fPaths;
 			PathRef				fCurrentPath;
-//			PointSelection		fPointSelection;
+			PointSelection		fPointSelection;
 
 			StyleRef			fStyle;
 
