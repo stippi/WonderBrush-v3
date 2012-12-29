@@ -56,10 +56,13 @@ struct HashSetTableDefinition {
 // HashSet
 template<typename Key>
 class HashSet {
+protected:
+	typedef OpenHashTable<HashSetTableDefinition<Key> > ElementTable;
+	typedef typename ElementTable::Iterator TableIterator;
+	typedef HashSetElement<Key>	Element;
+
 public:
 	class Iterator {
-	private:
-		typedef HashSetElement<Key>	Element;
 	public:
 		Iterator(const Iterator& other)
 			:
@@ -113,10 +116,8 @@ public:
 		}
 
 	private:
-		typedef OpenHashTable<HashSetTableDefinition<Key> > ElementTable;
-
 		HashSet<Key>*					fSet;
-		typename ElementTable::Iterator	fIterator;
+		TableIterator					fIterator;
 		Element*						fElement;
 
 	private:
@@ -138,8 +139,6 @@ public:
 	Iterator GetIterator();
 
 protected:
-	typedef OpenHashTable<HashSetTableDefinition<Key> > ElementTable;
-	typedef HashSetElement<Key>	Element;
 	friend class Iterator;
 
 protected:
@@ -285,7 +284,7 @@ HashSet<Key>::Remove(const Key& key)
 
 
 // Clear
-template<typename Key, typename Value>
+template<typename Key>
 void
 HashSet<Key>::Clear()
 {
@@ -322,21 +321,6 @@ typename HashSet<Key>::Iterator
 HashSet<Key>::GetIterator()
 {
 	return Iterator(this);
-}
-
-// _FindElement
-template<typename Key>
-typename HashSet<Key>::Element *
-HashSet<Key>::_FindElement(const Key& key) const
-{
-	Element* element = fTable.FindFirst(key.GetHashCode());
-	while (element && element->fKey != key) {
-		if (element->fNext >= 0)
-			element = fTable.ElementAt(element->fNext);
-		else
-			element = NULL;
-	}
-	return element;
 }
 
 
