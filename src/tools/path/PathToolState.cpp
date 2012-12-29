@@ -384,11 +384,15 @@ PathToolState::ObjectDeselected(const Selectable& selectable,
 void
 PathToolState::ObjectChanged(const Notifier* object)
 {
+	if (dynamic_cast<const Path*>(object) != NULL)
+		UpdateBounds();
+
 	if (fShape != NULL && object == fShape) {
 		SetObjectToCanvasTransformation(fShape->Transformation());
 		UpdateBounds();
 		UpdateDragState();
 	}
+
 	if (object == fCurrentColor && !fIgnoreColorColorNotifiactions) {
 	}
 }

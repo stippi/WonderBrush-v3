@@ -9,6 +9,7 @@
 #include <Messenger.h>
 
 #include "DragStateViewState.h"
+//#include "HashSetHugo.h"
 #include "List.h"
 #include "Path.h"
 #include "Selection.h"
@@ -93,6 +94,65 @@ private:
 
 			friend class PickShapeState;
 
+			class SelectedPoint {
+			public:
+				SelectedPoint()
+					: fPath(NULL)
+					, fIndex(-1)
+				{
+				}
+
+				SelectedPoint(const Path* path, int32 index)
+					: fPath(path)
+					, fIndex(index)
+				{
+				}
+
+				SelectedPoint(const SelectedPoint& other)
+					: fPath(other.fPath)
+					, fIndex(other.fIndex)
+				{
+				}
+
+				bool operator==(const SelectedPoint& other) const
+				{
+					return fPath == other.fPath && fIndex == other.fIndex;
+				}
+
+				bool operator!=(const SelectedPoint& other) const
+				{
+					return fPath != other.fPath || fIndex != other.fIndex;
+				}
+
+				SelectedPoint& operator=(const SelectedPoint& other)
+				{
+					fPath = other.fPath;
+					fIndex = other.fIndex;
+					return *this;
+				}
+
+				const Path* GetPath() const
+				{
+					return fPath;
+				}
+
+				int32 GetIndex() const
+				{
+					return fIndex;
+				}
+
+				uint32 GetHashCode() const
+				{
+					return (uint32)fPath ^ fIndex;
+				}
+
+			private:
+				const Path*		fPath;
+				int32			fIndex;
+			};
+
+//			typedef HashSet<SelectedPoint> PointSelection;
+
 private:
 			PlatformDelegate*	fPlatformDelegate;
 
@@ -112,6 +172,7 @@ private:
 
 			List<PathRef, false> fPaths;
 			PathRef				fCurrentPath;
+//			PointSelection		fPointSelection;
 
 			StyleRef			fStyle;
 
