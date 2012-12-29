@@ -5,10 +5,12 @@
 #ifndef HASH_SET_HUGO_H
 #define HASH_SET_HUGO_H
 
+#include <new>
+
 #include "OpenHashTableHugo.h"
 
 #include "AutoLocker.h"
-#include "Locker.h"
+#include <Locker.h>
 
 
 // HashSetElement
@@ -111,12 +113,11 @@ public:
 		}
 
 	private:
-		friend class HashMap<Key, Value>;
 		typedef OpenHashTable<HashSetTableDefinition<Key> > ElementTable;
 
-		HashSet<Key>*			fSet;
-		ElementTable::Iterator	fIterator;
-		Element*				fElement;
+		HashSet<Key>*					fSet;
+		typename ElementTable::Iterator	fIterator;
+		Element*						fElement;
 
 	private:
 		friend class HashSet<Key>;
@@ -148,11 +149,11 @@ protected:
 
 // SynchronizedHashSet
 template<typename Key>
-class SynchronizedHashSet : public Locker {
+class SynchronizedHashSet : public BLocker {
 public:
-	typedef HashSet<Key>::Iterator Iterator;
+	typedef typename HashSet<Key>::Iterator Iterator;
 
-	SynchronizedHashSet() : Locker("synchronized hash set")	{}
+	SynchronizedHashSet() : BLocker("synchronized hash set")	{}
 	~SynchronizedHashSet()	{ Lock(); }
 
 	status_t InitCheck() const
@@ -184,8 +185,8 @@ public:
 
 	bool Contains(const Key& key) const
 	{
-		const Locker* lock = this;
-		MapLocker locker(const_cast<Locker*>(lock));
+		const BLocker* lock = this;
+		MapLocker locker(const_cast<BLocker*>(lock));
 		if (!locker.IsLocked())
 			return false;
 		return fSet.Contains(key);
@@ -193,8 +194,8 @@ public:
 
 	int32 Size() const
 	{
-		const Locker* lock = this;
-		MapLocker locker(const_cast<Locker*>(lock));
+		const BLocker* lock = this;
+		MapLocker locker(const_cast<BLocker*>(lock));
 		return fSet.Size();
 	}
 
@@ -208,7 +209,7 @@ public:
 	HashSet<Key>& GetUnsynchronizedSet()				{ return fSet; }
 
 protected:
-	typedef AutoLocker<Locker> MapLocker;
+	typedef AutoLocker<BLocker> MapLocker;
 
 	HashSet<Key>	fSet;
 };
@@ -317,7 +318,7 @@ HashSet<Key>::Size() const
 
 // GetIterator
 template<typename Key>
-HashSet<Key>::Iterator
+typename HashSet<Key>::Iterator
 HashSet<Key>::GetIterator()
 {
 	return Iterator(this);
@@ -325,7 +326,7 @@ HashSet<Key>::GetIterator()
 
 // _FindElement
 template<typename Key>
-HashSet<Key>::Element *
+typename HashSet<Key>::Element *
 HashSet<Key>::_FindElement(const Key& key) const
 {
 	Element* element = fTable.FindFirst(key.GetHashCode());
