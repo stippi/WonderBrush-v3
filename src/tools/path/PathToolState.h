@@ -93,9 +93,11 @@ private:
 			class CreateShapeState;
 			class DragPathPointState;
 			class AddPathPointState;
+			class InsertPathPointState;
 
 			friend class PickShapeState;
 			friend class AddPathPointState;
+			friend class InsertPathPointState;
 
 			enum {
 				POINT		= 1 << 0,
@@ -205,8 +207,9 @@ private:
 
 			PickShapeState*		fPickShapeState;
 			CreateShapeState*	fCreateShapeState;
-			AddPathPointState*	fAddPathPointState;
 			DragPathPointState*	fDragPathPointState;
+			AddPathPointState*	fAddPathPointState;
+			InsertPathPointState* fInsertPathPointState;
 
 			Document*			fDocument;
 			Selection*			fSelection;

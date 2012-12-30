@@ -242,6 +242,7 @@ public:
 
 			fParent->SetDragState(fParent->fDragPathPointState);
 			fParent->fDragPathPointState->SetOrigin(fOrigin);
+			fParent->fDragPathPointState->DragTo(current, modifiers);
 		}
 	}
 
@@ -266,6 +267,130 @@ private:
 	bool				fPointAdded;
 };
 
+// InsertPathPointState
+class PathToolState::InsertPathPointState
+	: public DragStateViewState::DragState {
+public:
+	InsertPathPointState(PathToolState* parent)
+		: DragState(parent)
+		, fParent(parent)
+		, fPathRef()
+		, fPointAdded(false)
+	{
+	}
+
+	virtual void SetOrigin(BPoint origin)
+	{
+		fOrigin = origin;
+		Path* path = fPathRef.Get();
+		if (path != NULL && _InsertPoint(path, origin, fIndex))
+			fPointAdded = true;
+	}
+
+	virtual void DragTo(BPoint current, uint32 modifiers)
+	{
+		double dragDistance = point_point_distance(fOrigin, current);
+		if (fPointAdded && dragDistance > 7.0) {
+			Path* path = fPathRef.Get();
+			fParent->fDragPathPointState->SetPathPoint(PathPoint(path,
+				fIndex, POINT_ALL));
+			fParent->fDragPathPointState->SetDragMode(
+				DRAG_MODE_MOVE_POINT);
+
+			fParent->SetDragState(fParent->fDragPathPointState);
+			fParent->fDragPathPointState->SetOrigin(fOrigin);
+			fParent->fDragPathPointState->DragTo(current, modifiers);
+		}
+	}
+
+	virtual BCursor ViewCursor(BPoint current) const
+	{
+		return BCursor(kPathInsertCursor);
+	}
+
+	virtual const char* CommandName() const
+	{
+		return "Insert path point";
+	}
+
+	void SetPath(const PathRef& pathRef)
+	{
+		fPathRef = pathRef;
+	}
+
+	void SetInsertIndex(int32 index)
+	{
+		fIndex = index;
+	}
+
+private:
+	BPoint _ScalePoint(BPoint a, BPoint b, double scale) const
+	{
+		return BPoint(
+			a.x + (b.x - a.x) * scale,
+			a.y + (b.y - a.y) * scale
+		);
+	}
+
+	bool _InsertPoint(Path* path, BPoint where, int32 index)
+	{
+		double scale;
+
+		BPoint point;
+		BPoint pointIn;
+		BPoint pointOut;
+
+		BPoint previous;
+		BPoint previousOut;
+		BPoint next;
+		BPoint nextIn;
+
+		if (path->FindBezierScale(index - 1, where, &scale)
+			&& scale >= 0.0 && scale <= 1.0
+			&& path->GetPoint(index - 1, scale, point)) {
+
+			path->GetPointAt(index - 1, previous);
+			path->GetPointOutAt(index - 1, previousOut);
+			path->GetPointAt(index, next);
+			path->GetPointInAt(index, nextIn);
+
+			where = _ScalePoint(previousOut, nextIn, scale);
+
+			previousOut = _ScalePoint(previous, previousOut, scale);
+			nextIn = _ScalePoint(next, nextIn, 1 - scale);
+			pointIn = _ScalePoint(previousOut, where, scale);
+			pointOut = _ScalePoint(nextIn, where, 1 - scale);
+
+			if (path->AddPoint(point, index)) {
+				path->SetPointIn(index, pointIn);
+				path->SetPointOut(index, pointOut);
+
+//				delete fInsertPointCommand;
+//				fInsertPointCommand = new InsertPointCommand(path, index,
+//					fSelection->Items(), fSelection->CountItems());
+
+				path->SetPointOut(index - 1, previousOut);
+				path->SetPointIn(index + 1, nextIn);
+
+//				fCurrentPathPoint = index;
+//				_ShiftSelection(fCurrentPathPoint, 1);
+//				_Select(fCurrentPathPoint, fShiftDown);
+
+				return true;
+			}
+		}
+
+		return false;
+	}
+
+
+private:
+	PathToolState*		fParent;
+	PathRef				fPathRef;
+	int32				fIndex;
+	bool				fPointAdded;
+};
+
 // #pragma mark -
 
 // constructor
@@ -278,8 +403,9 @@ PathToolState::PathToolState(StateView* view, Document* document,
 
 	, fPickShapeState(new(std::nothrow) PickShapeState(this))
 	, fCreateShapeState(new(std::nothrow) CreateShapeState(this))
-	, fAddPathPointState(new(std::nothrow) AddPathPointState(this))
 	, fDragPathPointState(new(std::nothrow) DragPathPointState(this))
+	, fAddPathPointState(new(std::nothrow) AddPathPointState(this))
+	, fInsertPathPointState(new(std::nothrow) InsertPathPointState(this))
 
 	, fDocument(document)
 	, fSelection(selection)
@@ -317,8 +443,9 @@ PathToolState::~PathToolState()
 
 	delete fPickShapeState;
 	delete fCreateShapeState;
-	delete fAddPathPointState;
 	delete fDragPathPointState;
+	delete fAddPathPointState;
+	delete fInsertPathPointState;
 
 	SetInsertionInfo(NULL, -1);
 
@@ -551,6 +678,29 @@ PathToolState::DragStateFor(BPoint canvasWhere, float zoomLevel) const
 				break;
 		}
 		return fDragPathPointState;
+	}
+
+	// Check if pointer is above a path segment
+	inset = 7.0 / zoomLevel;
+	closestDistance = LONG_MAX;
+	for (int32 i = fPaths.CountItems() - 1; i >= 0; i--) {
+		Path* path = fPaths.ItemAtFast(i).Get();
+
+		float distance;
+		int32 index;
+		if (!path->GetDistance(canvasWhere, &distance, &index))
+			continue;
+
+		if (distance < closestDistance && distance < inset) {
+			closestDistance = distance;
+			closestPathPoint = PathPoint(path, index, POINT);
+		}
+	}
+
+	if (closestDistance < inset) {
+		fInsertPathPointState->SetPath(PathRef(closestPathPoint.GetPath()));
+		fInsertPathPointState->SetInsertIndex(closestPathPoint.GetIndex());
+		return fInsertPathPointState;
 	}
 
 	// If there is still no state, switch to the PickObjectsState
@@ -802,11 +952,11 @@ PathToolState::SetShape(Shape* shape, bool modifySelection)
 	if (shape != NULL) {
 		if (modifySelection)
 			fSelection->Select(Selectable(shape), this);
-		SetObjectToCanvasTransformation(shape->Transformation());
+//		SetObjectToCanvasTransformation(shape->Transformation());
 	} else {
 		if (modifySelection)
 			fSelection->DeselectAll(this);
-		SetObjectToCanvasTransformation(Transformable());
+//		SetObjectToCanvasTransformation(Transformable());
 	}
 }
 
