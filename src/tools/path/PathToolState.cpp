@@ -136,6 +136,7 @@ public:
 
 	virtual void SetOrigin(BPoint origin)
 	{
+		fOrigin = origin;
 		BPoint point(origin);
 		switch (fDragMode) {
 			case DRAG_MODE_MOVE_POINT:
@@ -210,10 +211,62 @@ private:
 	BPoint				fClickOffset;
 };
 
+// AddPathPointState
+class PathToolState::AddPathPointState : public DragStateViewState::DragState {
+public:
+	AddPathPointState(PathToolState* parent)
+		: DragState(parent)
+		, fParent(parent)
+		, fPathRef()
+		, fPointAdded(false)
+	{
+	}
 
+	virtual void SetOrigin(BPoint origin)
+	{
+		fOrigin = origin;
+		Path* path = fPathRef.Get();
+		if (path != NULL && path->AddPoint(origin))
+			fPointAdded = true;
+	}
+
+	virtual void DragTo(BPoint current, uint32 modifiers)
+	{
+		double dragDistance = point_point_distance(fOrigin, current);
+		if (fPointAdded && dragDistance > 7.0) {
+			Path* path = fPathRef.Get();
+			fParent->fDragPathPointState->SetPathPoint(PathPoint(path,
+				path->CountPoints() - 1, POINT_OUT));
+			fParent->fDragPathPointState->SetDragMode(
+				DRAG_MODE_MOVE_POINT_OUT_MIRROR_IN);
+
+			fParent->SetDragState(fParent->fDragPathPointState);
+			fParent->fDragPathPointState->SetOrigin(fOrigin);
+		}
+	}
+
+	virtual BCursor ViewCursor(BPoint current) const
+	{
+		return BCursor(kPathAddCursor);
+	}
+
+	virtual const char* CommandName() const
+	{
+		return "Add path point";
+	}
+
+	void SetPath(const PathRef& pathRef)
+	{
+		fPathRef = pathRef;
+	}
+
+private:
+	PathToolState*		fParent;
+	PathRef				fPathRef;
+	bool				fPointAdded;
+};
 
 // #pragma mark -
-
 
 // constructor
 PathToolState::PathToolState(StateView* view, Document* document,
@@ -225,6 +278,7 @@ PathToolState::PathToolState(StateView* view, Document* document,
 
 	, fPickShapeState(new(std::nothrow) PickShapeState(this))
 	, fCreateShapeState(new(std::nothrow) CreateShapeState(this))
+	, fAddPathPointState(new(std::nothrow) AddPathPointState(this))
 	, fDragPathPointState(new(std::nothrow) DragPathPointState(this))
 
 	, fDocument(document)
@@ -263,6 +317,7 @@ PathToolState::~PathToolState()
 
 	delete fPickShapeState;
 	delete fCreateShapeState;
+	delete fAddPathPointState;
 	delete fDragPathPointState;
 
 	SetInsertionInfo(NULL, -1);
@@ -408,6 +463,7 @@ PathToolState::Bounds() const
 	for (int32 i = 0; i < fPaths.CountItems(); i++) {
 		Path* path = fPaths.ItemAtFast(i).Get();
 		path->Iterate(&iterator, 1.0);
+		bounds = bounds | path->ControlPointBounds();
 	}
 
 	bounds.InsetBy(-15, -15);
@@ -428,7 +484,7 @@ PathToolState::StartTransaction(const char* editName)
 PathToolState::DragState*
 PathToolState::DragStateFor(BPoint canvasWhere, float zoomLevel) const
 {
-	double inset = 7.0 / zoomLevel;
+	double inset = 10.0 / zoomLevel;
 
 	double closestDistance = LONG_MAX;
 	PathPoint closestPathPoint;
@@ -506,6 +562,11 @@ PathToolState::DragStateFor(BPoint canvasWhere, float zoomLevel) const
 	if (pickedShape != NULL) {
 		fPickShapeState->SetShape(pickedShape);
 		return fPickShapeState;
+	}
+
+	if (fCurrentPath.Get() != NULL) {
+		fAddPathPointState->SetPath(fCurrentPath);
+		return fAddPathPointState;
 	}
 
 	return fCreateShapeState;
