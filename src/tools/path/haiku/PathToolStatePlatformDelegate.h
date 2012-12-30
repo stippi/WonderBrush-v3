@@ -56,7 +56,8 @@ public:
 				, fView(view)
 			{
 				fView->SetHighColor(0, 0, 0, 255);
-				fView->SetDrawingMode(B_OP_OVER);
+				fView->SetLowColor(255, 255, 255, 255);
+				fView->SetDrawingMode(B_OP_COPY);
 			}
 
 			virtual ~StrokePathIterator()
@@ -67,7 +68,6 @@ public:
 			{
 				fBlack = true;
 				fSkip = false;
-				fView->SetHighColor(0, 0, 0, 255);
 
 				fViewState.TransformObjectToView(&point, false);
 				fView->MovePenTo(point);
@@ -78,12 +78,11 @@ public:
 				fViewState.TransformObjectToView(&point, false);
 				if (!fSkip) {
 					if (fBlack)
-						fView->SetHighColor(255, 255, 255, 255);
+						fView->StrokeLine(point, B_SOLID_HIGH);
 					else
-						fView->SetHighColor(0, 0, 0, 255);
+						fView->StrokeLine(point, B_SOLID_LOW);
 					fBlack = !fBlack;
 
-					fView->StrokeLine(point);
 				} else {
 					fView->MovePenTo(point);
 				}
@@ -108,7 +107,7 @@ public:
 		view->SetFlags(flags);
 
 		const float kPointExtent = 3.0f;
-		const float kControlPointExtent = 1.0f;
+		const float kControlPointExtent = 2.0f;
 
 		view->SetLowColor(0, 0, 0, 255);
 		BPoint point;
@@ -160,9 +159,9 @@ public:
 					pointIn.x + kControlPointExtent,
 					pointIn.y + kControlPointExtent
 				);
-				view->StrokeRect(r, B_SOLID_LOW);
+				view->StrokeEllipse(r, B_SOLID_LOW);
 				r.InsetBy(1.0, 1.0);
-				view->FillRect(r, B_SOLID_HIGH);
+				view->FillEllipse(r, B_SOLID_HIGH);
 			}
 			// draw out control point
 			if (highlight && (hoverPoint.GetWhich() & POINT_OUT) != 0)
@@ -182,9 +181,9 @@ public:
 					pointOut.x + kControlPointExtent,
 					pointOut.y + kControlPointExtent
 				);
-				view->StrokeRect(r, B_SOLID_LOW);
+				view->StrokeEllipse(r, B_SOLID_LOW);
 				r.InsetBy(1.0, 1.0);
-				view->FillRect(r, B_SOLID_HIGH);
+				view->FillEllipse(r, B_SOLID_HIGH);
 			}
 		}
 	}
