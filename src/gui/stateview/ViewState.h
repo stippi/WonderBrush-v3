@@ -68,7 +68,8 @@ public:
 
 			float				ZoomLevel() const;
 
-			void				Invalidate(BRect canvasBounds);
+			void				Invalidate() const;
+			void				Invalidate(BRect canvasBounds) const;
 
 	inline	StateView*			View() const
 									{ return fView; }

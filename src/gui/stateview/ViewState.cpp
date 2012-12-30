@@ -176,7 +176,14 @@ ViewState::ZoomLevel() const
 
 // Invalidate
 void
-ViewState::Invalidate(BRect canvasBounds)
+ViewState::Invalidate() const
+{
+	Invalidate(fBounds);
+}
+
+// Invalidate
+void
+ViewState::Invalidate(BRect canvasBounds) const
 {
 	fView->ConvertFromCanvas(&canvasBounds);
 	canvasBounds.left = floorf(canvasBounds.left);
