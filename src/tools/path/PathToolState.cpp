@@ -78,42 +78,6 @@ private:
 	Shape*				fShape;
 };
 
-// CreateShapeState
-class PathToolState::CreateShapeState : public DragStateViewState::DragState {
-public:
-	CreateShapeState(PathToolState* parent)
-		: DragState(parent)
-		, fParent(parent)
-	{
-	}
-
-	virtual void SetOrigin(BPoint origin)
-	{
-		// Setup tool and switch to drag left/top state
-		if (fParent->CreatePath(origin)) {
-//			fParent->SetDragState(fParent->fDragLeftTopState);
-//			fParent->fDragLeftTopState->SetOrigin(origin);
-		}
-	}
-
-	virtual void DragTo(BPoint current, uint32 modifiers)
-	{
-	}
-
-	virtual BCursor ViewCursor(BPoint current) const
-	{
-		return BCursor(B_CURSOR_ID_SYSTEM_DEFAULT);
-	}
-
-	virtual const char* CommandName() const
-	{
-		return "Create shape";
-	}
-
-private:
-	PathToolState*		fParent;
-};
-
 enum {
 	DRAG_MODE_NONE						= 0,
 	DRAG_MODE_MOVE_POINT				= 1,
@@ -209,6 +173,47 @@ private:
 	PathPoint			fPathPoint;
 	uint32				fDragMode;
 	BPoint				fClickOffset;
+};
+
+// CreateShapeState
+class PathToolState::CreateShapeState : public DragStateViewState::DragState {
+public:
+	CreateShapeState(PathToolState* parent)
+		: DragState(parent)
+		, fParent(parent)
+	{
+	}
+
+	virtual void SetOrigin(BPoint origin)
+	{
+		// Setup tool and switch to drag left/top state
+		if (fParent->CreatePath(origin)) {
+			PathRef pathRef = fParent->fPaths.LastItem();
+			fParent->fDragPathPointState->SetPathPoint(
+				PathPoint(pathRef.Get(), 0, POINT_OUT));
+			fParent->fDragPathPointState->SetDragMode(
+				DRAG_MODE_MOVE_POINT_OUT_MIRROR_IN);
+			fParent->SetDragState(fParent->fDragPathPointState);
+			fParent->fDragPathPointState->SetOrigin(origin);
+		}
+	}
+
+	virtual void DragTo(BPoint current, uint32 modifiers)
+	{
+	}
+
+	virtual BCursor ViewCursor(BPoint current) const
+	{
+		return BCursor(kPathNewCursor);
+	}
+
+	virtual const char* CommandName() const
+	{
+		return "Create shape";
+	}
+
+private:
+	PathToolState*		fParent;
 };
 
 // AddPathPointState
@@ -901,8 +906,7 @@ PathToolState::CreatePath(BPoint canvasLocation)
 
 	PathRef pathRef(path, true);
 
-	if (!path->AddPoint(canvasLocation)
-		|| !path->AddPoint(canvasLocation + BPoint(30, 40))) {
+	if (!path->AddPoint(canvasLocation)) {
 		fprintf(stderr, "PathToolState::CreatePath(): Failed to add "
 			"path point. Out of memory\n");
 		return false;
