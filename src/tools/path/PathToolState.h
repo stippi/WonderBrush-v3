@@ -24,7 +24,7 @@ class Shape;
 
 class PathToolState : public DragStateViewState,
 	public Selection::Controller, public Selection::Listener,
-	public Listener {
+	public Listener, public Path::Listener {
 public:
 								PathToolState(StateView* view,
 									Document* document, Selection* selection,
@@ -74,64 +74,82 @@ public:
 
 			void				SetShape(Shape* shape,
 									bool modifySelection = false);
-private:
-			void				_DrawControls(PlatformDrawContext& drawContext);
-
 public:
 	// PathListener interface
-	virtual	void				PointAdded(Path* path, int32 index);
-	virtual	void				PointRemoved(Path* path, int32 index);
-	virtual	void				PointChanged(Path* path, int32 index);
-	virtual	void				PathChanged(Path* path);
-	virtual	void				PathClosedChanged(Path* path);
-	virtual	void				PathReversed(Path* path);
+	virtual	void				PointAdded(const Path* path, int32 index);
+	virtual	void				PointRemoved(const Path* path, int32 index);
+	virtual	void				PointChanged(const Path* path, int32 index);
+	virtual	void				PathChanged(const Path* path);
+	virtual	void				PathClosedChanged(const Path* path);
+	virtual	void				PathReversed(const Path* path);
+
+private:
+			void				_DrawControls(PlatformDrawContext& drawContext);
 
 private:
 			class PlatformDelegate;
 
 			class PickShapeState;
 			class CreateShapeState;
+			class DragPathPointState;
 
 			friend class PickShapeState;
 
-			class SelectedPoint {
+			enum {
+				POINT		= 1 << 0,
+				POINT_IN	= 1 << 1,
+				POINT_OUT	= 1 << 2,
+
+				POINT_ALL	= POINT | POINT_IN | POINT_OUT
+			};
+
+			class PathPoint {
 			public:
-				SelectedPoint()
+				PathPoint()
 					: fPath(NULL)
 					, fIndex(-1)
+					, fWhich(0)
 				{
 				}
 
-				SelectedPoint(const Path* path, int32 index)
+				PathPoint(Path* path, int32 index, int32 which)
 					: fPath(path)
 					, fIndex(index)
+					, fWhich(which)
 				{
 				}
 
-				SelectedPoint(const SelectedPoint& other)
+				PathPoint(const PathPoint& other)
 					: fPath(other.fPath)
 					, fIndex(other.fIndex)
+					, fWhich(other.fWhich)
 				{
 				}
 
-				bool operator==(const SelectedPoint& other) const
+				bool operator==(const PathPoint& other) const
+				{
+					return IsSameIndex(other) && fWhich == other.fWhich;
+				}
+
+				bool operator!=(const PathPoint& other) const
+				{
+					return !(*this == other);
+				}
+
+				PathPoint& operator=(const PathPoint& other)
+				{
+					fPath = other.fPath;
+					fIndex = other.fIndex;
+					fWhich = other.fWhich;
+					return *this;
+				}
+
+				bool IsSameIndex(const PathPoint& other) const
 				{
 					return fPath == other.fPath && fIndex == other.fIndex;
 				}
 
-				bool operator!=(const SelectedPoint& other) const
-				{
-					return fPath != other.fPath || fIndex != other.fIndex;
-				}
-
-				SelectedPoint& operator=(const SelectedPoint& other)
-				{
-					fPath = other.fPath;
-					fIndex = other.fIndex;
-					return *this;
-				}
-
-				const Path* GetPath() const
+				Path* GetPath() const
 				{
 					return fPath;
 				}
@@ -141,23 +159,51 @@ private:
 					return fIndex;
 				}
 
+				int32 GetWhich() const
+				{
+					return fWhich;
+				}
+
+				bool GetPointAt(BPoint& point) const
+				{
+					if (fPath == NULL)
+						return false;
+					return fPath->GetPointAt(fIndex, point);
+				}
+
+				bool GetPointInAt(BPoint& point) const
+				{
+					if (fPath == NULL)
+						return false;
+					return fPath->GetPointInAt(fIndex, point);
+				}
+
+				bool GetPointOutAt(BPoint& point) const
+				{
+					if (fPath == NULL)
+						return false;
+					return fPath->GetPointOutAt(fIndex, point);
+				}
+
 				size_t GetHashCode() const
 				{
-					return (size_t)fPath ^ fIndex;
+					return (size_t)fPath ^ fIndex ^ (fWhich << 4);
 				}
 
 			private:
-				const Path*		fPath;
+				Path*			fPath;
 				int32			fIndex;
+				int32			fWhich;
 			};
 
-			typedef HashSet<SelectedPoint> PointSelection;
+			typedef HashSet<PathPoint> PointSelection;
 
 private:
 			PlatformDelegate*	fPlatformDelegate;
 
 			PickShapeState*		fPickShapeState;
 			CreateShapeState*	fCreateShapeState;
+			DragPathPointState*	fDragPathPointState;
 
 			Document*			fDocument;
 			Selection*			fSelection;
@@ -172,6 +218,7 @@ private:
 
 			List<PathRef, false> fPaths;
 			PathRef				fCurrentPath;
+	mutable	PathPoint			fHoverPathPoint;
 			PointSelection		fPointSelection;
 
 			StyleRef			fStyle;

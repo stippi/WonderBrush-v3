@@ -5,6 +5,7 @@
 #include <Shape.h>
 
 #include "PathToolState.h"
+#include "ui_defines.h"
 
 
 class PathToolState::PlatformDelegate {
@@ -44,8 +45,9 @@ public:
 			widthOffset.x + size + 1, widthOffset.y + size + 1));
 	}
 
-	void DrawPath(const Path& path, PlatformDrawContext& drawContext,
-		TransformViewState& viewState, float zoomLevel)
+	void DrawPath(Path* path, PlatformDrawContext& drawContext,
+		TransformViewState& viewState, const PointSelection& selection,
+		const PathPoint& hoverPoint, float zoomLevel)
 	{
 		class StrokePathIterator : public Path::Iterator {
 		public:
@@ -101,9 +103,90 @@ public:
 		view->SetFlags(flags | B_SUBPIXEL_PRECISE);
 
 		StrokePathIterator iterator(viewState, view);
-		path.Iterate(&iterator, zoomLevel);
+		path->Iterate(&iterator, zoomLevel);
 
 		view->SetFlags(flags);
+
+		const float kPointExtent = 3.0f;
+		const float kControlPointExtent = 1.0f;
+
+		view->SetLowColor(0, 0, 0, 255);
+		BPoint point;
+		BPoint pointIn;
+		BPoint pointOut;
+		rgb_color focusColor = (rgb_color){ 255, 0, 0, 255 };
+		rgb_color highlightColor = (rgb_color){ 60, 60, 255, 255 };
+		for (int32 i = 0; path->GetPointsAt(i, point, pointIn, pointOut); i++) {
+			PathPoint pathPoint(path, i, POINT_ALL);
+			bool highlight = hoverPoint.IsSameIndex(pathPoint);
+			view->SetHighColor(255, 255, 255, 255);
+			// convert to view coordinate space
+			viewState.TransformObjectToView(&point, true);
+			viewState.TransformObjectToView(&pointIn, true);
+			viewState.TransformObjectToView(&pointOut, true);
+			// connect the points belonging to one control point
+			view->SetDrawingMode(B_OP_INVERT);
+			view->StrokeLine(point, pointIn);
+			view->StrokeLine(point, pointOut);
+			// draw main control point
+			if (highlight && (hoverPoint.GetWhich() & POINT) != 0)
+				view->SetLowColor(highlightColor);
+			if (selection.Contains(PathPoint(path, i, POINT)))
+				view->SetLowColor(focusColor);
+			else
+				view->SetLowColor(kBlack);
+
+			view->SetDrawingMode(B_OP_COPY);
+			BRect r(point, point);
+			r.InsetBy(-kPointExtent, -kPointExtent);
+			view->StrokeRect(r, B_SOLID_LOW);
+			r.InsetBy(1.0, 1.0);
+			view->FillRect(r, B_SOLID_HIGH);
+			// draw in control point
+			if (highlight && (hoverPoint.GetWhich() & POINT_IN) != 0)
+				view->SetLowColor(highlightColor);
+			else if (selection.Contains(PathPoint(path, i, POINT_IN)))
+				view->SetLowColor(focusColor);
+			else
+				view->SetLowColor(kBlack);
+			if (selection.Contains(PathPoint(path, i, POINT_IN)))
+				view->SetHighColor(220, 220, 220, 255);
+			else
+				view->SetHighColor(170, 170, 170, 255);
+			if (pointIn != point) {
+				r.Set(
+					pointIn.x - kControlPointExtent,
+					pointIn.y - kControlPointExtent,
+					pointIn.x + kControlPointExtent,
+					pointIn.y + kControlPointExtent
+				);
+				view->StrokeRect(r, B_SOLID_LOW);
+				r.InsetBy(1.0, 1.0);
+				view->FillRect(r, B_SOLID_HIGH);
+			}
+			// draw out control point
+			if (highlight && (hoverPoint.GetWhich() & POINT_OUT) != 0)
+				view->SetLowColor(highlightColor);
+			else if (selection.Contains(PathPoint(path, i, POINT_OUT)))
+				view->SetLowColor(focusColor);
+			else
+				view->SetLowColor(kBlack);
+			if (selection.Contains(PathPoint(path, i, POINT_OUT)))
+				view->SetHighColor(220, 220, 220, 255);
+			else
+				view->SetHighColor(170, 170, 170, 255);
+			if (pointOut != point) {
+				r.Set(
+					pointOut.x - kControlPointExtent,
+					pointOut.y - kControlPointExtent,
+					pointOut.x + kControlPointExtent,
+					pointOut.y + kControlPointExtent
+				);
+				view->StrokeRect(r, B_SOLID_LOW);
+				r.InsetBy(1.0, 1.0);
+				view->FillRect(r, B_SOLID_HIGH);
+			}
+		}
 	}
 
 	void DrawInvertedShape(PlatformDrawContext& drawContext, BShape& shape)

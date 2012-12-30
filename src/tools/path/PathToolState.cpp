@@ -20,6 +20,7 @@
 #include "EditManager.h"
 #include "CompoundEdit.h"
 #include "CurrentColor.h"
+#include "cursors.h"
 #include "Document.h"
 #include "Layer.h"
 #include "ObjectAddedEdit.h"
@@ -113,6 +114,103 @@ private:
 	PathToolState*		fParent;
 };
 
+enum {
+	DRAG_MODE_NONE						= 0,
+	DRAG_MODE_MOVE_POINT				= 1,
+	DRAG_MODE_MOVE_POINT_IN				= 2,
+	DRAG_MODE_MOVE_POINT_OUT			= 3,
+	DRAG_MODE_MOVE_POINT_OUT_MIRROR_IN	= 4,
+	DRAG_MODE_MOVE_SELECTION			= 5,
+};
+
+// DragPathPointState
+class PathToolState::DragPathPointState : public DragStateViewState::DragState {
+public:
+	DragPathPointState(PathToolState* parent)
+		: DragState(parent)
+		, fParent(parent)
+		, fPathPoint()
+		, fDragMode(DRAG_MODE_NONE)
+	{
+	}
+
+	virtual void SetOrigin(BPoint origin)
+	{
+		BPoint point(origin);
+		switch (fDragMode) {
+			case DRAG_MODE_MOVE_POINT:
+				fPathPoint.GetPointAt(point);
+				break;
+			case DRAG_MODE_MOVE_POINT_IN:
+				fPathPoint.GetPointInAt(point);
+				break;
+			case DRAG_MODE_MOVE_POINT_OUT:
+			case DRAG_MODE_MOVE_POINT_OUT_MIRROR_IN:
+				fPathPoint.GetPointOutAt(point);
+				break;
+			default:
+				break;
+		}
+		fClickOffset = origin - point;
+	}
+
+	virtual void DragTo(BPoint current, uint32 modifiers)
+	{
+		current = current - fClickOffset;
+		Path* path = fPathPoint.GetPath();
+
+		switch (fDragMode) {
+			case DRAG_MODE_MOVE_POINT:
+				if (path != NULL)
+					path->SetPoint(fPathPoint.GetIndex(), current);
+				break;
+			case DRAG_MODE_MOVE_POINT_IN:
+				if (path != NULL)
+					path->SetPointIn(fPathPoint.GetIndex(), current);
+				break;
+			case DRAG_MODE_MOVE_POINT_OUT:
+				if (path != NULL)
+					path->SetPointOut(fPathPoint.GetIndex(), current, false);
+				break;
+			case DRAG_MODE_MOVE_POINT_OUT_MIRROR_IN:
+				if (path != NULL)
+					path->SetPointOut(fPathPoint.GetIndex(), current, true);
+				break;
+			case DRAG_MODE_MOVE_SELECTION:
+				break;
+			default:
+				break;
+		}
+	}
+
+	virtual BCursor ViewCursor(BPoint current) const
+	{
+		return BCursor(kPathMoveCursor);
+	}
+
+	virtual const char* CommandName() const
+	{
+		return "Drag path point";
+	}
+
+	void SetPathPoint(const PathPoint& point)
+	{
+		fPathPoint = point;
+	}
+
+	void SetDragMode(uint32 dragMode)
+	{
+		fDragMode = dragMode;
+	}
+
+private:
+	PathToolState*		fParent;
+	PathPoint			fPathPoint;
+	uint32				fDragMode;
+	BPoint				fClickOffset;
+};
+
+
 
 // #pragma mark -
 
@@ -127,6 +225,7 @@ PathToolState::PathToolState(StateView* view, Document* document,
 
 	, fPickShapeState(new(std::nothrow) PickShapeState(this))
 	, fCreateShapeState(new(std::nothrow) CreateShapeState(this))
+	, fDragPathPointState(new(std::nothrow) DragPathPointState(this))
 
 	, fDocument(document)
 	, fSelection(selection)
@@ -164,10 +263,14 @@ PathToolState::~PathToolState()
 
 	delete fPickShapeState;
 	delete fCreateShapeState;
+	delete fDragPathPointState;
 
 	SetInsertionInfo(NULL, -1);
 
 	delete fPlatformDelegate;
+
+	for (int32 i = fPaths.CountItems() - 1; i >= 0; i--)
+		fPaths.ItemAtFast(i)->RemoveListener(this);
 }
 
 // Init
@@ -325,12 +428,73 @@ PathToolState::StartTransaction(const char* editName)
 PathToolState::DragState*
 PathToolState::DragStateFor(BPoint canvasWhere, float zoomLevel) const
 {
-	double scaleX;
-	double scaleY;
-	if (fShape != NULL
-		&& fShape->GetAffineParameters(NULL, NULL, NULL,
-			&scaleX, &scaleY, NULL, NULL)) {
-//		float inset = 7.0 / zoomLevel;
+	double inset = 7.0 / zoomLevel;
+
+	double closestDistance = LONG_MAX;
+	PathPoint closestPathPoint;
+
+	for (int32 i = fPaths.CountItems() - 1; i >= 0; i--) {
+		Path* path = fPaths.ItemAtFast(i).Get();
+		for (int32 j = path->CountPoints(); j >= 0; j--) {
+			BPoint point;
+			BPoint pointIn;
+			BPoint pointOut;
+			if (path->GetPointsAt(j, point, pointIn, pointOut)) {
+				double distance = point_point_distance(point,
+					canvasWhere);
+				double distanceIn = point_point_distance(pointIn,
+					canvasWhere);
+				double distanceOut = point_point_distance(pointOut,
+					canvasWhere);
+
+				if (distance < inset
+					&& distance < closestDistance
+					&& distance <= distanceIn
+					&& distance <= distanceOut) {
+					closestPathPoint = PathPoint(path, j, POINT);
+					closestDistance = distance;
+				}
+
+				// Hit test in/out control points only if they are different
+				// from the main control point. If in and out have the same
+				// position, prefer dragging out.
+				if (pointIn != point
+					&& distanceIn < inset
+					&& distanceIn < closestDistance
+					&& distanceIn < distance
+					&& distanceIn < distanceOut) {
+					closestPathPoint = PathPoint(path, j, POINT_IN);
+					closestDistance = distanceIn;
+				} else if (pointOut != point
+					&& distanceOut < inset
+					&& distanceOut < closestDistance
+					&& distanceOut < distance) {
+					closestPathPoint = PathPoint(path, j, POINT_OUT);
+					closestDistance = distanceOut;
+				}
+			}
+		}
+	}
+
+	if (fHoverPathPoint != closestPathPoint) {
+		fHoverPathPoint = closestPathPoint;
+		Invalidate();
+	}
+
+	if (closestDistance < inset) {
+		fDragPathPointState->SetPathPoint(closestPathPoint);
+		switch (closestPathPoint.GetWhich()) {
+			case POINT:
+				fDragPathPointState->SetDragMode(DRAG_MODE_MOVE_POINT);
+				break;
+			case POINT_IN:
+				fDragPathPointState->SetDragMode(DRAG_MODE_MOVE_POINT_IN);
+				break;
+			case POINT_OUT:
+				fDragPathPointState->SetDragMode(DRAG_MODE_MOVE_POINT_OUT);
+				break;
+		}
+		return fDragPathPointState;
 	}
 
 	// If there is still no state, switch to the PickObjectsState
@@ -401,14 +565,14 @@ PathToolState::ObjectChanged(const Notifier* object)
 
 // PointAdded
 void
-PathToolState::PointAdded(Path* path, int32 index)
+PathToolState::PointAdded(const Path* path, int32 index)
 {
 	ObjectChanged(path);
 }
 
 // PointRemoved
 void
-PathToolState::PointRemoved(Path* path, int32 index)
+PathToolState::PointRemoved(const Path* path, int32 index)
 {
 //	fSelection->Remove(index);
 	ObjectChanged(path);
@@ -416,28 +580,28 @@ PathToolState::PointRemoved(Path* path, int32 index)
 
 // PointChanged
 void
-PathToolState::PointChanged(Path* path, int32 index)
+PathToolState::PointChanged(const Path* path, int32 index)
 {
 	ObjectChanged(path);
 }
 
 // PathChanged
 void
-PathToolState::PathChanged(Path* path)
+PathToolState::PathChanged(const Path* path)
 {
 	ObjectChanged(path);
 }
 
 // PathClosedChanged
 void
-PathToolState::PathClosedChanged(Path* path)
+PathToolState::PathClosedChanged(const Path* path)
 {
 	ObjectChanged(path);
 }
 
 // PathReversed
 void
-PathToolState::PathReversed(Path* path)
+PathToolState::PathReversed(const Path* path)
 {
 //	// reverse selection along with path
 //	int32 count = fSelection->CountItems();
@@ -533,6 +697,12 @@ PathToolState::CreatePath(BPoint canvasLocation)
 		return false;
 	}
 
+	if (!path->AddListener(this)) {
+		fprintf(stderr, "PathToolState::CreatePath(): Failed to add "
+			"listener to path. Out of memory\n");
+		return false;
+	}
+
 	if (!fPaths.Add(pathRef)) {
 		fprintf(stderr, "PathToolState::CreatePath(): Failed to add "
 			"path to list. Out of memory\n");
@@ -587,8 +757,8 @@ PathToolState::_DrawControls(PlatformDrawContext& drawContext)
 {
 	for (int32 i = 0; i < fPaths.CountItems(); i++) {
 		Path* path = fPaths.ItemAtFast(i).Get();
-		fPlatformDelegate->DrawPath(*path, drawContext, *this,
-			fView->ZoomLevel());
+		fPlatformDelegate->DrawPath(path, drawContext, *this, fPointSelection,
+			fHoverPathPoint, fView->ZoomLevel());
 	}
 
 //	double scaleX;
