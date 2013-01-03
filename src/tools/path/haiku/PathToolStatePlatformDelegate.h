@@ -55,8 +55,8 @@ public:
 				: fViewState(viewState)
 				, fView(view)
 			{
-				fView->SetHighColor(0, 0, 0, 255);
-				fView->SetLowColor(255, 255, 255, 255);
+				fView->SetHighColor(52, 52, 52, 255);
+				fView->SetLowColor(203, 203, 203, 255);
 				fView->SetDrawingMode(B_OP_COPY);
 			}
 
