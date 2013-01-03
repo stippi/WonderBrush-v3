@@ -377,7 +377,7 @@ IconOptionsControl::AddOption(IconButton* icon)
 		return;
 
 	// first icon added, mark it
-	icon->SetPressed(!_FindIcon(0));
+	icon->SetPressed(_FindIcon(0) == NULL);
 
 	fIconGroup->GroupLayout()->AddView(icon);
 	icon->SetTarget(this);
