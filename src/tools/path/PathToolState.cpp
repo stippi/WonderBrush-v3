@@ -396,6 +396,46 @@ private:
 	bool				fPointAdded;
 };
 
+// ClosePathState
+class PathToolState::ClosePathState : public DragStateViewState::DragState {
+public:
+	ClosePathState(PathToolState* parent)
+		: DragState(parent)
+		, fParent(parent)
+	{
+	}
+
+	virtual void SetOrigin(BPoint origin)
+	{
+		Path* path = fPathRef.Get();
+		if (path != NULL)
+			path->SetClosed(true);
+	}
+
+	virtual void DragTo(BPoint current, uint32 modifiers)
+	{
+	}
+
+	virtual BCursor ViewCursor(BPoint current) const
+	{
+		return BCursor(kPathCloseCursor);
+	}
+
+	virtual const char* CommandName() const
+	{
+		return "Close path";
+	}
+
+	void SetPath(const PathRef& pathRef)
+	{
+		fPathRef = pathRef;
+	}
+
+private:
+	PathToolState*		fParent;
+	PathRef				fPathRef;
+};
+
 // #pragma mark -
 
 // constructor
@@ -411,6 +451,7 @@ PathToolState::PathToolState(StateView* view, Document* document,
 	, fDragPathPointState(new(std::nothrow) DragPathPointState(this))
 	, fAddPathPointState(new(std::nothrow) AddPathPointState(this))
 	, fInsertPathPointState(new(std::nothrow) InsertPathPointState(this))
+	, fClosePathState(new(std::nothrow) ClosePathState(this))
 
 	, fDocument(document)
 	, fSelection(selection)
@@ -451,6 +492,7 @@ PathToolState::~PathToolState()
 	delete fDragPathPointState;
 	delete fAddPathPointState;
 	delete fInsertPathPointState;
+	delete fClosePathState;
 
 	SetInsertionInfo(NULL, -1);
 
@@ -623,7 +665,7 @@ PathToolState::DragStateFor(BPoint canvasWhere, float zoomLevel) const
 
 	for (int32 i = fPaths.CountItems() - 1; i >= 0; i--) {
 		Path* path = fPaths.ItemAtFast(i).Get();
-		for (int32 j = path->CountPoints(); j >= 0; j--) {
+		for (int32 j = path->CountPoints() - 1; j >= 0; j--) {
 			BPoint point;
 			BPoint pointIn;
 			BPoint pointOut;
@@ -670,6 +712,14 @@ PathToolState::DragStateFor(BPoint canvasWhere, float zoomLevel) const
 	}
 
 	if (closestDistance < inset) {
+		if (closestPathPoint.GetWhich() == POINT
+			&& closestPathPoint.GetIndex() == 0
+			&& closestPathPoint.GetPath()->CountPoints() > 1) {
+			// Mouse over last path point
+			fClosePathState->SetPath(PathRef(closestPathPoint.GetPath()));
+			return fClosePathState;
+		}
+
 		fDragPathPointState->SetPathPoint(closestPathPoint);
 		switch (closestPathPoint.GetWhich()) {
 			case POINT:
@@ -719,7 +769,7 @@ PathToolState::DragStateFor(BPoint canvasWhere, float zoomLevel) const
 		return fPickShapeState;
 	}
 
-	if (fCurrentPath.Get() != NULL) {
+	if (fCurrentPath.Get() != NULL && !fCurrentPath->IsClosed()) {
 		fAddPathPointState->SetPath(fCurrentPath);
 		return fAddPathPointState;
 	}
