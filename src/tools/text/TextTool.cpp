@@ -145,3 +145,11 @@ TextTool::SetSize(float size)
 	TextToolState* state = static_cast<TextToolState*>(fViewState);
 	state->SetSize(size);
 }
+
+// SetAlignment
+void
+TextTool::SetAlignment(uint32 alignment)
+{
+	TextToolState* state = static_cast<TextToolState*>(fViewState);
+	state->SetTextAlignment(alignment);
+}

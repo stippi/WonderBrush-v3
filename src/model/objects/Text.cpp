@@ -89,24 +89,52 @@ Text::Width()
 void
 Text::SetAlignment(uint32 alignment)
 {
-	if (alignment == fTextLayout.getAlignment())
+	if (alignment == Alignment())
 		return;
 
-	fTextLayout.setAlignment(alignment);
+	switch (alignment) {
+		default:
+		case TEXT_ALIGNMENT_LEFT:
+			fTextLayout.setAlignment(ALIGNMENT_LEFT);
+			fTextLayout.setJustify(false);
+			break;
+		case TEXT_ALIGNMENT_CENTER:
+			fTextLayout.setAlignment(ALIGNMENT_CENTER);
+			fTextLayout.setJustify(false);
+			break;
+		case TEXT_ALIGNMENT_RIGHT:
+			fTextLayout.setAlignment(ALIGNMENT_RIGHT);
+			fTextLayout.setJustify(false);
+			break;
+		case TEXT_ALIGNMENT_JUSTIFY:
+			fTextLayout.setAlignment(ALIGNMENT_LEFT);
+			fTextLayout.setJustify(true);
+			break;
+	}
 
 	NotifyAndUpdate();
 }
 
-// SetJustify
-void
-Text::SetJustify(bool justify)
+// Alignment
+uint32
+Text::Alignment() const
 {
-	if (justify == fTextLayout.getJustify())
-		return;
+	uint32 alignment = fTextLayout.getAlignment();
+	bool justify = fTextLayout.getJustify();
 
-	fTextLayout.setJustify(justify);
+	if (alignment == ALIGNMENT_LEFT && !justify)
+		return TEXT_ALIGNMENT_LEFT;
 
-	NotifyAndUpdate();
+	if (alignment == ALIGNMENT_CENTER && !justify)
+		return TEXT_ALIGNMENT_CENTER;
+
+	if (alignment == ALIGNMENT_RIGHT && !justify)
+		return TEXT_ALIGNMENT_RIGHT;
+
+	if (alignment == ALIGNMENT_LEFT && justify)
+		return TEXT_ALIGNMENT_JUSTIFY;
+
+	return TEXT_ALIGNMENT_LEFT;
 }
 
 // SetText

@@ -2,7 +2,7 @@
 #define _TEXTTOOLSTATE_CPP_
 
 /*
- * Copyright 2012 Stephan Aßmus <superstippi@gmx.de>
+ * Copyright 2012-2013 Stephan Aßmus <superstippi@gmx.de>
  * All rights reserved. Distributed under the terms of the MIT license.
  */
 
@@ -27,6 +27,7 @@
 #include "ObjectAddedEdit.h"
 #include "RemoveTextEdit.h"
 #include "support.h"
+#include "SetTextAlignmentEdit.h"
 #include "SetTextStyleEdit.h"
 #include "SetTextWidthEdit.h"
 #include "Text.h"
@@ -284,6 +285,7 @@ TextToolState::TextToolState(StateView* view, Document* document,
 	, fFontFamily("DejaVu Serif")
 	, fFontStyle("Book")
 	, fSize(12.0)
+	, fTextAlignment(TEXT_ALIGNMENT_LEFT)
 
 	, fIgnoreColorColorNotifiactions(false)
 {
@@ -715,11 +717,11 @@ TextToolState::SetText(Text* text, bool modifySelection)
 	}
 
 	fNextText = "";
+
 	fSelectionAnchorOffset = 0;
 	fCaretOffset = 0;
 	fCaretAnchorX = 0.0;
-
-	_UpdateConfigView();
+	_AdoptStyleAtOffset(fCaretOffset);
 	_UpdateConfigViewSelection();
 }
 
@@ -825,6 +827,18 @@ TextToolState::SetSize(float size)
 	}
 }
 
+// SetTextAlignment
+void
+TextToolState::SetTextAlignment(uint32 alignment)
+{
+	fTextAlignment = alignment;
+	if (fText != NULL) {
+		View()->PerformEdit(new(std::nothrow) SetTextAlignmentEdit(
+			fText, alignment));
+		UpdateBounds();
+	}
+}
+
 // SetWidth
 void
 TextToolState::SetWidth(float width)
@@ -898,6 +912,7 @@ TextToolState::_UpdateConfigView() const
 		message.AddString("family", fFontFamily);
 		message.AddString("style", fFontStyle);
 		message.AddFloat("size", fSize);
+		message.AddInt32("alignment", fTextAlignment);
 		message.AddString("text", fText->GetText());
 	} else {
 		message.AddString("text", "");
@@ -1260,11 +1275,14 @@ TextToolState::_AdoptStyleAtOffset(int32 textOffset)
 		return;
 	}
 
+	uint32 alignment = fText->Alignment();
+
 	if (fSize != font.getSize() || fFontFamily != font.getFamily()
-		|| fFontStyle != font.getStyle()) {
+		|| fFontStyle != font.getStyle() || alignment != fTextAlignment) {
 		fSize = font.getSize();
 		fFontFamily = font.getFamily();
 		fFontStyle = font.getStyle();
+		fTextAlignment = alignment;
 
 		_UpdateConfigView();
 	}

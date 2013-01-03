@@ -1,5 +1,5 @@
 /*
- * Copyright 2012, Stephan Aßmus <superstippi@gmx.de>
+ * Copyright 2012-2013, Stephan Aßmus <superstippi@gmx.de>
  * All rights reserved.
  */
 
@@ -18,6 +18,9 @@
 
 #include "FontPopup.h"
 #include "FontRegistry.h"
+#include "IconButton.h"
+#include "IconOptionsControl.h"
+#include "Text.h"
 #include "TextTool.h"
 #include "TextToolState.h"
 
@@ -32,6 +35,8 @@ enum {
 
 	MSG_SELECTION_CHANGED	= 'slch',
 	MSG_SHOW_TEXT_OFFSET	= 'shwo',
+
+	MSG_SET_TEXT_ALIGNMENT	= 'stta',
 };
 
 // NotifyingTextView
@@ -148,6 +153,40 @@ TextToolConfigView::TextToolConfigView(::Tool* tool)
 	fSizeTextControl = new BTextControl("size text y", "", "",
 		new BMessage(MSG_SIZE_TEXT));
 
+	fTextAlignmentControl = new IconOptionsControl("text alignment");
+
+	// text align left
+	IconButton* iconButton = new IconButton("text align left", 0);
+	iconButton->SetIcon(601, 16);
+	BMessage* alignmentMessage = new BMessage(MSG_SET_TEXT_ALIGNMENT);
+	alignmentMessage->AddInt32("alignment", TEXT_ALIGNMENT_LEFT);
+	iconButton->SetMessage(alignmentMessage);
+	fTextAlignmentControl->AddOption(iconButton);
+
+	// text align center
+	iconButton = new IconButton("text align center", 1);
+	iconButton->SetIcon(602, 16);
+	alignmentMessage = new BMessage(MSG_SET_TEXT_ALIGNMENT);
+	alignmentMessage->AddInt32("alignment", TEXT_ALIGNMENT_CENTER);
+	iconButton->SetMessage(alignmentMessage);
+	fTextAlignmentControl->AddOption(iconButton);
+
+	// text align right
+	iconButton = new IconButton("text align right", 2);
+	iconButton->SetIcon(603, 16);
+	alignmentMessage = new BMessage(MSG_SET_TEXT_ALIGNMENT);
+	alignmentMessage->AddInt32("alignment", TEXT_ALIGNMENT_RIGHT);
+	iconButton->SetMessage(alignmentMessage);
+	fTextAlignmentControl->AddOption(iconButton);
+
+	// text align justify
+	iconButton = new IconButton("text align justify", 3);
+	iconButton->SetIcon(604, 16);
+	alignmentMessage = new BMessage(MSG_SET_TEXT_ALIGNMENT);
+	alignmentMessage->AddInt32("alignment", TEXT_ALIGNMENT_JUSTIFY);
+	iconButton->SetMessage(alignmentMessage);
+	fTextAlignmentControl->AddOption(iconButton);
+
 	fSubpixels = new BCheckBox("subpixels", "Subpixels",
 		new BMessage(MSG_SUBPIXELS));
 
@@ -169,7 +208,10 @@ TextToolConfigView::TextToolConfigView(::Tool* tool)
 			.End()
 		.End()
 		.Add(new BSeparatorView(B_VERTICAL, B_PLAIN_BORDER))
-		.Add(fSubpixels)
+		.AddGroup(B_VERTICAL, 3.0f)
+			.Add(fSubpixels)
+			.Add(fTextAlignmentControl)
+		.End()
 		.Add(scrollView)
 //		.AddGlue()
 		.SetInsets(5, 5, 5, 5)
@@ -191,6 +233,7 @@ TextToolConfigView::AttachedToWindow()
 	fSizeTextControl->SetTarget(this);
 	fSubpixels->SetTarget(this);
 	fTextView->SetTarget(this);
+	fTextAlignmentControl->SetTarget(this);
 
 	FontRegistry* fontRegistry = FontRegistry::Default();
 	if (fontRegistry->LockWithTimeout(3000) == B_OK) {
@@ -315,6 +358,25 @@ TextToolConfigView::MessageReceived(BMessage* message)
 				&& message->FindString("style", &style) == B_OK) {
 				fFontPopup->SetFamilyAndStyle(family, style);
 			}
+
+			int32 alignment;
+			if (message->FindInt32("alignment", &alignment) == B_OK) {
+				switch (alignment) {
+					default:
+					case TEXT_ALIGNMENT_LEFT:
+						fTextAlignmentControl->SetValue(0);
+						break;
+					case TEXT_ALIGNMENT_CENTER:
+						fTextAlignmentControl->SetValue(1);
+						break;
+					case TEXT_ALIGNMENT_RIGHT:
+						fTextAlignmentControl->SetValue(2);
+						break;
+					case TEXT_ALIGNMENT_JUSTIFY:
+						fTextAlignmentControl->SetValue(3);
+						break;
+				}
+			}
 			break;
 		}
 
@@ -329,6 +391,14 @@ TextToolConfigView::MessageReceived(BMessage* message)
 				fTextView->Select(selectionStart, selectionEnd);
 				fTextView->SetNotificationsEnabled(true);
 			}
+			break;
+		}
+
+		case MSG_SET_TEXT_ALIGNMENT:
+		{
+			int32 alignment;
+			if (message->FindInt32("alignment", &alignment) == B_OK)
+				((TextTool*)fTool)->SetAlignment(alignment);
 			break;
 		}
 

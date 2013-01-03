@@ -82,7 +82,7 @@ WonderBrushBase::WonderBrushBase(BRect bounds)
 	Text* text = new Text((rgb_color){ 0, 0, 0, 255 });
 	text->TranslateBy(BPoint(522, 31));
 	text->SetWidth(200.0);
-	text->SetJustify(true);
+	text->SetAlignment(TEXT_ALIGNMENT_JUSTIFY);
 	text->SetText("This is a test of the new text layouting features.",
 		Font("DejaVu Serif", "Book", 24.0), (rgb_color) { 0, 0, 0, 255 });
 	fDocument->RootLayer()->AddObject(text);

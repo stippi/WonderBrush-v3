@@ -1,5 +1,5 @@
 /*
- * Copyright 2012 Stephan Aßmus <superstippi@gmx.de>
+ * Copyright 2012-2013 Stephan Aßmus <superstippi@gmx.de>
  * All rights reserved. Distributed under the terms of the MIT license.
  */
 
@@ -85,6 +85,8 @@ public:
 
 			void				SetFont(const char* family, const char* style);
 			void				SetSize(float size);
+
+			void				SetTextAlignment(uint32 alignment);
 
 			void				SetWidth(float width);
 			float				Width() const;
@@ -174,6 +176,7 @@ private:
 			BString				fFontFamily;
 			BString				fFontStyle;
 			double				fSize;
+			uint32				fTextAlignment;
 
 			bool				fIgnoreColorColorNotifiactions;
 };

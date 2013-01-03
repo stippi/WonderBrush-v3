@@ -1,5 +1,5 @@
 /*
- * Copyright 2012, Stephan Aßmus <superstippi@gmx.de>
+ * Copyright 2012-2013, Stephan Aßmus <superstippi@gmx.de>
  * All rights reserved.
  */
 
@@ -14,6 +14,7 @@ class BSlider;
 class BStringView;
 class BTextControl;
 class FontPopup;
+class IconOptionsControl;
 class NotifyingTextView;
 
 class TextToolConfigView : public ToolConfigView {
@@ -50,6 +51,7 @@ private:
 			BStringView*		fSizeLabel;
 			BSlider*			fSizeSlider;
 			BTextControl*		fSizeTextControl;
+			IconOptionsControl*	fTextAlignmentControl;
 
 			BCheckBox*			fSubpixels;
 

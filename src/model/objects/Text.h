@@ -1,5 +1,5 @@
 /*
- * Copyright 2012, Stephan Aßmus <superstippi@gmx.de>.
+ * Copyright 2012-2013, Stephan Aßmus <superstippi@gmx.de>.
  * All rights reserved.
  */
 #ifndef TEXT_H
@@ -16,6 +16,13 @@
 class CharacterStyle;
 class StyleRun;
 class StyleRunList;
+
+enum {
+	TEXT_ALIGNMENT_LEFT		= 0,
+	TEXT_ALIGNMENT_CENTER	= 1,
+	TEXT_ALIGNMENT_RIGHT	= 2,
+	TEXT_ALIGNMENT_JUSTIFY	= 3,
+};
 
 class Text : public Styleable {
 public:
@@ -36,7 +43,7 @@ public:
 			double				Width();
 
 			void				SetAlignment(uint32 alignment);
-			void				SetJustify(bool justify);
+			uint32				Alignment() const;
 
 			void				SetText(const char* utf8String,
 									const Font& font, rgb_color color);
