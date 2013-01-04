@@ -100,8 +100,8 @@ TextToolConfigView::MessageReceived(BMessage* message)
 		{
 			fNotificationsEnabled = false;
 
-			float size;
-			if (message->FindFloat("size", &size) == B_OK) {
+			double size;
+			if (message->FindDouble("size", &size) == B_OK) {
 				fUi->sizeSlider->setValue((int)_ToLinearSize(size));
 				_SetValue(fUi->sizeEdit, size);
 			}

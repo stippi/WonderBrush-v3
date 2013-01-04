@@ -52,6 +52,7 @@ private:
 			BSlider*			fSizeSlider;
 			BTextControl*		fSizeTextControl;
 			IconOptionsControl*	fTextAlignmentControl;
+			BSlider*			fGlyphSpacingSlider;
 
 			BCheckBox*			fSubpixels;
 

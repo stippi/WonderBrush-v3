@@ -88,6 +88,8 @@ public:
 
 			void				SetTextAlignment(uint32 alignment);
 
+			void				SetGlyphSpacing(double spacing);
+
 			void				SetWidth(float width);
 			float				Width() const;
 
@@ -177,6 +179,7 @@ private:
 			BString				fFontStyle;
 			double				fSize;
 			uint32				fTextAlignment;
+			double				fGlyphSpacing;
 
 			bool				fIgnoreColorColorNotifiactions;
 };

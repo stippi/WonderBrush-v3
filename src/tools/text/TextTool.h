@@ -37,6 +37,7 @@ public:
 			void				SetFont(const char* family, const char* style);
 			void				SetSize(float size);
 			void				SetAlignment(uint32 alignment);
+			void				SetGlyphSpacing(double spacing);
 
 private:
 	virtual	ViewState*			MakeViewState(StateView* view,

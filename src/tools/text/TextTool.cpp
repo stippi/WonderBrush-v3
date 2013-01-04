@@ -153,3 +153,11 @@ TextTool::SetAlignment(uint32 alignment)
 	TextToolState* state = static_cast<TextToolState*>(fViewState);
 	state->SetTextAlignment(alignment);
 }
+
+// SetGlyphSpacing
+void
+TextTool::SetGlyphSpacing(double spacing)
+{
+	TextToolState* state = static_cast<TextToolState*>(fViewState);
+	state->SetGlyphSpacing(spacing);
+}

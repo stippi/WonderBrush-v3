@@ -27,6 +27,7 @@
 #include "ObjectAddedEdit.h"
 #include "RemoveTextEdit.h"
 #include "support.h"
+#include "SetGlyphSpacingEdit.h"
 #include "SetTextAlignmentEdit.h"
 #include "SetTextStyleEdit.h"
 #include "SetTextWidthEdit.h"
@@ -611,7 +612,7 @@ TextToolState::ObjectChanged(const Notifier* object)
 		SetObjectToCanvasTransformation(fText->Transformation());
 		UpdateBounds();
 		UpdateDragState();
-		_UpdateConfigView();
+		_AdoptStyleAtOffset(fCaretOffset);
 	}
 	if (object == fCurrentColor && !fIgnoreColorColorNotifiactions) {
 		SetColor(fCurrentColor->Color());
@@ -839,6 +840,18 @@ TextToolState::SetTextAlignment(uint32 alignment)
 	}
 }
 
+// SetGlyphSpacing
+void
+TextToolState::SetGlyphSpacing(double spacing)
+{
+	fGlyphSpacing = spacing;
+	if (fText != NULL) {
+		View()->PerformEdit(new(std::nothrow) SetGlyphSpacingEdit(
+			fText, spacing));
+		UpdateBounds();
+	}
+}
+
 // SetWidth
 void
 TextToolState::SetWidth(float width)
@@ -911,8 +924,9 @@ TextToolState::_UpdateConfigView() const
 	if (fText != NULL) {
 		message.AddString("family", fFontFamily);
 		message.AddString("style", fFontStyle);
-		message.AddFloat("size", fSize);
+		message.AddDouble("size", fSize);
 		message.AddInt32("alignment", fTextAlignment);
+		message.AddDouble("glyph spacing", fGlyphSpacing);
 		message.AddString("text", fText->GetText());
 	} else {
 		message.AddString("text", "");
@@ -1278,11 +1292,13 @@ TextToolState::_AdoptStyleAtOffset(int32 textOffset)
 	uint32 alignment = fText->Alignment();
 
 	if (fSize != font.getSize() || fFontFamily != font.getFamily()
-		|| fFontStyle != font.getStyle() || alignment != fTextAlignment) {
+		|| fFontStyle != font.getStyle() || alignment != fTextAlignment
+		|| fGlyphSpacing != layout.getGlyphSpacing()) {
 		fSize = font.getSize();
 		fFontFamily = font.getFamily();
 		fFontStyle = font.getStyle();
 		fTextAlignment = alignment;
+		fGlyphSpacing = layout.getGlyphSpacing();
 
 		_UpdateConfigView();
 	}

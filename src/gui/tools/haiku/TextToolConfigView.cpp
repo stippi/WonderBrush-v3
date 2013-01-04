@@ -37,6 +37,7 @@ enum {
 	MSG_SHOW_TEXT_OFFSET	= 'shwo',
 
 	MSG_SET_TEXT_ALIGNMENT	= 'stta',
+	MSG_SET_GLYPH_SPACING	= 'stgs',
 };
 
 // NotifyingTextView
@@ -187,6 +188,14 @@ TextToolConfigView::TextToolConfigView(::Tool* tool)
 	iconButton->SetMessage(alignmentMessage);
 	fTextAlignmentControl->AddOption(iconButton);
 
+	// glpyh spacing
+	fGlyphSpacingSlider = new BSlider("glyph spacing slider", "Spacing",
+		new BMessage(MSG_SET_GLYPH_SPACING),
+		-1024, 1024, B_HORIZONTAL, B_TRIANGLE_THUMB);
+	fGlyphSpacingSlider->SetExplicitMinSize(BSize(80, B_SIZE_UNSET));
+	fGlyphSpacingSlider->SetModificationMessage(
+		new BMessage(MSG_SET_GLYPH_SPACING));
+
 	fSubpixels = new BCheckBox("subpixels", "Subpixels",
 		new BMessage(MSG_SUBPIXELS));
 
@@ -210,7 +219,10 @@ TextToolConfigView::TextToolConfigView(::Tool* tool)
 		.Add(new BSeparatorView(B_VERTICAL, B_PLAIN_BORDER))
 		.AddGroup(B_VERTICAL, 3.0f)
 			.Add(fSubpixels)
-			.Add(fTextAlignmentControl)
+			.AddGroup(B_HORIZONTAL)
+				.Add(fTextAlignmentControl)
+				.Add(fGlyphSpacingSlider)
+			.End()
 		.End()
 		.Add(scrollView)
 //		.AddGlue()
@@ -234,6 +246,7 @@ TextToolConfigView::AttachedToWindow()
 	fSubpixels->SetTarget(this);
 	fTextView->SetTarget(this);
 	fTextAlignmentControl->SetTarget(this);
+	fGlyphSpacingSlider->SetTarget(this);
 
 	FontRegistry* fontRegistry = FontRegistry::Default();
 	if (fontRegistry->LockWithTimeout(3000) == B_OK) {
@@ -277,13 +290,20 @@ TextToolConfigView::MessageReceived(BMessage* message)
 		}
 
 		case MSG_SIZE_SLIDER:
-			fTool->SetOption(TextTool::SIZE,
-				(float)_FromLinearSize(fSizeSlider->Value()));
+		{
+			float size = (float)_FromLinearSize(fSizeSlider->Value());
+			fTool->SetOption(TextTool::SIZE, size);
+			_SetValue(fSizeTextControl, size);
 			break;
+		}
 
 		case MSG_SIZE_TEXT:
-			fTool->SetOption(TextTool::SIZE, _Value(fSizeTextControl));
+		{
+			float size = _Value(fSizeTextControl);
+			fTool->SetOption(TextTool::SIZE, size);
+			fSizeSlider->SetValue(_ToLinearSize(size));
 			break;
+		}
 
 		case MSG_SUBPIXELS:
 			fTool->SetOption(TextTool::SUBPIXELS,
@@ -339,8 +359,8 @@ TextToolConfigView::MessageReceived(BMessage* message)
 
 		case MSG_LAYOUT_CHANGED:
 		{
-			float size;
-			if (message->FindFloat("size", &size) == B_OK) {
+			double size;
+			if (message->FindDouble("size", &size) == B_OK) {
 				fSizeSlider->SetValue(_ToLinearSize(size));
 				_SetValue(fSizeTextControl, size);
 			}
@@ -377,6 +397,10 @@ TextToolConfigView::MessageReceived(BMessage* message)
 						break;
 				}
 			}
+			double glyphSpacing;
+			if (message->FindDouble("glyph spacing", &glyphSpacing) == B_OK) {
+				fGlyphSpacingSlider->SetValue(glyphSpacing * 256);
+			}
 			break;
 		}
 
@@ -399,6 +423,13 @@ TextToolConfigView::MessageReceived(BMessage* message)
 			int32 alignment;
 			if (message->FindInt32("alignment", &alignment) == B_OK)
 				((TextTool*)fTool)->SetAlignment(alignment);
+			break;
+		}
+
+		case MSG_SET_GLYPH_SPACING:
+		{
+			((TextTool*)fTool)->SetGlyphSpacing(
+				fGlyphSpacingSlider->Value() / 256.0);
 			break;
 		}
 
