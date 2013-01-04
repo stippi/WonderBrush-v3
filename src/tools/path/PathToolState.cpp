@@ -281,6 +281,7 @@ public:
 		, fParent(parent)
 		, fPathRef()
 		, fPointAdded(false)
+		, fDragInsertPosition(true)
 	{
 	}
 
@@ -288,8 +289,14 @@ public:
 	{
 		fOrigin = origin;
 		Path* path = fPathRef.Get();
-		if (path != NULL && _InsertPoint(path, origin, fIndex))
+		if (path != NULL
+			&& path->GetPointsAt(fIndex - 1,
+				fPrevious[0], fPrevious[1], fPrevious[2], &fPreviousConnected)
+			&& path->GetPointsAt(fIndex,
+				fNext[0], fNext[1], fNext[2], &fNextConnected)
+			&& _InsertPoint(path, origin, fIndex)) {
 			fPointAdded = true;
+		}
 	}
 
 	virtual void DragTo(BPoint current, uint32 modifiers)
@@ -297,14 +304,27 @@ public:
 		double dragDistance = point_point_distance(fOrigin, current);
 		if (fPointAdded && dragDistance > 7.0) {
 			Path* path = fPathRef.Get();
-			fParent->fDragPathPointState->SetPathPoint(PathPoint(path,
-				fIndex, POINT_ALL));
-			fParent->fDragPathPointState->SetDragMode(
-				DRAG_MODE_MOVE_POINT);
+			if (fDragInsertPosition) {
+				// Undo insertion and insert again at current pointer
+				// location
+				path->RemovePoint(fIndex);
+				path->SetPoint(fIndex - 1,
+					fPrevious[0], fPrevious[1], fPrevious[2],
+					fPreviousConnected);
+				path->SetPoint(fIndex,
+					fNext[0], fNext[1], fNext[2], fNextConnected);
+				_InsertPoint(path, current, fIndex);
+			} else {
+				// Switch to DragState for dragging the inserted point
+				fParent->fDragPathPointState->SetPathPoint(PathPoint(path,
+					fIndex, POINT_ALL));
+				fParent->fDragPathPointState->SetDragMode(
+					DRAG_MODE_MOVE_POINT);
 
-			fParent->SetDragState(fParent->fDragPathPointState);
-			fParent->fDragPathPointState->SetOrigin(fOrigin);
-			fParent->fDragPathPointState->DragTo(current, modifiers);
+				fParent->SetDragState(fParent->fDragPathPointState);
+				fParent->fDragPathPointState->SetOrigin(fOrigin);
+				fParent->fDragPathPointState->DragTo(current, modifiers);
+			}
 		}
 	}
 
@@ -326,6 +346,11 @@ public:
 	void SetInsertIndex(int32 index)
 	{
 		fIndex = index;
+	}
+
+	void SetDragInsertPosition(bool dragInsertPosition)
+	{
+		fDragInsertPosition = dragInsertPosition;
 	}
 
 private:
@@ -394,6 +419,12 @@ private:
 	PathRef				fPathRef;
 	int32				fIndex;
 	bool				fPointAdded;
+	bool				fDragInsertPosition;
+
+	BPoint				fPrevious[3];
+	bool				fPreviousConnected;
+	BPoint				fNext[3];
+	bool				fNextConnected;
 };
 
 // ClosePathState
