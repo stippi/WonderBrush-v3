@@ -116,6 +116,11 @@ public:
 		return fJustify;
 	}
 
+	inline double getGlyphSpacing() const
+	{
+		return fGlyphSpacing;
+	}
+
 	void clearStyleRuns();
 	bool addStyleRun(int start, const Font& font,
 		double metricsAscent, double metricsDescent, double metricsWidth,
