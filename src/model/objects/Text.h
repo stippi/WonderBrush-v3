@@ -45,6 +45,9 @@ public:
 			void				SetAlignment(uint32 alignment);
 			uint32				Alignment() const;
 
+			void				SetGlyphSpacing(double spacing);
+			double				GlyphSpacing() const;
+
 			void				SetText(const char* utf8String,
 									const Font& font, rgb_color color);
 

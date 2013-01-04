@@ -137,6 +137,25 @@ Text::Alignment() const
 	return TEXT_ALIGNMENT_LEFT;
 }
 
+// SetGlyphSpacing
+void
+Text::SetGlyphSpacing(double spacing)
+{
+	if (spacing == fTextLayout.getGlyphSpacing())
+		return;
+
+	fTextLayout.setGlyphSpacing(spacing);
+
+	NotifyAndUpdate();
+}
+
+// GlyphSpacing
+double
+Text::GlyphSpacing() const
+{
+	return fTextLayout.getGlyphSpacing();
+}
+
 // SetText
 void
 Text::SetText(const char* utf8String, const Font& font, rgb_color color)
