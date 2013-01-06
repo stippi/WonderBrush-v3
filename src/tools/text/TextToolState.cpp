@@ -287,6 +287,9 @@ TextToolState::TextToolState(StateView* view, Document* document,
 	, fFontStyle("Book")
 	, fSize(12.0)
 	, fTextAlignment(TEXT_ALIGNMENT_LEFT)
+	, fGlyphSpacing(0.0)
+	, fFauxWeight(0.0)
+	, fFauxItalic(0.0)
 
 	, fIgnoreColorColorNotifiactions(false)
 {
@@ -927,6 +930,8 @@ TextToolState::_UpdateConfigView() const
 		message.AddDouble("size", fSize);
 		message.AddInt32("alignment", fTextAlignment);
 		message.AddDouble("glyph spacing", fGlyphSpacing);
+		message.AddDouble("faux weight", fFauxWeight);
+		message.AddDouble("faux italic", fFauxItalic);
 		message.AddString("text", fText->GetText());
 	} else {
 		message.AddString("text", "");
@@ -1277,6 +1282,9 @@ TextToolState::_AdoptStyleAtOffset(int32 textOffset)
 	TextLayout& layout = fText->getTextLayout();
 
 	Font font(layout.getFont());
+	double glyphSpacing;
+	double fauxWeight;
+	double fauxItalic;
 	Color fgColor;
 	bool strikeOut;
 	Color strikeColor;
@@ -1284,8 +1292,9 @@ TextToolState::_AdoptStyleAtOffset(int32 textOffset)
 	unsigned underlineStyle;
 	Color underlineColor;
 
-	if (!layout.getInfo(textOffset, font, fgColor, strikeOut,
-			strikeColor, underline, underlineStyle, underlineColor)) {
+	if (!layout.getInfo(textOffset, font, glyphSpacing, fauxWeight, fauxItalic,
+			fgColor, strikeOut, strikeColor, underline, underlineStyle,
+			underlineColor)) {
 		return;
 	}
 
@@ -1293,12 +1302,15 @@ TextToolState::_AdoptStyleAtOffset(int32 textOffset)
 
 	if (fSize != font.getSize() || fFontFamily != font.getFamily()
 		|| fFontStyle != font.getStyle() || alignment != fTextAlignment
-		|| fGlyphSpacing != layout.getGlyphSpacing()) {
+		|| fGlyphSpacing != glyphSpacing || fFauxWeight != fauxWeight
+		|| fFauxItalic != fauxItalic) {
 		fSize = font.getSize();
 		fFontFamily = font.getFamily();
 		fFontStyle = font.getStyle();
 		fTextAlignment = alignment;
-		fGlyphSpacing = layout.getGlyphSpacing();
+		fGlyphSpacing = glyphSpacing;
+		fFauxWeight = fauxWeight;
+		fFauxItalic = fauxItalic;
 
 		_UpdateConfigView();
 	}

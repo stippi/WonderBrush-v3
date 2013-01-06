@@ -180,6 +180,8 @@ private:
 			double				fSize;
 			uint32				fTextAlignment;
 			double				fGlyphSpacing;
+			double				fFauxWeight;
+			double				fFauxItalic;
 
 			bool				fIgnoreColorColorNotifiactions;
 };
