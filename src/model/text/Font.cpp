@@ -95,3 +95,31 @@ Font::getFontFilePath() const
 	return fFontFilePath.String();
 }
 
+
+Font
+Font::setFamilyAndStyle(const char* family, const char* style) const
+{
+	Font font(*this);
+	font.fFamily = family;
+	font.fStyle = style;
+	return font;
+}
+
+
+Font
+Font::setSize(double size) const
+{
+	Font font(*this);
+	font.fSize = size;
+	return font;
+}
+
+
+Font
+Font::setScriptLevel(ScriptLevel scriptLevel) const
+{
+	Font font(*this);
+	font.fScriptLevel = scriptLevel;
+	return font;
+}
+

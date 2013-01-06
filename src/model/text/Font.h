@@ -48,6 +48,11 @@ public:
 
 	const char* getFontFilePath() const;
 
+	// Setters return new Font instance with the changed property
+	Font setFamilyAndStyle(const char* family, const char* style) const;
+	Font setSize(double size) const;
+	Font setScriptLevel(ScriptLevel scriptLevel) const;
+
 private:
 	BString				fFamily;
 	BString				fStyle;
