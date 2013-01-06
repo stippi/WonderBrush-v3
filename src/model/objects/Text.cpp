@@ -203,7 +203,7 @@ Text::Insert(int32 textOffset, const char* utf8String, const Font& font,
 		return;
 
 	CharacterStyle* characterStyle = new(std::nothrow) CharacterStyle(
-		font, style);
+		font, 0.0, 0.0, 0.0, style);
 
 	if (characterStyle == NULL)
 		return;
@@ -303,7 +303,7 @@ Text::SetStyle(int32 textOffset, int32 length, const Font& font,
 		return;
 
 	CharacterStyle* characterStyle = new(std::nothrow) CharacterStyle(
-		font, style);
+		font, 0.0, 0.0, 0.0, style);
 
 	if (characterStyle == NULL)
 		return;
@@ -334,11 +334,12 @@ Text::SetFont(int32 textOffset, int32 length, const char* family,
 	while (length > 0) {
 		// TODO: Make more efficient
 		const StyleRun* run = fStyleRuns->FindStyleRun(textOffset);
+		const CharacterStyle* previousCharacterStyle = run->GetStyle().Get();
+		Font font = previousCharacterStyle->GetFont()
+			.setFamilyAndStyle(family, style);
 
 		CharacterStyle* characterStyle = new(std::nothrow) CharacterStyle(
-			Font(family, style, run->GetStyle()->GetFont().getSize(),
-				run->GetStyle()->GetFont().getScriptLevel()),
-			run->GetStyle()->GetStyle());
+			previousCharacterStyle->SetFont(font));
 
 		if (characterStyle == NULL)
 			return;
@@ -371,12 +372,11 @@ Text::SetSize(int32 textOffset, int32 length, double size)
 	while (length > 0) {
 		// TODO: Make more efficient
 		const StyleRun* run = fStyleRuns->FindStyleRun(textOffset);
+		const CharacterStyle* previousCharacterStyle = run->GetStyle().Get();
+		Font font = previousCharacterStyle->GetFont().setSize(size);
 
 		CharacterStyle* characterStyle = new(std::nothrow) CharacterStyle(
-			Font(run->GetStyle()->GetFont().getFamily(),
-				run->GetStyle()->GetFont().getStyle(), size,
-				run->GetStyle()->GetFont().getScriptLevel()),
-			run->GetStyle()->GetStyle());
+			previousCharacterStyle->SetFont(font));
 
 		if (characterStyle == NULL)
 			return;
@@ -419,7 +419,7 @@ Text::SetColor(int32 textOffset, int32 length, const rgb_color& color)
 		const StyleRun* run = fStyleRuns->FindStyleRun(textOffset);
 
 		CharacterStyle* characterStyle = new(std::nothrow) CharacterStyle(
-			Font(run->GetStyle()->GetFont()), styleRef);
+			run->GetStyle()->SetStyle(styleRef));
 
 		if (characterStyle == NULL)
 			return;
@@ -483,6 +483,7 @@ Text::UpdateLayout()
 
 		fTextLayout.addStyleRun(
 			start, font, 0.0, 0.0, 0.0,
+			0.0, 0.0, 0.0,
 			Color(
 				RenderEngine::GammaToLinear(color.red),
 				RenderEngine::GammaToLinear(color.green),
