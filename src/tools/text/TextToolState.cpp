@@ -614,7 +614,7 @@ TextToolState::ObjectChanged(const Notifier* object)
 		SetObjectToCanvasTransformation(fText->Transformation());
 		UpdateBounds();
 		UpdateDragState();
-		_AdoptStyleAtOffset(fCaretOffset);
+		_AdoptStyleAtOffset(_SelectionStart());
 	}
 	if (object == fCurrentColor && !fIgnoreColorColorNotifiactions) {
 		SetColor(fCurrentColor->Color());
