@@ -13,6 +13,101 @@
 #include "Text.h"
 
 class SetTextStyleEdit : public UndoableEdit {
+private:
+	class CharacterStyleModifier {
+	public:
+		virtual CharacterStyle ModifyStyle(const CharacterStyle& style)
+			const = 0;
+	};
+
+	class FontSizeModifier : public CharacterStyleModifier {
+	public:
+		FontSizeModifier(double fontSize)
+			: fFontSize(fontSize)
+		{
+		}
+		virtual CharacterStyle ModifyStyle(const CharacterStyle& style) const
+		{
+			return style.SetFont(style.GetFont().setSize(fFontSize));
+		}
+	private:
+		double	fFontSize;
+	};
+
+	class FontFamilyAndStyleModifier : public CharacterStyleModifier {
+	public:
+		FontFamilyAndStyleModifier(const char* family, const char* style)
+			: fFamily(family)
+			, fStyle(style)
+		{
+		}
+		virtual CharacterStyle ModifyStyle(const CharacterStyle& style) const
+		{
+			return style.SetFont(style.GetFont().setFamilyAndStyle(
+				fFamily.String(), fStyle.String()));
+		}
+	private:
+		BString	fFamily;
+		BString	fStyle;
+	};
+
+	class StyleModifier : public CharacterStyleModifier {
+	public:
+		StyleModifier(const StyleRef& styleRef)
+			: fStyleRef(styleRef)
+		{
+		}
+		virtual CharacterStyle ModifyStyle(const CharacterStyle& style) const
+		{
+			return style.SetStyle(fStyleRef);
+		}
+	private:
+		StyleRef	fStyleRef;
+	};
+
+	class GlyphSpacingModifier : public CharacterStyleModifier {
+	public:
+		GlyphSpacingModifier(double spacing)
+			: fGlyphSpacing(spacing)
+		{
+		}
+		virtual CharacterStyle ModifyStyle(const CharacterStyle& style) const
+		{
+			return style.SetGlyphSpacing(fGlyphSpacing);
+		}
+	private:
+		double	fGlyphSpacing;
+	};
+
+	class FauxWeightModifier : public CharacterStyleModifier {
+	public:
+		FauxWeightModifier(double fauxWeight)
+			: fFauxWeight(fauxWeight)
+		{
+		}
+		virtual CharacterStyle ModifyStyle(const CharacterStyle& style) const
+		{
+			return style.SetFauxWeight(fFauxWeight);
+		}
+	private:
+		double	fFauxWeight;
+	};
+
+	class FauxItalicModifier : public CharacterStyleModifier {
+	public:
+		FauxItalicModifier(double fauxItalic)
+			: fFauxItalic(fauxItalic)
+		{
+		}
+		virtual CharacterStyle ModifyStyle(const CharacterStyle& style) const
+		{
+			return style.SetFauxItalic(fFauxItalic);
+		}
+	private:
+		double	fFauxItalic;
+	};
+
+
 public:
 	SetTextStyleEdit(Text* text, int32 textOffset, int32 length,
 		const rgb_color& color)
@@ -20,8 +115,6 @@ public:
 		, fCommandName("Change text color")
 	{
 		_Init(text, textOffset, length);
-		if (fOldStyles == NULL || fNewStyles == NULL)
-			return;
 
 		::Style* style = new(std::nothrow) ::Style();
 		if (style == NULL)
@@ -29,39 +122,7 @@ public:
 
 		style->SetFillPaint(Paint(color));
 
-		StyleRef styleRef(style, true);
-
-// TODO: Maybe make something like this possible:
-//		for (in32 i = 0; i < fNewStyles->CountRuns(); i++) {
-//			StyleRun* run = fNewStyles->StyleRunAt(i);
-//			run->GetStyle()->SetStyle(style);
-//		}
-
-		textOffset = 0;
-		while (length > 0) {
-			// TODO: Make more efficient
-			const StyleRun* run = fNewStyles->FindStyleRun(textOffset);
-
-			CharacterStyle* characterStyle = new(std::nothrow) CharacterStyle(
-				Font(run->GetStyle()->GetFont()), styleRef);
-
-			if (characterStyle == NULL)
-				return;
-
-			CharacterStyleRef styleRef(characterStyle, true);
-
-			StyleRun replaceRun(styleRef);
-			replaceRun.SetLength(1);
-
-			if (!fNewStyles->Insert(textOffset, replaceRun))
-				return;
-
-			fNewStyles->Remove(textOffset + 1, 1);
-			styleRef.Detach();
-
-			textOffset++;
-			length--;
-		}
+		_ModifyStyles(StyleModifier(StyleRef(style, true)));
 	}
 
 	SetTextStyleEdit(Text* text, int32 textOffset, int32 length,
@@ -70,37 +131,7 @@ public:
 		, fCommandName("Change text size")
 	{
 		_Init(text, textOffset, length);
-		if (fOldStyles == NULL || fNewStyles == NULL)
-			return;
-
-		textOffset = 0;
-		while (length > 0) {
-			// TODO: Make more efficient
-			const StyleRun* run = fNewStyles->FindStyleRun(textOffset);
-
-			CharacterStyle* characterStyle = new(std::nothrow) CharacterStyle(
-				Font(run->GetStyle()->GetFont().getFamily(),
-					run->GetStyle()->GetFont().getStyle(), fontSize,
-					run->GetStyle()->GetFont().getScriptLevel()),
-				run->GetStyle()->GetStyle());
-
-			if (characterStyle == NULL)
-				return;
-
-			CharacterStyleRef styleRef(characterStyle, true);
-
-			StyleRun replaceRun(styleRef);
-			replaceRun.SetLength(1);
-
-			if (!fNewStyles->Insert(textOffset, replaceRun))
-				return;
-
-			fNewStyles->Remove(textOffset + 1, 1);
-			styleRef.Detach();
-
-			textOffset++;
-			length--;
-		}
+		_ModifyStyles(FontSizeModifier(fontSize));
 	}
 
 	SetTextStyleEdit(Text* text, int32 textOffset, int32 length,
@@ -109,36 +140,14 @@ public:
 		, fCommandName("Change text font")
 	{
 		_Init(text, textOffset, length);
-		if (fOldStyles == NULL || fNewStyles == NULL)
-			return;
+		_ModifyStyles(FontFamilyAndStyleModifier(family, style));
+	}
 
-		textOffset = 0;
-		while (length > 0) {
-			// TODO: Make more efficient
-			const StyleRun* run = fNewStyles->FindStyleRun(textOffset);
-
-			CharacterStyle* characterStyle = new(std::nothrow) CharacterStyle(
-				Font(family, style, run->GetStyle()->GetFont().getSize(),
-					run->GetStyle()->GetFont().getScriptLevel()),
-				run->GetStyle()->GetStyle());
-
-			if (characterStyle == NULL)
-				return;
-
-			CharacterStyleRef styleRef(characterStyle, true);
-
-			StyleRun replaceRun(styleRef);
-			replaceRun.SetLength(1);
-
-			if (!fNewStyles->Insert(textOffset, replaceRun))
-				return;
-
-			fNewStyles->Remove(textOffset + 1, 1);
-			styleRef.Detach();
-
-			textOffset++;
-			length--;
-		}
+	SetTextStyleEdit(Text* text, int32 textOffset, int32 length)
+		: UndoableEdit()
+		, fCommandName("Change text font")
+	{
+		_Init(text, textOffset, length);
 	}
 
 	virtual ~SetTextStyleEdit()
@@ -146,6 +155,21 @@ public:
 		delete fOldStyles;
 		delete fNewStyles;
 		fText->RemoveReference();
+	}
+
+	void SetGlyphSpacing(double spacing)
+	{
+		_ModifyStyles(GlyphSpacingModifier(spacing));
+	}
+
+	void SetFauxWeight(double fauxWeight)
+	{
+		_ModifyStyles(FauxWeightModifier(fauxWeight));
+	}
+
+	void SetFauxItalic(double fauxItalic)
+	{
+		_ModifyStyles(FauxItalicModifier(fauxItalic));
 	}
 
 	virtual	status_t InitCheck()
@@ -203,6 +227,47 @@ private:
 			fNewStyles = new(std::nothrow) StyleRunList(*fOldStyles);
 		else
 			fNewStyles = NULL;
+	}
+
+	void _ModifyStyles(const CharacterStyleModifier& modifier)
+	{
+		if (fOldStyles == NULL || fNewStyles == NULL)
+			return;
+
+		StyleRunList* newStyles = new(std::nothrow) StyleRunList();
+		if (newStyles == NULL)
+			return;
+
+		int32 textOffset = 0;
+		int32 runCount = fNewStyles->CountRuns();
+		for (int32 i = 0; i < runCount; i++) {
+			const StyleRun* run = fNewStyles->StyleRunAt(i);
+
+			CharacterStyle* characterStyle = new(std::nothrow) CharacterStyle(
+				modifier.ModifyStyle(*(run->GetStyle().Get())));
+			
+			if (characterStyle == NULL) {
+				delete newStyles;
+				return;
+			}
+
+			CharacterStyleRef styleRef(characterStyle, true);
+
+			StyleRun replacementRun(styleRef);
+			replacementRun.SetLength(run->GetLength());
+		
+			if (!newStyles->Append(replacementRun)) {
+				delete newStyles;
+				return;
+			}
+
+			styleRef.Detach();
+			textOffset += run->GetLength();
+		}
+
+		// Swap the StyleRunLists
+		delete fNewStyles;
+		fNewStyles = newStyles;
 	}
 
 private:
