@@ -89,6 +89,8 @@ public:
 			void				SetTextAlignment(uint32 alignment);
 
 			void				SetGlyphSpacing(double spacing);
+			void				SetFauxWeight(double fauxWeight);
+			void				SetFauxItalic(double fauxItalic);
 
 			void				SetWidth(float width);
 			float				Width() const;

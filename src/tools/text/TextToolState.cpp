@@ -27,7 +27,6 @@
 #include "ObjectAddedEdit.h"
 #include "RemoveTextEdit.h"
 #include "support.h"
-#include "SetGlyphSpacingEdit.h"
 #include "SetTextAlignmentEdit.h"
 #include "SetTextStyleEdit.h"
 #include "SetTextWidthEdit.h"
@@ -769,7 +768,7 @@ TextToolState::Insert(int32 textOffset, const char* text,
 		UndoableEditRef insertEdit(
 			new(std::nothrow) InsertTextEdit(
 				fText, textOffset, text, Font(fFontFamily, fFontStyle, fSize),
-				fStyle),
+				fGlyphSpacing, fFauxWeight, fFauxItalic, fStyle),
 			true);
 
 		if (compoundEdit != NULL) {
@@ -848,9 +847,45 @@ void
 TextToolState::SetGlyphSpacing(double spacing)
 {
 	fGlyphSpacing = spacing;
-	if (fText != NULL) {
-		View()->PerformEdit(new(std::nothrow) SetGlyphSpacingEdit(
-			fText, spacing));
+	if (_HasSelection()) {
+		SetTextStyleEdit* edit = new(std::nothrow) SetTextStyleEdit(
+			fText, _SelectionStart(), _SelectionLength());
+		if (edit != NULL) {
+			edit->SetGlyphSpacing(spacing);
+			View()->PerformEdit(edit);
+		}
+		UpdateBounds();
+	}
+}
+
+// SetFauxWeight
+void
+TextToolState::SetFauxWeight(double fauxWeight)
+{
+	fFauxWeight = fauxWeight;
+	if (_HasSelection()) {
+		SetTextStyleEdit* edit = new(std::nothrow) SetTextStyleEdit(
+			fText, _SelectionStart(), _SelectionLength());
+		if (edit != NULL) {
+			edit->SetFauxWeight(fauxWeight);
+			View()->PerformEdit(edit);
+		}
+		UpdateBounds();
+	}
+}
+
+// SetFauxItalic
+void
+TextToolState::SetFauxItalic(double fauxItalic)
+{
+	fFauxItalic = fauxItalic;
+	if (_HasSelection()) {
+		SetTextStyleEdit* edit = new(std::nothrow) SetTextStyleEdit(
+			fText, _SelectionStart(), _SelectionLength());
+		if (edit != NULL) {
+			edit->SetFauxItalic(fauxItalic);
+			View()->PerformEdit(edit);
+		}
 		UpdateBounds();
 	}
 }

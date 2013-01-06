@@ -161,3 +161,19 @@ TextTool::SetGlyphSpacing(double spacing)
 	TextToolState* state = static_cast<TextToolState*>(fViewState);
 	state->SetGlyphSpacing(spacing);
 }
+
+// SetFauxWeight
+void
+TextTool::SetFauxWeight(double fauxWeight)
+{
+	TextToolState* state = static_cast<TextToolState*>(fViewState);
+	state->SetFauxWeight(fauxWeight);
+}
+
+// SetFauxItalic
+void
+TextTool::SetFauxItalic(double fauxItalic)
+{
+	TextToolState* state = static_cast<TextToolState*>(fViewState);
+	state->SetFauxItalic(fauxItalic);
+}

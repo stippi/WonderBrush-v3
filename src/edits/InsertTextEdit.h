@@ -15,12 +15,16 @@
 class InsertTextEdit : public UndoableEdit {
 public:
 	InsertTextEdit(Text* text, int32 textOffset, const char* utf8String,
-		const Font& font, const StyleRef& style)
+		const Font& font, double glyphSpacing, double fauxWeight,
+		double fauxItalic, const StyleRef& style)
 		: UndoableEdit()
 		, fText(text)
 		, fOffset(textOffset)
 		, fString(utf8String)
 		, fFont(font)
+		, fGlyphSpacing(glyphSpacing)
+		, fFauxWeight(fauxWeight)
+		, fFauxItalic(fauxItalic)
 		, fStyleRef(style)
 	{
 	}
@@ -36,7 +40,8 @@ public:
 
 	virtual	status_t Perform()
 	{
-		fText->Insert(fOffset, fString.String(), fFont, fStyleRef);
+		fText->Insert(fOffset, fString.String(), fFont, fGlyphSpacing,
+			fFauxWeight, fFauxItalic, fStyleRef);
 
 		return B_OK;
 	}
@@ -63,6 +68,9 @@ public:
 			|| next->fTimeStamp - fTimeStamp > 500000
 			|| next->fOffset != fOffset + fString.CountChars()
 			|| next->fFont != fFont
+			|| next->fGlyphSpacing != fGlyphSpacing
+			|| next->fFauxWeight != fFauxWeight
+			|| next->fFauxItalic != fFauxItalic
 			|| *next->fStyleRef.Get() != *fStyleRef.Get()) {
 			return false;
 		}
@@ -78,6 +86,9 @@ private:
 			int32				fOffset;
 			BString				fString;
 			Font				fFont;
+			double				fGlyphSpacing;
+			double				fFauxWeight;
+			double				fFauxItalic;
 			StyleRef			fStyleRef;
 };
 

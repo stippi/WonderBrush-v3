@@ -38,6 +38,8 @@ public:
 			void				SetSize(float size);
 			void				SetAlignment(uint32 alignment);
 			void				SetGlyphSpacing(double spacing);
+			void				SetFauxWeight(double fauxWeight);
+			void				SetFauxItalic(double fauxItalic);
 
 private:
 	virtual	ViewState*			MakeViewState(StateView* view,
