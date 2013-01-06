@@ -52,7 +52,12 @@ private:
 			BSlider*			fSizeSlider;
 			BTextControl*		fSizeTextControl;
 			IconOptionsControl*	fTextAlignmentControl;
+			BStringView*		fGlyphSpacingLabel;
+			BStringView*		fFauxWeightLabel;
+			BStringView*		fFauxItalicLabel;
 			BSlider*			fGlyphSpacingSlider;
+			BSlider*			fFauxWeightSlider;
+			BSlider*			fFauxItalicSlider;
 
 			BCheckBox*			fSubpixels;
 

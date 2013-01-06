@@ -8,7 +8,7 @@
 #include <stdio.h>
 
 #include <CheckBox.h>
-#include <GroupLayoutBuilder.h>
+#include <LayoutBuilder.h>
 #include <ScrollView.h>
 #include <SeparatorView.h>
 #include <Slider.h>
@@ -38,6 +38,8 @@ enum {
 
 	MSG_SET_TEXT_ALIGNMENT	= 'stta',
 	MSG_SET_GLYPH_SPACING	= 'stgs',
+	MSG_SET_FAUX_WEIGHT		= 'stfw',
+	MSG_SET_FAUX_ITALIC		= 'stfi',
 };
 
 // NotifyingTextView
@@ -144,6 +146,9 @@ TextToolConfigView::TextToolConfigView(::Tool* tool)
 	fFontPopup = new FontPopup("Font", true);
 
 	fSizeLabel = new BStringView("size label", "Size");
+	fGlyphSpacingLabel = new BStringView("glyph spacing label", "Spacing");
+	fFauxWeightLabel = new BStringView("faux weight label", "Weight");
+	fFauxItalicLabel = new BStringView("faux italic label", "Slant");
 
 	fSizeSlider = new BSlider("size slider", NULL,
 		new BMessage(MSG_SIZE_SLIDER),
@@ -189,12 +194,28 @@ TextToolConfigView::TextToolConfigView(::Tool* tool)
 	fTextAlignmentControl->AddOption(iconButton);
 
 	// glpyh spacing
-	fGlyphSpacingSlider = new BSlider("glyph spacing slider", "Spacing",
+	fGlyphSpacingSlider = new BSlider("glyph spacing slider", NULL,
 		new BMessage(MSG_SET_GLYPH_SPACING),
 		-1024, 1024, B_HORIZONTAL, B_TRIANGLE_THUMB);
 	fGlyphSpacingSlider->SetExplicitMinSize(BSize(80, B_SIZE_UNSET));
 	fGlyphSpacingSlider->SetModificationMessage(
 		new BMessage(MSG_SET_GLYPH_SPACING));
+
+	// faux weight
+	fFauxWeightSlider = new BSlider("faux weight slider", NULL,
+		new BMessage(MSG_SET_FAUX_WEIGHT),
+		-1024, 1024, B_HORIZONTAL, B_TRIANGLE_THUMB);
+	fFauxWeightSlider->SetExplicitMinSize(BSize(80, B_SIZE_UNSET));
+	fFauxWeightSlider->SetModificationMessage(
+		new BMessage(MSG_SET_FAUX_WEIGHT));
+
+	// faux italic
+	fFauxItalicSlider = new BSlider("glyph spacing slider", NULL,
+		new BMessage(MSG_SET_FAUX_ITALIC),
+		-1024, 1024, B_HORIZONTAL, B_TRIANGLE_THUMB);
+	fFauxItalicSlider->SetExplicitMinSize(BSize(80, B_SIZE_UNSET));
+	fFauxItalicSlider->SetModificationMessage(
+		new BMessage(MSG_SET_FAUX_ITALIC));
 
 	fSubpixels = new BCheckBox("subpixels", "Subpixels",
 		new BMessage(MSG_SUBPIXELS));
@@ -204,25 +225,27 @@ TextToolConfigView::TextToolConfigView(::Tool* tool)
 	BScrollView* scrollView = new BScrollView("text scroll view",
 		fTextView, 0, false, true);
 
-	BGroupLayoutBuilder(layout)
-		.AddGroup(B_VERTICAL, 3.0f)
-			.AddGroup(B_HORIZONTAL, 0.0f)
-				.Add(fFontPopup->CreateLabelLayoutItem())
-				.Add(fFontPopup->CreateMenuBarLayoutItem())
-			.End()
-			.AddGroup(B_HORIZONTAL, 0.0f)
-				.Add(fSizeLabel)
+	BLayoutBuilder::Group<>(layout)
+		.AddGrid(3.0f, 3.0f)
+			.Add(fFontPopup->CreateLabelLayoutItem(), 0, 0)
+			.Add(fFontPopup->CreateMenuBarLayoutItem(), 1, 0)
+			.Add(fSizeLabel, 0, 1)
+			.AddGroup(B_HORIZONTAL, 0.0f, 1, 1)
 				.Add(fSizeSlider, 0.8f)
 				.Add(fSizeTextControl, 0.2f)
 			.End()
 		.End()
-		.Add(new BSeparatorView(B_VERTICAL, B_PLAIN_BORDER))
-		.AddGroup(B_VERTICAL, 3.0f)
+		.AddGroup(B_VERTICAL, 3.0f, 0.0f)
 			.Add(fSubpixels)
-			.AddGroup(B_HORIZONTAL)
-				.Add(fTextAlignmentControl)
-				.Add(fGlyphSpacingSlider)
-			.End()
+			.Add(fTextAlignmentControl)
+		.End()
+		.AddGrid(3.0f, 3.0f)
+			.Add(fGlyphSpacingLabel, 0, 0)
+			.Add(fGlyphSpacingSlider, 1, 0)
+			.Add(fFauxWeightLabel, 0, 1)
+			.Add(fFauxWeightSlider, 1, 1)
+			.Add(fFauxItalicLabel, 0, 2)
+			.Add(fFauxItalicSlider, 1, 2)
 		.End()
 		.Add(scrollView)
 //		.AddGlue()
@@ -247,6 +270,8 @@ TextToolConfigView::AttachedToWindow()
 	fTextView->SetTarget(this);
 	fTextAlignmentControl->SetTarget(this);
 	fGlyphSpacingSlider->SetTarget(this);
+	fFauxWeightSlider->SetTarget(this);
+	fFauxItalicSlider->SetTarget(this);
 
 	FontRegistry* fontRegistry = FontRegistry::Default();
 	if (fontRegistry->LockWithTimeout(3000) == B_OK) {
@@ -397,10 +422,13 @@ TextToolConfigView::MessageReceived(BMessage* message)
 						break;
 				}
 			}
-			double glyphSpacing;
-			if (message->FindDouble("glyph spacing", &glyphSpacing) == B_OK) {
-				fGlyphSpacingSlider->SetValue(glyphSpacing * 256);
-			}
+			double value;
+			if (message->FindDouble("glyph spacing", &value) == B_OK)
+				fGlyphSpacingSlider->SetValue(value * 256);
+			if (message->FindDouble("faux weight", &value) == B_OK)
+				fFauxWeightSlider->SetValue(value * -512);
+			if (message->FindDouble("faux italic", &value) == B_OK)
+				fFauxItalicSlider->SetValue(value * -512);
 			break;
 		}
 
@@ -427,11 +455,17 @@ TextToolConfigView::MessageReceived(BMessage* message)
 		}
 
 		case MSG_SET_GLYPH_SPACING:
-		{
 			((TextTool*)fTool)->SetGlyphSpacing(
 				fGlyphSpacingSlider->Value() / 256.0);
 			break;
-		}
+		case MSG_SET_FAUX_WEIGHT:
+			((TextTool*)fTool)->SetFauxWeight(
+				fFauxWeightSlider->Value() / -512.0);
+			break;
+		case MSG_SET_FAUX_ITALIC:
+			((TextTool*)fTool)->SetFauxItalic(
+				fFauxItalicSlider->Value() / -512.0);
+			break;
 
 		default:
 			ToolConfigView::MessageReceived(message);
@@ -459,6 +493,10 @@ TextToolConfigView::SetEnabled(bool enable)
 {
 	fSizeSlider->SetEnabled(enable);
 	fSizeTextControl->SetEnabled(enable);
+	fTextAlignmentControl->SetEnabled(enable);
+	fGlyphSpacingSlider->SetEnabled(enable);
+	fFauxWeightSlider->SetEnabled(enable);
+	fFauxItalicSlider->SetEnabled(enable);
 }
 
 // #pragma mark - private
