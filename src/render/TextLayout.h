@@ -33,9 +33,14 @@ private:
 
 		Font						font;
 
+		// The following three values override glyph metrics unless 0
 		double						ascent;
 		double						descent;
 		double						width;
+
+		double						glyphSpacing;
+		double						fauxWeight;
+		double						fauxItalic;
 
 		Color						fgColor;
 
@@ -47,10 +52,6 @@ private:
 		bool						underline;
 		unsigned					underlineStyle;
 		Color						underlineColor;
-
-		// TODO: Probably needs metrics as well to define custom gaps in the
-		// text where the client can paint images that are wrapped like
-		// ordinary glyphs.
 	};
 
 	struct GlyphInfo {
@@ -124,6 +125,7 @@ public:
 	void clearStyleRuns();
 	bool addStyleRun(int start, const Font& font,
 		double metricsAscent, double metricsDescent, double metricsWidth,
+		double glyphSpacing, double fauxWeight, double fauxItalic,
 		const Color& fgColor, const Color& bgColor,
 		bool strikeOut, const Color& strikeOutColor,
 		bool underline, unsigned underlineStyle, const Color& underlineColor);
@@ -142,8 +144,9 @@ public:
 			*advanceX = 3.0;
 	}
 
-	inline bool getInfo(int index, Font& font, Color& fgColor,
-		bool& strikeOut, Color& strikeColor,
+	inline bool getInfo(int index, Font& font,
+		double& glyphSpacing, double& fauxWeight, double& fauxItalic,
+		Color& fgColor, bool& strikeOut, Color& strikeColor,
 		bool& underline, unsigned& underlineStyle, Color& underlineColor) const
 	{
 		if (index < 0 || index >= (int)fGlyphInfoCount)
@@ -152,6 +155,9 @@ public:
 		StyleRun* style = fGlyphInfoBuffer[index].styleRun;
 		if (style != NULL) {
 			font = style->font;
+			glyphSpacing = style->glyphSpacing;
+			fauxWeight = style->fauxWeight;
+			fauxItalic = style->fauxItalic;
 			fgColor = style->fgColor;
 			if (style->strikeOut) {
 				strikeOut = true;
@@ -164,6 +170,9 @@ public:
 			}
 		} else {
 			font = fFont;
+			glyphSpacing = fGlyphSpacing;
+			fauxWeight = 0.0;
+			fauxItalic = 0.0;
 			fgColor.r = 0;
 			fgColor.g = 0;
 			fgColor.b = 0;
@@ -175,9 +184,9 @@ public:
 	}
 
 	inline void getInfo(int index, const agg::glyph_cache** glyph, double* x,
-		double* y, double* height, Color& fgColor, bool& strikeOut,
-		Color& strikeColor, bool& underline, unsigned& underlineStyle,
-		Color& underlineColor) const
+		double* y, double* height, double* fauxWeight, double* fauxItalic,
+		Color& fgColor, bool& strikeOut, Color& strikeColor, bool& underline,
+		unsigned& underlineStyle, Color& underlineColor) const
 	{
 		*glyph = fGlyphInfoBuffer[index].glyph;
 		*x = fGlyphInfoBuffer[index].x;
@@ -188,6 +197,8 @@ public:
 		StyleRun* style = fGlyphInfoBuffer[index].styleRun;
 		if (style != NULL) {
 			*height = style->font.getSize();
+			*fauxWeight = style->fauxWeight;
+			*fauxItalic = style->fauxItalic;
 			fgColor = style->fgColor;
 			if (style->strikeOut) {
 				strikeOut = true;

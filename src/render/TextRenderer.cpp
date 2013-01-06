@@ -398,6 +398,9 @@ TextRenderer::drawText(RendererType& renderer,
 
 		const agg::glyph_cache* glyph;
 
+		double fauxWeight = fFauxWeight;
+		double fauxItalic = fFauxItalic;
+
 		Color fg(fForeground);
 
 		bool strikeOut = false;
@@ -407,8 +410,9 @@ TextRenderer::drawText(RendererType& renderer,
 		unsigned underlineStyle = 0;
 		Color underlineColor(fg);
 
-		layout->getInfo(index, &glyph, &x, &y, &height, fg, strikeOut,
-			strikeColor, underline, underlineStyle, underlineColor);
+		layout->getInfo(index, &glyph, &x, &y, &height, &fauxWeight,
+			&fauxItalic, fg, strikeOut, strikeColor, underline,
+			underlineStyle, underlineColor);
 
 		double ty = fHinting ? floor(yOffset + y + 0.5) : yOffset + y;
 
@@ -423,18 +427,18 @@ TextRenderer::drawText(RendererType& renderer,
 			fMatrix *= agg::trans_affine_scaling(
 				fGlyphWidthScale / scaleX, 1);
 			fMatrix *= agg::trans_affine_skewing(
-				fFauxItalic * subpixelScale / 3, 0);
+				fauxItalic * subpixelScale / 3, 0);
 			fMatrix *= agg::trans_affine_translation(
 				xOffsetScaled + x / scaleX, ty);
 			fMatrix *= fBaseMatrix;
 
 			fRasterizer.reset();
 
-			if (fabs(fFauxWeight) < 0.05) {
+			if (fabs(fauxWeight) < 0.05) {
 				fRasterizer.add_path(fTransformedGlyph);
 			} else {
 				fFauxWeightGlyph.weight(
-					-fFauxWeight * glyph->height * subpixelScale / 15);
+					-fauxWeight * glyph->height * subpixelScale / 15);
 				fRasterizer.add_path(fFauxWeightGlyph);
 			}
 

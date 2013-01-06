@@ -405,6 +405,7 @@ TextLayout::clearStyleRuns()
 bool
 TextLayout::addStyleRun(int start, const Font& font,
 	double metricsAscent, double metricsDescent, double metricsWidth,
+	double glyphSpacing, double fauxWeight, double fauxItalic,
 	const Color& fgColor, const Color& bgColor,
 	bool strikeOut, const Color& strikeOutColor,
 	bool underline, unsigned underlineStyle, const Color& underlineColor)
@@ -439,6 +440,10 @@ TextLayout::addStyleRun(int start, const Font& font,
 	fStyleRunBuffer[fStyleRunCount].ascent = metricsAscent;
 	fStyleRunBuffer[fStyleRunCount].descent = metricsDescent;
 	fStyleRunBuffer[fStyleRunCount].width = metricsWidth;
+
+	fStyleRunBuffer[fStyleRunCount].glyphSpacing = glyphSpacing;
+	fStyleRunBuffer[fStyleRunCount].fauxWeight = fauxWeight;
+	fStyleRunBuffer[fStyleRunCount].fauxItalic = fauxItalic;
 
 	fStyleRunBuffer[fStyleRunCount].fgColor = fgColor;
 	fStyleRunBuffer[fStyleRunCount].bgColor = bgColor;
@@ -577,21 +582,33 @@ TextLayout::getLineBounds(int lineIndex, double* x1, double* y1,
 
 	if (fStyleRunCount > 0)
 		*y2 = fStyleRunBuffer[0].font.getSize();
+	else
+		*y2 = fFont.getSize();
 
-	bool foundLineStart = false;
-
-	for (unsigned i = 0; i < fGlyphInfoCount; i++) {
-		if ((int) fGlyphInfoBuffer[i].lineIndex < lineIndex)
-			continue;
-		else if ((int) fGlyphInfoBuffer[i].lineIndex > lineIndex)
-			break;
-
-		if (!foundLineStart) {
-			foundLineStart = true;
-			getGlyphBoundingBox(i, x1, y1, x2, y2);
+	if (fGlyphInfoCount == 0) {
+		if (fAlignment == ALIGNMENT_RIGHT)
+			*x1 = fWidth;
+		else if (fAlignment == ALIGNMENT_CENTER)
+			*x1 = fWidth / 2.0;
+		else
+			*x1 = fFirstLineInset;
+		*x2 = *x1;
+	} else {
+		bool foundLineStart = false;
+	
+		for (unsigned i = 0; i < fGlyphInfoCount; i++) {
+			if ((int) fGlyphInfoBuffer[i].lineIndex < lineIndex)
+				continue;
+			else if ((int) fGlyphInfoBuffer[i].lineIndex > lineIndex)
+				break;
+	
+			if (!foundLineStart) {
+				foundLineStart = true;
+				getGlyphBoundingBox(i, x1, y1, x2, y2);
+			}
+	
+			*x2 = fGlyphInfoBuffer[i].x + fGlyphInfoBuffer[i].advanceX;
 		}
-
-		*x2 = fGlyphInfoBuffer[i].x + fGlyphInfoBuffer[i].advanceX;
 	}
 
 	double scale = getScaleX();
@@ -923,15 +940,36 @@ TextLayout::getTextBounds(int textOffset, double& x1, double& y1,
 	validateLayout();
 
 	if (textOffset < 0) {
-		x1 = 0.0;
+		if (fAlignment == ALIGNMENT_RIGHT)
+			x1 = fWidth;
+		else if (fAlignment == ALIGNMENT_CENTER)
+			x1 = fWidth / 2.0;
+		else
+			x1 = fFirstLineInset;
+			
 		y1 = 0.0;
-		x2 = 0.0;
+		x2 = x1;
 		y2 = 0.0;
 	} else if (textOffset >= (int) fGlyphInfoCount) {
 		if (fGlyphInfoCount == 0) {
 			getLineBounds(0, &x1, &y1, &x2, &y2);
 		} else {
 			getGlyphBoundingBox(fGlyphInfoCount - 1, &x1, &y1, &x2, &y2);
+
+			if (fGlyphInfoBuffer[fGlyphInfoCount - 1].charCode == '\n') {
+				// glyph buffer ends on a line break, skip to next line
+				double height = y2 - y1;
+				y1 = y2;
+				y2 = y1 + height;
+
+				if (fAlignment == ALIGNMENT_RIGHT)
+					x2 = fWidth;
+				else if (fAlignment == ALIGNMENT_CENTER)
+					x2 = fWidth / 2.0;
+				else
+					x2 = fLineInset;
+			}
+
 			x1 = x2;
 
 			const double scale = getScaleX();
@@ -1043,8 +1081,6 @@ TextLayout::layout(FontEngine& fontEngine, FontManager& fontManager,
 	AutoWriteLocker _(FontCache::getInstance());
 
 	const double width = fWidth * scaleX * subpixelScale;
-	const double additionalGlyphSpacing = fGlyphSpacing * scaleX
-		* subpixelScale;
 
 	double x = fFirstLineInset * scaleX * subpixelScale;
 	double y = 0;
@@ -1062,6 +1098,15 @@ TextLayout::layout(FontEngine& fontEngine, FontManager& fontManager,
 
 		double advanceX = 0.0;
 		double advanceY = 0.0;
+
+		double additionalGlyphSpacing;
+		if (fGlyphInfoBuffer[i].styleRun != NULL) {
+			additionalGlyphSpacing = fGlyphInfoBuffer[i].styleRun->glyphSpacing
+				* scaleX * subpixelScale;
+		} else {
+			additionalGlyphSpacing = fGlyphSpacing * scaleX
+				* subpixelScale;
+		}
 
 		// increment position
 		if (fGlyphInfoBuffer[i].styleRun != NULL
