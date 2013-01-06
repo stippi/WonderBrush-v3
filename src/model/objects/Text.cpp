@@ -199,11 +199,20 @@ void
 Text::Insert(int32 textOffset, const char* utf8String, const Font& font,
 	const StyleRef& style)
 {
+	Insert(textOffset, utf8String, font, 0.0, 0.0, 0.0, style);
+}
+
+// Insert
+void
+Text::Insert(int32 textOffset, const char* utf8String, const Font& font,
+	double glyphSpacing, double fauxWeight, double fauxItalic,
+	const StyleRef& style)
+{
 	if (textOffset < 0 || textOffset > fCharCount)
 		return;
 
 	CharacterStyle* characterStyle = new(std::nothrow) CharacterStyle(
-		font, 0.0, 0.0, 0.0, style);
+		font, glyphSpacing, fauxWeight, fauxItalic, style);
 
 	if (characterStyle == NULL)
 		return;
@@ -482,8 +491,11 @@ Text::UpdateLayout()
 //			run->GetLength());
 
 		fTextLayout.addStyleRun(
-			start, font, 0.0, 0.0, 0.0,
+			start, font,
 			0.0, 0.0, 0.0,
+			characterStyle->GetGlyphSpacing(),
+			characterStyle->GetFauxWeight(),
+			characterStyle->GetFauxItalic(),
 			Color(
 				RenderEngine::GammaToLinear(color.red),
 				RenderEngine::GammaToLinear(color.green),

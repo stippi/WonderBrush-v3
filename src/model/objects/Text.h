@@ -63,6 +63,11 @@ public:
 									const StyleRef& style);
 
 			void				Insert(int32 textOffset,
+									const char* utf8String, const Font& font,
+									double glyphSpacing, double fauxWeight,
+									double fauxItalic, const StyleRef& style);
+
+			void				Insert(int32 textOffset,
 									const BString& utf8String,
 									const StyleRunList& styleRuns);
 
