@@ -595,18 +595,18 @@ TextLayout::getLineBounds(int lineIndex, double* x1, double* y1,
 		*x2 = *x1;
 	} else {
 		bool foundLineStart = false;
-	
+
 		for (unsigned i = 0; i < fGlyphInfoCount; i++) {
 			if ((int) fGlyphInfoBuffer[i].lineIndex < lineIndex)
 				continue;
 			else if ((int) fGlyphInfoBuffer[i].lineIndex > lineIndex)
 				break;
-	
+
 			if (!foundLineStart) {
 				foundLineStart = true;
 				getGlyphBoundingBox(i, x1, y1, x2, y2);
 			}
-	
+
 			*x2 = fGlyphInfoBuffer[i].x + fGlyphInfoBuffer[i].advanceX;
 		}
 	}
@@ -946,7 +946,7 @@ TextLayout::getTextBounds(int textOffset, double& x1, double& y1,
 			x1 = fWidth / 2.0;
 		else
 			x1 = fFirstLineInset;
-			
+
 		y1 = 0.0;
 		x2 = x1;
 		y2 = 0.0;
@@ -1451,16 +1451,33 @@ TextLayout::applyAlignment(const double width)
 		// gradually decreased. This works since the iteration is backwards
 		// and the characters on the right are pushed farthest.
 		fGlyphInfoBuffer[i].x += spaceLeft;
+
+		unsigned classification
+			= getCharClassification(fGlyphInfoBuffer[i].charCode);
+
 		if (i < (int) fGlyphInfoCount - 1
 			&& (int) fGlyphInfoBuffer[i + 1].lineIndex == lineIndex) {
-			fGlyphInfoBuffer[i].advanceX = fGlyphInfoBuffer[i + 1].x
-				- fGlyphInfoBuffer[i].x;
+			unsigned nextClassification
+				= getCharClassification(fGlyphInfoBuffer[i + 1].charCode);
+			if (nextClassification == CHAR_CLASS_WHITESPACE
+				&& classification != CHAR_CLASS_WHITESPACE) {
+				// When a space character is right of a regular character,
+				// add the additional space to the space instead of the
+				// character
+				double shift = (fGlyphInfoBuffer[i + 1].x
+					- fGlyphInfoBuffer[i].x) - fGlyphInfoBuffer[i].advanceX;
+				fGlyphInfoBuffer[i + 1].advanceX += shift;
+				fGlyphInfoBuffer[i + 1].x -= shift;
+			} else {
+				// Adjust the advance value to match the distance to the
+				// following character
+				fGlyphInfoBuffer[i].advanceX = fGlyphInfoBuffer[i + 1].x
+					- fGlyphInfoBuffer[i].x;
+			}
 		}
 
 		// The shift (spaceLeft) is reduced depending on the character
 		// classification.
-		unsigned classification
-			= getCharClassification(fGlyphInfoBuffer[i].charCode);
 		if (classification == CHAR_CLASS_WHITESPACE) {
 			if (seenChar)
 				spaceLeft -= whiteSpace;
