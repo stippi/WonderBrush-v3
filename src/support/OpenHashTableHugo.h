@@ -204,7 +204,7 @@ public:
 	*/
 	ValueType* Clear(bool returnElements = false)
 	{
-		if (this->fItemCount == 0)
+		if (fItemCount == 0)
 			return NULL;
 
 		ValueType* result = NULL;
@@ -230,6 +230,7 @@ public:
 		}
 
 		memset(this->fTable, 0, sizeof(ValueType*) * this->fTableSize);
+		fItemCount = 0;
 
 		return result;
 	}
