@@ -68,9 +68,12 @@ Window::Window(BRect frame, const char* title, Document* document,
 	BMenuBar* menuBar = new BMenuBar("main menu");
 	fFileMenu = new BMenu("File");
 	menuBar->AddItem(fFileMenu);
-	BMenuItem* newWindowMI = new BMenuItem("New Window",
-		new BMessage(MSG_NEW_WINDOW), 'N');
+	BMenuItem* newWindowMI = new BMenuItem("New window",
+		new BMessage(MSG_NEW_WINDOW), 'N', B_SHIFT_KEY);
 	fFileMenu->AddItem(newWindowMI);
+	BMenuItem* newDocumentMI = new BMenuItem("New document",
+		new BMessage(MSG_NEW_DOCUMENT), 'N');
+	fFileMenu->AddItem(newDocumentMI);
 	fFileMenu->AddItem(new BMenuItem("Quit",
 		new BMessage(B_QUIT_REQUESTED), 'Q'));
 
@@ -95,7 +98,7 @@ Window::Window(BRect frame, const char* title, Document* document,
 	fPropertyMenu = new BMenu("Property");
 	propertyMenuBar->AddItem(fPropertyMenu);
 
-	fLayerTreeView = new ObjectTreeView(fDocument, &fSelection);
+	fLayerTreeView = new ObjectTreeView(fDocument.Get(), &fSelection);
 //	fLayerTreeView->SetModel(fLayerTreeModel);
 	fLayerTreeView->SetModel(new DefaultColumnTreeModel);
 	ScrollView* objectTreeScrollView = new ScrollView(fLayerTreeView,
@@ -104,7 +107,7 @@ Window::Window(BRect frame, const char* title, Document* document,
 		"layer tree", B_WILL_DRAW | B_FRAME_EVENTS, B_PLAIN_BORDER,
 		BORDER_BOTTOM);
 
-	fResourceTreeView = new ResourceTreeView(fDocument, &fSelection);
+	fResourceTreeView = new ResourceTreeView(fDocument.Get(), &fSelection);
 	fResourceTreeView->SetModel(new DefaultColumnTreeModel);
 	ScrollView* resourceTreeScrollView = new ScrollView(fResourceTreeView,
 		SCROLL_HORIZONTAL | SCROLL_VERTICAL/* | SCROLL_HORIZONTAL_MAGIC
@@ -112,10 +115,10 @@ Window::Window(BRect frame, const char* title, Document* document,
 		"layer tree", B_WILL_DRAW | B_FRAME_EVENTS, B_PLAIN_BORDER,
 		BORDER_BOTTOM);
 
-	fRenderManager = new RenderManager(fDocument);
+	fRenderManager = new RenderManager(fDocument.Get());
 	// TODO: Check error
 	fRenderManager->Init();
-	fView = new CanvasView(fDocument, fRenderManager);
+	fView = new CanvasView(fDocument.Get(), fRenderManager);
 	ScrollView* canvasScrollView = new ScrollView(fView,
 		SCROLL_HORIZONTAL | SCROLL_VERTICAL | SCROLL_NO_FRAME
 		| SCROLL_VISIBLE_RECT_IS_CHILD_BOUNDS, "canvas",
@@ -269,7 +272,8 @@ exportButton->SetEnabled(false);
 					.AddSplit(fVerticalSplit, 0.10f)
 						.AddGroup(B_VERTICAL, 0.0f, 0.30f)
 							.Add(new BSeparatorView(B_HORIZONTAL))
-							.Add(new NavigatorView(fDocument, fRenderManager))
+							.Add(new NavigatorView(fDocument.Get(),
+								fRenderManager))
 							.Add(new BSeparatorView(B_HORIZONTAL))
 							.Add(zoomIconGroup)
 						.End()
@@ -313,6 +317,7 @@ exportButton->SetEnabled(false);
 	fFileMenu->SetTargetForItems(this);
 	fEditMenu->SetTargetForItems(this);
 	newWindowMI->SetTarget(be_app);
+	newDocumentMI->SetTarget(be_app);
 	zoomInButton->SetTarget(fView);
 	zoomOutButton->SetTarget(fView);
 	zoomOriginalButton->SetTarget(fView);
@@ -367,7 +372,7 @@ Window::MessageReceived(BMessage* message)
 			int32 index;
 			if (message->FindInt32("tool", &index) == B_OK) {
 				if (Tool* tool = (Tool*)fTools.ItemAt(index)) {
-					fView->SetState(tool->ToolViewState(fView, fDocument,
+					fView->SetState(tool->ToolViewState(fView, fDocument.Get(),
 						&fSelection, &fCurrentColor));
 					fToolConfigLayout->SetVisibleItem(index);
 				}
@@ -445,7 +450,7 @@ Window::AddTool(Tool* tool)
 
 	if (count == 0) {
 		// this was the first tool
-		fView->SetState(tool->ToolViewState(fView, fDocument, &fSelection,
+		fView->SetState(tool->ToolViewState(fView, fDocument.Get(), &fSelection,
 			&fCurrentColor));
 		fToolConfigLayout->SetVisibleItem(0L);
 	}
@@ -566,7 +571,7 @@ Window::_AddLayer()
 		return;
 	}
 
-	AutoWriteLocker _(fDocument);
+	AutoWriteLocker _(fDocument.Get());
 
 	// Initial parent laye and insertion index, in case there is no selection
 	Layer* parentLayer = fDocument->RootLayer();
@@ -615,7 +620,7 @@ Window::_ResetTransformation()
 		return;
 	}
 
-	AutoWriteLocker _(fDocument);
+	AutoWriteLocker _(fDocument.Get());
 
 	if (fSelection.IsEmpty()) {
 		fprintf(stderr, "Window::_ResetTransformation(): No selection.\n");

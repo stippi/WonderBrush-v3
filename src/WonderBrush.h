@@ -8,8 +8,9 @@
 
 
 enum {
-	MSG_NEW_WINDOW	= 'nwnd',
-	MSG_WINDOW_QUIT	= 'wndq'
+	MSG_NEW_WINDOW		= 'nwnd',
+	MSG_NEW_DOCUMENT	= 'ndoc',
+	MSG_WINDOW_QUIT		= 'wndq'
 };
 
 
@@ -25,6 +26,7 @@ public:
 
 protected:
 	virtual	void				NewWindow() = 0;
+	virtual	void				NewDocument() = 0;
 	virtual	void				WindowQuit(BMessage* message) = 0;
 
 	virtual	status_t			OpenSettingsFile(BFile& file,
@@ -57,6 +59,7 @@ public:
 
 protected:
 	virtual	void				NewWindow();
+	virtual	void				NewDocument();
 	virtual	void				WindowQuit(BMessage* message);
 
 	virtual	void				StoreSettings();

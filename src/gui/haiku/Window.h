@@ -59,7 +59,7 @@ private:
 
 private:
 			CanvasView*			fView;
-			Document*			fDocument;
+			Reference<Document>	fDocument;
 			RenderManager*		fRenderManager;
 			ListenerAdapter		fEditManagerListener;
 			Selection			fSelection;

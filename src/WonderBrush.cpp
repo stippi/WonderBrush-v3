@@ -180,16 +180,21 @@ WonderBrush::MessageReceived(BMessage* message)
 			}
 			break;
 		}
+
 		case MSG_NEW_WINDOW:
 			NewWindow();
 			break;
+
+		case MSG_NEW_DOCUMENT:
+			NewDocument();
+			break;
+
 		case MSG_WINDOW_QUIT:
-		{
 			WindowQuit(message);
 			if (BaseClass::fWindowCount == 0)
 				PostMessage(B_QUIT_REQUESTED, this);
 			break;
-		}
+
 		default:
 			BaseClass::MessageReceived(message);
 			break;
@@ -217,6 +222,30 @@ WonderBrush::NewWindow()
 }
 
 
+// NewDocument
+void
+WonderBrush::NewDocument()
+{
+	fWindowFrame.OffsetBy(30, 30);
+
+	BString windowName("WonderBrush ");
+	windowName << ++fWindowCount;
+
+	Document* document = new Document(BRect(0, 0, 799, 599));
+
+	Window* window = new Window(fWindowFrame, windowName.String(),
+		document, document->RootLayer());
+
+	BMessage windowSettings;
+	if (fSettings.FindMessage("window settings", &windowSettings) == B_OK)
+		window->RestoreSettings(windowSettings);
+
+	window->Show();
+	
+	document->RemoveReference();
+}
+
+
 // WindowQuit
 void
 WonderBrush::WindowQuit(BMessage* message)
@@ -226,6 +255,7 @@ WonderBrush::WindowQuit(BMessage* message)
 		fSettings.RemoveName("window settings");
 		fSettings.AddMessage("window settings", &windowSettings);
 	}
+	// Next window opens in place of the window that just closed
 	message->FindRect("window frame", &fWindowFrame);
 
 	fWindowCount--;
