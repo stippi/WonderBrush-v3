@@ -27,7 +27,7 @@ if $(OSPLAT) = X86 {
 		NETWORK_LIBS += network ;
 		PLATFORM = haiku ;
 		COMMON_FOLDER = /boot/common ;
-		SYSHDRS += /boot/common/include/freetype2 ;
+		SYSHDRS += /boot/develop/headers/3rdparty/freetype2 ;
 	}
 	# check for BONE...
 	local haveBone = [ GLOB /boot/develop/headers/be/bone/arpa : inet.h ] ;
