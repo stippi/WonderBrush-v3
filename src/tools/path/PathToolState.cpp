@@ -100,6 +100,7 @@ public:
 
 	virtual void SetOrigin(BPoint origin)
 	{
+		fParent->TransformCanvasToObject(&origin);
 		fOrigin = origin;
 		BPoint point(origin);
 		switch (fDragMode) {
@@ -121,6 +122,10 @@ public:
 
 	virtual void DragTo(BPoint current, uint32 modifiers)
 	{
+//		BPoint objectCurrent = current;
+//		fParent->TransformCanvasToObject(&objectCurrent);
+		fParent->TransformCanvasToObject(&current);
+
 		current = current - fClickOffset;
 		Path* path = fPathPoint.GetPath();
 
@@ -229,6 +234,8 @@ public:
 
 	virtual void SetOrigin(BPoint origin)
 	{
+		fParent->TransformCanvasToObject(&origin);
+
 		fOrigin = origin;
 		Path* path = fPathRef.Get();
 		if (path != NULL && path->AddPoint(origin))
@@ -237,6 +244,8 @@ public:
 
 	virtual void DragTo(BPoint current, uint32 modifiers)
 	{
+		fParent->TransformCanvasToObject(&current);
+
 		double dragDistance = point_point_distance(fOrigin, current);
 		if (fPointAdded && dragDistance > 7.0) {
 			Path* path = fPathRef.Get();
@@ -287,6 +296,8 @@ public:
 
 	virtual void SetOrigin(BPoint origin)
 	{
+		fParent->TransformCanvasToObject(&origin);
+
 		fOrigin = origin;
 		Path* path = fPathRef.Get();
 		if (path != NULL
@@ -301,6 +312,8 @@ public:
 
 	virtual void DragTo(BPoint current, uint32 modifiers)
 	{
+		fParent->TransformCanvasToObject(&current);
+
 		double dragDistance = point_point_distance(fOrigin, current);
 		if (fPointAdded && dragDistance > 7.0) {
 			Path* path = fPathRef.Get();
@@ -689,6 +702,9 @@ PathToolState::StartTransaction(const char* editName)
 PathToolState::DragState*
 PathToolState::DragStateFor(BPoint canvasWhere, float zoomLevel) const
 {
+	BPoint objectWhere = canvasWhere;
+	TransformCanvasToObject(&objectWhere);
+
 	double inset = 10.0 / zoomLevel;
 
 	double closestDistance = LONG_MAX;
@@ -702,11 +718,11 @@ PathToolState::DragStateFor(BPoint canvasWhere, float zoomLevel) const
 			BPoint pointOut;
 			if (path->GetPointsAt(j, point, pointIn, pointOut)) {
 				double distance = point_point_distance(point,
-					canvasWhere);
+					objectWhere);
 				double distanceIn = point_point_distance(pointIn,
-					canvasWhere);
+					objectWhere);
 				double distanceOut = point_point_distance(pointOut,
-					canvasWhere);
+					objectWhere);
 
 				if (distance < inset
 					&& distance < closestDistance
@@ -776,7 +792,7 @@ PathToolState::DragStateFor(BPoint canvasWhere, float zoomLevel) const
 
 		float distance;
 		int32 index;
-		if (!path->GetDistance(canvasWhere, &distance, &index))
+		if (!path->GetDistance(objectWhere, &distance, &index))
 			continue;
 
 		if (distance < closestDistance && distance < inset) {
@@ -850,11 +866,11 @@ PathToolState::ObjectChanged(const Notifier* object)
 	if (dynamic_cast<const Path*>(object) != NULL)
 		UpdateBounds();
 
-	if (fShape != NULL && object == fShape) {
-		SetObjectToCanvasTransformation(fShape->Transformation());
-		UpdateBounds();
-		UpdateDragState();
-	}
+//	if (fShape != NULL && object == fShape) {
+//		SetObjectToCanvasTransformation(fShape->Transformation());
+//		UpdateBounds();
+//		UpdateDragState();
+//	}
 
 	if (object == fCurrentColor && !fIgnoreColorColorNotifiactions) {
 	}
@@ -1058,7 +1074,8 @@ PathToolState::SetShape(Shape* shape, bool modifySelection)
 		}
 
 		fCurrentPath = path;
-		ObjectChanged(shape);
+		SetObjectToCanvasTransformation(fShape->Transformation());
+//		ObjectChanged(shape);
 		ObjectChanged(fCurrentPath.Get());
 	} else {
 		if (modifySelection)
