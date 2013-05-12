@@ -11,9 +11,9 @@
 #include <Locker.h>
 #include <Rect.h>
 
-#include "StyleableSnapshot.h"
 #include "Referenceable.h"
 #include "RenderEngine.h"
+#include "StyleableSnapshot.h"
 
 class Shape;
 
@@ -43,7 +43,7 @@ private:
 
 private:
 			const Shape*		fOriginal;
-			BRect				fArea;
+			PathStorage			fPathStorage;
 
 			BLocker				fRasterizerLock;
 	volatile bool				fNeedsRasterizing;

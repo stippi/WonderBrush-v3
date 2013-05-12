@@ -942,7 +942,7 @@ PathToolState::CreateShape(BPoint canvasLocation)
 		return false;
 	}
 
-	Shape* shape = new(std::nothrow) Shape(BRect(0, 0, 50, 50), kBlack);
+	Shape* shape = new(std::nothrow) Shape(fCurrentPath, kBlack);
 	if (shape == NULL) {
 		fprintf(stderr, "PathToolState::CreateShape(): Failed to allocate "
 			"Shape. Out of memory\n");
@@ -1027,6 +1027,10 @@ PathToolState::SetShape(Shape* shape, bool modifySelection)
 	if (fShape != NULL) {
 		fShape->RemoveListener(this);
 		fShape->RemoveReference();
+		
+		PathRef path = fShape->GetPath();
+		path->RemoveListener(this);
+		fPaths.Clear();
 	}
 
 	fShape = shape;
@@ -1039,7 +1043,23 @@ PathToolState::SetShape(Shape* shape, bool modifySelection)
 	if (shape != NULL) {
 		if (modifySelection)
 			fSelection->Select(Selectable(shape), this);
-//		SetObjectToCanvasTransformation(shape->Transformation());
+		PathRef path = shape->GetPath();
+
+		if (!path->AddListener(this)) {
+			fprintf(stderr, "PathToolState::CreatePath(): Failed to add "
+				"listener to path. Out of memory\n");
+			return;
+		}
+
+		if (!fPaths.Add(path)) {
+			fprintf(stderr, "PathToolState::CreatePath(): Failed to add "
+				"path to list. Out of memory\n");
+			return;
+		}
+
+		fCurrentPath = path;
+		ObjectChanged(shape);
+		ObjectChanged(fCurrentPath.Get());
 	} else {
 		if (modifySelection)
 			fSelection->DeselectAll(this);

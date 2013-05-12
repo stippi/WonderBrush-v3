@@ -49,7 +49,26 @@ WonderBrushBase::WonderBrushBase(BRect bounds)
 	fDocument->RootLayer()->AddObject(subLayer);
 
 	fDocument->RootLayer()->AddObject(new Filter(5.0));
-	Shape* shape = new Shape(BRect(180, 40, 320, 170),
+	
+	PathRef path(new Path(), true);
+	BRect shapeArea(180, 40, 320, 170);
+	path->AddPoint(BPoint(shapeArea.left, shapeArea.top));
+	path->AddPoint(BPoint((shapeArea.left + shapeArea.right) / 2,
+		shapeArea.top + shapeArea.Height() / 3));
+
+	path->AddPoint(BPoint(shapeArea.right, shapeArea.top));
+	path->AddPoint(BPoint(shapeArea.right - shapeArea.Width() / 3,
+		(shapeArea.top + shapeArea.bottom) / 2));
+
+	path->AddPoint(BPoint(shapeArea.right, shapeArea.bottom));
+	path->AddPoint(BPoint((shapeArea.left + shapeArea.right) / 2,
+		shapeArea.bottom - shapeArea.Height() / 3));
+
+	path->AddPoint(BPoint(shapeArea.left, shapeArea.bottom));
+	path->AddPoint(BPoint(shapeArea.left + shapeArea.Width() / 3,
+		(shapeArea.top + shapeArea.bottom) / 2));
+	
+	Shape* shape = new Shape(path,
 		(rgb_color){ 255, 100, 50, 210 });
 	shape->RotateBy(BPoint(250, 105), 5);
 	fDocument->RootLayer()->AddObject(shape);
@@ -106,7 +125,7 @@ WonderBrushBase::WonderBrushBase(BRect bounds)
 	subSubLayer->AddObject(new Rect(BRect(420, 320, 650, 390),
 		(rgb_color){ 0, 255, 0, 240 }));
 
-	subSubLayer->AddObject(new Shape(BRect(460, 185, 590, 300),
+	subSubLayer->AddObject(new Shape(path,
 		(rgb_color){ 255, 0, 169, 255 }));
 
 	Layer* subSubSubLayer = new Layer(bounds);
@@ -120,7 +139,7 @@ WonderBrushBase::WonderBrushBase(BRect bounds)
 	fDocument->GlobalResources().AddObject(style);
 
 	Shape* shapeWidthGlobalStyle = new Shape();
-	shapeWidthGlobalStyle->SetArea(BRect(120, 80, 230, 190));
+	shapeWidthGlobalStyle->SetPath(path);
 	shapeWidthGlobalStyle->SetStyle(style);
 	subSubSubLayer->AddObject(shapeWidthGlobalStyle);
 

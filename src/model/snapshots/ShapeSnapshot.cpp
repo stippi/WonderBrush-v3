@@ -16,7 +16,7 @@
 ShapeSnapshot::ShapeSnapshot(const Shape* shape)
 	: StyleableSnapshot(shape)
 	, fOriginal(shape)
-	, fArea(shape->Area())
+	, fPathStorage()
 
 	, fRasterizerLock("shape lock")
 	, fNeedsRasterizing(true)
@@ -29,6 +29,9 @@ ShapeSnapshot::ShapeSnapshot(const Shape* shape)
 	, fCoverAllocator()
 	, fSpanAllocator()
 {
+	PathRef path = shape->GetPath();
+	if (path.Get() != NULL)
+		path->GetAGGPathStorage(fPathStorage);
 	fRasterizer.filling_rule(agg::fill_non_zero);
 }
 
@@ -52,7 +55,10 @@ bool
 ShapeSnapshot::Sync()
 {
 	if (StyleableSnapshot::Sync()) {
-		fArea = fOriginal->Area();
+		PathRef path = fOriginal->GetPath();
+		fPathStorage.remove_all();
+		if (path.Get() != NULL)
+			path->GetAGGPathStorage(fPathStorage);
 		fNeedsRasterizing = true;
 		return true;
 	}
@@ -115,31 +121,12 @@ ShapeSnapshot::_RasterizeShape(Rasterizer& rasterizer, BRect bounds)
 {
 	_ClearScanlines();
 
-	// TODO: Get the vertex iterator from somewhere...
-	PathStorage path;
-	path.move_to(fArea.left, fArea.top);
-	path.line_to((fArea.left + fArea.right) / 2,
-		fArea.top + fArea.Height() / 3);
-
-	path.line_to(fArea.right, fArea.top);
-	path.line_to(fArea.right - fArea.Width() / 3,
-		(fArea.top + fArea.bottom) / 2);
-
-	path.line_to(fArea.right, fArea.bottom);
-	path.line_to((fArea.left + fArea.right) / 2,
-		fArea.bottom - fArea.Height() / 3);
-
-	path.line_to(fArea.left, fArea.bottom);
-	path.line_to(fArea.left + fArea.Width() / 3,
-		(fArea.top + fArea.bottom) / 2);
-	path.close_polygon();
-
 	rasterizer.clip_box(bounds.left, bounds.top, bounds.right + 1,
 		bounds.bottom + 1);
 
 	if (fStyle.FillPaint() != NULL
 		&& fStyle.FillPaint()->Type() != Paint::NONE) {
-		TransformedPath transformedPath(path, LayoutedState().Matrix);
+		TransformedPath transformedPath(fPathStorage, LayoutedState().Matrix);
 	
 		rasterizer.add_path(transformedPath);
 		_StoreScanlines(rasterizer, fFillScanlines);
@@ -149,7 +136,7 @@ ShapeSnapshot::_RasterizeShape(Rasterizer& rasterizer, BRect bounds)
 		&& fStyle.StrokePaint()->Type() != Paint::NONE
 		&& fStyle.StrokeProperties() != NULL) {
 		if (fStyle.StrokeProperties()->StrokePosition() == CenterStroke) {
-			agg::conv_stroke<PathStorage> strokedPath(path);
+			agg::conv_stroke<PathStorage> strokedPath(fPathStorage);
 			fStyle.StrokeProperties()->SetupAggConverter(strokedPath);
 	
 			agg::conv_transform<agg::conv_stroke<PathStorage>, Transformation>
@@ -157,7 +144,7 @@ ShapeSnapshot::_RasterizeShape(Rasterizer& rasterizer, BRect bounds)
 	
 			rasterizer.add_path(transformedPath);
 		} else {
-			agg::conv_contour<PathStorage> offsetPath(path);
+			agg::conv_contour<PathStorage> offsetPath(fPathStorage);
 			if (fStyle.StrokeProperties()->StrokePosition() == InsideStroke)
 				offsetPath.width(-fStyle.StrokeProperties()->Width());
 			else

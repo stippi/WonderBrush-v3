@@ -7,25 +7,76 @@
 
 #include "ShapeSnapshot.h"
 
+class PathListener : public Path::Listener {
+public:
+	PathListener(Shape* shape)
+		: fShape(shape)
+	{
+	}
+
+	virtual ~PathListener()
+	{
+	}
+
+	virtual	void PointAdded(const Path* path, int32 index)
+	{
+		fShape->NotifyAndUpdate();
+	}
+	
+	virtual	void PointRemoved(const Path* path, int32 index)
+	{
+		fShape->NotifyAndUpdate();
+	}
+	
+	virtual	void PointChanged(const Path* path, int32 index)
+	{
+		fShape->NotifyAndUpdate();
+	}
+	
+	virtual	void PathChanged(const Path* path)
+	{
+		fShape->NotifyAndUpdate();
+	}
+	
+	virtual	void PathClosedChanged(const Path* path)
+	{
+		fShape->NotifyAndUpdate();
+	}
+	
+	virtual	void PathReversed(const Path* path)
+	{
+		fShape->NotifyAndUpdate();
+	}
+
+private:
+	Shape*	fShape;
+};
+
+// #pragma mark -
+
 // constructor
 Shape::Shape()
 	: Styleable()
-	, fArea(10, 10, 60, 60)
+	, fPathListener(new(std::nothrow) PathListener(this))
 {
+	SetPath(PathRef(new(std::nothrow) Path(), true));
 	InitBounds();
 }
 
 // constructor
-Shape::Shape(const BRect& area, const rgb_color& color)
+Shape::Shape(const PathRef& path, const rgb_color& color)
 	: Styleable(color)
-	, fArea(area)
+	, fPathListener(new(std::nothrow) PathListener(this))
 {
+	SetPath(path);
 	InitBounds();
 }
 
 // destructor
 Shape::~Shape()
 {
+	printf("~Shape()\n");
+	delete fPathListener;
 }
 
 // #pragma mark -
@@ -91,12 +142,38 @@ Shape::Area() const
 	return fArea;
 }
 
+// SetPath
+void
+Shape::SetPath(const PathRef& path)
+{
+	if (fPath == path)
+		return;
+	
+	if (fPath.Get() != NULL && fPathListener != NULL)
+		fPath->RemoveListener(fPathListener);
+
+	fPath = path;
+
+	if (fPath.Get() != NULL && fPathListener != NULL)
+		fPath->AddListener(fPathListener);
+}
+
+// GetPath
+const PathRef&
+Shape::GetPath() const
+{
+	return fPath;
+}
+
 // Bounds
 BRect
 Shape::Bounds()
 {
-	BRect bounds = fArea;
-	Style()->ExtendBounds(bounds);
+	BRect bounds;
+	if (fPath.Get() != NULL) {
+		bounds = fPath->Bounds();
+		Style()->ExtendBounds(bounds);
+	}
 	return bounds;
 }
 
@@ -106,21 +183,8 @@ Shape::Bounds()
 void
 Shape::_GetPath(PathStorage& path) const
 {
-	path.move_to(fArea.left, fArea.top);
-	path.line_to((fArea.left + fArea.right) / 2,
-		fArea.top + fArea.Height() / 3);
-
-	path.line_to(fArea.right, fArea.top);
-	path.line_to(fArea.right - fArea.Width() / 3,
-		(fArea.top + fArea.bottom) / 2);
-
-	path.line_to(fArea.right, fArea.bottom);
-	path.line_to((fArea.left + fArea.right) / 2,
-		fArea.bottom - fArea.Height() / 3);
-
-	path.line_to(fArea.left, fArea.bottom);
-	path.line_to(fArea.left + fArea.Width() / 3,
-		(fArea.top + fArea.bottom) / 2);
-	path.close_polygon();
+	if (fPath.Get() == NULL)
+		return;
+	fPath->GetAGGPathStorage(path);
 }
 

@@ -12,11 +12,12 @@
 
 #include "RenderEngine.h"
 #include "Styleable.h"
+#include "Path.h"
 
 class Shape : public Styleable {
 public:
 								Shape();
-								Shape(const BRect& area,
+								Shape(const PathRef& path,
 									const rgb_color& color);
 	virtual						~Shape();
 
@@ -36,6 +37,10 @@ public:
 	// Shape
 			void				SetArea(const BRect& area);
 			BRect				Area() const;
+
+			void				SetPath(const PathRef& path);
+			const PathRef&		GetPath() const;
+
 	virtual	BRect				Bounds();
 
 private:
@@ -43,6 +48,8 @@ private:
 
 private:
 			BRect				fArea;
+			PathRef				fPath;
+			Path::Listener*		fPathListener;
 };
 
 #endif // SHAPE_H
