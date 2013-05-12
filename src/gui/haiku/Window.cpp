@@ -460,9 +460,19 @@ Window::AddTool(Tool* tool)
 status_t
 store_split_weights(BMessage& message, const char* name, BSplitView* view)
 {
-	int32 count = view->CountChildren();
+	BString collapsedName(name);
+	collapsedName.Append("_collapsed");
+
+	message.RemoveName(name);
+	message.RemoveName(collapsedName.String());
+
+	int32 count = view->GetLayout()->CountItems();
 	for (int32 i = 0; i < count; i++) {
 		status_t ret = message.AddFloat(name, view->ItemWeight(i));
+		if (ret != B_OK)
+			return ret;
+		ret = message.AddBool(collapsedName.String(),
+			view->IsItemCollapsed(i));
 		if (ret != B_OK)
 			return ret;
 	}
@@ -474,9 +484,20 @@ void
 restore_split_weights(const BMessage& message, const char* name,
 	BSplitView* view)
 {
+	BString collapsedName(name);
+	collapsedName.Append("_collapsed");
+
 	float weight;
-	for (int32 i = 0; message.FindFloat(name, i, &weight) == B_OK; i++)
+	for (int32 i = 0; message.FindFloat(name, i, &weight) == B_OK; i++) {
+		if (i >= view->GetLayout()->CountItems())
+			break;
+		
 		view->SetItemWeight(i, weight, false);
+		
+		bool collapsed;
+		if (message.FindBool(collapsedName.String(), i, &collapsed) == B_OK)
+			view->SetItemCollapsed(i, collapsed);
+	}
 	view->InvalidateLayout(true);
 }
 
