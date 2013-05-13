@@ -122,8 +122,6 @@ public:
 
 	virtual void DragTo(BPoint current, uint32 modifiers)
 	{
-//		BPoint objectCurrent = current;
-//		fParent->TransformCanvasToObject(&objectCurrent);
 		fParent->TransformCanvasToObject(&current);
 
 		current = current - fClickOffset;
@@ -191,6 +189,9 @@ public:
 
 	virtual void SetOrigin(BPoint origin)
 	{
+		BPoint originalOrigin(origin);
+		fParent->TransformCanvasToObject(&origin);
+
 		// Setup tool and switch to drag left/top state
 		if (fParent->CreatePath(origin)) {
 			PathRef pathRef = fParent->fPaths.LastItem();
@@ -199,7 +200,7 @@ public:
 			fParent->fDragPathPointState->SetDragMode(
 				DRAG_MODE_MOVE_POINT_OUT_MIRROR_IN);
 			fParent->SetDragState(fParent->fDragPathPointState);
-			fParent->fDragPathPointState->SetOrigin(origin);
+			fParent->fDragPathPointState->SetOrigin(originalOrigin);
 		}
 	}
 
@@ -244,6 +245,7 @@ public:
 
 	virtual void DragTo(BPoint current, uint32 modifiers)
 	{
+		BPoint originalCurrent(current);
 		fParent->TransformCanvasToObject(&current);
 
 		double dragDistance = point_point_distance(fOrigin, current);
@@ -254,9 +256,12 @@ public:
 			fParent->fDragPathPointState->SetDragMode(
 				DRAG_MODE_MOVE_POINT_OUT_MIRROR_IN);
 
+			BPoint originalOrigin(fOrigin);
+			fParent->TransformObjectToCanvas(&originalOrigin);
+
 			fParent->SetDragState(fParent->fDragPathPointState);
-			fParent->fDragPathPointState->SetOrigin(fOrigin);
-			fParent->fDragPathPointState->DragTo(current, modifiers);
+			fParent->fDragPathPointState->SetOrigin(originalOrigin);
+			fParent->fDragPathPointState->DragTo(originalCurrent, modifiers);
 		}
 	}
 
@@ -1044,8 +1049,8 @@ PathToolState::SetShape(Shape* shape, bool modifySelection)
 		fShape->RemoveListener(this);
 		fShape->RemoveReference();
 		
-		PathRef path = fShape->GetPath();
-		path->RemoveListener(this);
+		for (int32 i = fPaths.CountItems() - 1; i >= 0; i--)
+			fPaths.ItemAtFast(i)->RemoveListener(this);
 		fPaths.Clear();
 	}
 
