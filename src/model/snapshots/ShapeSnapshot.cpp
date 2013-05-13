@@ -127,8 +127,9 @@ ShapeSnapshot::_RasterizeShape(Rasterizer& rasterizer, BRect bounds)
 	if (fStyle.FillPaint() != NULL
 		&& fStyle.FillPaint()->Type() != Paint::NONE) {
 		TransformedPath transformedPath(fPathStorage, LayoutedState().Matrix);
+		CurvedPath curvedPath(transformedPath);
 	
-		rasterizer.add_path(transformedPath);
+		rasterizer.add_path(curvedPath);
 		_StoreScanlines(rasterizer, fFillScanlines);
 		rasterizer.reset();
 	}
@@ -136,28 +137,36 @@ ShapeSnapshot::_RasterizeShape(Rasterizer& rasterizer, BRect bounds)
 		&& fStyle.StrokePaint()->Type() != Paint::NONE
 		&& fStyle.StrokeProperties() != NULL) {
 		if (fStyle.StrokeProperties()->StrokePosition() == CenterStroke) {
-			agg::conv_stroke<PathStorage> strokedPath(fPathStorage);
+			agg::conv_curve<PathStorage> curvedPath(fPathStorage);
+
+			agg::conv_stroke<agg::conv_curve<PathStorage> > strokedPath(
+				curvedPath);
 			fStyle.StrokeProperties()->SetupAggConverter(strokedPath);
 	
-			agg::conv_transform<agg::conv_stroke<PathStorage>, Transformation>
+			agg::conv_transform<agg::conv_stroke<agg::conv_curve<PathStorage> >,
+				Transformation>
 				transformedPath(strokedPath, LayoutedState().Matrix);
 	
 			rasterizer.add_path(transformedPath);
 		} else {
-			agg::conv_contour<PathStorage> offsetPath(fPathStorage);
+			agg::conv_curve<PathStorage> curvedPath(fPathStorage);
+
+			agg::conv_contour<agg::conv_curve<PathStorage> > offsetPath(
+				curvedPath);
 			if (fStyle.StrokeProperties()->StrokePosition() == InsideStroke)
 				offsetPath.width(-fStyle.StrokeProperties()->Width());
 			else
 				offsetPath.width(fStyle.StrokeProperties()->Width());
 			offsetPath.auto_detect_orientation(true);
 
-			agg::conv_stroke<agg::conv_contour<PathStorage> >
+			agg::conv_stroke<agg::conv_contour<agg::conv_curve<PathStorage> > >
 				strokedPath(offsetPath);
 			fStyle.StrokeProperties()->SetupAggConverter(strokedPath);
 //			strokedPath.inner_join(agg::inner_miter);
 	
 			agg::conv_transform<
-				agg::conv_stroke<agg::conv_contour<PathStorage> >,
+				agg::conv_stroke<agg::conv_contour<
+				agg::conv_curve<PathStorage> > >,
 				Transformation>
 				transformedPath(strokedPath, LayoutedState().Matrix);
 	
