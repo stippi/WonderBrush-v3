@@ -67,6 +67,7 @@ WonderBrushBase::WonderBrushBase(BRect bounds)
 	path->AddPoint(BPoint(shapeArea.left, shapeArea.bottom));
 	path->AddPoint(BPoint(shapeArea.left + shapeArea.Width() / 3,
 		(shapeArea.top + shapeArea.bottom) / 2));
+	path->SetClosed(true);
 	
 	Shape* shape = new Shape(path,
 		(rgb_color){ 255, 100, 50, 210 });
