@@ -5,6 +5,7 @@
 #ifndef RENDER_ENGINE_H
 #define RENDER_ENGINE_H
 
+#include <agg_conv_curve.h>
 #include <agg_conv_stroke.h>
 #include <agg_conv_transform.h>
 #include <agg_gamma_lut.h>
@@ -54,6 +55,8 @@ typedef ObjectCache<Scanline, false>		ScanlineContainer;
 typedef agg::trans_perspective				Transformation;
 typedef agg::conv_transform
 			<PathStorage, Transformation>	TransformedPath;
+typedef agg::conv_curve
+			<TransformedPath>				CurvedPath;
 
 // This class should become the rendering backend. Compound rasterizer
 // pipeline, blending functions, etc...
