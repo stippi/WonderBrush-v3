@@ -120,6 +120,23 @@ public:
 		if (fCount > 0)
 			_Resize(fCount - 1);
 	}
+	
+	inline void Remove(int32 index)
+	{
+		if (index < 0 || index >= fCount)
+			return;
+
+		if (!PlainOldData) {
+			ItemType* object = fItems + index;
+			object->~ItemType();
+		}
+
+		int32 nextIndex = index + 1;
+		if (fCount > nextIndex)
+			memcpy(fItems + index, fItems + nextIndex, fCount - nextIndex);
+		
+		fCount--;
+	}
 
 	inline const ItemType& ItemAt(int32 index) const
 	{
