@@ -59,7 +59,6 @@ Shape::Shape()
 	: Styleable()
 	, fPathListener(new(std::nothrow) PathListener(this))
 {
-	SetPath(PathRef(new(std::nothrow) Path(), true));
 	InitBounds();
 }
 
@@ -68,14 +67,13 @@ Shape::Shape(const PathRef& path, const rgb_color& color)
 	: Styleable(color)
 	, fPathListener(new(std::nothrow) PathListener(this))
 {
-	SetPath(path);
+	AddPath(path);
 	InitBounds();
 }
 
 // destructor
 Shape::~Shape()
 {
-	printf("~Shape()\n");
 	delete fPathListener;
 }
 
@@ -114,77 +112,54 @@ bool
 Shape::HitTest(const BPoint& canvasPoint)
 {
 	PathStorage path;
-	_GetPath(path);
+	GetPath(path);
 	RenderEngine engine(Transformation());
 	return engine.HitTest(path, canvasPoint);
 }
 
 // #pragma mark -
 
-// SetArea
+// AddPath
 void
-Shape::SetArea(const BRect& area)
+Shape::AddPath(const PathRef& path)
 {
-	if (area == fArea)
-		return;
-
-	BRect oldArea(fArea);
-	fArea = area;
-
-	UpdateChangeCounter();
-	UpdateBounds();
-}
-
-// Area
-BRect
-Shape::Area() const
-{
-	return fArea;
-}
-
-// SetPath
-void
-Shape::SetPath(const PathRef& path)
-{
-	if (fPath == path)
+	if (path.Get() == NULL || !fPaths.Add(path))
 		return;
 	
-	if (fPath.Get() != NULL && fPathListener != NULL)
-		fPath->RemoveListener(fPathListener);
+	if (fPathListener != NULL)
+		path->AddListener(fPathListener);
 
-	fPath = path;
-
-	if (fPath.Get() != NULL && fPathListener != NULL)
-		fPath->AddListener(fPathListener);
+	NotifyAndUpdate();
 }
 
-// GetPath
-const PathRef&
-Shape::GetPath() const
+// Paths
+const PathList&
+Shape::Paths() const
 {
-	return fPath;
+	return fPaths;
 }
 
 // Bounds
 BRect
 Shape::Bounds()
 {
-	BRect bounds;
-	if (fPath.Get() != NULL) {
-		bounds = fPath->Bounds();
-		Style()->ExtendBounds(bounds);
+	BRect bounds(LONG_MAX, LONG_MAX, -LONG_MAX, -LONG_MAX);
+	for (int32 i = fPaths.CountItems() - 1; i >= 0; i--) {
+		const PathRef& path = fPaths.ItemAtFast(i);
+		bounds = bounds | path->Bounds();
 	}
+	if (bounds.IsValid())
+		Style()->ExtendBounds(bounds);
 	return bounds;
 }
 
-// #pragma mark -
-
-// _GetPath
+// GetPath
 void
-Shape::_GetPath(PathStorage& path) const
+Shape::GetPath(PathStorage& pathStorage) const
 {
-	if (fPath.Get() == NULL)
-		return;
-	fPath->GetAGGPathStorage(path);
+	for (int32 i = fPaths.CountItems() - 1; i >= 0; i--) {
+		const PathRef& path = fPaths.ItemAtFast(i);
+		path->GetAGGPathStorage(pathStorage);
+	}
 }
 

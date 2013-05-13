@@ -1028,9 +1028,13 @@ PathToolState::CreatePath(BPoint canvasLocation)
 		return false;
 	}
 
+	fCurrentPath.SetTo(path);
+
+	if (fShape != NULL)
+		fShape->AddPath(pathRef);
+
 //	View()->PerformEdit(new(std::nothrow) ObjectAddedEdit(shape,
 //		fSelection));
-	fCurrentPath.SetTo(path);
 
 	UpdateBounds();
 
@@ -1064,21 +1068,13 @@ PathToolState::SetShape(Shape* shape, bool modifySelection)
 	if (shape != NULL) {
 		if (modifySelection)
 			fSelection->Select(Selectable(shape), this);
-		PathRef path = shape->GetPath();
 
-		if (!path->AddListener(this)) {
-			fprintf(stderr, "PathToolState::CreatePath(): Failed to add "
-				"listener to path. Out of memory\n");
-			return;
-		}
+		fPaths = shape->Paths();
+		for (int32 i = fPaths.CountItems() - 1; i >= 0; i--)
+			fPaths.ItemAtFast(i)->AddListener(this);
 
-		if (!fPaths.Add(path)) {
-			fprintf(stderr, "PathToolState::CreatePath(): Failed to add "
-				"path to list. Out of memory\n");
-			return;
-		}
+		fCurrentPath = fPaths.ItemAt(0);
 
-		fCurrentPath = path;
 		SetObjectToCanvasTransformation(fShape->Transformation());
 //		ObjectChanged(shape);
 		ObjectChanged(fCurrentPath.Get());

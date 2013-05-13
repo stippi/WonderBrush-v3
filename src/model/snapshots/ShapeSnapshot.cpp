@@ -29,9 +29,7 @@ ShapeSnapshot::ShapeSnapshot(const Shape* shape)
 	, fCoverAllocator()
 	, fSpanAllocator()
 {
-	PathRef path = shape->GetPath();
-	if (path.Get() != NULL)
-		path->GetAGGPathStorage(fPathStorage);
+	shape->GetPath(fPathStorage);
 	fRasterizer.filling_rule(agg::fill_non_zero);
 }
 
@@ -55,10 +53,9 @@ bool
 ShapeSnapshot::Sync()
 {
 	if (StyleableSnapshot::Sync()) {
-		PathRef path = fOriginal->GetPath();
 		fPathStorage.remove_all();
-		if (path.Get() != NULL)
-			path->GetAGGPathStorage(fPathStorage);
+		fOriginal->GetPath(fPathStorage);
+
 		fNeedsRasterizing = true;
 		return true;
 	}

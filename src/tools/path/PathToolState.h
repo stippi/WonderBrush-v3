@@ -13,6 +13,7 @@
 #include "List.h"
 #include "Path.h"
 #include "Selection.h"
+#include "Shape.h"
 #include "Style.h"
 
 class BMessageRunner;
@@ -20,7 +21,6 @@ class BShape;
 class CurrentColor;
 class Document;
 class Layer;
-class Shape;
 
 class PathToolState : public DragStateViewState,
 	public Selection::Controller, public Selection::Listener,
@@ -225,7 +225,7 @@ private:
 
 			Shape*				fShape;
 
-			List<PathRef, false> fPaths;
+			PathList			fPaths;
 			PathRef				fCurrentPath;
 	mutable	PathPoint			fHoverPathPoint;
 			PointSelection		fPointSelection;

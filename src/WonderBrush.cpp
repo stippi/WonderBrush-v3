@@ -140,7 +140,7 @@ WonderBrushBase::WonderBrushBase(BRect bounds)
 	fDocument->GlobalResources().AddObject(style);
 
 	Shape* shapeWidthGlobalStyle = new Shape();
-	shapeWidthGlobalStyle->SetPath(path);
+	shapeWidthGlobalStyle->AddPath(path);
 	shapeWidthGlobalStyle->SetStyle(style);
 	subSubSubLayer->AddObject(shapeWidthGlobalStyle);
 

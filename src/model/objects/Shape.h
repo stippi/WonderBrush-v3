@@ -10,9 +10,12 @@
 #include <List.h>
 #include <Rect.h>
 
+#include "List.h"
 #include "RenderEngine.h"
 #include "Styleable.h"
 #include "Path.h"
+
+typedef List<PathRef, false> PathList;
 
 class Shape : public Styleable {
 public:
@@ -35,20 +38,15 @@ public:
 	virtual	bool				HitTest(const BPoint& canvasPoint);
 
 	// Shape
-			void				SetArea(const BRect& area);
-			BRect				Area() const;
-
-			void				SetPath(const PathRef& path);
-			const PathRef&		GetPath() const;
+			void				AddPath(const PathRef& path);
+			const PathList&		Paths() const;
 
 	virtual	BRect				Bounds();
 
-private:
-			void				_GetPath(PathStorage& path) const;
+			void				GetPath(PathStorage& path) const;
 
 private:
-			BRect				fArea;
-			PathRef				fPath;
+			PathList			fPaths;
 			Path::Listener*		fPathListener;
 };
 
