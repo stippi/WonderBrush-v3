@@ -188,19 +188,6 @@ public:
 		}
 	}
 
-	void DrawInvertedShape(PlatformDrawContext& drawContext, BShape& shape)
-	{
-		BView* view = drawContext.View();
-		view->PushState();
-		uint32 flags = view->Flags();
-		view->SetFlags(flags | B_SUBPIXEL_PRECISE);
-		view->SetDrawingMode(B_OP_INVERT);
-		view->MovePenTo(B_ORIGIN);
-		view->FillShape(&shape);
-		view->SetFlags(flags);
-		view->PopState();
-	}
-
 private:
 	PathToolState*	fState;
 };
