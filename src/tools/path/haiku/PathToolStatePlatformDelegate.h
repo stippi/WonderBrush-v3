@@ -16,6 +16,57 @@ public:
 	{
 	}
 
+	void DrawControlPoint(BView* view, const BPoint& point,
+		bool selected, bool highlight,
+		const rgb_color& highlightColor, const rgb_color& focusColor)
+	{
+		const float kControlPointExtent = 2.0f;
+
+		if (highlight)
+			view->SetLowColor(highlightColor);
+		else if (selected)
+			view->SetLowColor(focusColor);
+		else
+			view->SetLowColor(kBlack);
+
+		if (selected)
+			view->SetHighColor(220, 220, 220, 255);
+		else
+			view->SetHighColor(170, 170, 170, 255);
+
+		BRect r(
+			point.x - kControlPointExtent,
+			point.y - kControlPointExtent,
+			point.x + kControlPointExtent,
+			point.y + kControlPointExtent
+		);
+		view->StrokeEllipse(r, B_SOLID_LOW);
+
+		r.InsetBy(1.0, 1.0);
+		view->FillEllipse(r, B_SOLID_HIGH);
+	}
+
+	void DrawPathPoint(BView* view, const BPoint& point,
+		bool selected, bool highlight,
+		const rgb_color& highlightColor, const rgb_color& focusColor)
+	{
+		const float kPointExtent = 3.0f;
+
+		if (highlight)
+			view->SetLowColor(highlightColor);
+		else if (selected)
+			view->SetLowColor(focusColor);
+		else
+			view->SetLowColor(kBlack);
+
+		view->SetDrawingMode(B_OP_COPY);
+		BRect r(point, point);
+		r.InsetBy(-kPointExtent, -kPointExtent);
+		view->StrokeRect(r, B_SOLID_LOW);
+		r.InsetBy(1.0, 1.0);
+		view->FillRect(r, B_SOLID_HIGH);
+	}
+
 	void DrawPath(Path* path, PlatformDrawContext& drawContext,
 		TransformViewState& viewState, const PointSelection& selection,
 		const PathPoint& hoverPoint, float zoomLevel)
@@ -77,9 +128,6 @@ public:
 
 		view->SetFlags(flags);
 
-		const float kPointExtent = 3.0f;
-		const float kControlPointExtent = 2.0f;
-
 		view->SetLowColor(0, 0, 0, 255);
 		BPoint point;
 		BPoint pointIn;
@@ -96,65 +144,31 @@ public:
 			viewState.TransformObjectToView(&pointOut, true);
 			// connect the points belonging to one control point
 			view->SetDrawingMode(B_OP_INVERT);
-			view->StrokeLine(point, pointIn);
-			view->StrokeLine(point, pointOut);
-			// draw main control point
-			if (highlight && (hoverPoint.GetWhich() & POINT) != 0)
-				view->SetLowColor(highlightColor);
-			if (selection.Contains(PathPoint(path, i, POINT)))
-				view->SetLowColor(focusColor);
-			else
-				view->SetLowColor(kBlack);
+			if (point != pointIn)
+				view->StrokeLine(point, pointIn);
+			if (point != pointOut)
+				view->StrokeLine(point, pointOut);
 
-			view->SetDrawingMode(B_OP_COPY);
-			BRect r(point, point);
-			r.InsetBy(-kPointExtent, -kPointExtent);
-			view->StrokeRect(r, B_SOLID_LOW);
-			r.InsetBy(1.0, 1.0);
-			view->FillRect(r, B_SOLID_HIGH);
+			// draw main control point
+			DrawPathPoint(view, point,
+				selection.Contains(PathPoint(path, i, POINT)),
+				highlight && (hoverPoint.GetWhich() & POINT) != 0,
+				highlightColor, focusColor);
+
 			// draw in control point
-			if (highlight && (hoverPoint.GetWhich() & POINT_IN) != 0)
-				view->SetLowColor(highlightColor);
-			else if (selection.Contains(PathPoint(path, i, POINT_IN)))
-				view->SetLowColor(focusColor);
-			else
-				view->SetLowColor(kBlack);
-			if (selection.Contains(PathPoint(path, i, POINT_IN)))
-				view->SetHighColor(220, 220, 220, 255);
-			else
-				view->SetHighColor(170, 170, 170, 255);
 			if (pointIn != point) {
-				r.Set(
-					pointIn.x - kControlPointExtent,
-					pointIn.y - kControlPointExtent,
-					pointIn.x + kControlPointExtent,
-					pointIn.y + kControlPointExtent
-				);
-				view->StrokeEllipse(r, B_SOLID_LOW);
-				r.InsetBy(1.0, 1.0);
-				view->FillEllipse(r, B_SOLID_HIGH);
+				DrawControlPoint(view, pointIn,
+					selection.Contains(PathPoint(path, i, POINT_IN)),
+					highlight && (hoverPoint.GetWhich() & POINT_IN) != 0,
+					highlightColor, focusColor);
 			}
+
 			// draw out control point
-			if (highlight && (hoverPoint.GetWhich() & POINT_OUT) != 0)
-				view->SetLowColor(highlightColor);
-			else if (selection.Contains(PathPoint(path, i, POINT_OUT)))
-				view->SetLowColor(focusColor);
-			else
-				view->SetLowColor(kBlack);
-			if (selection.Contains(PathPoint(path, i, POINT_OUT)))
-				view->SetHighColor(220, 220, 220, 255);
-			else
-				view->SetHighColor(170, 170, 170, 255);
 			if (pointOut != point) {
-				r.Set(
-					pointOut.x - kControlPointExtent,
-					pointOut.y - kControlPointExtent,
-					pointOut.x + kControlPointExtent,
-					pointOut.y + kControlPointExtent
-				);
-				view->StrokeEllipse(r, B_SOLID_LOW);
-				r.InsetBy(1.0, 1.0);
-				view->FillEllipse(r, B_SOLID_HIGH);
+				DrawControlPoint(view, pointOut,
+					selection.Contains(PathPoint(path, i, POINT_OUT)),
+					highlight && (hoverPoint.GetWhich() & POINT_OUT) != 0,
+					highlightColor, focusColor);
 			}
 		}
 	}
