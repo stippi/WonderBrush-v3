@@ -20,7 +20,8 @@ public:
 		bool selected, bool highlight,
 		const rgb_color& highlightColor, const rgb_color& focusColor)
 	{
-		const float kControlPointExtent = 2.0f;
+		const float inset = highlight ? 2.0f : 1.0f;
+		const float extent = 1.0f + inset;
 
 		if (highlight)
 			view->SetLowColor(highlightColor);
@@ -35,14 +36,14 @@ public:
 			view->SetHighColor(170, 170, 170, 255);
 
 		BRect r(
-			point.x - kControlPointExtent,
-			point.y - kControlPointExtent,
-			point.x + kControlPointExtent,
-			point.y + kControlPointExtent
+			point.x - extent,
+			point.y - extent,
+			point.x + extent,
+			point.y + extent
 		);
-		view->StrokeEllipse(r, B_SOLID_LOW);
+		view->FillEllipse(r, B_SOLID_LOW);
 
-		r.InsetBy(1.0, 1.0);
+		r.InsetBy(inset, inset);
 		view->FillEllipse(r, B_SOLID_HIGH);
 	}
 
@@ -50,7 +51,8 @@ public:
 		bool selected, bool highlight,
 		const rgb_color& highlightColor, const rgb_color& focusColor)
 	{
-		const float kPointExtent = 3.0f;
+		float inset = highlight ? 2.0f : 1.0f;
+		const float extent = 2.0f + inset;
 
 		if (highlight)
 			view->SetLowColor(highlightColor);
@@ -60,10 +62,17 @@ public:
 			view->SetLowColor(kBlack);
 
 		view->SetDrawingMode(B_OP_COPY);
-		BRect r(point, point);
-		r.InsetBy(-kPointExtent, -kPointExtent);
-		view->StrokeRect(r, B_SOLID_LOW);
-		r.InsetBy(1.0, 1.0);
+		BRect r(
+			point.x - extent,
+			point.y - extent,
+			point.x + extent,
+			point.y + extent
+		);
+		while (inset > 0.0f) {
+			view->StrokeRect(r, B_SOLID_LOW);
+			r.InsetBy(1.0f, 1.0f);
+			inset--;
+		}
 		view->FillRect(r, B_SOLID_HIGH);
 	}
 
@@ -133,7 +142,7 @@ public:
 		BPoint pointIn;
 		BPoint pointOut;
 		rgb_color focusColor = (rgb_color){ 255, 0, 0, 255 };
-		rgb_color highlightColor = (rgb_color){ 60, 60, 255, 255 };
+		rgb_color highlightColor = (rgb_color){ 1, 121, 255, 255 };
 		for (int32 i = 0; path->GetPointsAt(i, point, pointIn, pointOut); i++) {
 			PathPoint pathPoint(path, i, POINT_ALL);
 			bool highlight = hoverPoint.IsSameIndex(pathPoint);
