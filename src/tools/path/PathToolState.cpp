@@ -1049,13 +1049,13 @@ PathToolState::SetShape(Shape* shape, bool modifySelection)
 	if (fShape == shape)
 		return;
 
+	for (int32 i = fPaths.CountItems() - 1; i >= 0; i--)
+		fPaths.ItemAtFast(i)->RemoveListener(this);
+	fPaths.Clear();
+
 	if (fShape != NULL) {
 		fShape->RemoveListener(this);
 		fShape->RemoveReference();
-		
-		for (int32 i = fPaths.CountItems() - 1; i >= 0; i--)
-			fPaths.ItemAtFast(i)->RemoveListener(this);
-		fPaths.Clear();
 	}
 
 	fShape = shape;
