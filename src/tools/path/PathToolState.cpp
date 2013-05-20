@@ -105,14 +105,14 @@ public:
 		BPoint point(origin);
 		switch (fDragMode) {
 			case DRAG_MODE_MOVE_POINT:
-				fPathPoint.GetPointAt(point);
+				fPathPoint.GetPoint(point);
 				break;
 			case DRAG_MODE_MOVE_POINT_IN:
-				fPathPoint.GetPointInAt(point);
+				fPathPoint.GetPointIn(point);
 				break;
 			case DRAG_MODE_MOVE_POINT_OUT:
 			case DRAG_MODE_MOVE_POINT_OUT_MIRROR_IN:
-				fPathPoint.GetPointOutAt(point);
+				fPathPoint.GetPointOut(point);
 				break;
 			default:
 				break;
@@ -176,6 +176,81 @@ private:
 	PathPoint			fPathPoint;
 	uint32				fDragMode;
 	BPoint				fClickOffset;
+};
+
+// ToggleSmoothSharpState
+class PathToolState::ToggleSmoothSharpState
+	: public DragStateViewState::DragState {
+public:
+	ToggleSmoothSharpState(PathToolState* parent)
+		: DragState(parent)
+		, fParent(parent)
+		, fPathPoint()
+		, fDragMode(DRAG_MODE_NONE)
+	{
+	}
+
+	virtual void SetOrigin(BPoint origin)
+	{
+		Path* path = fPathPoint.GetPath();
+		int32 index = fPathPoint.GetIndex();
+		BPoint point;
+		BPoint pointIn;
+		BPoint pointOut;
+		if (fPathPoint.GetPoint(point)
+			&& fPathPoint.GetPointIn(pointIn)
+			&& fPathPoint.GetPointOut(pointOut)) {
+			switch (fDragMode) {
+				case DRAG_MODE_MOVE_POINT_IN:
+					path->SetPoint(index, point, pointIn, pointOut, false);
+					fParent->fDragPathPointState->SetPathPoint(PathPoint(path,
+						index, POINT_IN));
+					break;
+				case DRAG_MODE_MOVE_POINT_OUT:
+					path->SetPoint(index, point, pointIn, pointOut, false);
+					fParent->fDragPathPointState->SetPathPoint(PathPoint(path,
+						index, POINT_OUT));
+					break;
+				case DRAG_MODE_MOVE_POINT_OUT_MIRROR_IN:
+					path->SetPoint(index, point, point, point, true);
+					fParent->fDragPathPointState->SetPathPoint(PathPoint(path,
+						index, POINT_OUT));
+					break;
+			}
+			fParent->fDragPathPointState->SetDragMode(fDragMode);
+		}
+		fParent->SetDragState(fParent->fDragPathPointState);
+		fParent->fDragPathPointState->SetOrigin(origin);
+	}
+
+	virtual void DragTo(BPoint current, uint32 modifiers)
+	{
+	}
+
+	virtual BCursor ViewCursor(BPoint current) const
+	{
+		return BCursor(kPathSharpCursor);
+	}
+
+	virtual const char* CommandName() const
+	{
+		return "Set path point sharp";
+	}
+
+	void SetPathPoint(const PathPoint& point)
+	{
+		fPathPoint = point;
+	}
+
+	void SetDragMode(uint32 dragMode)
+	{
+		fDragMode = dragMode;
+	}
+
+private:
+	PathToolState*		fParent;
+	PathPoint			fPathPoint;
+	uint32				fDragMode;
 };
 
 // CreateShapeState
@@ -498,6 +573,7 @@ PathToolState::PathToolState(StateView* view, Document* document,
 	, fPickShapeState(new(std::nothrow) PickShapeState(this))
 	, fCreateShapeState(new(std::nothrow) CreateShapeState(this))
 	, fDragPathPointState(new(std::nothrow) DragPathPointState(this))
+	, fToggleSmoothSharpState(new(std::nothrow) ToggleSmoothSharpState(this))
 	, fAddPathPointState(new(std::nothrow) AddPathPointState(this))
 	, fInsertPathPointState(new(std::nothrow) InsertPathPointState(this))
 	, fClosePathState(new(std::nothrow) ClosePathState(this))
@@ -539,6 +615,7 @@ PathToolState::~PathToolState()
 	delete fPickShapeState;
 	delete fCreateShapeState;
 	delete fDragPathPointState;
+	delete fToggleSmoothSharpState;
 	delete fAddPathPointState;
 	delete fInsertPathPointState;
 	delete fClosePathState;
@@ -591,6 +668,7 @@ void
 PathToolState::ModifiersChanged(uint32 modifiers)
 {
 	DragStateViewState::ModifiersChanged(modifiers);
+	UpdateDragState();
 }
 
 // HandleKeyDown
@@ -772,6 +850,26 @@ PathToolState::DragStateFor(BPoint canvasWhere, float zoomLevel) const
 			// Pointer over first path point of open path
 			fClosePathState->SetPath(PathRef(closestPathPoint.GetPath()));
 			return fClosePathState;
+		}
+
+		if ((Modifiers() & B_COMMAND_KEY) != 0) {
+			// Pointer over point and control key pressed
+			fToggleSmoothSharpState->SetPathPoint(closestPathPoint);
+			switch (closestPathPoint.GetWhich()) {
+				case POINT:
+					fToggleSmoothSharpState->SetDragMode(
+						DRAG_MODE_MOVE_POINT_OUT_MIRROR_IN);
+					break;
+				case POINT_IN:
+					fToggleSmoothSharpState->SetDragMode(
+						DRAG_MODE_MOVE_POINT_IN);
+					break;
+				case POINT_OUT:
+					fToggleSmoothSharpState->SetDragMode(
+						DRAG_MODE_MOVE_POINT_OUT);
+					break;
+			}
+			return fToggleSmoothSharpState;
 		}
 
 		fDragPathPointState->SetPathPoint(closestPathPoint);

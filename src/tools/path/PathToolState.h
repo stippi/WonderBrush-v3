@@ -92,6 +92,7 @@ private:
 			class PickShapeState;
 			class CreateShapeState;
 			class DragPathPointState;
+			class ToggleSmoothSharpState;
 			class AddPathPointState;
 			class InsertPathPointState;
 			class ClosePathState;
@@ -99,6 +100,7 @@ private:
 			friend class PickShapeState;
 			friend class AddPathPointState;
 			friend class InsertPathPointState;
+			friend class ToggleSmoothSharpState;
 			friend class ClosePathState;
 
 			enum {
@@ -170,21 +172,21 @@ private:
 					return fWhich;
 				}
 
-				bool GetPointAt(BPoint& point) const
+				bool GetPoint(BPoint& point) const
 				{
 					if (fPath == NULL)
 						return false;
 					return fPath->GetPointAt(fIndex, point);
 				}
 
-				bool GetPointInAt(BPoint& point) const
+				bool GetPointIn(BPoint& point) const
 				{
 					if (fPath == NULL)
 						return false;
 					return fPath->GetPointInAt(fIndex, point);
 				}
 
-				bool GetPointOutAt(BPoint& point) const
+				bool GetPointOut(BPoint& point) const
 				{
 					if (fPath == NULL)
 						return false;
@@ -210,6 +212,7 @@ private:
 			PickShapeState*		fPickShapeState;
 			CreateShapeState*	fCreateShapeState;
 			DragPathPointState*	fDragPathPointState;
+			ToggleSmoothSharpState*	fToggleSmoothSharpState;
 			AddPathPointState*	fAddPathPointState;
 			InsertPathPointState* fInsertPathPointState;
 			ClosePathState*		fClosePathState;
