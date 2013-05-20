@@ -1,3 +1,8 @@
+Resourcen
+
+Noch mehr Dinge als jetzt schon (Fill, Path) könnten Resourcen sein, zum Beispiel auch einfache Farben. Im Eigenschaften Feld könnte man diese Resourcen "veröffentlichen" können, was sie in die globale Resourcen Liste einträgt. Von dort könnte man Resourcen anderen Objekten zuweisen oder Resourcen erzeugen, die ableiten von anderen Resourcen, wie beispielsweise "Shades" was eine Color-Resource ist, welche auf einer anderen Color-Resource basiert und Parameter abändern kann (Sättigung, Helligkeit, ...). Resourcen könnten dann an beliebiger Stelle referenziert werden. Eine Color-Resource in einem Gradient-Step uswusf.
+
+
 Dekorationen
 
 Gegenwärtig ist es bei Shape und Rect Objekten möglich, einen "Fill" und einen "Stroke" Paint zu definieren. Besonders flexibel ist das noch nicht. So ähnlich wie in Icon-O-Matic könnte man das Konzept der "Decorations" erfinden, wo man bestimmte Typen von Objekten (Shape, Rect, Text) erst einmal als Vektorform auffasst. Vielleicht leiten diese Objekte alle von einer Basisklasse ab, welche eine agg::path_storage liefert.

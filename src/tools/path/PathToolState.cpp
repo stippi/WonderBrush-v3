@@ -520,6 +520,65 @@ private:
 	bool				fNextConnected;
 };
 
+// RemovePathPointState
+class PathToolState::RemovePathPointState
+	: public DragStateViewState::DragState {
+public:
+	RemovePathPointState(PathToolState* parent)
+		: DragState(parent)
+		, fParent(parent)
+		, fPathPoint()
+	{
+	}
+
+	virtual void SetOrigin(BPoint origin)
+	{
+		Path* path = fPathPoint.GetPath();
+		if (path == NULL)
+			return;
+
+		BPoint point;
+		if (!fPathPoint.GetPoint(point))
+			return;
+
+		int32 index = fPathPoint.GetIndex();
+		switch (fPathPoint.GetWhich()) {
+			case POINT_IN:
+				path->SetPointIn(index, point);
+				break;
+			case POINT_OUT:
+				path->SetPointOut(index, point);
+				break;
+			case POINT:
+				path->RemovePoint(index);
+				break;
+		}
+	}
+
+	virtual void DragTo(BPoint current, uint32 modifiers)
+	{
+	}
+
+	virtual BCursor ViewCursor(BPoint current) const
+	{
+		return BCursor(kPathRemoveCursor);
+	}
+
+	virtual const char* CommandName() const
+	{
+		return "Remove path point";
+	}
+
+	void SetPathPoint(const PathPoint& point)
+	{
+		fPathPoint = point;
+	}
+
+private:
+	PathToolState*		fParent;
+	PathPoint			fPathPoint;
+};
+
 // ClosePathState
 class PathToolState::ClosePathState : public DragStateViewState::DragState {
 public:
@@ -576,6 +635,7 @@ PathToolState::PathToolState(StateView* view, Document* document,
 	, fToggleSmoothSharpState(new(std::nothrow) ToggleSmoothSharpState(this))
 	, fAddPathPointState(new(std::nothrow) AddPathPointState(this))
 	, fInsertPathPointState(new(std::nothrow) InsertPathPointState(this))
+	, fRemovePathPointState(new(std::nothrow) RemovePathPointState(this))
 	, fClosePathState(new(std::nothrow) ClosePathState(this))
 
 	, fDocument(document)
@@ -618,6 +678,7 @@ PathToolState::~PathToolState()
 	delete fToggleSmoothSharpState;
 	delete fAddPathPointState;
 	delete fInsertPathPointState;
+	delete fRemovePathPointState;
 	delete fClosePathState;
 
 	SetInsertionInfo(NULL, -1);
@@ -852,8 +913,14 @@ PathToolState::DragStateFor(BPoint canvasWhere, float zoomLevel) const
 			return fClosePathState;
 		}
 
+		if ((Modifiers() & B_CONTROL_KEY) != 0) {
+			// Pointer over point and control/alt key pressed
+			fRemovePathPointState->SetPathPoint(closestPathPoint);
+			return fRemovePathPointState;
+		}
+
 		if ((Modifiers() & B_COMMAND_KEY) != 0) {
-			// Pointer over point and control key pressed
+			// Pointer over point and alt/control key pressed
 			fToggleSmoothSharpState->SetPathPoint(closestPathPoint);
 			switch (closestPathPoint.GetWhich()) {
 				case POINT:

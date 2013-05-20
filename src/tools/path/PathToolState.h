@@ -95,6 +95,7 @@ private:
 			class ToggleSmoothSharpState;
 			class AddPathPointState;
 			class InsertPathPointState;
+			class RemovePathPointState;
 			class ClosePathState;
 
 			friend class PickShapeState;
@@ -215,6 +216,7 @@ private:
 			ToggleSmoothSharpState*	fToggleSmoothSharpState;
 			AddPathPointState*	fAddPathPointState;
 			InsertPathPointState* fInsertPathPointState;
+			RemovePathPointState* fRemovePathPointState;
 			ClosePathState*		fClosePathState;
 
 			Document*			fDocument;
