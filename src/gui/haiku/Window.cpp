@@ -721,6 +721,8 @@ Window::_RemoveObjects()
 		}
 	}
 
+	// TODO: Do via UndoableEdit
+
 	fSelection.DeselectAll(fLayerTreeView);
 //	fDocument->EditManager()->Perform(
 //		new(std::nothrow) ObjectAddedEdit(newLayer, &fSelection));
