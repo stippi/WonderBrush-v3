@@ -49,7 +49,7 @@ WonderBrushBase::WonderBrushBase(BRect bounds)
 	fDocument->RootLayer()->AddObject(subLayer);
 
 	fDocument->RootLayer()->AddObject(new Filter(5.0));
-	
+
 	PathRef path(new Path(), true);
 	BRect shapeArea(180, 40, 320, 170);
 	path->AddPoint(BPoint(shapeArea.left, shapeArea.top));
@@ -68,7 +68,7 @@ WonderBrushBase::WonderBrushBase(BRect bounds)
 	path->AddPoint(BPoint(shapeArea.left + shapeArea.Width() / 3,
 		(shapeArea.top + shapeArea.bottom) / 2));
 	path->SetClosed(true);
-	
+
 	Shape* shape = new Shape(path,
 		(rgb_color){ 255, 100, 50, 210 });
 	shape->RotateBy(BPoint(250, 105), 5);
@@ -103,8 +103,12 @@ WonderBrushBase::WonderBrushBase(BRect bounds)
 	text->TranslateBy(BPoint(522, 31));
 	text->SetWidth(200.0);
 	text->SetAlignment(TEXT_ALIGNMENT_JUSTIFY);
-	text->SetText("This is a test of the new text layouting features.",
+	text->SetText("There are only three kind of people. "
+			"Those who can count and those who don't.",
 		Font("DejaVu Serif", "Book", 24.0), (rgb_color) { 0, 0, 0, 255 });
+	text->SetFont(15, 5, "DejaVu Serif", "Bold");
+	text->SetFont(47, 3, "DejaVu Serif", "Italic");
+	text->SetFont(71, 5, "DejaVu Serif", "Italic");
 	fDocument->RootLayer()->AddObject(text);
 
 	Rect* transformedRect = new Rect(BRect(150, 200, 210, 330),
@@ -261,7 +265,7 @@ WonderBrush::NewDocument()
 		window->RestoreSettings(windowSettings);
 
 	window->Show();
-	
+
 	document->RemoveReference();
 }
 
