@@ -68,13 +68,28 @@ public:
 	virtual	void ObjectSelected(const Selectable& object,
 		const Selection::Controller* controller)
 	{
-		fRemoveMI->SetEnabled(fSelection->CountSelected() > 0);
+		fRemoveMI->SetEnabled(_CountRemovableObjects() > 0);
 	}
 
 	virtual	void ObjectDeselected(const Selectable& object,
 		const Selection::Controller* controller)
 	{
-		fRemoveMI->SetEnabled(fSelection->CountSelected() > 0);
+		fRemoveMI->SetEnabled(_CountRemovableObjects() > 0);
+	}
+
+private:
+
+	int32 _CountRemovableObjects() const
+	{
+		int32 objectCount = 0;
+		for (int32 i = fSelection->CountSelected() - 1; i >= 0; i--) {
+			const Selectable& selectable = fSelection->SelectableAt(i);
+			Object* object = dynamic_cast<Object*>(selectable.Get());
+			if (object != NULL && object->Parent() != NULL)
+				objectCount++;
+		}
+
+		return objectCount;
 	}
 
 private:
