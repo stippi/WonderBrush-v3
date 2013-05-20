@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2010 Stephan Aßmus <superstippi@gmx.de>
+ * Copyright 2007-2013 Stephan Aßmus <superstippi@gmx.de>
  * All rights reserved.
  */
 
@@ -50,8 +50,39 @@ enum {
 	MSG_SET_TOOL					= 'sltl',
 	MSG_ADD_LAYER					= 'addl',
 	MSG_RESET_TRANSFORMATION		= 'rttr',
+	MSG_REMOVE						= 'rmvo',
 };
 
+class Window::SelectionListener : public Selection::Listener {
+public:
+	SelectionListener(BMenuItem* removeItem, Selection* selection)
+		: fRemoveMI(removeItem)
+		, fSelection(selection)
+	{
+	}
+
+	virtual ~SelectionListener()
+	{
+	}
+
+	virtual	void ObjectSelected(const Selectable& object,
+		const Selection::Controller* controller)
+	{
+		fRemoveMI->SetEnabled(fSelection->CountSelected() > 0);
+	}
+
+	virtual	void ObjectDeselected(const Selectable& object,
+		const Selection::Controller* controller)
+	{
+		fRemoveMI->SetEnabled(fSelection->CountSelected() > 0);
+	}
+
+private:
+	BMenuItem*	fRemoveMI;
+	Selection*	fSelection;
+};
+
+// #pragma mark -
 
 // constructor
 Window::Window(BRect frame, const char* title, Document* document,
@@ -85,6 +116,10 @@ Window::Window(BRect frame, const char* title, Document* document,
 	message = new BMessage(MSG_REDO);
 	fRedoMI = new BMenuItem("Redo", message, 'Y', B_SHIFT_KEY);
 	fEditMenu->AddItem(fRedoMI);
+
+	fRemoveMI = new BMenuItem("Remove",
+		new BMessage(MSG_REMOVE));
+	fRemoveMI->SetEnabled(false);
 
 	BMenuBar* objectMenuBar = new BMenuBar("object menu");
 	fObjectMenu = _CreateObjectMenu();
@@ -322,6 +357,7 @@ exportButton->SetEnabled(false);
 	zoomOutButton->SetTarget(fView);
 	zoomOriginalButton->SetTarget(fView);
 	zoomToFit->SetTarget(fView);
+	fRemoveMI->SetTarget(this);
 
 	_InitTools();
 
@@ -330,6 +366,11 @@ exportButton->SetEnabled(false);
 	fDocument->EditManager()->AddListener(&fEditManagerListener);
 	_ObjectChanged(fDocument->EditManager());
 
+	fSelectionListener = new(std::nothrow)
+		SelectionListener(fRemoveMI, &fSelection);
+
+	fSelection.AddListener(fSelectionListener);
+
 	AddShortcut('Z', B_COMMAND_KEY, new BMessage(MSG_UNDO));
 	AddShortcut('Z', B_COMMAND_KEY | B_SHIFT_KEY, new BMessage(MSG_REDO));
 }
@@ -337,6 +378,9 @@ exportButton->SetEnabled(false);
 // destructor
 Window::~Window()
 {
+	fSelection.RemoveListener(fSelectionListener);
+	delete fSelectionListener;
+
 	fDocument->EditManager()->RemoveListener(&fEditManagerListener);
 	delete fRenderManager;
 //	delete fLayerTreeModel;
@@ -386,6 +430,10 @@ Window::MessageReceived(BMessage* message)
 
 		case MSG_RESET_TRANSFORMATION:
 			_ResetTransformation();
+			break;
+
+		case MSG_REMOVE:
+			_RemoveObjects();
 			break;
 
 		default:
@@ -491,9 +539,9 @@ restore_split_weights(const BMessage& message, const char* name,
 	for (int32 i = 0; message.FindFloat(name, i, &weight) == B_OK; i++) {
 		if (i >= view->GetLayout()->CountItems())
 			break;
-		
+
 		view->SetItemWeight(i, weight, false);
-		
+
 		bool collapsed;
 		if (message.FindBool(collapsedName.String(), i, &collapsed) == B_OK)
 			view->SetItemCollapsed(i, collapsed);
@@ -580,6 +628,10 @@ Window::_CreateObjectMenu() const
 		new BMessage(MSG_RESET_TRANSFORMATION));
 	menu->AddItem(item);
 
+	menu->AddItem(new BSeparatorItem());
+
+	menu->AddItem(fRemoveMI);
+
 	return menu;
 }
 
@@ -630,6 +682,33 @@ Window::_AddLayer()
 	fSelection.DeselectAll(fLayerTreeView);
 	fDocument->EditManager()->Perform(
 		new(std::nothrow) ObjectAddedEdit(newLayer, &fSelection));
+}
+
+// _RemoveObjects
+void
+Window::_RemoveObjects()
+{
+	if (fDocument == NULL) {
+		fprintf(stderr, "Window::_RemoveObject(): No document.\n");
+		return;
+	}
+
+	AutoWriteLocker _(fDocument.Get());
+
+	if (!fSelection.IsEmpty()) {
+		int32 selectionCount = fSelection.CountSelected();
+		for (int32 i = 0; i < selectionCount; i++) {
+			const Selectable& selectable = fSelection.SelectableAt(i);
+			Object* object = dynamic_cast<Object*>(selectable.Get());
+			if (object == NULL || object->Parent() == NULL)
+				continue;
+			object->Parent()->RemoveObject(object);
+		}
+	}
+
+	fSelection.DeselectAll(fLayerTreeView);
+//	fDocument->EditManager()->Perform(
+//		new(std::nothrow) ObjectAddedEdit(newLayer, &fSelection));
 }
 
 // _ResetTransformation

@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2009 Stephan Aßmus <superstippi@gmx.de>
+ * Copyright 2007-2013 Stephan Aßmus <superstippi@gmx.de>
  * All rights reserved.
  */
 
@@ -55,14 +55,18 @@ private:
 			BMenu*				_CreateObjectMenu() const;
 
 			void				_AddLayer();
+			void				_RemoveObjects();
 			void				_ResetTransformation();
 
 private:
+			class SelectionListener;
+
 			CanvasView*			fView;
 			Reference<Document>	fDocument;
 			RenderManager*		fRenderManager;
 			ListenerAdapter		fEditManagerListener;
 			Selection			fSelection;
+			SelectionListener*	fSelectionListener;
 			CurrentColor		fCurrentColor;
 
 			BMenu*				fFileMenu;
@@ -73,6 +77,7 @@ private:
 
 			BMenuItem*			fUndoMI;
 			BMenuItem*			fRedoMI;
+			BMenuItem*			fRemoveMI;
 
 			IconOptionsControl*	fToolIconControl;
 			BCardLayout*		fToolConfigLayout;
