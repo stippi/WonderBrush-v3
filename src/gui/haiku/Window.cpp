@@ -611,21 +611,27 @@ Window::_ObjectChanged(const Notifier* object)
 	if (object == fDocument->EditManager()) {
 		// relable Undo item and update enabled status
 		BString label("Undo");
-		fUndoMI->SetEnabled(fDocument->EditManager()->GetUndoName(label));
-		fUndoIcon->SetEnabled(fUndoMI->IsEnabled());
-		if (fUndoMI->IsEnabled())
-			fUndoMI->SetLabel(label.String());
-		else
-			fUndoMI->SetLabel("<nothing to undo>");
+		bool enabled = fDocument->EditManager()->GetUndoName(label);
+		if (!enabled)
+			label = "<nothing to undo>";
+		
+		fUndoMI->SetEnabled(enabled);
+		fUndoIcon->SetEnabled(enabled);
+		
+		fUndoMI->SetLabel(label.String());
+		fUndoIcon->SetToolTip(label.String());
 
 		// relable Redo item and update enabled status
 		label.SetTo("Redo");
-		fRedoMI->SetEnabled(fDocument->EditManager()->GetRedoName(label));
-		fRedoIcon->SetEnabled(fRedoMI->IsEnabled());
-		if (fRedoMI->IsEnabled())
-			fRedoMI->SetLabel(label.String());
-		else
-			fRedoMI->SetLabel("<nothing to redo>");
+		enabled = fDocument->EditManager()->GetRedoName(label);
+		if (!enabled)
+			label = "<nothing to redo>";
+
+		fRedoMI->SetEnabled(enabled);
+		fRedoIcon->SetEnabled(enabled);
+
+		fRedoMI->SetLabel(label.String());
+		fRedoIcon->SetToolTip(label.String());
 	}
 }
 
