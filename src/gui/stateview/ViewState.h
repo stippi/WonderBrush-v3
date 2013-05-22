@@ -24,7 +24,7 @@ public:
 	// mouse tracking
 	virtual	void				MouseDown(const MouseInfo& info);
 	virtual	void				MouseMoved(const MouseInfo& info);
-	virtual	UndoableEdit*			MouseUp();
+	virtual	UndoableEdit*		MouseUp();
 
 	// modifiers
 	virtual	void				ModifiersChanged(uint32 modifiers);
