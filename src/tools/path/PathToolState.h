@@ -1,5 +1,5 @@
 /*
- * Copyright 2012 Stephan Aßmus <superstippi@gmx.de>
+ * Copyright 2012-2013 Stephan Aßmus <superstippi@gmx.de>
  * All rights reserved. Distributed under the terms of the MIT license.
  */
 
@@ -67,13 +67,6 @@ public:
 	// Listener interface
 	virtual	void				ObjectChanged(const Notifier* object);
 
-	// PathToolState
-			void				SetInsertionInfo(Layer* layer, int32 index);
-			bool				CreateShape(BPoint canvasLocation);
-			bool				CreatePath(BPoint canvasLocation);
-
-			void				SetShape(Shape* shape,
-									bool modifySelection = false);
 public:
 	// PathListener interface
 	virtual	void				PointAdded(const Path* path, int32 index);
@@ -82,6 +75,14 @@ public:
 	virtual	void				PathChanged(const Path* path);
 	virtual	void				PathClosedChanged(const Path* path);
 	virtual	void				PathReversed(const Path* path);
+
+	// PathToolState
+			void				SetInsertionInfo(Layer* layer, int32 index);
+			bool				CreateShape(BPoint canvasLocation);
+			bool				CreatePath(BPoint canvasLocation);
+
+			void				SetShape(Shape* shape,
+									bool modifySelection = false);
 
 private:
 			void				_DrawControls(PlatformDrawContext& drawContext);
@@ -206,6 +207,12 @@ private:
 			};
 
 			typedef HashSet<PathPoint> PointSelection;
+
+private:
+			void				_SelectPoint(const PathPoint& point,
+									bool extend);
+			void				_DeselectPoint(const PathPoint& point);
+			void				_DeselectPoints();
 
 private:
 			PlatformDelegate*	fPlatformDelegate;

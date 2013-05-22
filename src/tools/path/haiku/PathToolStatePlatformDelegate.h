@@ -158,16 +158,18 @@ public:
 			if (point != pointOut)
 				view->StrokeLine(point, pointOut);
 
+			bool selected = selection.Contains(PathPoint(path, i, POINT_ALL));
+
 			// draw main control point
 			DrawPathPoint(view, point,
-				selection.Contains(PathPoint(path, i, POINT)),
+				selected,
 				highlight && (hoverPoint.GetWhich() & POINT) != 0,
 				highlightColor, focusColor);
 
 			// draw in control point
 			if (pointIn != point) {
 				DrawControlPoint(view, pointIn,
-					selection.Contains(PathPoint(path, i, POINT_IN)),
+					selected,
 					highlight && (hoverPoint.GetWhich() & POINT_IN) != 0,
 					highlightColor, focusColor);
 			}
@@ -175,7 +177,7 @@ public:
 			// draw out control point
 			if (pointOut != point) {
 				DrawControlPoint(view, pointOut,
-					selection.Contains(PathPoint(path, i, POINT_OUT)),
+					selected,
 					highlight && (hoverPoint.GetWhich() & POINT_OUT) != 0,
 					highlightColor, focusColor);
 			}

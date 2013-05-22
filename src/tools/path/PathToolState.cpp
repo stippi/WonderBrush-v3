@@ -2,7 +2,7 @@
 #define _PATHTOOLSTATE_CPP_
 
 /*
- * Copyright 2012 Stephan Aßmus <superstippi@gmx.de>
+ * Copyright 2012-2013 Stephan Aßmus <superstippi@gmx.de>
  * All rights reserved. Distributed under the terms of the MIT license.
  */
 
@@ -118,6 +118,10 @@ public:
 				break;
 		}
 		fClickOffset = origin - point;
+		
+		fParent->_SelectPoint(PathPoint(fPathPoint.GetPath(),
+			fPathPoint.GetIndex(), POINT_ALL),
+			(fParent->Modifiers() & B_SHIFT_KEY) != 0);
 	}
 
 	virtual void DragTo(BPoint current, uint32 modifiers)
@@ -218,6 +222,7 @@ public:
 					break;
 			}
 			fParent->fDragPathPointState->SetDragMode(fDragMode);
+			fParent->_SelectPoint(PathPoint(path, index, POINT_ALL), false);
 		}
 		fParent->SetDragState(fParent->fDragPathPointState);
 		fParent->fDragPathPointState->SetOrigin(origin);
@@ -314,8 +319,11 @@ public:
 
 		fOrigin = origin;
 		Path* path = fPathRef.Get();
-		if (path != NULL && path->AddPoint(origin))
+		if (path != NULL && path->AddPoint(origin)) {
 			fPointAdded = true;
+			fParent->_SelectPoint(PathPoint(path, path->CountPoints() - 1,
+				POINT_ALL), false);
+		}
 	}
 
 	virtual void DragTo(BPoint current, uint32 modifiers)
@@ -387,6 +395,8 @@ public:
 				fNext[0], fNext[1], fNext[2], &fNextConnected)
 			&& _InsertPoint(path, origin, fIndex)) {
 			fPointAdded = true;
+			fParent->_SelectPoint(PathPoint(path, fIndex,
+				POINT_ALL), false);
 		}
 	}
 
@@ -1052,6 +1062,7 @@ PathToolState::ObjectChanged(const Notifier* object)
 void
 PathToolState::PointAdded(const Path* path, int32 index)
 {
+	_SelectPoint(PathPoint(const_cast<Path*>(path), index, POINT_ALL), false);
 	ObjectChanged(path);
 }
 
@@ -1059,7 +1070,7 @@ PathToolState::PointAdded(const Path* path, int32 index)
 void
 PathToolState::PointRemoved(const Path* path, int32 index)
 {
-//	fSelection->Remove(index);
+	_DeselectPoint(PathPoint(const_cast<Path*>(path), index, POINT_ALL));
 	ObjectChanged(path);
 }
 
@@ -1279,6 +1290,44 @@ PathToolState::_DrawControls(PlatformDrawContext& drawContext)
 //	TransformObjectToView(&widthOffset, true);
 //
 //	fPlatformDelegate->DrawControls(drawContext, origin, widthOffset);
+}
+
+// _SelectPoint
+void
+PathToolState::_SelectPoint(const PathToolState::PathPoint& point, bool extend)
+{
+	if (!extend)
+		_DeselectPoints();
+	else if (fPointSelection.Contains(point))
+		return;
+	
+	fPointSelection.Add(point);
+
+	Invalidate();
+}
+
+// _DeselectPoint
+void
+PathToolState::_DeselectPoint(const PathToolState::PathPoint& point)
+{
+	if (!fPointSelection.Contains(point))
+		return;
+	
+	fPointSelection.Remove(point);
+
+	Invalidate();
+}
+
+// _DeselectPoints
+void
+PathToolState::_DeselectPoints()
+{
+	if (fPointSelection.Size() == 0)
+		return;
+
+	fPointSelection.Clear();
+
+	Invalidate();
 }
 
 #endif	// _PATHTOOLSTATE_CPP_
