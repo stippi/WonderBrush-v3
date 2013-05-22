@@ -609,7 +609,7 @@ Window::_ObjectChanged(const Notifier* object)
 		return;
 
 	if (object == fDocument->EditManager()) {
-		// relable Undo item and update enabled status
+		// relabel Undo item/icon and update enabled status
 		BString label("Undo");
 		bool enabled = fDocument->EditManager()->GetUndoName(label);
 		if (!enabled)
@@ -621,7 +621,7 @@ Window::_ObjectChanged(const Notifier* object)
 		fUndoMI->SetLabel(label.String());
 		fUndoIcon->SetToolTip(label.String());
 
-		// relable Redo item and update enabled status
+		// relabel Redo item/icon and update enabled status
 		label.SetTo("Redo");
 		enabled = fDocument->EditManager()->GetRedoName(label);
 		if (!enabled)
