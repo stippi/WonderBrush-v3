@@ -838,8 +838,17 @@ PathToolState::Bounds() const
 		bounds = bounds | path->ControlPointBounds();
 	}
 
-	bounds.InsetBy(-15, -15);
 	TransformObjectToView(&bounds);
+	bounds.InsetBy(-15, -15);
+
+	// Selection rect
+	if (fSelectionRect.IsValid()) {
+		BRect selectionRect(fSelectionRect);
+		TransformCanvasToView(&selectionRect);
+	
+		bounds = bounds | selectionRect;
+	}
+
 	return bounds;
 }
 
@@ -1273,6 +1282,11 @@ PathToolState::_DrawControls(PlatformDrawContext& drawContext)
 			fHoverPathPoint, fView->ZoomLevel());
 	}
 
+	if (fSelectionRect.IsValid()) {
+		fPlatformDelegate->DrawSelectionRect(fSelectionRect, drawContext,
+			*this);
+	}
+
 //	double scaleX;
 //	double scaleY;
 //	if (!EffectiveTransformation().GetAffineParameters(NULL, NULL, NULL,
@@ -1290,6 +1304,16 @@ PathToolState::_DrawControls(PlatformDrawContext& drawContext)
 //	TransformObjectToView(&widthOffset, true);
 //
 //	fPlatformDelegate->DrawControls(drawContext, origin, widthOffset);
+}
+
+// _SetSelectionRect
+void
+PathToolState::_SetSelectionRect(const BRect& rect)
+{
+	if (fSelectionRect == rect)
+		return;
+	fSelectionRect = rect;
+	UpdateBounds();
 }
 
 // _SelectPoint

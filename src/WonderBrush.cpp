@@ -68,6 +68,7 @@ WonderBrushBase::WonderBrushBase(BRect bounds)
 	path->AddPoint(BPoint(shapeArea.left + shapeArea.Width() / 3,
 		(shapeArea.top + shapeArea.bottom) / 2));
 	path->SetClosed(true);
+
 	fDocument->GlobalResources().AddObject(path.Get());
 
 	Shape* shape = new Shape(path,

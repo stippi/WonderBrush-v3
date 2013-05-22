@@ -214,6 +214,8 @@ private:
 			void				_DeselectPoint(const PathPoint& point);
 			void				_DeselectPoints();
 
+			void				_SetSelectionRect(const BRect& rect);
+
 private:
 			PlatformDelegate*	fPlatformDelegate;
 
@@ -241,6 +243,7 @@ private:
 			PathRef				fCurrentPath;
 	mutable	PathPoint			fHoverPathPoint;
 			PointSelection		fPointSelection;
+			BRect				fSelectionRect;
 
 			StyleRef			fStyle;
 

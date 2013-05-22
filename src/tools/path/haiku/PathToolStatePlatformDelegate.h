@@ -183,6 +183,24 @@ public:
 			}
 		}
 	}
+	
+	void DrawSelectionRect(BRect selectionRect,
+		PlatformDrawContext& drawContext,
+		TransformViewState& viewState)
+	{
+		viewState.TransformCanvasToView(&selectionRect);
+		BView* view = drawContext.View();
+		view->PushState();
+		view->SetDrawingMode(B_OP_ALPHA);
+		view->SetHighColor(80, 120, 255, 180);
+		view->StrokeRect(selectionRect);
+		selectionRect.InsetBy(1, 1);
+		if (selectionRect.IsValid()) {
+			view->SetHighColor(80, 120, 255, 100);
+			view->FillRect(selectionRect);
+		}
+		view->PopState();
+	}
 
 private:
 	PathToolState*	fState;
