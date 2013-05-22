@@ -39,6 +39,9 @@ public:
 	virtual	bool				MessageReceived(BMessage* message,
 									UndoableEdit** _edit);
 
+	// mouse tracking
+	virtual	UndoableEdit*		MouseUp();
+
 	// modifiers
 	virtual	void				ModifiersChanged(uint32 modifiers);
 

@@ -89,10 +89,16 @@ public:
 
 	virtual void SetOrigin(BPoint origin)
 	{
+		fStart = origin;
 	}
 
 	virtual void DragTo(BPoint current, uint32 modifiers)
 	{
+		BRect selectionRect(
+			std::min(fStart.x, current.x), std::min(fStart.y, current.y),
+			std::max(fStart.x, current.x), std::max(fStart.y, current.y)
+		);
+		fParent->_SetSelectionRect(selectionRect);
 	}
 
 	virtual BCursor ViewCursor(BPoint current) const
@@ -107,6 +113,7 @@ public:
 
 private:
 	PathToolState*		fParent;
+	BPoint				fStart;
 };
 
 enum {
@@ -767,6 +774,16 @@ PathToolState::MessageReceived(BMessage* message, UndoableEdit** _edit)
 
 // #pragma mark -
 
+// MouseUp
+UndoableEdit*
+PathToolState::MouseUp()
+{
+	_SetSelectionRect(BRect());
+	return DragStateViewState::MouseUp();
+}
+
+// #pragma mark -
+
 // ModifiersChanged
 void
 PathToolState::ModifiersChanged(uint32 modifiers)
@@ -1004,6 +1021,10 @@ PathToolState::DragStateFor(BPoint canvasWhere, float zoomLevel) const
 				break;
 		}
 		return fDragPathPointState;
+	}
+	
+	if (fPaths.CountItems() > 0 && (Modifiers() & B_SHIFT_KEY) != 0) {
+		return fSelectPointsState;
 	}
 
 	// Check if pointer is above a path segment
