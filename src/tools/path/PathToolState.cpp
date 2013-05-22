@@ -1002,7 +1002,7 @@ PathToolState::DragStateFor(BPoint canvasWhere, float zoomLevel) const
 	fDocument->RootLayer()->HitTest(canvasWhere, NULL, &pickedObject, true);
 
 	Shape* pickedShape = dynamic_cast<Shape*>(pickedObject);
-	if (pickedShape != NULL) {
+	if (pickedShape != NULL && pickedShape != fShape) {
 		fPickShapeState->SetShape(pickedShape);
 		return fPickShapeState;
 	}
