@@ -86,7 +86,9 @@ UndoableEdit*
 DragStateViewState::MouseUp()
 {
 	fDragging = false;
-	return FinishTransaction(fCurrentCommand);
+	UndoableEdit* edit = FinishTransaction(fCurrentCommand);
+	UpdateDragState();
+	return edit;
 }
 
 // UpdateCursor
