@@ -78,6 +78,37 @@ private:
 	Shape*				fShape;
 };
 
+// SelectPointsState
+class PathToolState::SelectPointsState : public DragStateViewState::DragState {
+public:
+	SelectPointsState(PathToolState* parent)
+		: DragState(parent)
+		, fParent(parent)
+	{
+	}
+
+	virtual void SetOrigin(BPoint origin)
+	{
+	}
+
+	virtual void DragTo(BPoint current, uint32 modifiers)
+	{
+	}
+
+	virtual BCursor ViewCursor(BPoint current) const
+	{
+		return BCursor(kPathSelectCursor);
+	}
+
+	virtual const char* CommandName() const
+	{
+		return "Select points";
+	}
+
+private:
+	PathToolState*		fParent;
+};
+
 enum {
 	DRAG_MODE_NONE						= 0,
 	DRAG_MODE_MOVE_POINT				= 1,
@@ -640,6 +671,7 @@ PathToolState::PathToolState(StateView* view, Document* document,
 	, fPlatformDelegate(new PlatformDelegate(this))
 
 	, fPickShapeState(new(std::nothrow) PickShapeState(this))
+	, fSelectPointsState(new(std::nothrow) SelectPointsState(this))
 	, fCreateShapeState(new(std::nothrow) CreateShapeState(this))
 	, fDragPathPointState(new(std::nothrow) DragPathPointState(this))
 	, fToggleSmoothSharpState(new(std::nothrow) ToggleSmoothSharpState(this))
@@ -683,6 +715,7 @@ PathToolState::~PathToolState()
 	fSelection->RemoveListener(this);
 
 	delete fPickShapeState;
+	delete fSelectPointsState;
 	delete fCreateShapeState;
 	delete fDragPathPointState;
 	delete fToggleSmoothSharpState;

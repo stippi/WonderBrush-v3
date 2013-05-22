@@ -91,6 +91,7 @@ private:
 			class PlatformDelegate;
 
 			class PickShapeState;
+			class SelectPointsState;
 			class CreateShapeState;
 			class DragPathPointState;
 			class ToggleSmoothSharpState;
@@ -100,6 +101,7 @@ private:
 			class ClosePathState;
 
 			friend class PickShapeState;
+			friend class SelectPointsState;
 			friend class AddPathPointState;
 			friend class InsertPathPointState;
 			friend class ToggleSmoothSharpState;
@@ -220,6 +222,7 @@ private:
 			PlatformDelegate*	fPlatformDelegate;
 
 			PickShapeState*		fPickShapeState;
+			SelectPointsState*	fSelectPointsState;
 			CreateShapeState*	fCreateShapeState;
 			DragPathPointState*	fDragPathPointState;
 			ToggleSmoothSharpState*	fToggleSmoothSharpState;
