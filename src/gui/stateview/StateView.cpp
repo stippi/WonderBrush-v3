@@ -231,12 +231,12 @@ StateView::MessageReceived(BMessage* message)
 			uint32 mods;
 			if (message->FindInt32("modifiers", (int32*)&mods) != B_OK)
 				mods = modifiers();
+			fMouseInfo.modifiers = mods;
+
 			ViewState* state = fDropAnticipatingState != NULL ?
 				fDropAnticipatingState : fCurrentState;
 			if (state != NULL)
 				state->ModifiersChanged(mods);
-
-			fMouseInfo.modifiers = mods;
 
 			// call MouseMoved() of drop anticipation state
 			// in case something needs to change because of
