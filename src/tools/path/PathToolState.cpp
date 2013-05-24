@@ -90,6 +90,7 @@ public:
 	virtual void SetOrigin(BPoint origin)
 	{
 		fStart = origin;
+		fPreviousSelection = fParent->fPointSelection;
 	}
 
 	virtual void DragTo(BPoint current, uint32 modifiers)
@@ -98,7 +99,7 @@ public:
 			std::min(fStart.x, current.x), std::min(fStart.y, current.y),
 			std::max(fStart.x, current.x), std::max(fStart.y, current.y)
 		);
-		fParent->_SetSelectionRect(selectionRect);
+		fParent->_SetSelectionRect(selectionRect, fPreviousSelection);
 	}
 
 	virtual BCursor ViewCursor(BPoint current) const
@@ -114,6 +115,7 @@ public:
 private:
 	PathToolState*		fParent;
 	BPoint				fStart;
+	PointSelection		fPreviousSelection;
 };
 
 enum {
@@ -157,9 +159,15 @@ public:
 		}
 		fClickOffset = origin - point;
 		
-		fParent->_SelectPoint(PathPoint(fPathPoint.GetPath(),
-			fPathPoint.GetIndex(), POINT_ALL),
-			(fParent->Modifiers() & B_SHIFT_KEY) != 0);
+		PathPoint pathPoint(fPathPoint.GetPath(), fPathPoint.GetIndex(),
+			POINT_ALL);
+		
+		bool shift = (fParent->Modifiers() & B_SHIFT_KEY) != 0;
+		
+		if (shift && fParent->fPointSelection.Contains(pathPoint))
+			fParent->_DeselectPoint(pathPoint);
+		else
+			fParent->_SelectPoint(pathPoint, shift);
 	}
 
 	virtual void DragTo(BPoint current, uint32 modifiers)
@@ -778,7 +786,7 @@ PathToolState::MessageReceived(BMessage* message, UndoableEdit** _edit)
 UndoableEdit*
 PathToolState::MouseUp()
 {
-	_SetSelectionRect(BRect());
+	_SetSelectionRect(BRect(), fPointSelection);
 	return DragStateViewState::MouseUp();
 }
 
@@ -1362,11 +1370,40 @@ PathToolState::_DrawControls(PlatformDrawContext& drawContext)
 
 // _SetSelectionRect
 void
-PathToolState::_SetSelectionRect(const BRect& rect)
+PathToolState::_SetSelectionRect(const BRect& rect,
+	const PointSelection& previousSelection)
 {
 	if (fSelectionRect == rect)
 		return;
 	fSelectionRect = rect;
+	if (rect.IsValid()) {
+		PointSelection selection(previousSelection);
+		for (int32 i = fPaths.CountItems() - 1; i >= 0; i--) {
+			Path* path = fPaths.ItemAtFast(i).Get();
+			for (int32 j = path->CountPoints() - 1; j >= 0; j--) {
+				BPoint point;
+				BPoint pointIn;
+				BPoint pointOut;
+				if (!path->GetPointsAt(j, point, pointIn, pointOut))
+					continue;
+				TransformObjectToCanvas(&point);
+				TransformObjectToCanvas(&pointIn);
+				TransformObjectToCanvas(&pointOut);
+				
+				PathPoint pathPoint(path, j, POINT_ALL);
+				
+				if (rect.Contains(point) || rect.Contains(pointIn)
+					|| rect.Contains(pointOut)) {
+					// Path point within selection rect
+					if (previousSelection.Contains(pathPoint))
+						selection.Remove(pathPoint);
+					else
+						selection.Add(pathPoint);
+				}
+			}
+		}
+		fPointSelection = selection;
+	}
 	UpdateBounds();
 }
 
