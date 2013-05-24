@@ -125,9 +125,14 @@ public:
 	};
 
 	HashSet();
+	HashSet(const HashSet<Key>& other);
 	~HashSet();
 
 	status_t InitCheck() const;
+
+	HashSet<Key>& operator=(const HashSet<Key>& other);
+	bool operator==(const HashSet<Key>& other) const;
+	bool operator!=(const HashSet<Key>& other) const;
 
 	status_t Add(const Key& key);
 	bool Remove(const Key& key);
@@ -226,6 +231,17 @@ HashSet<Key>::HashSet()
 }
 
 
+// constructor
+template<typename Key>
+HashSet<Key>::HashSet(const HashSet<Key>& other)
+	:
+	fTable()
+{
+	fTable.Init();
+	*this = other;
+}
+
+
 // destructor
 template<typename Key>
 HashSet<Key>::~HashSet()
@@ -240,6 +256,49 @@ status_t
 HashSet<Key>::InitCheck() const
 {
 	return (fTable.TableSize() > 0 ? B_OK : B_NO_MEMORY);
+}
+
+
+// operator=
+template<typename Key>
+HashSet<Key>&
+HashSet<Key>::operator=(const HashSet<Key>& other)
+{
+	Clear();
+	HashSet<Key>::Iterator iterator = const_cast<HashSet&>(other).GetIterator();
+	while (iterator.HasNext()) {
+		Add(iterator.Next());
+	}
+	return *this;
+}
+
+
+// operator==
+template<typename Key>
+bool
+HashSet<Key>::operator==(const HashSet<Key>& other) const
+{
+	if (Size() != other.Size())
+		return false;
+	
+	HashSet<Key>::Iterator thisIterator = GetIterator();
+	HashSet<Key>::Iterator otherIterator
+		= const_cast<HashSet&>(other).GetIterator();
+	while (thisIterator.HasNext() && otherIterator.HasNext()) {
+		if (thisIterator.Next() != otherIterator.Next())
+			return false;
+	}
+
+	return true;
+}
+
+
+// operator!=
+template<typename Key>
+bool
+HashSet<Key>::operator!=(const HashSet<Key>& other) const
+{
+	return !(*this == other);
 }
 
 
