@@ -319,6 +319,9 @@ public:
 
 	virtual void SetOrigin(BPoint origin)
 	{
+		fParent->TransformCanvasToObject(&origin);
+		fOrigin = origin;
+
 		Path* path = fPathPoint.GetPath();
 		int32 index = fPathPoint.GetIndex();
 		BPoint point;
@@ -346,13 +349,25 @@ public:
 			}
 			fParent->fDragPathPointState->SetDragMode(fDragMode);
 			fParent->_SelectPoint(PathPoint(path, index, POINT_ALL), false);
+		} else {
+			fParent->fDragPathPointState->SetPathPoint(PathPoint());
 		}
-		fParent->SetDragState(fParent->fDragPathPointState);
-		fParent->fDragPathPointState->SetOrigin(origin);
 	}
 
 	virtual void DragTo(BPoint current, uint32 modifiers)
 	{
+		BPoint originalCurrent(current);
+		fParent->TransformCanvasToObject(&current);
+		
+		double dragDistance = point_point_distance(fOrigin, current);
+		if (dragDistance * fParent->ZoomLevel() > 7.0) {
+			BPoint originalOrigin(fOrigin);
+			fParent->TransformObjectToCanvas(&originalOrigin);
+
+			fParent->SetDragState(fParent->fDragPathPointState);
+			fParent->fDragPathPointState->SetOrigin(fOrigin);
+			fParent->fDragPathPointState->DragTo(originalCurrent, modifiers);
+		}
 	}
 
 	virtual BCursor ViewCursor(BPoint current) const
