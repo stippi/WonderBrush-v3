@@ -144,6 +144,10 @@ TextToolConfigView::TextToolConfigView(::Tool* tool)
 	SetLayout(layout);
 
 	fFontPopup = new FontPopup("Font", true);
+	BLayoutItem* fontLabelItem = fFontPopup->CreateLabelLayoutItem();
+	BLayoutItem* fontPopupItem = fFontPopup->CreateMenuBarLayoutItem();
+	fontPopupItem->SetExplicitMinSize(BSize(100, B_SIZE_UNSET));
+	fontPopupItem->SetExplicitMaxSize(BSize(200, B_SIZE_UNSET));
 
 	fSizeLabel = new BStringView("size label", "Size");
 	fGlyphSpacingLabel = new BStringView("glyph spacing label", "Spacing");
@@ -227,8 +231,8 @@ TextToolConfigView::TextToolConfigView(::Tool* tool)
 
 	BLayoutBuilder::Group<>(layout)
 		.AddGrid(3.0f, 3.0f)
-			.Add(fFontPopup->CreateLabelLayoutItem(), 0, 0)
-			.Add(fFontPopup->CreateMenuBarLayoutItem(), 1, 0)
+			.Add(fontLabelItem, 0, 0)
+			.Add(fontPopupItem, 1, 0)
 			.Add(fSizeLabel, 0, 1)
 			.AddGroup(B_HORIZONTAL, 0.0f, 1, 1)
 				.Add(fSizeSlider, 0.8f)
