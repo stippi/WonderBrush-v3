@@ -9,6 +9,7 @@
 #include <String.h>
 
 #include "BaseObject.h"
+#include "List.h"
 #include "Transformable.h"
 
 
@@ -16,6 +17,7 @@ class BBitmap;
 class Layer;
 class ObjectSnapshot;
 
+typedef List<BaseObjectRef, false> AssetList;
 
 class Object : public Transformable, public BaseObject {
 public:
@@ -28,6 +30,9 @@ public:
 	inline	Layer*				Parent() const
 									{ return fParent; }
 			int32				Level() const;
+
+	// Returns the assets that can be published as global resources
+	virtual	AssetList			Assets() const;
 
 	virtual	bool				GetIcon(const BBitmap* bitmap) const;
 

@@ -38,9 +38,16 @@ Object::SetParent(Layer* layer)
 int32
 Object::Level() const
 {
-	if (!fParent)
+	if (fParent == NULL)
 		return 0;
 	return fParent->Level() + 1;
+}
+
+// Assets
+AssetList
+Object::Assets() const
+{
+	return AssetList();
 }
 
 // #pragma mark -
