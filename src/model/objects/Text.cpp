@@ -197,6 +197,22 @@ Text::GetCharCount() const
 // Insert
 void
 Text::Insert(int32 textOffset, const char* utf8String, const Font& font,
+	rgb_color color)
+{
+	::Style* style = new(std::nothrow) ::Style();
+	if (style == NULL)
+		return;
+
+	style->SetFillPaint(Paint(color));
+
+	StyleRef styleRef(style, true);
+
+	Insert(textOffset, utf8String, font, 0.0, 0.0, 0.0, styleRef);
+}
+
+// Insert
+void
+Text::Insert(int32 textOffset, const char* utf8String, const Font& font,
 	const StyleRef& style)
 {
 	Insert(textOffset, utf8String, font, 0.0, 0.0, 0.0, style);
@@ -253,6 +269,39 @@ Text::Insert(int32 textOffset, const BString& utf8String,
 	fCharCount += charCount;
 
 	UpdateLayout();
+}
+
+// Append
+void
+Text::Append(const char* utf8String, const Font& font,
+	rgb_color color)
+{
+	Insert(fCharCount, utf8String, font, color);
+}
+
+// Append
+void
+Text::Append(const char* utf8String, const Font& font,
+	const StyleRef& style)
+{
+	Insert(fCharCount, utf8String, font, style);
+}
+
+// Append
+void
+Text::Append(const char* utf8String, const Font& font,
+	double glyphSpacing, double fauxWeight, double fauxItalic,
+	const StyleRef& style)
+{
+	Insert(fCharCount, utf8String, font, glyphSpacing, fauxWeight, fauxItalic,
+		style);
+}
+
+// Append
+void
+Text::Append(const BString& utf8String, const StyleRunList& styleRuns)
+{
+	Insert(fCharCount, utf8String, styleRuns);
 }
 
 // ReplaceStyles

@@ -60,6 +60,10 @@ public:
 
 			void				Insert(int32 textOffset,
 									const char* utf8String, const Font& font,
+									rgb_color color);
+
+			void				Insert(int32 textOffset,
+									const char* utf8String, const Font& font,
 									const StyleRef& style);
 
 			void				Insert(int32 textOffset,
@@ -69,6 +73,19 @@ public:
 
 			void				Insert(int32 textOffset,
 									const BString& utf8String,
+									const StyleRunList& styleRuns);
+
+			void				Append(const char* utf8String, const Font& font,
+									rgb_color color);
+
+			void				Append(const char* utf8String, const Font& font,
+									const StyleRef& style);
+
+			void				Append(const char* utf8String, const Font& font,
+									double glyphSpacing, double fauxWeight,
+									double fauxItalic, const StyleRef& style);
+
+			void				Append(const BString& utf8String,
 									const StyleRunList& styleRuns);
 
 			void				ReplaceStyles(int32 textOffset, int32 length,
