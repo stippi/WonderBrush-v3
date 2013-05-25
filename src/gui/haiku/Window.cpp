@@ -427,15 +427,11 @@ Window::MessageReceived(BMessage* message)
 			break;
 		}
 
-		case MSG_SET_TOOL: {
+		case MSG_SET_TOOL:
+		{
 			int32 index;
-			if (message->FindInt32("tool", &index) == B_OK) {
-				if (Tool* tool = (Tool*)fTools.ItemAt(index)) {
-					fView->SetState(tool->ToolViewState(fView, fDocument.Get(),
-						&fSelection, &fCurrentColor));
-					fToolConfigLayout->SetVisibleItem(index);
-				}
-			}
+			if (message->FindInt32("tool", &index) == B_OK)
+				_SetTool(index);
 			break;
 		}
 
@@ -513,9 +509,7 @@ Window::AddTool(Tool* tool)
 
 	if (count == 0) {
 		// this was the first tool
-		fView->SetState(tool->ToolViewState(fView, fDocument.Get(), &fSelection,
-			&fCurrentColor));
-		fToolConfigLayout->SetVisibleItem(0L);
+		_SetTool(0);
 	}
 }
 
@@ -577,6 +571,10 @@ Window::StoreSettings(BMessage& settings) const
 		ret = store_split_weights(settings, "vertical split",
 			fVerticalSplit);
 	}
+	if (ret == B_OK) {
+		settings.RemoveName("current tool index");
+		ret = settings.AddInt32("current tool index", fCurrentToolIndex);
+	}
 	return ret;
 }
 
@@ -586,6 +584,10 @@ Window::RestoreSettings(const BMessage& settings)
 {
 	restore_split_weights(settings, "horizontal split", fHorizontalSplit);
 	restore_split_weights(settings, "vertical split", fVerticalSplit);
+
+	int32 toolIndex;
+	if (settings.FindInt32("current tool index", &toolIndex) == B_OK)
+		_SetTool(toolIndex);
 }
 
 // #pragma mark -
@@ -599,6 +601,20 @@ Window::_InitTools()
 	AddTool(new(std::nothrow) BrushTool());
 	AddTool(new(std::nothrow) TextTool());
 	AddTool(new(std::nothrow) PathTool());
+}
+
+// _SetTool
+void
+Window::_SetTool(int32 index)
+{
+	if (Tool* tool = (Tool*)fTools.ItemAt(index)) {
+		fView->SetState(tool->ToolViewState(fView, fDocument.Get(),
+			&fSelection, &fCurrentColor));
+		fToolConfigLayout->SetVisibleItem(index);
+		fToolIconControl->SetValue(index);
+
+		fCurrentToolIndex = index;
+	}
 }
 
 // _ObjectChanged

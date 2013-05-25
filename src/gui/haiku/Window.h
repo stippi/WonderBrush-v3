@@ -49,6 +49,7 @@ public:
 
 private:
 			void				_InitTools();
+			void				_SetTool(int32 index);
 
 			void				_ObjectChanged(const Notifier* object);
 
@@ -96,6 +97,7 @@ private:
 			IconButton*			fCancelIcon;
 
 			BList				fTools;
+			int32				fCurrentToolIndex;
 };
 
 #endif // WINDOW_H
