@@ -105,12 +105,26 @@ WonderBrushBase::WonderBrushBase(BRect bounds)
 	text->TranslateBy(BPoint(522, 31));
 	text->SetWidth(200.0);
 	text->SetAlignment(TEXT_ALIGNMENT_JUSTIFY);
-	text->SetText("There are only three kind of people. "
-			"Those who can count and those who don't.",
+
+	text->Append("There are only ",
 		Font("DejaVu Serif", "Book", 24.0), (rgb_color) { 0, 0, 0, 255 });
-	text->SetFont(15, 5, "DejaVu Serif", "Bold");
-	text->SetFont(47, 3, "DejaVu Serif", "Italic");
-	text->SetFont(71, 5, "DejaVu Serif", "Italic");
+	text->Append("three",
+		Font("DejaVu Serif", "Bold", 24.0), (rgb_color) { 0, 0, 0, 255 });
+	text->Append(" kind of people in this world. ",
+		Font("DejaVu Serif", "Book", 24.0), (rgb_color) { 0, 0, 0, 255 });
+	text->Append("Those who ",
+		Font("Courier Prime", "Regular", 24.0), (rgb_color) { 0, 0, 0, 255 });
+	text->Append("can",
+		Font("Courier Prime", "Italic", 32.0), (rgb_color) { 0, 0, 0, 255 });
+	text->Append(" count and those who ",
+		Font("Courier Prime", "Regular", 24.0), (rgb_color) { 0, 0, 0, 255 });
+	text->Append("can't",
+		Font("Courier Prime", "Italic", 24.0),
+		(rgb_color) { 180, 20, 35, 255 });
+	text->Append(".",
+		Font("Courier Prime", "Regular", 24.0),
+		(rgb_color) { 0, 0, 0, 255 });
+
 	fDocument->RootLayer()->AddObject(text);
 
 	Rect* transformedRect = new Rect(BRect(150, 200, 210, 330),
