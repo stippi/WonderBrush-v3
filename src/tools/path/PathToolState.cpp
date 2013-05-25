@@ -98,6 +98,7 @@ public:
 			else
 				fParent->_SelectPoint(fPathPoint, true);
 		}
+		fDragDistance = 0.0;
 	}
 
 	virtual void DragTo(BPoint current, uint32 modifiers)
@@ -110,6 +111,8 @@ public:
 			std::max(fStart.x, current.x), std::max(fStart.y, current.y)
 		);
 		fParent->_SetSelectionRect(selectionRect, fPreviousSelection);
+		
+		fDragDistance = point_point_distance(current, fStart);
 	}
 
 	virtual BCursor ViewCursor(BPoint current) const
@@ -127,11 +130,20 @@ public:
 		fPathPoint = point;
 	}
 
+	bool DeselectOnMouseUp() const
+	{
+		if (fPathPoint.IsValid())
+			return false;
+		
+		return fDragDistance * fParent->ZoomLevel() < 5.0;
+	}
+
 private:
 	PathToolState*		fParent;
 	BPoint				fStart;
 	PathPoint			fPathPoint;
 	PointSelection		fPreviousSelection;
+	double				fDragDistance;
 };
 
 enum {
@@ -849,7 +861,11 @@ PathToolState::MessageReceived(BMessage* message, UndoableEdit** _edit)
 UndoableEdit*
 PathToolState::MouseUp()
 {
-	_SetSelectionRect(BRect(), fPointSelection);
+	if (CurrentState() == fSelectPointsState) {
+		_SetSelectionRect(BRect(), fPointSelection);
+		if (fSelectPointsState->DeselectOnMouseUp())
+			_DeselectPoints();
+	}
 	return DragStateViewState::MouseUp();
 }
 
