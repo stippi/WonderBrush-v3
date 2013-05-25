@@ -27,6 +27,8 @@ public:
 	// Object interface
 	virtual	ObjectSnapshot*		Snapshot() const;
 
+	virtual	AssetList			Assets() const;
+
 	virtual	void				AddProperties(PropertyObject* object,
 									uint32 flags = 0) const;
 	virtual	bool				SetToPropertyObject(

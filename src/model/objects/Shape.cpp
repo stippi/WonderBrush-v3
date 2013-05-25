@@ -86,6 +86,18 @@ Shape::Snapshot() const
 	return new ShapeSnapshot(this);
 }
 
+// Assets
+AssetList
+Shape::Assets() const
+{
+	AssetList list = Styleable::Assets();
+	for (int32 i = 0; i < fPaths.CountItems(); i++) {
+		const PathRef& ref = fPaths.ItemAtFast(i);
+		list.Add(BaseObjectRef(ref.Get()));
+	}
+	return list;
+}
+
 // AddProperties
 void
 Shape::AddProperties(PropertyObject* object, uint32 flags) const
