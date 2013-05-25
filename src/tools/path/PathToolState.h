@@ -97,6 +97,7 @@ private:
 			class SelectPointsState;
 			class CreateShapeState;
 			class DragPathPointState;
+			class DragSelectionState;
 			class ToggleSmoothSharpState;
 			class AddPathPointState;
 			class InsertPathPointState;
@@ -105,6 +106,7 @@ private:
 
 			friend class PickShapeState;
 			friend class SelectPointsState;
+			friend class DragSelectionState;
 			friend class AddPathPointState;
 			friend class InsertPathPointState;
 			friend class ToggleSmoothSharpState;
@@ -158,6 +160,12 @@ private:
 					fWhich = other.fWhich;
 					return *this;
 				}
+				
+				bool IsValid() const
+				{
+					return fPath != NULL && fIndex >= 0
+						&& fIndex < fPath->CountPoints();
+				}
 
 				bool IsSameIndex(const PathPoint& other) const
 				{
@@ -199,6 +207,28 @@ private:
 						return false;
 					return fPath->GetPointOutAt(fIndex, point);
 				}
+				
+				bool OffsetBy(const BPoint& offset) const
+				{
+					if (fPath == NULL)
+						return false;
+					
+					BPoint point;
+					BPoint pointIn;
+					BPoint pointOut;
+					bool connected;
+					if (!fPath->GetPointsAt(fIndex, point, pointIn, pointOut,
+						&connected)) {
+						return false;
+					}
+					
+					point += offset;
+					pointIn += offset;
+					pointOut += offset;
+					
+					return fPath->SetPoint(fIndex, point, pointIn, pointOut,
+						connected);
+				}
 
 				size_t GetHashCode() const
 				{
@@ -214,6 +244,8 @@ private:
 			typedef HashSet<PathPoint> PointSelection;
 
 private:
+			void				_SetHoverPoint(const PathPoint& point) const;
+
 			void				_SelectPoint(const PathPoint& point,
 									bool extend);
 			void				_DeselectPoint(const PathPoint& point);
@@ -229,6 +261,7 @@ private:
 			SelectPointsState*	fSelectPointsState;
 			CreateShapeState*	fCreateShapeState;
 			DragPathPointState*	fDragPathPointState;
+			DragSelectionState*	fDragSelectionState;
 			ToggleSmoothSharpState*	fToggleSmoothSharpState;
 			AddPathPointState*	fAddPathPointState;
 			InsertPathPointState* fInsertPathPointState;

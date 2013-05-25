@@ -84,6 +84,7 @@ public:
 	SelectPointsState(PathToolState* parent)
 		: DragState(parent)
 		, fParent(parent)
+		, fPathPoint()
 	{
 	}
 
@@ -91,10 +92,19 @@ public:
 	{
 		fStart = origin;
 		fPreviousSelection = fParent->fPointSelection;
+		if (fPathPoint.IsValid()) {
+			if (fPreviousSelection.Contains(fPathPoint))
+				fParent->_DeselectPoint(fPathPoint);
+			else
+				fParent->_SelectPoint(fPathPoint, true);
+		}
 	}
 
 	virtual void DragTo(BPoint current, uint32 modifiers)
 	{
+		if (fPathPoint.IsValid())
+			return;
+
 		BRect selectionRect(
 			std::min(fStart.x, current.x), std::min(fStart.y, current.y),
 			std::max(fStart.x, current.x), std::max(fStart.y, current.y)
@@ -112,9 +122,15 @@ public:
 		return "Select points";
 	}
 
+	void SetPathPoint(const PathPoint& point)
+	{
+		fPathPoint = point;
+	}
+
 private:
 	PathToolState*		fParent;
 	BPoint				fStart;
+	PathPoint			fPathPoint;
 	PointSelection		fPreviousSelection;
 };
 
@@ -226,6 +242,51 @@ private:
 	PathPoint			fPathPoint;
 	uint32				fDragMode;
 	BPoint				fClickOffset;
+};
+
+// DragSelectionState
+class PathToolState::DragSelectionState : public DragStateViewState::DragState {
+public:
+	DragSelectionState(PathToolState* parent)
+		: DragState(parent)
+		, fParent(parent)
+	{
+	}
+
+	virtual void SetOrigin(BPoint origin)
+	{
+		fParent->TransformCanvasToObject(&origin);
+		fOrigin = origin;
+	}
+
+	virtual void DragTo(BPoint current, uint32 modifiers)
+	{
+		fParent->TransformCanvasToObject(&current);
+		BPoint offset = current - fOrigin;
+		fOrigin = current;
+		
+		// TODO: Stop Path notifications until all points are modified
+		
+		PointSelection::Iterator iterator
+			= fParent->fPointSelection.GetIterator();
+		while (iterator.HasNext()) {
+			PathPoint pathPoint = iterator.Next();
+			pathPoint.OffsetBy(offset);
+		}
+	}
+
+	virtual BCursor ViewCursor(BPoint current) const
+	{
+		return BCursor(kPathMoveCursor);
+	}
+
+	virtual const char* CommandName() const
+	{
+		return "Drag path points";
+	}
+
+private:
+	PathToolState*		fParent;
 };
 
 // ToggleSmoothSharpState
@@ -689,6 +750,7 @@ PathToolState::PathToolState(StateView* view, Document* document,
 	, fSelectPointsState(new(std::nothrow) SelectPointsState(this))
 	, fCreateShapeState(new(std::nothrow) CreateShapeState(this))
 	, fDragPathPointState(new(std::nothrow) DragPathPointState(this))
+	, fDragSelectionState(new(std::nothrow) DragSelectionState(this))
 	, fToggleSmoothSharpState(new(std::nothrow) ToggleSmoothSharpState(this))
 	, fAddPathPointState(new(std::nothrow) AddPathPointState(this))
 	, fInsertPathPointState(new(std::nothrow) InsertPathPointState(this))
@@ -733,6 +795,7 @@ PathToolState::~PathToolState()
 	delete fSelectPointsState;
 	delete fCreateShapeState;
 	delete fDragPathPointState;
+	delete fDragSelectionState;
 	delete fToggleSmoothSharpState;
 	delete fAddPathPointState;
 	delete fInsertPathPointState;
@@ -974,6 +1037,7 @@ PathToolState::DragStateFor(BPoint canvasWhere, float zoomLevel) const
 		}
 	}
 
+	_SetHoverPoint(closestPathPoint);
 	if (fHoverPathPoint != closestPathPoint) {
 		fHoverPathPoint = closestPathPoint;
 		Invalidate();
@@ -1015,7 +1079,27 @@ PathToolState::DragStateFor(BPoint canvasWhere, float zoomLevel) const
 			}
 			return fToggleSmoothSharpState;
 		}
+	
+		if ((Modifiers() & B_SHIFT_KEY) != 0) {
+			PathPoint pathPoint(closestPathPoint.GetPath(),
+				closestPathPoint.GetIndex(), POINT_ALL);
+			_SetHoverPoint(pathPoint);
+			fSelectPointsState->SetPathPoint(pathPoint);
+			return fSelectPointsState;
+		}
 
+		if (closestPathPoint.GetWhich() == POINT) {
+			PathPoint pathPoint(closestPathPoint.GetPath(),
+				closestPathPoint.GetIndex(), POINT_ALL);
+			if (fPointSelection.Contains(pathPoint)
+				&& fPointSelection.Size() > 1) {
+				// Hovering an already selected point above the main
+				// path point and there are other selected points. Drag
+				// them as a group
+				return fDragSelectionState;
+			}
+		}
+		
 		fDragPathPointState->SetPathPoint(closestPathPoint);
 		switch (closestPathPoint.GetWhich()) {
 			case POINT:
@@ -1032,6 +1116,7 @@ PathToolState::DragStateFor(BPoint canvasWhere, float zoomLevel) const
 	}
 	
 	if (fPaths.CountItems() > 0 && (Modifiers() & B_SHIFT_KEY) != 0) {
+		fSelectPointsState->SetPathPoint(PathPoint());
 		return fSelectPointsState;
 	}
 
@@ -1366,6 +1451,16 @@ PathToolState::_DrawControls(PlatformDrawContext& drawContext)
 //	TransformObjectToView(&widthOffset, true);
 //
 //	fPlatformDelegate->DrawControls(drawContext, origin, widthOffset);
+}
+
+// 	_SetHoverPoint
+void
+PathToolState::_SetHoverPoint(const PathPoint& point) const
+{
+	if (fHoverPathPoint != point) {
+		fHoverPathPoint = point;
+		Invalidate();
+	}
 }
 
 // _SetSelectionRect
