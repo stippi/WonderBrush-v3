@@ -106,13 +106,17 @@ public:
 		if (fPathPoint.IsValid())
 			return;
 
-		BRect selectionRect(
-			std::min(fStart.x, current.x), std::min(fStart.y, current.y),
-			std::max(fStart.x, current.x), std::max(fStart.y, current.y)
-		);
-		fParent->_SetSelectionRect(selectionRect, fPreviousSelection);
-		
 		fDragDistance = point_point_distance(current, fStart);
+
+		if (fDragDistance * fParent->ZoomLevel() >= 5.0) {
+			BRect selectionRect(
+				std::min(fStart.x, current.x), std::min(fStart.y, current.y),
+				std::max(fStart.x, current.x), std::max(fStart.y, current.y)
+			);
+			fParent->_SetSelectionRect(selectionRect, fPreviousSelection);
+		} else {
+			fParent->_SetSelectionRect(BRect(), fPreviousSelection);
+		}
 	}
 
 	virtual BCursor ViewCursor(BPoint current) const
@@ -451,7 +455,7 @@ public:
 		fParent->TransformCanvasToObject(&current);
 
 		double dragDistance = point_point_distance(fOrigin, current);
-		if (fPointAdded && dragDistance > 7.0) {
+		if (fPointAdded && dragDistance * fParent->ZoomLevel() > 7.0) {
 			Path* path = fPathRef.Get();
 			fParent->fDragPathPointState->SetPathPoint(PathPoint(path,
 				path->CountPoints() - 1, POINT_OUT));
