@@ -54,10 +54,13 @@ public:
 
 			void				UpdateDragState();
 
+			DragState*			CurrentState() const
+									{ return fCurrentState; }
+
 private:
 			DragState*			fCurrentState;
 			bool				fDragging;
-			UndoableEdit*			fCurrentCommand;
+			UndoableEdit*		fCurrentCommand;
 };
 
 #endif // DRAG_STATE_VIEW_STATE_H
