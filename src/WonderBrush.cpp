@@ -109,8 +109,14 @@ WonderBrushBase::WonderBrushBase(BRect bounds)
 	text->Append("There are only ",
 		Font("DejaVu Serif", "Book", 24.0), (rgb_color) { 0, 0, 0, 255 });
 	text->Append("three",
-		Font("DejaVu Serif", "Bold", 24.0), (rgb_color) { 0, 0, 0, 255 });
-	text->Append(" kind of people in this world. ",
+		Font("Source Sans Pro", "Regular", 46.0),
+		(rgb_color) { 0, 170, 255, 255 });
+	text->Append(" kind of people in this ",
+		Font("DejaVu Serif", "Book", 24.0), (rgb_color) { 0, 0, 0, 255 });
+	text->Append("world",
+		Font("DejaVu Serif", "Book", 24.0),
+		(rgb_color) { 169, 255, 0, 255 });
+	text->Append(".\n",
 		Font("DejaVu Serif", "Book", 24.0), (rgb_color) { 0, 0, 0, 255 });
 	text->Append("Those who ",
 		Font("Courier Prime", "Regular", 24.0), (rgb_color) { 0, 0, 0, 255 });
