@@ -365,7 +365,7 @@ public:
 			fParent->TransformObjectToCanvas(&originalOrigin);
 
 			fParent->SetDragState(fParent->fDragPathPointState);
-			fParent->fDragPathPointState->SetOrigin(fOrigin);
+			fParent->fDragPathPointState->SetOrigin(originalOrigin);
 			fParent->fDragPathPointState->DragTo(originalCurrent, modifiers);
 		}
 	}
