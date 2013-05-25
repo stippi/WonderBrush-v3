@@ -43,4 +43,6 @@ private:
 			BString				fName;
 };
 
+typedef Reference<BaseObject> BaseObjectRef;
+
 #endif // BASE_OBJECT_H
