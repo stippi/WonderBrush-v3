@@ -77,8 +77,10 @@ MoveObjectsEdit::MoveObjectsEdit(Object** objects,
 MoveObjectsEdit::~MoveObjectsEdit()
 {
 	if (fObjects != NULL) {
-		for (int32 i = 0; i < fObjectCount; i++)
-			fObjects[i]->RemoveReference();
+		for (int32 i = 0; i < fObjectCount; i++) {
+			if (fObjects[i] != NULL)
+				fObjects[i]->RemoveReference();
+		}
 		delete[] fObjects;
 	}
 
