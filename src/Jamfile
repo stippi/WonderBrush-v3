@@ -109,6 +109,7 @@ Application WonderBrush :
 
 	# edits
 	MoveObjectsEdit.cpp
+	RemoveObjectsEdit.cpp
 
 	# gui/misc
 	InputTextView.cpp
