@@ -28,21 +28,20 @@ public:
 			void				SetStrokeProperties(
 									::StrokeProperties* properties);
 
-	inline	const Paint*		FillPaint() const
-									{ return fFillPaint; }
-	inline	const Paint*		StrokePaint() const
-									{ return fStrokePaint; }
-	inline	const ::StrokeProperties* StrokeProperties() const
-									{ return fStrokeProperties; }
+			const Paint*		FillPaint() const;
+			const Paint*		StrokePaint() const;
+			const ::StrokeProperties* StrokeProperties() const;
 
 private:
-			template <typename MemberType>
+			template <typename MemberType, typename ValueType,
+				typename CacheType>
 			void				_SetMember(MemberType*& member,
-									MemberType* newMember);
+									const ValueType& newValue,
+									CacheType& cache);
 
-			Paint*				fFillPaint;
-			Paint*				fStrokePaint;
-			::StrokeProperties*	fStrokeProperties;
+			SharedPaint*		fFillPaint;
+			SharedPaint*		fStrokePaint;
+			SharedStrokeProperties*	fStrokeProperties;
 };
 
 #endif // LAYOUT_STATE_H

@@ -11,9 +11,6 @@
 #include "SetProperty.h"
 #include "StrokeProperties.h"
 
-typedef SharedObject<StrokeProperties>		SharedStrokeProperties;
-typedef SharedObjectCache<StrokeProperties>	StrokePropertiesCache;
-
 class BRect;
 
 class Style : public BaseObject {
@@ -86,7 +83,6 @@ private:
 									const PropertyObject* object,
 									uint32 flags);
 
-	static	StrokePropertiesCache& _StrokePropertiesCache();
 	static	Style&				_NullStyle();
 
 private:

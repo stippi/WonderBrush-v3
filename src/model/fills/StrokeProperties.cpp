@@ -477,3 +477,16 @@ StrokeProperties::HashKey() const
 		^ fSetProperties ^ fCapMode ^ fJoinMode ^ fStrokePosition);
 }
 
+/*static*/ const StrokeProperties&
+StrokeProperties::EmptyStrokeProperties()
+{
+	static StrokeProperties empty;
+	return empty;
+}
+
+/*static*/ ::StrokePropertiesCache&
+StrokeProperties::StrokePropertiesCache()
+{
+	static ::StrokePropertiesCache cache;
+	return cache;
+}

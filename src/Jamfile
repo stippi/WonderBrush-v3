@@ -304,14 +304,23 @@ Application Resizer :
 			RenderBuffer.o
 			RenderEngine.o
 
+			# model
+			BaseObject.o
+			Gradient.o
+			Paint.o
+			StrokeProperties.o
+
 			# support
 			Debug.o
+			Listener.o
+			Notifier.o
 			support.o
 			Referenceable.o
 			Transformable.o
 		]
 
 		libagg.a
+		libproperty.a
 
 		tracker
 		$(STDC++LIB)
@@ -346,14 +355,23 @@ Application Denoiser :
 			RenderBuffer.o
 			RenderEngine.o
 
+			# model
+			BaseObject.o
+			Gradient.o
+			Paint.o
+			StrokeProperties.o
+
 			# support
 			Debug.o
+			Listener.o
+			Notifier.o
 			support.o
 			Referenceable.o
 			Transformable.o
 		]
 
 		libagg.a
+		libproperty.a
 
 		tracker
 		$(STDC++LIB)

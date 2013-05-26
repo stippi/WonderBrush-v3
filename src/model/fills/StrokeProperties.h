@@ -10,6 +10,7 @@
 
 #include "BaseObject.h"
 #include "SetProperty.h"
+#include "SharedObjectCache.h"
 
 enum CapMode {
 	ButtCap						= agg::butt_cap,
@@ -30,6 +31,11 @@ enum StrokePosition {
 	OutsideStroke				= 1,
 	InsideStroke				= 2,
 };
+
+class StrokeProperties;
+
+typedef SharedObject<StrokeProperties>			SharedStrokeProperties;
+typedef SharedObjectCache<StrokeProperties>		StrokePropertiesCache;
 
 class StrokeProperties : public BaseObject {
 public:
@@ -97,6 +103,9 @@ public:
 
 			template<typename Converter>
 			void				SetupAggConverter(Converter& converter) const;
+
+	static	const StrokeProperties& EmptyStrokeProperties();
+	static	::StrokePropertiesCache& StrokePropertiesCache();
 
 private:
 			float				fWidth;

@@ -16,6 +16,9 @@ LayoutState::LayoutState()
 	, fStrokePaint(NULL)
 	, fStrokeProperties(NULL)
 {
+	SetFillPaint(NULL);
+	SetStrokePaint(NULL);
+	SetStrokeProperties(NULL);
 }
 
 // constructor
@@ -56,14 +59,34 @@ LayoutState::operator=(const LayoutState& other)
 void
 LayoutState::SetFillPaint(Paint* paint)
 {
-	_SetMember(fFillPaint, paint);
+	if (paint != NULL)
+		_SetMember(fFillPaint, *paint, Paint::PaintCache());
+	else
+		_SetMember(fFillPaint, Paint::EmptyPaint(), Paint::PaintCache());
+}
+
+// FillPaint
+const Paint*
+LayoutState::FillPaint() const
+{
+	return fFillPaint;
 }
 
 // SetStrokePaint
 void
 LayoutState::SetStrokePaint(Paint* paint)
 {
-	_SetMember(fStrokePaint, paint);
+	if (paint != NULL)
+		_SetMember(fStrokePaint, *paint, Paint::PaintCache());
+	else
+		_SetMember(fStrokePaint, Paint::EmptyPaint(), Paint::PaintCache());
+}
+
+// StrokePaint
+const Paint*
+LayoutState::StrokePaint() const
+{
+	return fStrokePaint;
 }
 
 // SetStrokeProperties
@@ -74,31 +97,57 @@ LayoutState::SetStrokeProperties(::StrokeProperties* properties)
 //		printf("LayoutState::SetStrokeProperties(%p) %p -> %ld\n",
 //			properties, fStrokeProperties, fStrokeProperties->CountReferences());
 //	}
-	_SetMember(fStrokeProperties, properties);
+	if (properties != NULL) {
+		_SetMember(fStrokeProperties, *properties,
+			StrokeProperties::StrokePropertiesCache());
+	} else {
+		_SetMember(fStrokeProperties,
+			StrokeProperties::EmptyStrokeProperties(),
+			StrokeProperties::StrokePropertiesCache());
+	}
 //	if (fStrokeProperties != NULL) {
 //		printf("                                (%p) %p -> %ld\n",
 //			properties, fStrokeProperties, fStrokeProperties->CountReferences());
 //	}
 }
 
-// _SetMember
-template <typename MemberType>
-void
-LayoutState::_SetMember(MemberType*& member, MemberType* newMember)
+// StrokePaint
+const ::StrokeProperties*
+LayoutState::StrokeProperties() const
 {
-	// The theory here is that the objects held by a LayoutState are
-	// always only additional references to existing objects that never
-	// change through the LayoutState. So all the LayoutState needs to do
-	// is to add/remove references.
-	if (member == newMember)
+	return fStrokeProperties;
+}
+
+// _SetMember
+template <typename MemberType, typename ValueType, typename CacheType>
+void
+LayoutState::_SetMember(MemberType*& member, const ValueType& newValue,
+	CacheType& cache)
+{
+//	// The theory here is that the objects held by a LayoutState are
+//	// always only additional references to existing objects that never
+//	// change through the LayoutState. So all the LayoutState needs to do
+//	// is to add/remove references.
+//	if (member == newMember)
+//		return;
+//
+//	if (newMember != NULL)
+//		newMember->AddReference();
+//
+//	if (member != NULL)
+//		member->RemoveReference();
+//
+//	member = newMember;
+	if (member == NULL) {
+		member = cache.Get(newValue);
+		return;
+	}
+
+	if (*member == newValue)
 		return;
 
-	if (newMember != NULL)
-		newMember->AddReference();
-
-	if (member != NULL)
-		member->RemoveReference();
-
-	member = newMember;
+	member = cache.PrepareForModifications(member);
+	*member = newValue;
+	member = cache.CommitModifications(member);
 }
 

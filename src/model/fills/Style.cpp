@@ -196,7 +196,8 @@ Style::UnsetStrokePaint()
 void
 Style::SetStrokeProperties(const ::StrokeProperties& properties)
 {
-	_SetProperty(fStrokeProperties, properties, _StrokePropertiesCache(),
+	_SetProperty(fStrokeProperties, properties,
+		StrokeProperties::StrokePropertiesCache(),
 		properties.SetProperties());
 }
 
@@ -206,7 +207,8 @@ Style::UnsetStrokeProperties()
 {
 	uint64 properties = STROKE_WIDTH | STROKE_JOIN_MODE | STROKE_CAP_MODE
 		| STROKE_MITER_LIMIT;
-	_UnsetProperty(fStrokeProperties, _StrokePropertiesCache(), properties);
+	_UnsetProperty(fStrokeProperties, StrokeProperties::StrokePropertiesCache(),
+		properties);
 }
 
 // ExtendBounds
@@ -340,14 +342,6 @@ Style::_SetPaintToPropertyObject(SharedPaint*& member, uint64 setProperty,
 	// any single property of the paint while still storing the others.
 	if (paint.SetToPropertyObject(object, flags))
 		_SetProperty(member, paint, Paint::PaintCache(), setProperty);
-}
-
-
-/*static*/ StrokePropertiesCache&
-Style::_StrokePropertiesCache()
-{
-	static StrokePropertiesCache strokePropertiesCache;
-	return strokePropertiesCache;
 }
 
 
