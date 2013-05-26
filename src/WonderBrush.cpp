@@ -156,6 +156,7 @@ WonderBrushBase::WonderBrushBase(BRect bounds)
 		(rgb_color){ 255, 0, 169, 255 }));
 
 	Layer* subSubSubLayer = new Layer(bounds);
+	subSubSubLayer->ScaleBy(BPoint(0, 0), 1.8, 1.8);
 	subSubLayer->AddObject(subSubSubLayer);
 
 	Style* style = new Style();
