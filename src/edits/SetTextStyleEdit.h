@@ -154,7 +154,6 @@ public:
 	{
 		delete fOldStyles;
 		delete fNewStyles;
-		fText->RemoveReference();
 	}
 
 	void SetGlyphSpacing(double spacing)
@@ -174,7 +173,7 @@ public:
 
 	virtual	status_t InitCheck()
 	{
-		return fText != NULL && fOldStyles != NULL && fNewStyles != NULL
+		return fText.Get() != NULL && fOldStyles != NULL && fNewStyles != NULL
 			? B_OK : B_ERROR;
 	}
 
@@ -218,15 +217,16 @@ public:
 private:
 	void _Init(Text* text, int32 offset, int32 length)
 	{
-		fText = text;
-		fText->AddReference();
+		fNewStyles = NULL;
+		if (text == NULL)
+			return;
+
+		fText.SetTo(text);
 		fOffset = offset;
 		fString = fText->GetSubString(offset, length);
 		fOldStyles = fText->GetStyleRuns(offset, length);
 		if (fOldStyles != NULL)
 			fNewStyles = new(std::nothrow) StyleRunList(*fOldStyles);
-		else
-			fNewStyles = NULL;
 	}
 
 	void _ModifyStyles(const CharacterStyleModifier& modifier)
@@ -271,7 +271,7 @@ private:
 	}
 
 private:
-			Text*				fText;
+			Reference<Text>		fText;
 			int32				fOffset;
 			BString				fString;
 			StyleRunList*		fOldStyles;

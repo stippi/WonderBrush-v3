@@ -17,17 +17,16 @@ public:
 		, fText(text)
 		, fAlignment(alignment)
 	{
-		fText->AddReference();
 	}
 
 	virtual ~SetTextAlignmentEdit()
 	{
-		fText->RemoveReference();
 	}
 
 	virtual	status_t InitCheck()
 	{
-		return fText->Alignment() != fAlignment ? B_OK : B_ERROR;
+		return fText.Get() != NULL && fText->Alignment() != fAlignment
+			? B_OK : B_ERROR;
 	}
 
 	virtual	status_t Perform()
@@ -65,7 +64,7 @@ public:
 	}
 
 private:
-			Text*				fText;
+			Reference<Text>		fText;
 			uint32				fAlignment;
 };
 

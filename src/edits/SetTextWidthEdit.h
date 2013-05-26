@@ -17,12 +17,10 @@ public:
 		, fText(text)
 		, fWidth(width)
 	{
-		fText->AddReference();
 	}
 
 	virtual ~SetTextWidthEdit()
 	{
-		fText->RemoveReference();
 	}
 
 	virtual	status_t InitCheck()
@@ -65,7 +63,7 @@ public:
 	}
 
 private:
-			Text*				fText;
+			Reference<Text>		fText;
 			double				fWidth;
 };
 
