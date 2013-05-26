@@ -123,7 +123,7 @@ public:
 	
 	inline void Remove(int32 index)
 	{
-		if (index < 0 || index >= fCount)
+		if (index < 0 || index >= (int32)fCount)
 			return;
 
 		if (!PlainOldData) {
@@ -132,8 +132,9 @@ public:
 		}
 
 		int32 nextIndex = index + 1;
-		if (fCount > nextIndex)
-			memcpy(fItems + index, fItems + nextIndex, fCount - nextIndex);
+		if ((int32)fCount > nextIndex)
+			memcpy(fItems + index, fItems + nextIndex,
+				(fCount - nextIndex) * sizeof(ItemType));
 		
 		fCount--;
 	}
