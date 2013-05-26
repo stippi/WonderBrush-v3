@@ -38,6 +38,7 @@
 #include "ToolConfigView.h"
 #include "TransformObjectEdit.h"
 #include "TransformTool.h"
+#include "RemoveObjectsEdit.h"
 #include "RenderManager.h"
 #include "ResourceTreeView.h"
 #include "ScrollView.h"
@@ -726,28 +727,28 @@ void
 Window::_RemoveObjects()
 {
 	if (fDocument == NULL) {
-		fprintf(stderr, "Window::_RemoveObject(): No document.\n");
+		fprintf(stderr, "Window::_RemoveObjects(): No document.\n");
 		return;
 	}
 
 	AutoWriteLocker _(fDocument.Get());
 
-	if (!fSelection.IsEmpty()) {
-		int32 selectionCount = fSelection.CountSelected();
-		for (int32 i = 0; i < selectionCount; i++) {
-			const Selectable& selectable = fSelection.SelectableAt(i);
-			Object* object = dynamic_cast<Object*>(selectable.Get());
-			if (object == NULL || object->Parent() == NULL)
-				continue;
-			object->Parent()->RemoveObject(object);
-		}
+	if (fSelection.IsEmpty())
+		return;
+
+	RemoveObjectsEdit::ObjectList list;
+
+	int32 selectionCount = fSelection.CountSelected();
+	for (int32 i = 0; i < selectionCount; i++) {
+		const Selectable& selectable = fSelection.SelectableAt(i);
+		Object* object = dynamic_cast<Object*>(selectable.Get());
+		if (object == NULL || object->Parent() == NULL)
+			continue;
+		list.Add(Reference<Object>(object));
 	}
 
-	// TODO: Do via UndoableEdit
-
-	fSelection.DeselectAll(fLayerTreeView);
-//	fDocument->EditManager()->Perform(
-//		new(std::nothrow) ObjectAddedEdit(newLayer, &fSelection));
+	fDocument->EditManager()->Perform(
+		new(std::nothrow) RemoveObjectsEdit(list, &fSelection));
 }
 
 // _ResetTransformation
