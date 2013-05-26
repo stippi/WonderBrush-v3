@@ -396,50 +396,6 @@ private:
 	uint32				fDragMode;
 };
 
-// CreateShapeState
-class PathToolState::CreateShapeState : public DragStateViewState::DragState {
-public:
-	CreateShapeState(PathToolState* parent)
-		: DragState(parent)
-		, fParent(parent)
-	{
-	}
-
-	virtual void SetOrigin(BPoint origin)
-	{
-		BPoint originalOrigin(origin);
-		fParent->TransformCanvasToObject(&origin);
-
-		// Setup tool and switch to drag left/top state
-		if (fParent->CreatePath(origin)) {
-			PathRef pathRef = fParent->fPaths.LastItem();
-			fParent->fDragPathPointState->SetPathPoint(
-				PathPoint(pathRef.Get(), 0, POINT_OUT));
-			fParent->fDragPathPointState->SetDragMode(
-				DRAG_MODE_MOVE_POINT_OUT_MIRROR_IN);
-			fParent->SetDragState(fParent->fDragPathPointState);
-			fParent->fDragPathPointState->SetOrigin(originalOrigin);
-		}
-	}
-
-	virtual void DragTo(BPoint current, uint32 modifiers)
-	{
-	}
-
-	virtual BCursor ViewCursor(BPoint current) const
-	{
-		return BCursor(kPathNewCursor);
-	}
-
-	virtual const char* CommandName() const
-	{
-		return "Create shape";
-	}
-
-private:
-	PathToolState*		fParent;
-};
-
 // AddPathPointState
 class PathToolState::AddPathPointState : public DragStateViewState::DragState {
 public:
@@ -767,6 +723,57 @@ private:
 	PathRef				fPathRef;
 };
 
+// CreateShapeState
+class PathToolState::CreateShapeState : public DragStateViewState::DragState {
+public:
+	CreateShapeState(PathToolState* parent)
+		: DragState(parent)
+		, fParent(parent)
+	{
+	}
+
+	virtual void SetOrigin(BPoint origin)
+	{
+		BPoint originalOrigin(origin);
+
+		// Create shape
+		if (!fParent->CreateShape(origin))
+			return;
+
+		fParent->TransformCanvasToObject(&origin);
+
+		// Create path with initial point
+		if (!fParent->CreatePath(origin))
+			return;
+
+		// Switch to drag path point state
+		PathRef pathRef = fParent->fPaths.LastItem();
+		fParent->fDragPathPointState->SetPathPoint(
+			PathPoint(pathRef.Get(), 0, POINT_OUT));
+		fParent->fDragPathPointState->SetDragMode(
+			DRAG_MODE_MOVE_POINT_OUT_MIRROR_IN);
+		fParent->SetDragState(fParent->fDragPathPointState);
+		fParent->fDragPathPointState->SetOrigin(originalOrigin);
+	}
+
+	virtual void DragTo(BPoint current, uint32 modifiers)
+	{
+	}
+
+	virtual BCursor ViewCursor(BPoint current) const
+	{
+		return BCursor(kPathNewCursor);
+	}
+
+	virtual const char* CommandName() const
+	{
+		return "Create shape";
+	}
+
+private:
+	PathToolState*		fParent;
+};
+
 // #pragma mark -
 
 // constructor
@@ -779,7 +786,6 @@ PathToolState::PathToolState(StateView* view, Document* document,
 
 	, fPickShapeState(new(std::nothrow) PickShapeState(this))
 	, fSelectPointsState(new(std::nothrow) SelectPointsState(this))
-	, fCreateShapeState(new(std::nothrow) CreateShapeState(this))
 	, fDragPathPointState(new(std::nothrow) DragPathPointState(this))
 	, fDragSelectionState(new(std::nothrow) DragSelectionState(this))
 	, fToggleSmoothSharpState(new(std::nothrow) ToggleSmoothSharpState(this))
@@ -787,6 +793,7 @@ PathToolState::PathToolState(StateView* view, Document* document,
 	, fInsertPathPointState(new(std::nothrow) InsertPathPointState(this))
 	, fRemovePathPointState(new(std::nothrow) RemovePathPointState(this))
 	, fClosePathState(new(std::nothrow) ClosePathState(this))
+	, fCreateShapeState(new(std::nothrow) CreateShapeState(this))
 
 	, fDocument(document)
 	, fSelection(selection)
@@ -801,18 +808,14 @@ PathToolState::PathToolState(StateView* view, Document* document,
 
 	, fPaths()
 	, fCurrentPath()
-
-	, fStyle(new(std::nothrow) Style(), true)
-
-	, fIgnoreColorColorNotifiactions(false)
+	
+	, fIgnoreColorNotifiactions(false)
 {
 	// TODO: Find a way to change this later...
 	SetInsertionInfo(fDocument->RootLayer(),
 		fDocument->RootLayer()->CountObjects());
 
 	fCurrentColor->AddListener(this);
-
-	fStyle.Get()->SetFillPaint(Paint(fCurrentColor->Color()));
 }
 
 // destructor
@@ -824,7 +827,6 @@ PathToolState::~PathToolState()
 
 	delete fPickShapeState;
 	delete fSelectPointsState;
-	delete fCreateShapeState;
 	delete fDragPathPointState;
 	delete fDragSelectionState;
 	delete fToggleSmoothSharpState;
@@ -832,6 +834,7 @@ PathToolState::~PathToolState()
 	delete fInsertPathPointState;
 	delete fRemovePathPointState;
 	delete fClosePathState;
+	delete fCreateShapeState;
 
 	SetInsertionInfo(NULL, -1);
 
@@ -1243,7 +1246,14 @@ PathToolState::ObjectChanged(const Notifier* object)
 //		UpdateDragState();
 //	}
 
-	if (object == fCurrentColor && !fIgnoreColorColorNotifiactions) {
+	if (object == fCurrentColor && !fIgnoreColorNotifiactions) {
+		AutoWriteLocker _(View()->Locker());
+		
+		if (fShape != NULL) {
+			Style* style = fShape->Style();
+			if (style != NULL)
+				style->SetFillPaint(Paint(fCurrentColor->Color()));
+		}
 	}
 }
 
@@ -1330,12 +1340,19 @@ PathToolState::CreateShape(BPoint canvasLocation)
 		return false;
 	}
 
-	Shape* shape = new(std::nothrow) Shape(fCurrentPath, kBlack);
-	if (shape == NULL) {
+	Shape* shape = new(std::nothrow) Shape();
+	Style* style = new(std::nothrow) Style();
+	if (shape == NULL || style == NULL) {
 		fprintf(stderr, "PathToolState::CreateShape(): Failed to allocate "
-			"Shape. Out of memory\n");
+			"Shape or Style. Out of memory\n");
+		delete shape;
+		delete style;
 		return false;
 	}
+
+	style->SetFillPaint(Paint(fCurrentColor->Color()));
+	shape->SetStyle(style);
+	style->RemoveReference();
 
 	shape->TranslateBy(canvasLocation);
 
@@ -1445,6 +1462,14 @@ PathToolState::SetShape(Shape* shape, bool modifySelection)
 		SetObjectToCanvasTransformation(fShape->Transformation());
 //		ObjectChanged(shape);
 		ObjectChanged(fCurrentPath.Get());
+
+		Style* style = fShape->Style();
+		Paint* fillPaint = style->FillPaint();
+		if (fillPaint->Type() == Paint::COLOR) {
+			fIgnoreColorNotifiactions = true;
+			fCurrentColor->SetColor(fillPaint->Color());
+			fIgnoreColorNotifiactions = false;
+		}
 	} else {
 		if (modifySelection)
 			fSelection->DeselectAll(this);

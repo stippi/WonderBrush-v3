@@ -95,7 +95,6 @@ private:
 
 			class PickShapeState;
 			class SelectPointsState;
-			class CreateShapeState;
 			class DragPathPointState;
 			class DragSelectionState;
 			class ToggleSmoothSharpState;
@@ -103,6 +102,7 @@ private:
 			class InsertPathPointState;
 			class RemovePathPointState;
 			class ClosePathState;
+			class CreateShapeState;
 
 			friend class PickShapeState;
 			friend class SelectPointsState;
@@ -259,7 +259,6 @@ private:
 
 			PickShapeState*		fPickShapeState;
 			SelectPointsState*	fSelectPointsState;
-			CreateShapeState*	fCreateShapeState;
 			DragPathPointState*	fDragPathPointState;
 			DragSelectionState*	fDragSelectionState;
 			ToggleSmoothSharpState*	fToggleSmoothSharpState;
@@ -267,6 +266,7 @@ private:
 			InsertPathPointState* fInsertPathPointState;
 			RemovePathPointState* fRemovePathPointState;
 			ClosePathState*		fClosePathState;
+			CreateShapeState*	fCreateShapeState;
 
 			Document*			fDocument;
 			Selection*			fSelection;
@@ -285,9 +285,7 @@ private:
 			PointSelection		fPointSelection;
 			BRect				fSelectionRect;
 
-			StyleRef			fStyle;
-
-			bool				fIgnoreColorColorNotifiactions;
+			bool				fIgnoreColorNotifiactions;
 };
 
 #endif // PATH_TOOL_STATE_H
