@@ -35,7 +35,7 @@ public:
 
 	virtual	status_t InitCheck()
 	{
-		return fText != NULL && fString.Length() > 0 ? B_OK : B_ERROR;
+		return fText.Get() != NULL && fString.Length() > 0 ? B_OK : B_ERROR;
 	}
 
 	virtual	status_t Perform()
@@ -82,7 +82,7 @@ public:
 	}
 
 private:
-			Text*				fText;
+			Reference<Text>		fText;
 			int32				fOffset;
 			BString				fString;
 			Font				fFont;
