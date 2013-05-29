@@ -712,6 +712,7 @@ Path::SetClosed(bool closed)
 {
 	if (fClosed != closed) {
 		fClosed = closed;
+		fCachedBounds.Set(0.0, 0.0, -1.0, -1.0);
 		_NotifyClosedChanged();
 		Notify();
 	}
