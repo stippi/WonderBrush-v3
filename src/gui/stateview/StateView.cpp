@@ -200,7 +200,7 @@ void
 StateView::MessageReceived(BMessage* message)
 {
 	// let the state handle the message if it wants
-	if (fCurrentState) {
+	if (fCurrentState != NULL) {
 		AutoWriteLocker locker(fLocker);
 		if (fLocker && !locker.IsLocked())
 			return;
@@ -625,6 +625,21 @@ StateView::PerformEdit(const UndoableEditRef& edit)
 		return fEditManager->Perform(edit);
 
 	return B_NO_INIT;
+}
+
+// PostMessage
+void
+StateView::PostMessage(uint32 what)
+{
+	BMessage message(what);
+	PostMessage(message);
+}
+
+// PostMessage
+void
+StateView::PostMessage(BMessage& message)
+{
+	Looper()->PostMessage(&message, this);
 }
 
 // TriggerUpdate
