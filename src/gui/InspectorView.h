@@ -21,6 +21,7 @@ public:
 	virtual						~InspectorView();
 
 	// BView interface
+	virtual void				MessageReceived(BMessage* message);
 	virtual	void				Draw(BRect updateRect);
 
 	// PropertyListView interface

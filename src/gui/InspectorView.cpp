@@ -6,10 +6,14 @@
 #include "InspectorView.h"
 
 #include "EditManager.h"
+#include "Messenger.h"
 #include "Property.h"
 #include "PropertyObject.h"
 #include "SetPropertiesEdit.h"
 
+enum {
+	MSG_OBJECT_CHANGED	= 'objc'
+};
 
 // constructor
 InspectorView::InspectorView()
@@ -29,6 +33,30 @@ InspectorView::~InspectorView()
 	SetSelection(NULL);
 	_SetObject(NULL);
 }
+
+// MessageReceived
+void
+InspectorView::MessageReceived(BMessage* message)
+{
+	switch (message->what) {
+		case MSG_OBJECT_CHANGED:
+		{
+			BaseObject* object;
+			if (message->FindPointer("object", (void**)&object) == B_OK) {
+				if (object == fObject)
+					SetTo(fObject->MakePropertyObject());
+				// Remove the extra reference that was transferred with
+				// the message
+				object->RemoveReference();
+			}
+			break;
+		}
+		
+		default:
+			PropertyListView::MessageReceived(message);
+			break;
+	}
+}	
 
 // Draw
 void
@@ -139,7 +167,12 @@ InspectorView::ObjectChanged(const Notifier* object)
 {
 	if (object == fObject/* && !fIgnoreObjectChange*/) {
 //printf("IconObjectListView::ObjectChanged(fObject)\n");
-		SetTo(fObject->MakePropertyObject());
+		BMessenger messenger(this);
+		BMessage message(MSG_OBJECT_CHANGED);
+		if (message.AddPointer("object", object) == B_OK
+			&& messenger.SendMessage(&message) == B_OK) {
+			fObject->AddReference();
+		}
 	}
 }
 
