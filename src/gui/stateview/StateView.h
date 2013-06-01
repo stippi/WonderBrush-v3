@@ -104,8 +104,8 @@ public:
 			status_t			PerformEdit(UndoableEdit* edit);
 			status_t			PerformEdit(const UndoableEditRef& edit);
 
-			void				PostMessage(uint32 what);
-			void				PostMessage(BMessage& message);
+			status_t			PostMessage(uint32 what);
+			status_t			PostMessage(BMessage& message);
 
 			void				TriggerUpdate();
 

@@ -628,18 +628,19 @@ StateView::PerformEdit(const UndoableEditRef& edit)
 }
 
 // PostMessage
-void
+status_t
 StateView::PostMessage(uint32 what)
 {
 	BMessage message(what);
-	PostMessage(message);
+	return PostMessage(message);
 }
 
 // PostMessage
-void
+status_t
 StateView::PostMessage(BMessage& message)
 {
-	Looper()->PostMessage(&message, this);
+	BMessenger messenger(this);
+	return messenger.SendMessage(&message);
 }
 
 // TriggerUpdate
