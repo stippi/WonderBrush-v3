@@ -34,6 +34,10 @@
 #include "TransformObjectEdit.h"
 #include "ui_defines.h"
 
+enum {
+	MSG_TEXT_CHANGED	= 'tttc',
+};
+
 // DragLeftTopState
 class TextToolState::DragLeftTopState : public DragStateViewState::DragState {
 public:
@@ -356,6 +360,18 @@ TextToolState::MessageReceived(BMessage* message, UndoableEdit** _edit)
 	bool handled = true;
 
 	switch (message->what) {
+		case MSG_TEXT_CHANGED:
+		{
+			Text* text;
+			if (message->FindPointer("text", (void**)&text) == B_OK
+				&& text != NULL && text == fText) {
+				SetObjectToCanvasTransformation(fText->Transformation());
+				UpdateBounds();
+				UpdateDragState();
+				_AdoptStyleAtOffset(_SelectionStart());
+			}
+			break;
+		}
 		case MSG_CARET_PULSE:
 			fShowCaret = !fShowCaret;
 			UpdateBounds();
@@ -611,10 +627,9 @@ void
 TextToolState::ObjectChanged(const Notifier* object)
 {
 	if (fText != NULL && object == fText) {
-		SetObjectToCanvasTransformation(fText->Transformation());
-		UpdateBounds();
-		UpdateDragState();
-		_AdoptStyleAtOffset(_SelectionStart());
+		BMessage message(MSG_TEXT_CHANGED);
+		if (message.AddPointer("object", fText) == B_OK)
+			View()->PostMessage(message);
 	}
 	if (object == fCurrentColor && !fIgnoreColorColorNotifiactions) {
 		SetColor(fCurrentColor->Color());
