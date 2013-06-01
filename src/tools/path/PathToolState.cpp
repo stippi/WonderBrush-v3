@@ -29,6 +29,10 @@
 #include "TransformObjectEdit.h"
 #include "ui_defines.h"
 
+enum {
+	MSG_UPDATE_BOUNDS	= 'ptub',
+};
+
 // PickShapeState
 class PathToolState::PickShapeState : public DragStateViewState::DragState {
 public:
@@ -870,6 +874,10 @@ PathToolState::MessageReceived(BMessage* message, UndoableEdit** _edit)
 	bool handled = true;
 
 	switch (message->what) {
+		case MSG_UPDATE_BOUNDS:
+			UpdateBounds();
+			handled = true;
+			break;
 		default:
 			handled = DragStateViewState::MessageReceived(message, _edit);
 	}
@@ -1237,8 +1245,11 @@ PathToolState::ObjectDeselected(const Selectable& selectable,
 void
 PathToolState::ObjectChanged(const Notifier* object)
 {
-	if (dynamic_cast<const Path*>(object) != NULL)
-		UpdateBounds();
+	if (dynamic_cast<const Path*>(object) != NULL) {
+		// Update asynchronously, since the notification may arrive on
+		// the wrong thread.
+		View()->PostMessage(MSG_UPDATE_BOUNDS);
+	}
 
 //	if (fShape != NULL && object == fShape) {
 //		SetObjectToCanvasTransformation(fShape->Transformation());
