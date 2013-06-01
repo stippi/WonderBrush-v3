@@ -34,6 +34,7 @@
 #include "ObjectAddedEdit.h"
 #include "ObjectTreeView.h"
 #include "PathTool.h"
+#include "RectangleTool.h"
 #include "TextTool.h"
 #include "ToolConfigView.h"
 #include "TransformObjectEdit.h"
@@ -602,6 +603,7 @@ Window::_InitTools()
 	AddTool(new(std::nothrow) BrushTool());
 	AddTool(new(std::nothrow) TextTool());
 	AddTool(new(std::nothrow) PathTool());
+	AddTool(new(std::nothrow) RectangleTool());
 }
 
 // _SetTool
