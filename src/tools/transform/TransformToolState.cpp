@@ -22,6 +22,9 @@
 #include "Shape.h"
 #include "support.h"
 
+enum {
+	MSG_ADOPT_OBJECT	= 'ttao',
+};
 
 class TransformToolState::DragPivotState
 	: public DragStateViewState::DragState {
@@ -645,6 +648,10 @@ TransformToolState::MessageReceived(BMessage* message, UndoableEdit** _edit)
 	bool handled = true;
 
 	switch (message->what) {
+		case MSG_ADOPT_OBJECT:
+			if (fObject != NULL)
+				AdoptObject();
+			break;
 		default:
 			handled = ViewState::MessageReceived(message, _edit);
 	}
@@ -843,9 +850,8 @@ TransformToolState::ObjectChanged(const Notifier* object)
 	if (fIgnoreObjectEvents)
 		return;
 
-	if (fObject != NULL && object == fObject) {
-		AdoptObject();
-	}
+	if (fObject != NULL && object == fObject)
+		View()->PostMessage(MSG_ADOPT_OBJECT);
 }
 
 // #pragma mark -
