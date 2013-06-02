@@ -84,6 +84,8 @@ private:
 			class PlatformDelegate;
 
 			class CreateRectangleState;
+			
+			friend class CreateRectangleState;
 
 private:
 			PlatformDelegate*	fPlatformDelegate;

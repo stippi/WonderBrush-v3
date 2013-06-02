@@ -52,19 +52,22 @@ public:
 			return;
 
 		fParent->TransformCanvasToObject(&origin);
-
-//		// Switch to drag path point state
-//		PathRef pathRef = fParent->fPaths.LastItem();
-//		fParent->fDragPathPointState->SetPathPoint(
-//			PathPoint(pathRef.Get(), 0, POINT_OUT));
-//		fParent->fDragPathPointState->SetDragMode(
-//			DRAG_MODE_MOVE_POINT_OUT_MIRROR_IN);
-//		fParent->SetDragState(fParent->fDragPathPointState);
-//		fParent->fDragPathPointState->SetOrigin(originalOrigin);
+		fOrigin = origin;
 	}
 
 	virtual void DragTo(BPoint current, uint32 modifiers)
 	{
+		if (fParent->fRectangle == NULL)
+			return;
+		
+		fParent->TransformCanvasToObject(&current);
+		BRect rect(
+			std::min(fOrigin.x, current.x),
+			std::min(fOrigin.y, current.y),
+			std::max(fOrigin.x, current.x),
+			std::max(fOrigin.y, current.y));
+		
+		fParent->fRectangle->SetArea(rect);
 	}
 
 	virtual BCursor ViewCursor(BPoint current) const
@@ -345,7 +348,8 @@ RectangleToolState::CreateRectangle(BPoint canvasLocation)
 		return false;
 	}
 
-	Rect* rectangle = new(std::nothrow) Rect();
+	Rect* rectangle = new(std::nothrow) Rect(BRect(0, 0, 0, 0),
+		fCurrentColor->Color());
 	Style* style = new(std::nothrow) Style();
 	if (rectangle == NULL || style == NULL) {
 		fprintf(stderr, "RectangleToolState::CreateRectangle(): Failed to allocate "
