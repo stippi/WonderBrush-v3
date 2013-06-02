@@ -26,11 +26,13 @@
 #include "ObjectAddedEdit.h"
 #include "support.h"
 #include "Shape.h"
+#include "StyleSetFillPaintEdit.h"
 #include "TransformObjectEdit.h"
 #include "ui_defines.h"
 
 enum {
 	MSG_UPDATE_BOUNDS	= 'ptub',
+	MSG_SHAPE_CHANGED	= 'ptsc',
 };
 
 // PickShapeState
@@ -878,6 +880,14 @@ PathToolState::MessageReceived(BMessage* message, UndoableEdit** _edit)
 			UpdateBounds();
 			handled = true;
 			break;
+		case MSG_SHAPE_CHANGED:
+			if (fShape != NULL) {
+				SetObjectToCanvasTransformation(fShape->Transformation());
+				UpdateBounds();
+				UpdateDragState();
+				_AdoptShapePaint();
+			}
+			break;
 		default:
 			handled = DragStateViewState::MessageReceived(message, _edit);
 	}
@@ -1251,19 +1261,17 @@ PathToolState::ObjectChanged(const Notifier* object)
 		View()->PostMessage(MSG_UPDATE_BOUNDS);
 	}
 
-//	if (fShape != NULL && object == fShape) {
-//		SetObjectToCanvasTransformation(fShape->Transformation());
-//		UpdateBounds();
-//		UpdateDragState();
-//	}
+	if (fShape != NULL && object == fShape) {
+//		View()->PostMessage(MSG_SHAPE_CHANGED);
+	}
 
 	if (object == fCurrentColor && !fIgnoreColorNotifiactions) {
 		AutoWriteLocker _(View()->Locker());
 		
 		if (fShape != NULL) {
 			Style* style = fShape->Style();
-			if (style != NULL)
-				style->SetFillPaint(Paint(fCurrentColor->Color()));
+			View()->PerformEdit(new(std::nothrow) StyleSetFillPaintEdit(style,
+				Paint(fCurrentColor->Color())));
 		}
 	}
 }
@@ -1474,13 +1482,7 @@ PathToolState::SetShape(Shape* shape, bool modifySelection)
 //		ObjectChanged(shape);
 		ObjectChanged(fCurrentPath.Get());
 
-		Style* style = fShape->Style();
-		Paint* fillPaint = style->FillPaint();
-		if (fillPaint->Type() == Paint::COLOR) {
-			fIgnoreColorNotifiactions = true;
-			fCurrentColor->SetColor(fillPaint->Color());
-			fIgnoreColorNotifiactions = false;
-		}
+		_AdoptShapePaint();
 	} else {
 		if (modifySelection)
 			fSelection->DeselectAll(this);
@@ -1609,6 +1611,19 @@ PathToolState::_DeselectPoints()
 	fPointSelection.Clear();
 
 	Invalidate();
+}
+
+// _AdoptShapePaint
+void
+PathToolState::_AdoptShapePaint()
+{
+	Style* style = fShape->Style();
+	Paint* fillPaint = style->FillPaint();
+	if (fillPaint->Type() == Paint::COLOR) {
+		fIgnoreColorNotifiactions = true;
+		fCurrentColor->SetColor(fillPaint->Color());
+		fIgnoreColorNotifiactions = false;
+	}
 }
 
 #endif	// _PATHTOOLSTATE_CPP_

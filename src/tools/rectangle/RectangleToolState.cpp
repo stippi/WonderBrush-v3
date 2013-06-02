@@ -25,6 +25,7 @@
 #include "Layer.h"
 #include "ObjectAddedEdit.h"
 #include "Rect.h"
+#include "StyleSetFillPaintEdit.h"
 #include "support.h"
 #include "TransformObjectEdit.h"
 #include "ui_defines.h"
@@ -158,6 +159,7 @@ RectangleToolState::MessageReceived(BMessage* message, UndoableEdit** _edit)
 	switch (message->what) {
 		case MSG_UPDATE_BOUNDS:
 			if (fRectangle != NULL) {
+				_AdoptRectanglePaint();
 				SetObjectToCanvasTransformation(fRectangle->Transformation());
 				UpdateBounds();
 				UpdateDragState();
@@ -316,8 +318,8 @@ RectangleToolState::ObjectChanged(const Notifier* object)
 		
 		if (fRectangle != NULL) {
 			Style* style = fRectangle->Style();
-			if (style != NULL)
-				style->SetFillPaint(Paint(fCurrentColor->Color()));
+			View()->PerformEdit(new(std::nothrow) StyleSetFillPaintEdit(style,
+				Paint(fCurrentColor->Color())));
 		}
 	}
 }
@@ -416,13 +418,7 @@ RectangleToolState::SetRectangle(Rect* rectangle, bool modifySelection)
 		SetObjectToCanvasTransformation(fRectangle->Transformation());
 //		ObjectChanged(rectangle);
 
-		Style* style = fRectangle->Style();
-		Paint* fillPaint = style->FillPaint();
-		if (fillPaint->Type() == Paint::COLOR) {
-			fIgnoreColorNotifiactions = true;
-			fCurrentColor->SetColor(fillPaint->Color());
-			fIgnoreColorNotifiactions = false;
-		}
+		_AdoptRectanglePaint();
 	} else {
 		if (modifySelection)
 			fSelection->DeselectAll(this);
@@ -436,6 +432,20 @@ RectangleToolState::SetRectangle(Rect* rectangle, bool modifySelection)
 void
 RectangleToolState::_DrawControls(PlatformDrawContext& drawContext)
 {
+	
+}
+
+// _AdoptRectanglePaint
+void
+RectangleToolState::_AdoptRectanglePaint()
+{
+	Style* style = fRectangle->Style();
+	Paint* fillPaint = style->FillPaint();
+	if (fillPaint->Type() == Paint::COLOR) {
+		fIgnoreColorNotifiactions = true;
+		fCurrentColor->SetColor(fillPaint->Color());
+		fIgnoreColorNotifiactions = false;
+	}
 }
 
 #endif	// _RECTANGLETOOLSTATE_CPP_

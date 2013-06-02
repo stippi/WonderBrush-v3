@@ -254,6 +254,8 @@ private:
 			void				_SetSelectionRect(const BRect& rect,
 									const PointSelection& previousSelection);
 
+			void				_AdoptShapePaint();
+
 private:
 			PlatformDelegate*	fPlatformDelegate;
 

@@ -80,6 +80,8 @@ public:
 private:
 			void				_DrawControls(PlatformDrawContext& drawContext);
 
+			void				_AdoptRectanglePaint();
+
 private:
 			class PlatformDelegate;
 
