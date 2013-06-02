@@ -1261,8 +1261,8 @@ PathToolState::ObjectChanged(const Notifier* object)
 		View()->PostMessage(MSG_UPDATE_BOUNDS);
 	}
 
-	if (fShape != NULL && object == fShape) {
-//		View()->PostMessage(MSG_SHAPE_CHANGED);
+	if (fShape != NULL && object == fShape && !IsDragging()) {
+		View()->PostMessage(MSG_SHAPE_CHANGED);
 	}
 
 	if (object == fCurrentColor && !fIgnoreColorNotifiactions) {
