@@ -416,13 +416,14 @@ RectangleToolState::SetRectangle(Rect* rectangle, bool modifySelection)
 			fSelection->Select(Selectable(rectangle), this);
 
 		SetObjectToCanvasTransformation(fRectangle->Transformation());
-//		ObjectChanged(rectangle);
+		ObjectChanged(rectangle);
 
 		_AdoptRectanglePaint();
 	} else {
 		if (modifySelection)
 			fSelection->DeselectAll(this);
 //		SetObjectToCanvasTransformation(Transformable());
+		UpdateBounds();
 	}
 }
 
@@ -432,7 +433,22 @@ RectangleToolState::SetRectangle(Rect* rectangle, bool modifySelection)
 void
 RectangleToolState::_DrawControls(PlatformDrawContext& drawContext)
 {
+	if (fRectangle == NULL)
+		return;
+
+	BRect box = fRectangle->Bounds();
 	
+	BPoint lt(box.LeftTop());
+	BPoint rt(box.RightTop());
+	BPoint rb(box.RightBottom());
+	BPoint lb(box.LeftBottom());
+
+	TransformObjectToView(&lt, true);
+	TransformObjectToView(&rt, true);
+	TransformObjectToView(&rb, true);
+	TransformObjectToView(&lb, true);
+
+	fPlatformDelegate->DrawBox(drawContext, lt, rt, rb, lb, ZoomLevel());
 }
 
 // _AdoptRectanglePaint
