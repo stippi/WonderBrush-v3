@@ -65,8 +65,7 @@ Rect::SetArea(const BRect& area)
 	BRect oldArea(fArea);
 	fArea = area;
 
-	UpdateChangeCounter();
-	UpdateBounds();
+	NotifyAndUpdate();
 }
 
 // Area
