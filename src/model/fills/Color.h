@@ -1,21 +1,23 @@
 /*
- * Copyright 2009, Stephan Aßmus <superstippi@gmx.de>.
+ * Copyright 2009-2013, Stephan Aßmus <superstippi@gmx.de>.
  * All rights reserved. Distributed under the terms of the MIT License.
  */
 
 #ifndef COLOR_H
 #define COLOR_H
 
-#include <GraphicsDefs.h>
+#include "ColorProvider.h"
 
-#include "Notifier.h"
-
-class Color : public Notifier {
+class Color : public ColorProvider {
 public:
 								Color();
 								Color(const Color& color);
 								Color(const rgb_color& color);
 	virtual						~Color();
+
+	virtual	rgb_color			GetColor() const;
+
+	virtual	const char*			DefaultName() const;
 
 	inline						operator rgb_color() const
 									{ return fColor; }
@@ -35,4 +37,4 @@ private:
 			rgb_color			fColor;
 };
 
-#endif // CURRENT_COLOR_H
+#endif // COLOR_H

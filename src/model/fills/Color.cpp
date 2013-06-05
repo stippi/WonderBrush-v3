@@ -1,5 +1,5 @@
 /*
- * Copyright 2009, Stephan Aßmus <superstippi@gmx.de>.
+ * Copyright 2009-2013, Stephan Aßmus <superstippi@gmx.de>.
  * All rights reserved. Distributed under the terms of the MIT License.
  */
 
@@ -14,7 +14,7 @@
 // constructor
 Color::Color()
 	:
-	Notifier(),
+	ColorProvider(),
 	fColor(kBlack)
 {
 }
@@ -22,7 +22,7 @@ Color::Color()
 // constructor
 Color::Color(const Color& color)
 	:
-	Notifier(),
+	ColorProvider(),
 	fColor(color.fColor)
 {
 }
@@ -30,7 +30,7 @@ Color::Color(const Color& color)
 // constructor
 Color::Color(const rgb_color& color)
 	:
-	Notifier(),
+	ColorProvider(),
 	fColor(color)
 {
 }
@@ -38,6 +38,20 @@ Color::Color(const rgb_color& color)
 // destructor
 Color::~Color()
 {
+}
+
+// GetColor
+rgb_color
+Color::GetColor() const
+{
+	return fColor;
+}
+
+// DefaultName
+const char*
+Color::DefaultName() const
+{
+	return "Color";
 }
 
 // SetColor

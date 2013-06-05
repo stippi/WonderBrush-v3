@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2009, Stephan Aßmus <superstippi@gmx.de>.
+ * Copyright 2006-2013, Stephan Aßmus <superstippi@gmx.de>.
  * All rights reserved. Distributed under the terms of the MIT License.
  */
 
@@ -11,6 +11,7 @@
 
 #include <Message.h>
 
+#include "Color.h"
 #include "ColorProperty.h"
 #include "Gradient.h"
 #include "OptionProperty.h"
@@ -20,7 +21,7 @@
 Paint::Paint()
 	: BaseObject()
 	, fType(NONE)
-	, fColor((rgb_color){0, 0, 0, 255})
+	, fColor(new(std::nothrow) ::Color())
 	, fGradient(NULL)
 
 	, fColors(NULL)
@@ -34,7 +35,7 @@ Paint::Paint()
 Paint::Paint(const Paint& other)
 	: BaseObject(other)
 	, fType(NONE)
-	, fColor((rgb_color){0, 0, 0, 255})
+	, fColor(other.fColor)
 	, fGradient(NULL)
 
 	, fColors(NULL)
@@ -47,6 +48,20 @@ Paint::Paint(const Paint& other)
 
 // constructor
 Paint::Paint(const rgb_color& color)
+	: BaseObject()
+	, fType(COLOR)
+	, fColor(new(std::nothrow) ::Color(color))
+	, fGradient(NULL)
+
+	, fColors(NULL)
+
+	, fGammaCorrectedColors(NULL)
+	, fGammaCorrectedColorsValid(false)
+{
+}
+
+// constructor
+Paint::Paint(const ColorProviderRef& color)
 	: BaseObject()
 	, fType(COLOR)
 	, fColor(color)
@@ -63,7 +78,7 @@ Paint::Paint(const rgb_color& color)
 Paint::Paint(const ::Gradient* gradient)
 	: BaseObject()
 	, fType(GRADIENT)
-	, fColor((rgb_color){0, 0, 0, 255})
+	, fColor(new(std::nothrow) ::Color())
 	, fGradient(NULL)
 
 	, fColors(NULL)
@@ -78,7 +93,7 @@ Paint::Paint(const ::Gradient* gradient)
 Paint::Paint(BMessage* archive)
 	: BaseObject()
 	, fType(NONE)
-	, fColor((rgb_color){0, 0, 0, 255})
+	, fColor(new(std::nothrow) ::Color())
 	, fGradient(NULL)
 
 	, fColors(NULL)
@@ -136,8 +151,13 @@ Paint::Archive(BMessage* into, bool deep) const
 				break;
 
 			case COLOR:
-				ret = into->AddInt32("color", *(int32*)&fColor);
+			{
+				BMessage colorArchive;
+				ret = fColor->Archive(&colorArchive, deep);
+				if (ret == B_OK)
+					ret = into->AddMessage("color", &colorArchive);
 				break;
+			}
 
 			case GRADIENT:
 			{
@@ -318,7 +338,7 @@ Paint::HasTransparency() const
 			return false;
 
 		case COLOR:
-			return fColor.alpha < 255;
+			return fColor->GetColor().alpha < 255;
 
 		case GRADIENT:
 			if (fGradient != NULL) {
@@ -343,10 +363,11 @@ Paint::HashKey() const
 {
 	size_t hash = 0;
 	hash |= fType << 30;
-	hash |= (fColor.red & 0x0f) << 26;
-	hash |= (fColor.green & 0x0f) << 22;
-	hash |= (fColor.blue & 0x0f) << 18;
-	hash |= (fColor.alpha & 0x0f) << 14;
+	rgb_color color = fColor->GetColor();
+	hash |= (color.red & 0x0f) << 26;
+	hash |= (color.green & 0x0f) << 22;
+	hash |= (color.blue & 0x0f) << 18;
+	hash |= (color.alpha & 0x0f) << 14;
 	hash |= ((addr_t)fGradient & 0xff) << 6;
 
 	// TODO: pattern...
@@ -387,11 +408,11 @@ Paint::SetColor(const rgb_color& color)
 	if (fType != COLOR)
 		fType = COLOR;
 	else {
-		if (fColor == color)
+		if (fColor->GetColor() == color)
 			return;
 	}
 
-	fColor = color;
+	fColor.SetTo(new(std::nothrow) ::Color(color));
 	Notify();
 }
 

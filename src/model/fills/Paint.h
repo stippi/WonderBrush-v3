@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2009, Stephan Aßmus <superstippi@gmx.de>.
+ * Copyright 2006-2013, Stephan Aßmus <superstippi@gmx.de>.
  * All rights reserved. Distributed under the terms of the MIT License.
  */
 
@@ -10,7 +10,7 @@
 
 #include <agg_color_rgba.h>
 
-#include "BaseObject.h"
+#include "ColorProvider.h"
 #include "Listener.h"
 #include "SharedObjectCache.h"
 
@@ -36,6 +36,7 @@ public:
 								Paint();
 								Paint(const Paint& other);
 								Paint(const rgb_color& color);
+								Paint(const ColorProviderRef& color);
 								Paint(const ::Gradient* gradient);
 								Paint(BMessage* archive);
 
@@ -72,7 +73,7 @@ public:
 
 			void				SetColor(const rgb_color& color);
 	inline	rgb_color			Color() const
-									{ return fColor; }
+									{ return fColor->GetColor(); }
 
 			void				SetGradient(const ::Gradient* gradient);
 	inline	::Gradient*			Gradient() const
@@ -89,7 +90,7 @@ public:
 
 private:
 			uint32				fType;
-			rgb_color			fColor;
+			ColorProviderRef	fColor;
 			::Gradient*			fGradient;
 
 			// hold gradient color array

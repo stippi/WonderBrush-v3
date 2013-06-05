@@ -161,7 +161,8 @@ Application WonderBrush :
 	Selection.cpp
 
 	# model/fills
-#	Color.cpp
+	Color.cpp
+	ColorProvider.cpp
 	Brush.cpp
 	Gradient.cpp
 	Paint.cpp
@@ -315,6 +316,8 @@ Application Resizer :
 
 			# model
 			BaseObject.o
+			Color.o
+			ColorProvider.o
 			Gradient.o
 			Paint.o
 			StrokeProperties.o
@@ -366,6 +369,8 @@ Application Denoiser :
 
 			# model
 			BaseObject.o
+			Color.o
+			ColorProvider.o
 			Gradient.o
 			Paint.o
 			StrokeProperties.o
