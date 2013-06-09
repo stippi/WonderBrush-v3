@@ -144,7 +144,7 @@ public:
 	{
 		if (fPathPoint.IsValid())
 			return false;
-		
+
 		return fDragDistance * fParent->ZoomLevel() < 5.0;
 	}
 
@@ -196,12 +196,12 @@ public:
 				break;
 		}
 		fClickOffset = origin - point;
-		
+
 		PathPoint pathPoint(fPathPoint.GetPath(), fPathPoint.GetIndex(),
 			POINT_ALL);
-		
+
 		bool shift = (fParent->Modifiers() & B_SHIFT_KEY) != 0;
-		
+
 		if (shift && fParent->fPointSelection.Contains(pathPoint))
 			fParent->_DeselectPoint(pathPoint);
 		else
@@ -286,9 +286,9 @@ public:
 		fParent->TransformCanvasToObject(&current);
 		BPoint offset = current - fOrigin;
 		fOrigin = current;
-		
+
 		// TODO: Stop Path notifications until all points are modified
-		
+
 		PointSelection::Iterator iterator
 			= fParent->fPointSelection.GetIterator();
 		while (iterator.HasNext()) {
@@ -364,7 +364,7 @@ public:
 	{
 		BPoint originalCurrent(current);
 		fParent->TransformCanvasToObject(&current);
-		
+
 		double dragDistance = point_point_distance(fOrigin, current);
 		if (dragDistance * fParent->ZoomLevel() > 7.0) {
 			BPoint originalOrigin(fOrigin);
@@ -814,7 +814,7 @@ PathToolState::PathToolState(StateView* view, Document* document,
 
 	, fPaths()
 	, fCurrentPath()
-	
+
 	, fIgnoreColorNotifiactions(false)
 {
 	// TODO: Find a way to change this later...
@@ -1022,7 +1022,7 @@ PathToolState::Bounds() const
 	if (fSelectionRect.IsValid()) {
 		BRect selectionRect(fSelectionRect);
 		TransformCanvasToView(&selectionRect);
-	
+
 		bounds = bounds | selectionRect;
 	}
 
@@ -1135,7 +1135,7 @@ PathToolState::DragStateFor(BPoint canvasWhere, float zoomLevel) const
 			}
 			return fToggleSmoothSharpState;
 		}
-	
+
 		if ((Modifiers() & B_SHIFT_KEY) != 0) {
 			PathPoint pathPoint(closestPathPoint.GetPath(),
 				closestPathPoint.GetIndex(), POINT_ALL);
@@ -1155,7 +1155,7 @@ PathToolState::DragStateFor(BPoint canvasWhere, float zoomLevel) const
 				return fDragSelectionState;
 			}
 		}
-		
+
 		fDragPathPointState->SetPathPoint(closestPathPoint);
 		switch (closestPathPoint.GetWhich()) {
 			case POINT:
@@ -1170,7 +1170,7 @@ PathToolState::DragStateFor(BPoint canvasWhere, float zoomLevel) const
 		}
 		return fDragPathPointState;
 	}
-	
+
 	if (fPaths.CountItems() > 0 && (Modifiers() & B_SHIFT_KEY) != 0) {
 		fSelectPointsState->SetPathPoint(PathPoint());
 		return fSelectPointsState;
@@ -1199,20 +1199,27 @@ PathToolState::DragStateFor(BPoint canvasWhere, float zoomLevel) const
 		return fInsertPathPointState;
 	}
 
-	// If there is still no state, switch to the PickObjectsState
-	// and try to find an object. If nothing is picked, unset on mouse down.
-	Object* pickedObject = NULL;
-	fDocument->RootLayer()->HitTest(canvasWhere, NULL, &pickedObject, true);
+	if ((Modifiers() & B_COMMAND_KEY) != 0) {
+		// If there is still no state, switch to the PickObjectsState
+		// and try to find an object. If nothing is picked, unset on mouse down.
+		Object* pickedObject = NULL;
+		fDocument->RootLayer()->HitTest(canvasWhere, NULL, &pickedObject, true);
 
-	Shape* pickedShape = dynamic_cast<Shape*>(pickedObject);
-	if (pickedShape != NULL && pickedShape != fShape) {
-		fPickShapeState->SetShape(pickedShape);
-		return fPickShapeState;
+		Shape* pickedShape = dynamic_cast<Shape*>(pickedObject);
+		if (pickedShape != NULL && pickedShape != fShape) {
+			fPickShapeState->SetShape(pickedShape);
+			return fPickShapeState;
+		}
 	}
 
-	if (fCurrentPath.Get() != NULL && !fCurrentPath->IsClosed()) {
-		fAddPathPointState->SetPath(fCurrentPath);
-		return fAddPathPointState;
+	if (fCurrentPath.Get() != NULL) {
+		if (!fCurrentPath->IsClosed()) {
+			fAddPathPointState->SetPath(fCurrentPath);
+			return fAddPathPointState;
+		} else {
+			fSelectPointsState->SetPathPoint(PathPoint());
+			return fSelectPointsState;
+		}
 	}
 
 	return fCreateShapeState;
@@ -1267,7 +1274,7 @@ PathToolState::ObjectChanged(const Notifier* object)
 
 	if (object == fCurrentColor && !fIgnoreColorNotifiactions) {
 		AutoWriteLocker _(View()->Locker());
-		
+
 		if (fShape != NULL) {
 			Style* style = fShape->Style();
 			View()->PerformEdit(new(std::nothrow) StyleSetFillPaintEdit(style,
@@ -1557,9 +1564,9 @@ PathToolState::_SetSelectionRect(const BRect& rect,
 				TransformObjectToCanvas(&point);
 				TransformObjectToCanvas(&pointIn);
 				TransformObjectToCanvas(&pointOut);
-				
+
 				PathPoint pathPoint(path, j, POINT_ALL);
-				
+
 				if (rect.Contains(point) || rect.Contains(pointIn)
 					|| rect.Contains(pointOut)) {
 					// Path point within selection rect
@@ -1583,7 +1590,7 @@ PathToolState::_SelectPoint(const PathToolState::PathPoint& point, bool extend)
 		_DeselectPoints();
 	else if (fPointSelection.Contains(point))
 		return;
-	
+
 	fPointSelection.Add(point);
 
 	Invalidate();
@@ -1595,7 +1602,7 @@ PathToolState::_DeselectPoint(const PathToolState::PathPoint& point)
 {
 	if (!fPointSelection.Contains(point))
 		return;
-	
+
 	fPointSelection.Remove(point);
 
 	Invalidate();
