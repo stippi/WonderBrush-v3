@@ -1206,10 +1206,8 @@ PathToolState::DragStateFor(BPoint canvasWhere, float zoomLevel) const
 		fDocument->RootLayer()->HitTest(canvasWhere, NULL, &pickedObject, true);
 
 		Shape* pickedShape = dynamic_cast<Shape*>(pickedObject);
-		if (pickedShape != NULL && pickedShape != fShape) {
-			fPickShapeState->SetShape(pickedShape);
-			return fPickShapeState;
-		}
+		fPickShapeState->SetShape(pickedShape);
+		return fPickShapeState;
 	}
 
 	if (fCurrentPath.Get() != NULL) {
@@ -1462,6 +1460,7 @@ PathToolState::SetShape(Shape* shape, bool modifySelection)
 	for (int32 i = fPaths.CountItems() - 1; i >= 0; i--)
 		fPaths.ItemAtFast(i)->RemoveListener(this);
 	fPaths.Clear();
+	fCurrentPath.SetTo(NULL);
 
 	if (fShape != NULL) {
 		fShape->RemoveListener(this);
@@ -1493,7 +1492,7 @@ PathToolState::SetShape(Shape* shape, bool modifySelection)
 	} else {
 		if (modifySelection)
 			fSelection->DeselectAll(this);
-//		SetObjectToCanvasTransformation(Transformable());
+		UpdateBounds();
 	}
 }
 
