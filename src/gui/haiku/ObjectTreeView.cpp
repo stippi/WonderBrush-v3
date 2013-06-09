@@ -688,6 +688,8 @@ ObjectTreeView::_ObjectSelected(Object* object, bool selected)
 		}
 	}
 
+	ScrollToSelection();
+
 	fIgnoreSelectionChanged = false;
 }
 

@@ -467,6 +467,8 @@ ResourceTreeView::_ObjectSelected(BaseObject* object, bool selected)
 		}
 	}
 
+	ScrollToSelection();
+
 	fIgnoreSelectionChanged = false;
 }
 
