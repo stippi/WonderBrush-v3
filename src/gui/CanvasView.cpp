@@ -1,6 +1,7 @@
 #include "CanvasView.h"
 #include "CanvasViewPlatformDelegate.h"
 
+#include <algorithm>
 #include <stdio.h>
 
 #include <Bitmap.h>
@@ -132,7 +133,7 @@ CanvasView::MessageReceived(BMessage* message)
 			}
 			break;
 		}
-		
+
 		case MSG_LAYOUT_CHANGED:
 		{
 			BPoint offset = fRenderManager->VisibleRect().LeftTop()
@@ -156,11 +157,29 @@ CanvasView::MessageReceived(BMessage* message)
 			SetZoomLevel(NextZoomOutLevel(fZoomLevel), false);
 			break;
 		case MSG_ZOOM_ORIGINAL:
-			SetZoomLevel(1.0, false);
+		{
+			BRect visibleRect = VisibleRect();
+			BRect canvasRect = fDocument->Bounds();
+			SetZoomLevel(1.0,
+				BPoint(visibleRect.left + roundf(visibleRect.Width() / 2),
+					visibleRect.top + roundf(visibleRect.Height() / 2)),
+				BPoint(canvasRect.Width() / 2, canvasRect.Height() / 2));
 			break;
+		}
 		case MSG_ZOOM_TO_FIT:
 		{
-			printf("MSG_ZOOM_TO_FIT\n");
+			BRect visibleRect = VisibleRect();
+			BRect canvasRect = fDocument->Bounds();
+			if (canvasRect.Width() <= 0.0f || canvasRect.Height() <= 0.0f)
+				break;
+
+			double scaleX = visibleRect.Width() / canvasRect.Width();
+			double scaleY = visibleRect.Height() / canvasRect.Height();
+			double scale = std::min(scaleX, scaleY);
+			SetZoomLevel(scale,
+				BPoint(visibleRect.left + roundf(visibleRect.Width() / 2),
+					visibleRect.top + roundf(visibleRect.Height() / 2)),
+				BPoint(canvasRect.Width() / 2, canvasRect.Height() / 2));
 			break;
 		}
 
@@ -563,14 +582,22 @@ CanvasView::SetZoomLevel(double zoomLevel, bool mouseIsAnchor)
 	BPoint canvasAnchor = anchor;
 	ConvertToCanvas(&canvasAnchor);
 
+	SetZoomLevel(zoomLevel, anchor, canvasAnchor);
+}
+
+// SetZoomLevel
+void
+CanvasView::SetZoomLevel(double zoomLevel, BPoint viewAnchor,
+	BPoint canvasAnchor)
+{
 	fZoomLevel = zoomLevel;
 	BRect dataRect = _LayoutCanvas();
 
 	ConvertFromCanvas(&canvasAnchor);
 
 	BPoint offset = ScrollOffset();
-	offset.x = roundf(offset.x + canvasAnchor.x - anchor.x);
-	offset.y = roundf(offset.y + canvasAnchor.y - anchor.y);
+	offset.x = roundf(offset.x + canvasAnchor.x - viewAnchor.x);
+	offset.y = roundf(offset.y + canvasAnchor.y - viewAnchor.y);
 
 #if CANVAS_VIEW_USE_NATIVE_SCROLLING
 	Invalidate();
@@ -727,7 +754,7 @@ CanvasView::_LayoutCanvas()
 void
 CanvasView::_SetRenderManagerZoom()
 {
-	if (fZoomLevel <= 1.0)	
+	if (fZoomLevel <= 1.0)
 		fRenderManager->SetZoomLevel(fZoomLevel);
 	else {
 		// upscaling depends on zoom policy

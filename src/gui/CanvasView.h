@@ -76,17 +76,19 @@ protected:
 	virtual	void				SetScrollOffset(BPoint offset);
 
 	virtual	void				ScrollOffsetChanged(BPoint oldOffset,
-													BPoint newOffset);
+									BPoint newOffset);
 	virtual	void				VisibleSizeChanged(float oldWidth,
-												   float oldHeight,
-												   float newWidth,
-												   float newHeight);
+									float oldHeight, float newWidth,
+									float newHeight);
 	// CanvasView
 public:
 			double				NextZoomInLevel(double zoom) const;
 			double				NextZoomOutLevel(double zoom) const;
 			void				SetZoomLevel(double zoomLevel,
-										 bool mouseIsAnchor = true);
+									bool mouseIsAnchor = true);
+			void				SetZoomLevel(double zoomLevel,
+									BPoint viewAnchor,
+									BPoint canvasAnchor);
 
 			enum {
 				ZOOM_POLICY_ENLARGE_PIXELS	= 0,
