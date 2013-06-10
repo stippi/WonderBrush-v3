@@ -68,8 +68,8 @@ FilterSaturationSnapshot::Render(RenderEngine& engine,
 	bits += left * 8;
 
 	if (fSaturation < 1.0f) {
-		const int coeff = (int)(fSaturation * 256.0);
-		const int oneMinusCoeff = 256 - (int)(std::min(1.0f, fSaturation) * 256.0);
+		const int coeff = (int)(std::max(0.0f, fSaturation) * 256.0);
+		const int oneMinusCoeff = 256 - coeff;
 
 		for (int y = top; y <= bottom; y++) {
 			uint16* p = (uint16*)bits;
@@ -79,12 +79,9 @@ FilterSaturationSnapshot::Render(RenderEngine& engine,
 				lum += 77 * p[2];		// R
 				lum = lum >> 8;
 
-				p[0] = constrain_int32_0_65535(
-					(p[0] * coeff + lum * oneMinusCoeff) >> 8);
-				p[1] = constrain_int32_0_65535(
-					(p[1] * coeff + lum * oneMinusCoeff) >> 8);
-				p[2] = constrain_int32_0_65535(
-					(p[2] * coeff + lum * oneMinusCoeff) >> 8);
+				p[0] = (p[0] * coeff + lum * oneMinusCoeff) >> 8;
+				p[1] = (p[1] * coeff + lum * oneMinusCoeff) >> 8;
+				p[2] = (p[2] * coeff + lum * oneMinusCoeff) >> 8;
 
 				p += 4;
 			}
