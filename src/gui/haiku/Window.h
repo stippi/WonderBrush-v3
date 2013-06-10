@@ -22,6 +22,7 @@ class IconButton;
 class IconOptionsControl;
 class InspectorView;
 class Layer;
+class Object;
 class ObjectColumnTreeItem;
 class ObjectTreeView;
 class RenderManager;
@@ -53,9 +54,17 @@ private:
 
 			void				_ObjectChanged(const Notifier* object);
 
+			void				_AddFilterMenuItem(BMenu* menu,
+									const char* label,
+									int32 filterID) const;
 			BMenu*				_CreateObjectMenu() const;
 
+			bool				_GetInsertionPosition(Layer** _layer,
+									int32* _index) const;
 			void				_AddLayer();
+			void				_AddFilter(int32 filterID);
+			void				_AddObject(Layer* parentLayer,
+									int32 insertIndex, Object* object);
 			void				_RemoveObjects();
 			void				_ResetTransformation();
 

@@ -26,6 +26,8 @@
 #include "DefaultColumnTreeModel.h"
 #include "Document.h"
 #include "EditManager.h"
+#include "Filter.h"
+#include "FilterSaturation.h"
 #include "IconButton.h"
 #include "IconOptionsControl.h"
 #include "InspectorView.h"
@@ -51,8 +53,14 @@ enum {
 	MSG_REDO						= 'redo',
 	MSG_SET_TOOL					= 'sltl',
 	MSG_ADD_LAYER					= 'addl',
+	MSG_ADD_FILTER					= 'addf',
 	MSG_RESET_TRANSFORMATION		= 'rttr',
 	MSG_REMOVE						= 'rmvo',
+};
+
+enum {
+	FILTER_GAUSSIAN_BLUR			= 'gblr',
+	FILTER_SATURATION				= 'srtn',
 };
 
 class Window::SelectionListener : public Selection::Listener {
@@ -441,6 +449,14 @@ Window::MessageReceived(BMessage* message)
 			_AddLayer();
 			break;
 
+		case MSG_ADD_FILTER:
+		{
+			int32 filterID;
+			if (message->FindInt32("filter id", &filterID) == B_OK)
+				_AddFilter(filterID);
+			break;
+		}
+
 		case MSG_RESET_TRANSFORMATION:
 			_ResetTransformation();
 			break;
@@ -633,10 +649,10 @@ Window::_ObjectChanged(const Notifier* object)
 		bool enabled = fDocument->EditManager()->GetUndoName(label);
 		if (!enabled)
 			label = "<nothing to undo>";
-		
+
 		fUndoMI->SetEnabled(enabled);
 		fUndoIcon->SetEnabled(enabled);
-		
+
 		fUndoMI->SetLabel(label.String());
 		fUndoIcon->SetToolTip(label.String());
 
@@ -654,6 +670,17 @@ Window::_ObjectChanged(const Notifier* object)
 	}
 }
 
+// _AddFilterMenuItem
+void
+Window::_AddFilterMenuItem(BMenu* menu, const char* label,
+	int32 filterID) const
+{
+	BMessage* message = new BMessage(MSG_ADD_FILTER);
+	message->AddInt32("filter id", filterID);
+
+	menu->AddItem(new BMenuItem(label, message));
+}
+
 // _CreateObjectMenu
 BMenu*
 Window::_CreateObjectMenu() const
@@ -663,6 +690,15 @@ Window::_CreateObjectMenu() const
 	BMenuItem* item = new BMenuItem("Add layer",
 		new BMessage(MSG_ADD_LAYER));
 	menu->AddItem(item);
+
+	BMenu* filterMenu = new BMenu("Add filter");
+
+	_AddFilterMenuItem(filterMenu, "Gaussian blur", FILTER_GAUSSIAN_BLUR);
+	_AddFilterMenuItem(filterMenu, "Saturation", FILTER_SATURATION);
+
+	menu->AddItem(filterMenu);
+
+	menu->AddItem(new BSeparatorItem());
 
 	item = new BMenuItem("Reset transformation",
 		new BMessage(MSG_RESET_TRANSFORMATION));
@@ -675,22 +711,15 @@ Window::_CreateObjectMenu() const
 	return menu;
 }
 
-// _AddLayer
-void
-Window::_AddLayer()
+// _GetInsertionPosition
+bool
+Window::_GetInsertionPosition(Layer** _layer, int32* _index) const
 {
-	if (fDocument == NULL) {
-		fprintf(stderr, "Window::_AddLayer(): No document.\n");
-		return;
-	}
-
-	AutoWriteLocker _(fDocument.Get());
-
-	// Initial parent laye and insertion index, in case there is no selection
+	// Initial parent layer and insertion index, in case there is no selection
 	Layer* parentLayer = fDocument->RootLayer();
 	if (parentLayer == NULL) {
-		fprintf(stderr, "Window::_AddLayer(): No root layer.\n");
-		return;
+		fprintf(stderr, "Window::_GetInsertionPosition(): No root layer.\n");
+		return false;
 	}
 
 	int32 insertIndex = parentLayer->CountObjects();
@@ -712,16 +741,79 @@ Window::_AddLayer()
 		}
 	}
 
-	Layer* newLayer = new(std::nothrow) Layer(parentLayer->Bounds());
-	if (newLayer == NULL || !parentLayer->AddObject(newLayer, insertIndex)) {
-		fprintf(stderr, "Window::_AddLayer(): Failed to allocate new layer.\n");
-		delete newLayer;
+	*_layer = parentLayer;
+	*_index = insertIndex;
+	return true;
+}
+
+// _AddLayer
+void
+Window::_AddLayer()
+{
+	if (fDocument == NULL) {
+		fprintf(stderr, "Window::_AddLayer(): No document.\n");
 		return;
 	}
 
-	fSelection.DeselectAll(fLayerTreeView);
+	AutoWriteLocker _(fDocument.Get());
+
+	Layer* parentLayer;
+	int32 insertIndex;
+	if (!_GetInsertionPosition(&parentLayer, &insertIndex)) {
+		fprintf(stderr, "Window::_AddLayer(): No insert position info.\n");
+		return;
+	}
+
+	Layer* newLayer = new(std::nothrow) Layer(parentLayer->Bounds());
+
+	_AddObject(parentLayer, insertIndex, newLayer);
+}
+
+// _AddFilter
+void
+Window::_AddFilter(int32 filterID)
+{
+	if (fDocument == NULL) {
+		fprintf(stderr, "Window::_AddLayer(): No document.\n");
+		return;
+	}
+
+	AutoWriteLocker _(fDocument.Get());
+
+	Layer* parentLayer;
+	int32 insertIndex;
+	if (!_GetInsertionPosition(&parentLayer, &insertIndex)) {
+		fprintf(stderr, "Window::_AddFilter(): No insert position info.\n");
+		return;
+	}
+
+	Object* filter = NULL;
+	switch (filterID) {
+		case FILTER_GAUSSIAN_BLUR:
+			filter = new(std::nothrow) Filter();
+			break;
+		case FILTER_SATURATION:
+			filter = new(std::nothrow) FilterSaturation();
+			break;
+	};
+
+	_AddObject(parentLayer, insertIndex, filter);
+}
+
+// _AddObject
+void
+Window::_AddObject(Layer* parentLayer, int32 insertIndex, Object* object)
+{
+	if (object == NULL || !parentLayer->AddObject(object, insertIndex)) {
+		fprintf(stderr,
+			"Window::_AddObject(): Failed to allocate or insert new object.\n");
+		delete object;
+		return;
+	}
+
+	fLayerTreeView->DeselectAll();
 	fDocument->EditManager()->Perform(
-		new(std::nothrow) ObjectAddedEdit(newLayer, &fSelection));
+		new(std::nothrow) ObjectAddedEdit(object, &fSelection));
 }
 
 // _RemoveObjects

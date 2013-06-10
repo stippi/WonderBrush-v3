@@ -178,6 +178,8 @@ Application WonderBrush :
 	BrushStrokeSnapshot.cpp
 	Filter.cpp
 	FilterSnapshot.cpp
+	FilterSaturation.cpp
+	FilterSaturationSnapshot.cpp
 	Image.cpp
 	ImageSnapshot.cpp
 	Layer.cpp

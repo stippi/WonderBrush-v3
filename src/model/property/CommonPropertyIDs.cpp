@@ -94,6 +94,9 @@ name_for_id(int32 id)
 		case PROPERTY_FILTER_RADIUS:
 			name = "Filter Radius";
 			break;
+		case PROPERTY_SATURATION:
+			name = "Saturation";
+			break;
 
 		case PROPERTY_GROUP_STROKE_PAINT:
 			name = "Stroke";
