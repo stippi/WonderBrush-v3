@@ -41,9 +41,34 @@ constrain_int32_0_255_asm(int32 value)
 
 
 inline int32
+constrain_int32_0_65535_asm(int32 value)
+{
+	__asm__ __volatile__ (
+		"movl	$0,		%%ecx;"
+		"movl	$65535,	%%edx;"
+		"cmpl	%%ecx,	%%eax;"
+		"cmovl	%%ecx,	%%eax;"
+		"cmpl	%%edx,	%%eax;"
+		"cmovg	%%edx,	%%eax"
+		: "=a" (value)
+		: "a" (value)
+		: "%ecx", "%edx"
+	);
+	return value;
+}
+
+
+inline int32
 constrain_int32_0_255_c(int32 value)
 {
     return max_c(0, min_c(255, value));
+}
+
+
+inline int32
+constrain_int32_0_65535_c(int32 value)
+{
+    return max_c(0, min_c(65535, value));
 }
 
 
@@ -74,6 +99,7 @@ multiply_bytes(uint32 x, uint32 a)
 
 
 #define constrain_int32_0_255 constrain_int32_0_255_asm
+#define constrain_int32_0_65535 constrain_int32_0_65535_asm
 
 // rect_to_int
 inline void
