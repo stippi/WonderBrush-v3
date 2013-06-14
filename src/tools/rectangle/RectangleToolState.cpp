@@ -85,6 +85,152 @@ private:
 	RectangleToolState*		fParent;
 };
 
+// DragCornerState
+class RectangleToolState::DragCornerState
+	: public DragStateViewState::DragState {
+public:
+	enum Corner {
+		LEFT_TOP,
+		RIGHT_TOP,
+		LEFT_BOTTOM,
+		RIGHT_BOTTOM,
+	};
+
+	DragCornerState(RectangleToolState* parent)
+		: DragState(parent)
+		, fParent(parent)
+		, fCorner(LEFT_TOP)
+	{
+	}
+
+	virtual void SetOrigin(BPoint origin)
+	{
+		if (fParent->fRectangle == NULL)
+			return;
+
+		fParent->TransformCanvasToObject(&origin);
+		fOrigin = origin;
+		
+		fStartArea = fParent->fRectangle->Area();
+	}
+
+	virtual void DragTo(BPoint current, uint32 modifiers)
+	{
+		if (fParent->fRectangle == NULL)
+			return;
+
+		fParent->TransformCanvasToObject(&current);
+		
+		BPoint offset = current - fOrigin;
+		
+		// TODO: Support proportional resizing!
+		
+		BRect area = fStartArea;
+		switch (fCorner) {
+			case LEFT_TOP:
+				area.left = fStartArea.left + offset.x;
+				area.top = fStartArea.top + offset.y;
+				break;
+			case RIGHT_TOP:
+				area.right = fStartArea.right + offset.x;
+				area.top = fStartArea.top + offset.y;
+				break;
+			case LEFT_BOTTOM:
+				area.left = fStartArea.left + offset.x;
+				area.bottom = fStartArea.bottom + offset.y;
+				break;
+			case RIGHT_BOTTOM:
+				area.right = fStartArea.right + offset.x;
+				area.bottom = fStartArea.bottom + offset.y;
+				break;
+		}
+
+		if (area.left > area.right) {
+			float temp = area.left;
+			area.left = area.right;
+			area.right = temp;
+		}
+		
+		if (area.top > area.bottom) {
+			float temp = area.top;
+			area.top = area.bottom;
+			area.bottom = temp;
+		}
+
+		// TODO: Use UndoableEdit
+		fParent->fRectangle->SetArea(area);
+	}
+
+	virtual BCursor ViewCursor(BPoint current) const
+	{
+		float rotation = fmod(360.0 - fParent->ViewspaceRotation() + 22.5,
+			180.0);
+
+		BCursorID cursorID = B_CURSOR_ID_MOVE;
+		if (rotation < 45.0) {
+			switch (fCorner) {
+				case LEFT_TOP:
+				case RIGHT_BOTTOM:
+					cursorID = B_CURSOR_ID_RESIZE_NORTH_WEST_SOUTH_EAST;
+					break;
+				case RIGHT_TOP:
+				case LEFT_BOTTOM:
+					cursorID = B_CURSOR_ID_RESIZE_NORTH_EAST_SOUTH_WEST;
+					break;
+			}
+		} else if (rotation < 90.0) {
+			switch (fCorner) {
+				case LEFT_TOP:
+				case RIGHT_BOTTOM:
+					cursorID = B_CURSOR_ID_RESIZE_EAST_WEST;
+					break;
+				case RIGHT_TOP:
+				case LEFT_BOTTOM:
+					cursorID = B_CURSOR_ID_RESIZE_NORTH_SOUTH;
+					break;
+			}
+		} else if (rotation < 135.0) {
+			switch (fCorner) {
+				case LEFT_TOP:
+				case RIGHT_BOTTOM:
+					cursorID = B_CURSOR_ID_RESIZE_NORTH_EAST_SOUTH_WEST;
+					break;
+				case RIGHT_TOP:
+				case LEFT_BOTTOM:
+					cursorID = B_CURSOR_ID_RESIZE_NORTH_WEST_SOUTH_EAST;
+					break;
+			}
+		} else {
+			switch (fCorner) {
+				case LEFT_TOP:
+				case RIGHT_BOTTOM:
+					cursorID = B_CURSOR_ID_RESIZE_NORTH_SOUTH;
+					break;
+				case RIGHT_TOP:
+				case LEFT_BOTTOM:
+					cursorID = B_CURSOR_ID_RESIZE_EAST_WEST;
+					break;
+			}
+		}
+		return BCursor(cursorID);
+	}
+
+	virtual const char* CommandName() const
+	{
+		return "Change rectangle size";
+	}
+
+	void SetCorner(Corner corner)
+	{
+		fCorner = corner;
+	}
+
+private:
+	RectangleToolState*		fParent;
+	Corner					fCorner;
+	BRect					fStartArea;
+};
+
 // #pragma mark -
 
 // constructor
@@ -96,6 +242,7 @@ RectangleToolState::RectangleToolState(StateView* view, Document* document,
 	, fPlatformDelegate(new PlatformDelegate(this))
 
 	, fCreateRectangleState(new(std::nothrow) CreateRectangleState(this))
+	, fDragCornerState(new(std::nothrow) DragCornerState(this))
 
 	, fDocument(document)
 	, fSelection(selection)
@@ -125,6 +272,7 @@ RectangleToolState::~RectangleToolState()
 	fSelection->RemoveListener(this);
 
 	delete fCreateRectangleState;
+	delete fDragCornerState;
 
 	SetInsertionInfo(NULL, -1);
 
@@ -267,6 +415,30 @@ RectangleToolState::StartTransaction(const char* editName)
 RectangleToolState::DragState*
 RectangleToolState::DragStateFor(BPoint canvasWhere, float zoomLevel) const
 {
+	if (fRectangle != NULL) {
+		BPoint objectWhere(canvasWhere);
+		TransformCanvasToObject(&objectWhere);
+		
+		BRect area = fRectangle->Area();
+		float distLT = point_point_distance(area.LeftTop(), objectWhere);
+		float distRT = point_point_distance(area.RightTop(), objectWhere);
+		float distLB = point_point_distance(area.LeftBottom(), objectWhere);
+		float distRB = point_point_distance(area.RightBottom(), objectWhere);
+
+		float cornerDist = min4(distLT, distRT, distLB, distRB);
+		if (cornerDist / zoomLevel < 10) {
+			if (cornerDist == distLT)
+				fDragCornerState->SetCorner(DragCornerState::LEFT_TOP);
+			else if (cornerDist == distRT)
+				fDragCornerState->SetCorner(DragCornerState::RIGHT_TOP);
+			else if (cornerDist == distLB)
+				fDragCornerState->SetCorner(DragCornerState::LEFT_BOTTOM);
+			else if (cornerDist == distRB)
+				fDragCornerState->SetCorner(DragCornerState::RIGHT_BOTTOM);
+			return fDragCornerState;
+		}
+	}
+	
 	return fCreateRectangleState;
 }
 
@@ -436,7 +608,7 @@ RectangleToolState::_DrawControls(PlatformDrawContext& drawContext)
 	if (fRectangle == NULL)
 		return;
 
-	BRect box = fRectangle->Bounds();
+	BRect box = fRectangle->Area();
 	
 	BPoint lt(box.LeftTop());
 	BPoint rt(box.RightTop());

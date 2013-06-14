@@ -86,13 +86,16 @@ private:
 			class PlatformDelegate;
 
 			class CreateRectangleState;
+			class DragCornerState;
 			
 			friend class CreateRectangleState;
+			friend class DragCornerState;
 
 private:
 			PlatformDelegate*	fPlatformDelegate;
 
 			CreateRectangleState*	fCreateRectangleState;
+			DragCornerState*	fDragCornerState;
 
 			Document*			fDocument;
 			Selection*			fSelection;
