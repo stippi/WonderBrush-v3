@@ -85,6 +85,53 @@ private:
 	RectangleToolState*		fParent;
 };
 
+class RectangleToolState::DragBoxState : public DragStateViewState::DragState {
+public:
+	DragBoxState(RectangleToolState* parent)
+		: DragState(parent)
+		, fParent(parent)
+	{
+	}
+
+	virtual void SetOrigin(BPoint origin)
+	{
+		if (fParent->fRectangle == NULL)
+			return;
+
+		fParent->TransformCanvasToObject(&origin);
+		DragState::SetOrigin(origin);
+
+		fStartArea = fParent->fRectangle->Area();
+	}
+
+	virtual void DragTo(BPoint current, uint32 modifiers)
+	{
+		if (fParent->fRectangle == NULL)
+			return;
+
+		fParent->TransformCanvasToObject(&current);
+		BPoint offset = current - fOrigin;
+
+		BRect area = fStartArea;
+		area.OffsetBy(offset);
+		fParent->fRectangle->SetArea(area);
+	}
+
+	virtual BCursor ViewCursor(BPoint current) const
+	{
+		return BCursor(B_CURSOR_ID_MOVE);
+	}
+
+	virtual const char* CommandName() const
+	{
+		return "Move rectangle";
+	}
+
+private:
+	RectangleToolState*	fParent;
+	BRect				fStartArea;
+};
+
 // DragCornerState
 class RectangleToolState::DragCornerState
 	: public DragStateViewState::DragState {
@@ -217,7 +264,7 @@ public:
 
 	virtual const char* CommandName() const
 	{
-		return "Change rectangle size";
+		return "Drag rectangle corner";
 	}
 
 	void SetCorner(Corner corner)
@@ -228,6 +275,148 @@ public:
 private:
 	RectangleToolState*		fParent;
 	Corner					fCorner;
+	BRect					fStartArea;
+};
+
+// DragSideState
+class RectangleToolState::DragSideState
+	: public DragStateViewState::DragState {
+public:
+	enum Side {
+		LEFT,
+		RIGHT,
+		TOP,
+		BOTTOM,
+	};
+
+	DragSideState(RectangleToolState* parent)
+		: DragState(parent)
+		, fParent(parent)
+		, fSide(LEFT)
+	{
+	}
+
+	virtual void SetOrigin(BPoint origin)
+	{
+		if (fParent->fRectangle == NULL)
+			return;
+
+		fParent->TransformCanvasToObject(&origin);
+		fOrigin = origin;
+		
+		fStartArea = fParent->fRectangle->Area();
+	}
+
+	virtual void DragTo(BPoint current, uint32 modifiers)
+	{
+		if (fParent->fRectangle == NULL)
+			return;
+
+		fParent->TransformCanvasToObject(&current);
+		
+		BPoint offset = current - fOrigin;
+		
+		// TODO: Support proportional resizing!
+		
+		BRect area = fStartArea;
+		switch (fSide) {
+			case LEFT:
+				area.left = fStartArea.left + offset.x;
+				break;
+			case RIGHT:
+				area.right = fStartArea.right + offset.x;
+				break;
+			case TOP:
+				area.top = fStartArea.top + offset.y;
+				break;
+			case BOTTOM:
+				area.bottom = fStartArea.bottom + offset.y;
+				break;
+		}
+
+		if (area.left > area.right) {
+			float temp = area.left;
+			area.left = area.right;
+			area.right = temp;
+		}
+		
+		if (area.top > area.bottom) {
+			float temp = area.top;
+			area.top = area.bottom;
+			area.bottom = temp;
+		}
+
+		// TODO: Use UndoableEdit
+		fParent->fRectangle->SetArea(area);
+	}
+
+	virtual BCursor ViewCursor(BPoint current) const
+	{
+		float rotation = fmod(360.0 - fParent->ViewspaceRotation() + 22.5,
+			180.0);
+
+		BCursorID cursorID = B_CURSOR_ID_MOVE;
+		if (rotation < 45.0) {
+			switch (fSide) {
+				case LEFT:
+				case RIGHT:
+					cursorID = B_CURSOR_ID_RESIZE_EAST_WEST;
+					break;
+				case TOP:
+				case BOTTOM:
+					cursorID = B_CURSOR_ID_RESIZE_NORTH_SOUTH;
+					break;
+			}
+		} else if (rotation < 90.0) {
+			switch (fSide) {
+				case LEFT:
+				case RIGHT:
+					cursorID = B_CURSOR_ID_RESIZE_NORTH_EAST_SOUTH_WEST;
+					break;
+				case TOP:
+				case BOTTOM:
+					cursorID = B_CURSOR_ID_RESIZE_NORTH_WEST_SOUTH_EAST;
+					break;
+			}
+		} else if (rotation < 135.0) {
+			switch (fSide) {
+				case LEFT:
+				case RIGHT:
+					cursorID = B_CURSOR_ID_RESIZE_NORTH_SOUTH;
+					break;
+				case TOP:
+				case BOTTOM:
+					cursorID = B_CURSOR_ID_RESIZE_EAST_WEST;
+					break;
+			}
+		} else {
+			switch (fSide) {
+				case LEFT:
+				case RIGHT:
+					cursorID = B_CURSOR_ID_RESIZE_NORTH_WEST_SOUTH_EAST;
+					break;
+				case TOP:
+				case BOTTOM:
+					cursorID = B_CURSOR_ID_RESIZE_NORTH_EAST_SOUTH_WEST;
+					break;
+			}
+		}
+		return BCursor(cursorID);
+	}
+
+	virtual const char* CommandName() const
+	{
+		return "Drag rectangle side";
+	}
+
+	void SetSide(Side side)
+	{
+		fSide = side;
+	}
+
+private:
+	RectangleToolState*		fParent;
+	Side					fSide;
 	BRect					fStartArea;
 };
 
@@ -242,7 +431,9 @@ RectangleToolState::RectangleToolState(StateView* view, Document* document,
 	, fPlatformDelegate(new PlatformDelegate(this))
 
 	, fCreateRectangleState(new(std::nothrow) CreateRectangleState(this))
+	, fDragBoxState(new(std::nothrow) DragBoxState(this))
 	, fDragCornerState(new(std::nothrow) DragCornerState(this))
+	, fDragSideState(new(std::nothrow) DragSideState(this))
 
 	, fDocument(document)
 	, fSelection(selection)
@@ -272,7 +463,9 @@ RectangleToolState::~RectangleToolState()
 	fSelection->RemoveListener(this);
 
 	delete fCreateRectangleState;
+	delete fDragBoxState;
 	delete fDragCornerState;
+	delete fDragSideState;
 
 	SetInsertionInfo(NULL, -1);
 
@@ -416,27 +609,71 @@ RectangleToolState::DragState*
 RectangleToolState::DragStateFor(BPoint canvasWhere, float zoomLevel) const
 {
 	if (fRectangle != NULL) {
+		float inset = 10.0 / zoomLevel;
+
 		BPoint objectWhere(canvasWhere);
 		TransformCanvasToObject(&objectWhere);
 		
 		BRect area = fRectangle->Area();
-		float distLT = point_point_distance(area.LeftTop(), objectWhere);
-		float distRT = point_point_distance(area.RightTop(), objectWhere);
-		float distLB = point_point_distance(area.LeftBottom(), objectWhere);
-		float distRB = point_point_distance(area.RightBottom(), objectWhere);
+		BPoint lt(area.LeftTop());
+		BPoint rt(area.RightTop());
+		BPoint lb(area.LeftBottom());
+		BPoint rb(area.RightBottom());
+		
+		// Second priority has the inside of the box, checked with some inset
+		// so that the user can drag the whole box when the box is very small
+		// and the click is otherwise near enough to a corner.
 
-		float cornerDist = min4(distLT, distRT, distLB, distRB);
-		if (cornerDist / zoomLevel < 10) {
-			if (cornerDist == distLT)
+		BRect iR(area);
+		float hInset = min_c(inset, max_c(0, (iR.Width() - inset) / 2.0));
+		float vInset = min_c(inset, max_c(0, (iR.Height() - inset) / 2.0));
+
+		iR.InsetBy(hInset, vInset);
+		if (iR.Contains(objectWhere))
+			return fDragBoxState;
+
+		float distLT = point_point_distance(lt, objectWhere);
+		float distRT = point_point_distance(rt, objectWhere);
+		float distLB = point_point_distance(lb, objectWhere);
+		float distRB = point_point_distance(rb, objectWhere);
+
+		float dist = min4(distLT, distRT, distLB, distRB);
+		if (dist < inset) {
+			if (dist == distLT)
 				fDragCornerState->SetCorner(DragCornerState::LEFT_TOP);
-			else if (cornerDist == distRT)
+			else if (dist == distRT)
 				fDragCornerState->SetCorner(DragCornerState::RIGHT_TOP);
-			else if (cornerDist == distLB)
+			else if (dist == distLB)
 				fDragCornerState->SetCorner(DragCornerState::LEFT_BOTTOM);
-			else if (cornerDist == distRB)
+			else if (dist == distRB)
 				fDragCornerState->SetCorner(DragCornerState::RIGHT_BOTTOM);
 			return fDragCornerState;
 		}
+
+		// Next priority have the sides.
+
+		float dL = point_stroke_distance(lt, lb, objectWhere, inset);
+		float dR = point_stroke_distance(rt, rb, objectWhere, inset);
+		float dT = point_stroke_distance(lt, rt, objectWhere, inset);
+		float dB = point_stroke_distance(lb, rb, objectWhere, inset);
+		dist = min4(dL, dR, dT, dB);
+		if (dist < inset) {
+			if (dist == dL)
+				fDragSideState->SetSide(DragSideState::LEFT);
+			else if (dist == dR)
+				fDragSideState->SetSide(DragSideState::RIGHT);
+			else if (dist == dT)
+				fDragSideState->SetSide(DragSideState::TOP);
+			else if (dist == dB)
+				fDragSideState->SetSide(DragSideState::BOTTOM);
+			return fDragSideState;
+		}
+
+		// Check inside of the box again.
+		if (area.Contains(objectWhere))
+			return fDragBoxState;
+
+		return NULL;
 	}
 	
 	return fCreateRectangleState;
