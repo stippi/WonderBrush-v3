@@ -77,6 +77,8 @@ public:
 			void				SetRectangle(Rect* rectangle,
 									bool modifySelection = false);
 
+			void				SetRoundCornerRadius(double radius);
+
 private:
 			void				_DrawControls(PlatformDrawContext& drawContext);
 
@@ -113,6 +115,8 @@ private:
 			int32				fInsertionIndex;
 
 			Rect*				fRectangle;
+
+			double				fRoundCornerRadius;
 
 			bool				fIgnoreColorNotifiactions;
 };

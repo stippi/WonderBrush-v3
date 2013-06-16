@@ -8,7 +8,8 @@
 
 #include "ToolConfigView.h"
 
-class BCheckBox;
+class BSlider;
+class BTextControl;
 
 class RectangleToolConfigView : public ToolConfigView {
 public:
@@ -26,7 +27,12 @@ public:
 	virtual	void				MessageReceived(BMessage* message);
 
 private:
-			BCheckBox*			fSubpixels;
+			double				_FromLinearSize(double value) const;
+			double				_ToLinearSize(double value) const;
+
+private:
+			BSlider*			fRoundCornerRadiusSlider;
+			BTextControl*		fRoundCornerRadiusTextControl;
 };
 
 #endif // RECTANGLE_TOOL_CONFIG_VIEW_H

@@ -87,6 +87,13 @@ RectangleTool::SetOption(uint32 option, bool value)
 void
 RectangleTool::SetOption(uint32 option, float value)
 {
+	RectangleToolState* state = static_cast<RectangleToolState*>(fViewState);
+
+	switch (option) {
+		case CORNER_RADIUS:
+			state->SetRoundCornerRadius(value);
+			break;
+	}
 }
 
 // SetOption
@@ -100,3 +107,4 @@ void
 RectangleTool::SetOption(uint32 option, const char* value)
 {
 }
+

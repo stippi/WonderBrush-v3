@@ -446,6 +446,8 @@ RectangleToolState::RectangleToolState(StateView* view, Document* document,
 
 	, fRectangle(NULL)
 	
+	, fRoundCornerRadius(0.0)
+	
 	, fIgnoreColorNotifiactions(false)
 {
 	// TODO: Find a way to change this later...
@@ -776,6 +778,8 @@ RectangleToolState::CreateRectangle(BPoint canvasLocation)
 
 	rectangle->TranslateBy(canvasLocation);
 
+	rectangle->SetRoundCornerRadius(fRoundCornerRadius);
+
 	if (fInsertionIndex < 0)
 		fInsertionIndex = 0;
 	if (fInsertionIndex > fInsertionLayer->CountObjects())
@@ -834,6 +838,20 @@ RectangleToolState::SetRectangle(Rect* rectangle, bool modifySelection)
 //		SetObjectToCanvasTransformation(Transformable());
 		UpdateBounds();
 	}
+}
+
+// SetRoundCornerRadius
+void
+RectangleToolState::SetRoundCornerRadius(double radius)
+{
+	if (fRoundCornerRadius == radius)
+		return;
+	
+	fRoundCornerRadius = radius;
+	
+	// TODO: UndoableEdit
+	if (fRectangle != NULL)
+		fRectangle->SetRoundCornerRadius(fRoundCornerRadius);
 }
 
 // #pragma mark - private
