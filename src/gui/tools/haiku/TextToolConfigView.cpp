@@ -578,7 +578,6 @@ TextToolConfigView::_PopulateFontMenu(BMenu* menu, BHandler* target,
 	manager->Unlock();
 }
 
-
 // _FromLinearSize
 double
 TextToolConfigView::_FromLinearSize(double value) const
