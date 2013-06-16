@@ -27,7 +27,7 @@ store_color_in_message(BMessage* message, rgb_color color)
 	status_t ret = B_BAD_VALUE;
 	if (message) {
 		ret = message->AddData("RGBColor", B_RGB_COLOR_TYPE,
-							   (void*)&color, sizeof(rgb_color));
+			(void*)&color, sizeof(rgb_color));
 	}
 	return ret;
 }
@@ -41,7 +41,7 @@ restore_color_from_message(const BMessage* message, rgb_color& color, int32 inde
 			const void* colorPointer;
 			ssize_t size = sizeof(rgb_color);
 			ret = message->FindData("RGBColor", B_RGB_COLOR_TYPE, index,
-									&colorPointer, &size);
+				&colorPointer, &size);
 			if (ret >= B_OK)
 				color = *(const rgb_color*)colorPointer;
 	}
