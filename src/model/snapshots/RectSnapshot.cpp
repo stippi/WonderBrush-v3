@@ -16,6 +16,7 @@ RectSnapshot::RectSnapshot(const Rect* rect)
 	: StyleableSnapshot(rect)
 	, fOriginal(rect)
 	, fArea(rect->Area())
+	, fRoundCornerRadius(rect->RoundCornerRadius())
 {
 }
 
@@ -39,6 +40,7 @@ RectSnapshot::Sync()
 {
 	if (StyleableSnapshot::Sync()) {
 		fArea = fOriginal->Area();
+		fRoundCornerRadius = fOriginal->RoundCornerRadius();
 		return true;
 	}
 	return false;
@@ -51,7 +53,11 @@ RectSnapshot::Render(RenderEngine& engine, RenderBuffer* bitmap,
 {
 	engine.SetStyle(fStyle);
 	engine.SetTransformation(LayoutedState().Matrix);
-	engine.DrawRectangle(fArea, area);
+
+	double radius = fRoundCornerRadius;
+	if (radius <= 0.0)
+		radius = 0.0;
+	engine.DrawRectangle(fArea, area, radius, radius);
 }
 
 

@@ -25,13 +25,19 @@ public:
 
 	virtual	bool				HitTest(const BPoint& canvasPoint);
 
+	// Styleable interface
+	virtual	BRect				Bounds();
+
 	// Rect
 			void				SetArea(const BRect& area);
 			BRect				Area() const;
-	virtual	BRect				Bounds();
+
+			void				SetRoundCornerRadius(double radius);
+			double				RoundCornerRadius() const;
 
 private:
 			BRect				fArea;
+			double				fRoundCornerRadius;
 };
 
 #endif // RECT_H

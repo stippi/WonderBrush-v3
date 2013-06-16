@@ -96,7 +96,7 @@ public:
 									BlendingMode blendingMode = CompOpSrcOver);
 
 			void				DrawRectangle(const BRect& rect,
-									BRect area);
+									BRect area, double xRadius, double yRadius);
 			void				DrawImage(const RenderBuffer* buffer,
 									BRect area);
 

@@ -189,13 +189,17 @@ RenderEngine::BlendArea(const RenderBuffer* source, BRect area, uint8 opacity,
 
 // DrawRectangle
 void
-RenderEngine::DrawRectangle(const BRect& rect, BRect area)
+RenderEngine::DrawRectangle(const BRect& rect, BRect area,
+	double xRadius, double yRadius)
 {
 	if (!fState.Matrix.TransformBounds(rect).Intersects(area))
 		return;
 
-	agg::rounded_rect roundRect(rect.left, rect.top, rect.right, rect.bottom,
-		0.0);
+	agg::rounded_rect roundRect;
+	roundRect.rect(rect.left, rect.top, rect.right, rect.bottom);
+	roundRect.radius(xRadius, yRadius);
+	roundRect.normalize_radius();
+	roundRect.approximation_scale(fState.Matrix.Scale());
 
 	if (fState.FillPaint() != NULL
 		&& fState.FillPaint()->Type() != Paint::NONE) {

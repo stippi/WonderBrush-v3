@@ -11,7 +11,8 @@
 // constructor
 Rect::Rect()
 	: Styleable()
-	, fArea(10, 10, 60, 60)
+	, fArea(0, 0, 0, 0)
+	, fRoundCornerRadius(0.0)
 {
 	InitBounds();
 }
@@ -20,6 +21,7 @@ Rect::Rect()
 Rect::Rect(const BRect& area, const rgb_color& color)
 	: Styleable(color)
 	, fArea(area)
+	, fRoundCornerRadius(0.0)
 {
 	InitBounds();
 }
@@ -55,6 +57,17 @@ Rect::HitTest(const BPoint& canvasPoint)
 
 // #pragma mark -
 
+// Bounds
+BRect
+Rect::Bounds()
+{
+	BRect bounds = fArea;
+	Style()->ExtendBounds(bounds);
+	return bounds;
+}
+
+// #pragma mark -
+
 // SetArea
 void
 Rect::SetArea(const BRect& area)
@@ -62,7 +75,6 @@ Rect::SetArea(const BRect& area)
 	if (area == fArea)
 		return;
 
-	BRect oldArea(fArea);
 	fArea = area;
 
 	NotifyAndUpdate();
@@ -75,12 +87,23 @@ Rect::Area() const
 	return fArea;
 }
 
-// Bounds
-BRect
-Rect::Bounds()
+// SetRoundCornerRadius
+void
+Rect::SetRoundCornerRadius(double radius)
 {
-	BRect bounds = fArea;
-	Style()->ExtendBounds(bounds);
-	return bounds;
+	if (radius == fRoundCornerRadius)
+		return;
+
+	fRoundCornerRadius = radius;
+
+	NotifyAndUpdate();
 }
+
+// RoundCornerRadius
+double
+Rect::RoundCornerRadius() const
+{
+	return fRoundCornerRadius;
+}
+
 

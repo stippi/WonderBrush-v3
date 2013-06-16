@@ -25,6 +25,7 @@ public:
 private:
 			const Rect*			fOriginal;
 			BRect				fArea;
+			double				fRoundCornerRadius;
 };
 
 #endif // RECT_SNAPSHOT_H
