@@ -33,10 +33,6 @@ public:
 	virtual	void				MessageReceived(BMessage* message);
 
 private:
-			void				_SetValue(BTextControl* control,
-									float value) const;
-			float				_Value(BTextControl* control) const;
-
 			void				_PopulateFontMenu(BMenu* menu,
 									BHandler* target,
 									const char* markedFamily,

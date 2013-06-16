@@ -1,14 +1,12 @@
 /*
- * Copyright 2006, Haiku.
- * Distributed under the terms of the MIT License.
- *
- * Authors:
- *		Stephan Aßmus <superstippi@gmx.de>
+ * Copyright 2006-2013, Stephan Aßmus <superstippi@gmx.de>.
+ * All rights reserved. Distributed under the terms of the MIT License.
  */
 
 #include "support_ui.h"
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 #include <Bitmap.h>
@@ -17,6 +15,7 @@
 #include <File.h>
 #include <Screen.h>
 #include <String.h>
+#include <TextControl.h>
 #include <Path.h>
 #include <View.h>
 
@@ -309,4 +308,49 @@ print_color_space(color_space format)
 {
 	printf("%s\n", string_for_color_space(format));
 }
+
+// from_linear
+double
+from_linear(double value, double maxValue)
+{
+	return 1.0 + (maxValue - 1.0) * pow((value - 1) / (maxValue - 1.0), 2.0);
+}
+
+// to_linear
+double
+to_linear(double value, double maxValue)
+{
+	return 1.0 + (maxValue - 1.0) * sqrt((value - 1) / (maxValue - 1.0));
+}
+
+// set_text_control_float_value
+void
+set_text_control_float_value(BTextControl* control, float value)
+{
+	char text[64];
+	snprintf(text, sizeof(text), "%.2f", value);
+
+	int32 selectionStart;
+	int32 selectionEnd;
+	control->TextView()->GetSelection(&selectionStart, &selectionEnd);
+	bool selectionEndIsTextEnd
+		= selectionEnd == control->TextView()->TextLength();
+
+	control->SetText(text);
+
+	if (selectionEndIsTextEnd)
+		selectionEnd = control->TextView()->TextLength();
+	if (selectionStart > selectionEnd)
+		selectionStart = selectionEnd;
+
+	control->TextView()->Select(selectionStart, selectionEnd);
+}
+
+// get_text_control_float_value
+float
+get_text_control_float_value(BTextControl* control)
+{
+	return atof(control->Text());
+}
+
 

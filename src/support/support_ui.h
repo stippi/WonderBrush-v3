@@ -1,9 +1,6 @@
 /*
- * Copyright 2006, Haiku.
- * Distributed under the terms of the MIT License.
- *
- * Authors:
- *		Stephan Aßmus <superstippi@gmx.de>
+ * Copyright 2006-2013, Stephan Aßmus <superstippi@gmx.de>.
+ * All rights reserved. Distributed under the terms of the MIT License.
  */
 
 #ifndef SUPPORT_UI_H
@@ -20,6 +17,7 @@ class BDataIO;
 class BMessage;
 class BPositionIO;
 class BString;
+class BTextControl;
 class BView;
 class BWindow;
 
@@ -66,6 +64,16 @@ operator!=(const rgb_color& a, const rgb_color& b)
 
 #endif // B_BEOS_VERSION <= ...
 
+// produces values between 1 and maxValue that increase exponentially for
+// linear values in the same range
+double from_linear(double value, double maxValue);
+
+// produces values between 1 and maxValue that increase linearily for
+// exponentially increasing values in the same range
+double to_linear(double value, double maxValue);
+
+void set_text_control_float_value(BTextControl* control, float value);
+float get_text_control_float_value(BTextControl* control);
 
 // platform dependent
 

@@ -20,6 +20,7 @@
 #include "FontRegistry.h"
 #include "IconButton.h"
 #include "IconOptionsControl.h"
+#include "support_ui.h"
 #include "Text.h"
 #include "TextTool.h"
 #include "TextToolState.h"
@@ -322,13 +323,13 @@ TextToolConfigView::MessageReceived(BMessage* message)
 		{
 			float size = (float)_FromLinearSize(fSizeSlider->Value());
 			fTool->SetOption(TextTool::SIZE, size);
-			_SetValue(fSizeTextControl, size);
+			set_text_control_float_value(fSizeTextControl, size);
 			break;
 		}
 
 		case MSG_SIZE_TEXT:
 		{
-			float size = _Value(fSizeTextControl);
+			float size = get_text_control_float_value(fSizeTextControl);
 			fTool->SetOption(TextTool::SIZE, size);
 			fSizeSlider->SetValue(_ToLinearSize(size));
 			break;
@@ -391,7 +392,7 @@ TextToolConfigView::MessageReceived(BMessage* message)
 			double size;
 			if (message->FindDouble("size", &size) == B_OK) {
 				fSizeSlider->SetValue(_ToLinearSize(size));
-				_SetValue(fSizeTextControl, size);
+				set_text_control_float_value(fSizeTextControl, size);
 			}
 
 			const char* text;
@@ -505,32 +506,6 @@ TextToolConfigView::SetEnabled(bool enable)
 
 // #pragma mark - private
 
-// _SetText
-void
-TextToolConfigView::_SetValue(BTextControl* control, float value) const
-{
-	char text[64];
-	snprintf(text, sizeof(text), "%.2f", value);
-	int32 selectionStart;
-	int32 selectionEnd;
-	control->TextView()->GetSelection(&selectionStart, &selectionEnd);
-	bool selectionEndIsTextEnd
-		= selectionEnd == control->TextView()->TextLength();
-
-	control->SetText(text);
-
-	if (selectionEndIsTextEnd)
-		selectionEnd = control->TextView()->TextLength();
-	control->TextView()->Select(selectionStart, selectionEnd);
-}
-
-// _Value
-float
-TextToolConfigView::_Value(BTextControl* control) const
-{
-	return atof(control->Text());
-}
-
 // _PopulateFontMenu
 void
 TextToolConfigView::_PopulateFontMenu(BMenu* menu, BHandler* target,
@@ -608,12 +583,12 @@ TextToolConfigView::_PopulateFontMenu(BMenu* menu, BHandler* target,
 double
 TextToolConfigView::_FromLinearSize(double value) const
 {
-	return 1.0 + 1023.0 * pow((value - 1) / 1023.0, 2.0);
+	return from_linear(value, 1024.0);
 }
 
 // _ToLinearSize
 double
 TextToolConfigView::_ToLinearSize(double value) const
 {
-	return 1.0 + 1023.0 * sqrt((value - 1) / 1023.0);
+	return to_linear(value, 1024.0);
 }
