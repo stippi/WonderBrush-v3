@@ -1,5 +1,5 @@
 /*
- * Copyright 2007,2010, Stephan Aßmus <superstippi@gmx.de>.
+ * Copyright 2007,2010,2013 Stephan Aßmus <superstippi@gmx.de>.
  * All rights reserved. Distributed under the terms of the MIT License.
  */
 
@@ -17,39 +17,22 @@
 
 // constructor
 RenderBuffer::RenderBuffer(const BRect& bounds)
-	: fBits(new(std::nothrow) uint8[(bounds.IntegerWidth() + 1) * 8
-		* (bounds.IntegerHeight() + 1)])
-	, fWidth(bounds.IntegerWidth() + 1)
-	, fHeight(bounds.IntegerHeight() + 1)
-	, fBPR(fWidth * 8)
-	, fLeft(static_cast<int32>(bounds.left))
-	, fTop(static_cast<int32>(bounds.top))
-	, fAdopted(false)
+	: PixelBuffer(bounds, 8)
 {
 }
 
 // constructor
 RenderBuffer::RenderBuffer(uint32 width, uint32 height)
-	: fBits(new(std::nothrow) uint8[width * 8 * height])
-	, fWidth(width)
-	, fHeight(height)
-	, fBPR(width * 8)
-	, fLeft(0)
-	, fTop(0)
-	, fAdopted(false)
+	: PixelBuffer(width, height, 8)
 {
 }
 
 // constructor
 RenderBuffer::RenderBuffer(const BBitmap* bitmap)
-	: fBits(new(std::nothrow) uint8[(bitmap->Bounds().IntegerWidth() + 1) * 8
-		* (bitmap->Bounds().IntegerHeight() + 1)])
-	, fWidth(bitmap->Bounds().IntegerWidth() + 1)
-	, fHeight(bitmap->Bounds().IntegerHeight() + 1)
-	, fBPR(fWidth * 8)
-	, fLeft(static_cast<int32>(bitmap->Bounds().left))
-	, fTop(static_cast<int32>(bitmap->Bounds().top))
-	, fAdopted(false)
+	: PixelBuffer(
+		bitmap->Bounds().IntegerWidth() + 1,
+		bitmap->Bounds().IntegerHeight() + 1,
+		8)
 {
 	uint8* dst = fBits;
 	uint8* src = reinterpret_cast<uint8*>(bitmap->Bits());
@@ -64,7 +47,7 @@ RenderBuffer::RenderBuffer(const BBitmap* bitmap)
 					RenderEngine::GammaToLinear(s[2]),
 					RenderEngine::GammaToLinear(s[1]),
 					RenderEngine::GammaToLinear(s[0]),
-					s[3] >> 8);
+					((uint16)s[3] << 8) | s[3]);
 				color.premultiply();
 				d[0] = color.b;
 				d[1] = color.g;
@@ -89,62 +72,21 @@ RenderBuffer::RenderBuffer(const BBitmap* bitmap)
 			}
 		}
 		src += srcBPR;
-		dst += fBPR;
+		dst += fBytesPerRow;
 	}
 }
 
 // constructor
-RenderBuffer::RenderBuffer(RenderBuffer* bitmap, BRect area, bool adopt)
-	: fBits(NULL)
-	, fWidth(0)
-	, fHeight(0)
-	, fBPR(0)
-	, fLeft(0)
-	, fTop(0)
-	, fAdopted(false)
+RenderBuffer::RenderBuffer(RenderBuffer* buffer, BRect area, bool adopt)
+	: PixelBuffer(buffer, area, adopt)
 {
-	area = area & bitmap->Bounds();
-
-	uint8* buffer = bitmap->Bits();
-	uint32 width = area.IntegerWidth() + 1;
-	uint32 height = area.IntegerHeight() + 1;
-	uint32 bpr = bitmap->BytesPerRow();
-
-	buffer += (int32)area.left * 8;
-	buffer += (int32)area.top * bpr;
-
-	Attach(buffer, width, height, bpr, adopt);
-
-	fLeft = (int32)area.left;
-	fTop = (int32)area.top;
 }
 
 // constructor
 RenderBuffer::RenderBuffer(uint8* buffer, uint32 width, uint32 height,
 		uint32 bytesPerRow, bool adopt)
-	: fBits(NULL)
-	, fWidth(0)
-	, fHeight(0)
-	, fBPR(0)
-	, fLeft(0)
-	, fTop(0)
-	, fAdopted(false)
+	: PixelBuffer(buffer, width, height, 8, bytesPerRow, adopt)
 {
-	Attach(buffer, width, height, bytesPerRow, adopt);
-}
-
-// destructor
-RenderBuffer::~RenderBuffer()
-{
-	if (!fAdopted)
-		delete[] fBits;
-}
-
-// IsValid()
-bool
-RenderBuffer::IsValid() const
-{
-	return fBits != NULL && fWidth > 0 && fHeight > 0;
 }
 
 // Attach
@@ -152,36 +94,7 @@ void
 RenderBuffer::Attach(uint8* buffer, uint32 width, uint32 height,
 	uint32 bytesPerRow, bool adopt)
 {
-	if (!fAdopted)
-		delete[] fBits;
-
-	fWidth = width;
-	fHeight = height;
-	fAdopted = adopt;
-	if (adopt) {
-		fBits = buffer;
-		fBPR = bytesPerRow;
-		if (fBPR < width * 8)
-			debugger("Buffer size insufficient for given width.");
-	} else {
-		fBPR = width * 8;
-		fBits = new uint8[fBPR * height];
-		uint8* dst = fBits;
-		for (uint32 y = 0; y < height; y++) {
-			memcpy(dst, buffer, fBPR);
-			dst += fBPR;
-			buffer += bytesPerRow;
-		}
-	}
-}
-
-// Bounds
-BRect
-RenderBuffer::Bounds() const
-{
-	BRect bounds(0, 0, fWidth - 1, fHeight - 1);
-	bounds.OffsetBy(fLeft, fTop);
-	return bounds;
+	_Attach(buffer, width, height, 8, bytesPerRow, adopt);
 }
 
 // Clear
@@ -197,7 +110,7 @@ RenderBuffer::Clear(BRect area, const rgb_color& color)
 
 	uint8* dst = fBits;
 	dst += (left - fLeft) * 8;
-	dst += ((int32)area.top - fTop) * fBPR;
+	dst += ((int32)area.top - fTop) * fBytesPerRow;
 
 	agg::rgba16 linearColor(
 		RenderEngine::GammaToLinear(color.red),
@@ -215,8 +128,15 @@ RenderBuffer::Clear(BRect area, const rgb_color& color)
 			d[3] = linearColor.a;
 			d += 4;
 		}
-		dst += fBPR;
+		dst += fBytesPerRow;
 	}
+}
+
+// CopyTo
+void
+RenderBuffer::CopyTo(RenderBuffer* buffer, BRect area) const
+{
+	PixelBuffer::CopyTo(buffer, area);
 }
 
 // CopyTo
@@ -238,7 +158,7 @@ RenderBuffer::CopyTo(BBitmap* bitmap, BRect area) const
 	dst += (top - (int32)bitmap->Bounds().top) * dstBPR;
 	uint8* src = fBits;
 	src += (left - fLeft) * 8;
-	src += (top - fTop) * fBPR;
+	src += (top - fTop) * fBytesPerRow;
 
 	for (int32 y = 0; y < height; y++) {
 		uint8* d = dst;
@@ -254,32 +174,7 @@ RenderBuffer::CopyTo(BBitmap* bitmap, BRect area) const
 			d += 4;
 			s += 4;
 		}
-		src += fBPR;
-		dst += dstBPR;
-	}
-}
-
-// CopyTo
-void
-RenderBuffer::CopyTo(RenderBuffer* buffer, BRect area) const
-{
-	// make sure we don't copy out of bounds
-	area = area & buffer->Bounds();
-	area = area & Bounds();
-
-	uint8* dst = buffer->Bits();
-	uint32 dstBPR = buffer->BytesPerRow();
-	dst += ((int32)area.left - buffer->fLeft) * 8;
-	dst += ((int32)area.top - buffer->fTop) * dstBPR;
-	uint8* src = fBits;
-	src += ((int32)area.left - fLeft) * 8;
-	src += ((int32)area.top - fTop) * fBPR;
-	int32 bytes = (area.IntegerWidth() + 1) * 8;
-	int32 height = area.IntegerHeight() + 1;
-
-	for (int32 y = 0; y < height; y++) {
-		memcpy(dst, src, bytes);
-		src += fBPR;
+		src += fBytesPerRow;
 		dst += dstBPR;
 	}
 }
@@ -301,7 +196,7 @@ RenderBuffer::BlendTo(RenderBuffer* buffer, BRect area) const
 	dst += ((int32)area.top - buffer->fTop) * dstBPR;
 	uint8* src = fBits;
 	src += (left - fLeft) * 8;
-	src += ((int32)area.top - fTop) * fBPR;
+	src += ((int32)area.top - fTop) * fBytesPerRow;
 	int32 height = area.IntegerHeight() + 1;
 
 	for (int32 y = 0; y < height; y++) {
@@ -325,7 +220,7 @@ RenderBuffer::BlendTo(RenderBuffer* buffer, BRect area) const
 			d += 4;
 			s += 4;
 		}
-		src += fBPR;
+		src += fBytesPerRow;
 		dst += dstBPR;
 	}
 }

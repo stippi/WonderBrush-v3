@@ -208,11 +208,13 @@ Application WonderBrush :
 	platform_support_ui.cpp
 
 	# render
+	AlphaBuffer.cpp
 	FontCache.cpp
 	GaussFilter.cpp
 	LayoutContext.cpp
 	LayoutState.cpp
 	Path.cpp
+	PixelBuffer.cpp
 	RenderBuffer.cpp
 	RenderEngine.cpp
 	RenderManager.cpp
@@ -313,6 +315,7 @@ Application Resizer :
 		[ FGristFiles
 			# render
 			LayoutState.o
+			PixelBuffer.o
 			RenderBuffer.o
 			RenderEngine.o
 
@@ -366,6 +369,7 @@ Application Denoiser :
 		[ FGristFiles
 			# render
 			LayoutState.o
+			PixelBuffer.o
 			RenderBuffer.o
 			RenderEngine.o
 

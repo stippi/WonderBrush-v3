@@ -1,14 +1,11 @@
 /*
- * Copyright 2007,2010, Stephan Aßmus <superstippi@gmx.de>.
+ * Copyright 2007,2010,2013 Stephan Aßmus <superstippi@gmx.de>.
  * All rights reserved. Distributed under the terms of the MIT License.
  */
 #ifndef RENDER_BUFFER_H
 #define RENDER_BUFFER_H
 
-#include <GraphicsDefs.h>
-#include <Rect.h>
-
-#include "Referenceable.h"
+#include "PixelBuffer.h"
 
 class BBitmap;
 
@@ -25,7 +22,7 @@ class BBitmap;
 // It is not possible/intended to shift the buffer in the coordinate space
 // during the copy process.
 
-class RenderBuffer : public Referenceable {
+class RenderBuffer : public PixelBuffer {
 public:
 								RenderBuffer(const BRect& bounds);
 								RenderBuffer(uint32 width, uint32 height);
@@ -35,40 +32,17 @@ public:
 								RenderBuffer(uint8* buffer,
 									uint32 width, uint32 height,
 									uint32 bytesPerRow, bool adopt);
-	virtual						~RenderBuffer();
 
-			bool				IsValid() const;
-
-			void				Attach(uint8* buffer,
-									uint32 width, uint32 height,
-									uint32 bytesPerRow,
+			void				Attach(uint8* buffer, uint32 width,
+									uint32 height, uint32 bytesPerRow,
 									bool adopt);
-
-	inline	uint8*				Bits() const
-									{ return fBits; }
-	inline	uint32				Width() const
-									{ return fWidth; }
-	inline	uint32				Height() const
-									{ return fHeight; }
-	inline	uint32				BytesPerRow() const
-									{ return fBPR; }
-			BRect				Bounds() const;
 
 			void				Clear(BRect area, const rgb_color& color);
 
-			void				CopyTo(BBitmap* bitmap, BRect area) const;
 			void				CopyTo(RenderBuffer* buffer, BRect area) const;
+			void				CopyTo(BBitmap* bitmap, BRect area) const;
 
 			void				BlendTo(RenderBuffer* buffer, BRect area) const;
-
-private:
-			uint8*				fBits;
-			uint32				fWidth;
-			uint32				fHeight;
-			uint32				fBPR;
-			int32				fLeft;
-			int32				fTop;
-			bool				fAdopted;
 };
 
 #endif // RENDER_BUFFER_H
