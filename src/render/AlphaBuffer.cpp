@@ -44,3 +44,18 @@ AlphaBuffer::Attach(uint8* buffer, uint32 width, uint32 height,
 {
 	_Attach(buffer, width, height, 2, bytesPerRow, adopt);
 }
+
+// CropUnclipped
+AlphaBufferRef
+AlphaBuffer::CropUnclipped(BRect bounds) const
+{
+	AlphaBuffer* buffer = static_cast<AlphaBuffer*>(_CropUnclipped(bounds));
+	return AlphaBufferRef(buffer, true);
+}
+
+// _Create
+PixelBuffer*
+AlphaBuffer::_Create(const BRect bounds) const
+{
+	return new (std::nothrow) AlphaBuffer(bounds);
+}

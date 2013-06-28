@@ -7,6 +7,9 @@
 
 #include "PixelBuffer.h"
 
+class AlphaBuffer;
+typedef Reference<AlphaBuffer> AlphaBufferRef;
+
 class AlphaBuffer : public PixelBuffer {
 public:
 								AlphaBuffer(const BRect& bounds);
@@ -20,6 +23,11 @@ public:
 			void				Attach(uint8* buffer, uint32 width,
 									uint32 height, uint32 bytesPerRow,
 									bool adopt);
+
+			AlphaBufferRef		CropUnclipped(BRect bounds) const;
+
+protected:
+	virtual PixelBuffer*		_Create(const BRect bounds) const;
 };
 
 #endif // ALPHA_BUFFER_H
