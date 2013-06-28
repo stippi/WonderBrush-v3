@@ -6,6 +6,7 @@
 
 #include "agg_pod_vector.h"
 
+#include "AlphaBuffer.h"
 #include "RenderBuffer.h"
 
 template<class T> struct stack_blur_tables
@@ -111,7 +112,7 @@ StackBlurFilter::FilterRGBA32(RenderBuffer* buffer, double radius)
 
 
 void
-StackBlurFilter::FilterGray8(RenderBuffer* buffer, double radius)
+StackBlurFilter::FilterGray16(AlphaBuffer* buffer, double radius)
 {
 	if (radius < 1.0)
 		return;
@@ -119,11 +120,11 @@ StackBlurFilter::FilterGray8(RenderBuffer* buffer, double radius)
 	int32 width = buffer->Width();
 	int32 height = buffer->Height();
 	uint32 bpr = buffer->BytesPerRow();
-	uint8* bits = buffer->Bits();
+	uint16* bits = (uint16*)buffer->Bits();
 
 	unsigned r = (unsigned)roundf(radius);
 
-	_Filter8(bits, width, height, bpr, r, r);
+	_FilterGray<uint16>(bits, width, height, bpr, r, r);
 }
 
 
@@ -147,7 +148,7 @@ StackBlurFilter::Filter(BBitmap* bitmap, double radius)
 
 	} else if (bitmap->ColorSpace() == B_GRAY8) {
 
-		_Filter8(bits, width, height, bpr, r, r);
+		_FilterGray<uint8>(bits, width, height, bpr, r, r);
 
 	} else {
 		printf("StackBlurFilter::Filter() - unsupported color space\n");
@@ -745,18 +746,21 @@ StackBlurFilter::_Filter32(uint8* buffer,
 }
 
 
+template<typename PixelType>
 void
-StackBlurFilter::_Filter8(uint8* buffer,
-						  unsigned width, unsigned height,
-						  int32 bpr,
-						  unsigned rx, unsigned ry) const
+StackBlurFilter::_FilterGray(PixelType* buffer,
+	unsigned width, unsigned height, int32 bpr,
+	unsigned rx, unsigned ry) const
 {
 	unsigned x, y, xp, yp, i;
 	unsigned stack_ptr;
 	unsigned stack_start;
 
-	const uint8* src_pix_ptr;
-		  uint8* dst_pix_ptr;
+	// TODO: Wrong!
+	bpr /= sizeof(PixelType);
+
+	const PixelType* src_pix_ptr;
+		  PixelType* dst_pix_ptr;
 	unsigned pix;
 	unsigned stack_pix;
 	unsigned sum;
@@ -772,7 +776,7 @@ StackBlurFilter::_Filter8(uint8* buffer,
 	unsigned mul_sum;
 	unsigned shr_sum;
 
-	pod_vector<uint8> stack;
+	pod_vector<PixelType> stack;
 
 	if(rx > 0)
 	{
