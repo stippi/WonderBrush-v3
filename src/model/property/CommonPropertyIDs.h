@@ -1,9 +1,6 @@
 /*
- * Copyright 2006, Haiku.
- * Distributed under the terms of the MIT License.
- *
- * Authors:
- *		Stephan Aßmus <superstippi@gmx.de>
+ * Copyright 2006-2013, Stephan Aßmus <superstippi@gmx.de>.
+ * All rights reserved.
  */
 
 #ifndef COMMON_PROPERTY_IDS_H
@@ -39,6 +36,9 @@ enum {
 	PROPERTY_ROTATION					= 'rotn',
 	PROPERTY_SCALE_X					= 'sclx',
 	PROPERTY_SCALE_Y					= 'scly',
+
+	PROPERTY_OFFSET_X					= 'ofsx',
+	PROPERTY_OFFSET_Y					= 'ofsy',
 
 	PROPERTY_DETECT_ORIENTATION			= 'ador',
 

@@ -1,9 +1,6 @@
 /*
- * Copyright 2006, Haiku.
- * Distributed under the terms of the MIT License.
- *
- * Authors:
- *		Stephan Aßmus <superstippi@gmx.de>
+ * Copyright 2006-2013, Stephan Aßmus <superstippi@gmx.de>.
+ * All rights reserved.
  */
 
 #include "CommonPropertyIDs.h"
@@ -85,6 +82,13 @@ name_for_id(int32 id)
 			break;
 		case PROPERTY_SCALE_Y:
 			name = "Scale Y";
+			break;
+
+		case PROPERTY_OFFSET_X:
+			name = "Offset X";
+			break;
+		case PROPERTY_OFFSET_Y:
+			name = "Offset Y";
 			break;
 
 		case PROPERTY_DETECT_ORIENTATION:
