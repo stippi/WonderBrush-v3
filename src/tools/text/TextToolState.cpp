@@ -440,9 +440,6 @@ TextToolState::HandleKeyDown(const StateView::KeyEvent& event,
 			case B_ENTER:
 				Insert(fCaretOffset, "\n");
 				break;
-			case B_SPACE:
-				Insert(fCaretOffset, " ");
-				break;
 			case B_TAB:
 				Insert(fCaretOffset, " ");
 				break;
