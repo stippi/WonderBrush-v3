@@ -10,6 +10,7 @@
 #include "BrushStroke.h"
 #include "Document.h"
 #include "Filter.h"
+#include "FilterDropShadow.h"
 #include "FontCache.h"
 #include "FontRegistry.h"
 #include "Image.h"
@@ -78,6 +79,9 @@ WonderBrushBase::WonderBrushBase(BRect bounds)
 	fDocument->RootLayer()->AddObject(new Rect(BRect(200, 10, 280, 70),
 		(rgb_color){ 255, 200, 50, 80 }));
 
+	Layer* shadowLayer = new Layer(bounds);
+	fDocument->RootLayer()->AddObject(shadowLayer);
+
 	BBitmap* bitmap = BTranslationUtils::GetBitmap(
 		"/boot/home/Desktop/gamma_dalai_lama_gray.jpg");
 	if (bitmap == NULL && sFontsDirectory != NULL) {
@@ -94,7 +98,7 @@ WonderBrushBase::WonderBrushBase(BRect bounds)
 			0.5, 0.5);
 //		image->RotateBy(BPoint(buffer->Width() / 2, buffer->Height() / 2),
 //			2);
-		fDocument->RootLayer()->AddObject(image);
+		shadowLayer->AddObject(image);
 
 		buffer->RemoveReference();
 		delete bitmap;
@@ -131,7 +135,13 @@ WonderBrushBase::WonderBrushBase(BRect bounds)
 		Font("Courier Prime", "Regular", 24.0),
 		(rgb_color) { 0, 0, 0, 255 });
 
-	fDocument->RootLayer()->AddObject(text);
+	shadowLayer->AddObject(text);
+
+	FilterDropShadow* dropShadow = new FilterDropShadow(2.0f);
+	dropShadow->SetOpacity(200.0f);
+	dropShadow->SetOffsetY(1.0f);
+
+	shadowLayer->AddObject(dropShadow);
 
 	Rect* transformedRect = new Rect(BRect(150, 200, 210, 330),
 		(rgb_color){ 55, 120, 80, 120 });
