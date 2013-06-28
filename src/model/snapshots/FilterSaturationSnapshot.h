@@ -2,8 +2,8 @@
  * Copyright 2013, Stephan Aßmus <superstippi@gmx.de>.
  * All rights reserved. Distributed under the terms of the MIT License.
  */
-#ifndef FILTER_CLONE_H
-#define FILTER_CLONE_H
+#ifndef FILTER_SATURATION_SNAPSHOT_H
+#define FILTER_SATURATION_SNAPSHOT_H
 
 #include "ObjectSnapshot.h"
 
@@ -26,4 +26,4 @@ class FilterSaturationSnapshot : public ObjectSnapshot {
 			float				fSaturation;
 };
 
-#endif // FILTER_CLONE_H
+#endif // FILTER_SATURATION_SNAPSHOT_H
