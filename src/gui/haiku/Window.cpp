@@ -27,6 +27,7 @@
 #include "Document.h"
 #include "EditManager.h"
 #include "Filter.h"
+#include "FilterDropShadow.h"
 #include "FilterSaturation.h"
 #include "IconButton.h"
 #include "IconOptionsControl.h"
@@ -59,6 +60,7 @@ enum {
 };
 
 enum {
+	FILTER_DROP_SHADOW				= 'drps',
 	FILTER_GAUSSIAN_BLUR			= 'gblr',
 	FILTER_SATURATION				= 'srtn',
 };
@@ -693,6 +695,7 @@ Window::_CreateObjectMenu() const
 
 	BMenu* filterMenu = new BMenu("Add filter");
 
+	_AddFilterMenuItem(filterMenu, "Drop shadow", FILTER_DROP_SHADOW);
 	_AddFilterMenuItem(filterMenu, "Gaussian blur", FILTER_GAUSSIAN_BLUR);
 	_AddFilterMenuItem(filterMenu, "Saturation", FILTER_SATURATION);
 
@@ -789,6 +792,9 @@ Window::_AddFilter(int32 filterID)
 
 	Object* filter = NULL;
 	switch (filterID) {
+		case FILTER_DROP_SHADOW:
+			filter = new(std::nothrow) FilterDropShadow();
+			break;
 		case FILTER_GAUSSIAN_BLUR:
 			filter = new(std::nothrow) Filter();
 			break;
