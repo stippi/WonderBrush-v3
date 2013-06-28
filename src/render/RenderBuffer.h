@@ -22,6 +22,9 @@ class BBitmap;
 // It is not possible/intended to shift the buffer in the coordinate space
 // during the copy process.
 
+class RenderBuffer;
+typedef Reference<RenderBuffer> RenderBufferRef;
+
 class RenderBuffer : public PixelBuffer {
 public:
 								RenderBuffer(const BRect& bounds);
@@ -42,7 +45,12 @@ public:
 			void				CopyTo(RenderBuffer* buffer, BRect area) const;
 			void				CopyTo(BBitmap* bitmap, BRect area) const;
 
+			RenderBufferRef		CropUnclipped(BRect bounds) const;
+
 			void				BlendTo(RenderBuffer* buffer, BRect area) const;
+
+protected:
+	virtual PixelBuffer*		_Create(const BRect bounds) const;
 };
 
 #endif // RENDER_BUFFER_H

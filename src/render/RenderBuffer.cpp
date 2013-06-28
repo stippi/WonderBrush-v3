@@ -179,6 +179,14 @@ RenderBuffer::CopyTo(BBitmap* bitmap, BRect area) const
 	}
 }
 
+// CropUnclipped
+RenderBufferRef
+RenderBuffer::CropUnclipped(BRect bounds) const
+{
+	RenderBuffer* buffer = static_cast<RenderBuffer*>(_CropUnclipped(bounds));
+	return RenderBufferRef(buffer, true);
+}
+
 // BlendTo
 void
 RenderBuffer::BlendTo(RenderBuffer* buffer, BRect area) const
@@ -223,4 +231,11 @@ RenderBuffer::BlendTo(RenderBuffer* buffer, BRect area) const
 		src += fBytesPerRow;
 		dst += dstBPR;
 	}
+}
+
+// _Create
+PixelBuffer*
+RenderBuffer::_Create(const BRect bounds) const
+{
+	return new (std::nothrow) RenderBuffer(bounds);
 }
