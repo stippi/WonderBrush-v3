@@ -130,7 +130,7 @@ WonderBrushBase::WonderBrushBase(BRect bounds)
 		Font("Courier Prime", "Regular", 24.0), (rgb_color) { 0, 0, 0, 255 });
 	text->Append("can't",
 		Font("Courier Prime", "Italic", 24.0),
-		(rgb_color) { 180, 20, 35, 255 });
+		(rgb_color) { 255, 80, 40, 232 });
 	text->Append(".",
 		Font("Courier Prime", "Regular", 24.0),
 		(rgb_color) { 0, 0, 0, 255 });
