@@ -148,17 +148,14 @@ Window::Window(BRect frame, const char* title, Document* document,
 		new BMessage(MSG_REMOVE));
 	fRemoveMI->SetEnabled(false);
 
-	BMenuBar* objectMenuBar = new BMenuBar("object menu");
 	fObjectMenu = _CreateObjectMenu();
-	objectMenuBar->AddItem(fObjectMenu);
+	menuBar->AddItem(fObjectMenu);
 
-	BMenuBar* resourceMenuBar = new BMenuBar("resource menu");
 	fResourceMenu = new BMenu("Resource");
-	resourceMenuBar->AddItem(fResourceMenu);
+	menuBar->AddItem(fResourceMenu);
 
-	BMenuBar* propertyMenuBar = new BMenuBar("property menu");
 	fPropertyMenu = new BMenu("Property");
-	propertyMenuBar->AddItem(fPropertyMenu);
+	menuBar->AddItem(fPropertyMenu);
 
 	fLayerTreeView = new ObjectTreeView(fDocument.Get(), &fSelection);
 //	fLayerTreeView->SetModel(fLayerTreeModel);
@@ -304,12 +301,12 @@ exportButton->SetEnabled(false);
 
 	BGroupView* objectGroup = new BGroupView(B_VERTICAL, 0.0f);
 	BLayoutBuilder::Group<>(objectGroup->GroupLayout())
-		.Add(objectMenuBar)
+//		.Add(objectMenuBar)
 		.Add(objectTreeScrollView)
 	;
 	BGroupView* resourceGroup = new BGroupView(B_VERTICAL, 0.0f);
 	BLayoutBuilder::Group<>(resourceGroup->GroupLayout())
-		.Add(resourceMenuBar)
+//		.Add(resourceMenuBar)
 		.Add(resourceTreeScrollView)
 	;
 
@@ -326,10 +323,10 @@ exportButton->SetEnabled(false);
 	fVerticalSplit = new BSplitView(B_VERTICAL, 0.0f);
 
 	BLayoutBuilder::Group<>(this, B_VERTICAL, 0.0f)
+		.Add(menuBar)
 		.AddSplit(fHorizontalSplit, 0.15f)
 			.AddGroup(B_HORIZONTAL, 0.0f)
 				.AddGroup(B_VERTICAL, 0.0f)
-					.Add(menuBar)
 					.Add(fileIconGroup)
 					.AddSplit(fVerticalSplit, 0.10f)
 						.AddGroup(B_VERTICAL, 0.0f, 0.30f)
@@ -342,7 +339,7 @@ exportButton->SetEnabled(false);
 						.Add(objectResourceTabView)
 						.AddGroup(B_VERTICAL, 0.0f, 0.35f)
 							.Add(new BSeparatorView(B_HORIZONTAL))
-							.Add(propertyMenuBar)
+//							.Add(propertyMenuBar)
 							.Add(inspectorScrollView)
 						.End()
 					.End()
