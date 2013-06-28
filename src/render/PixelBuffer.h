@@ -35,8 +35,12 @@ public:
 	inline	uint32				BytesPerRow() const
 									{ return fBytesPerRow; }
 	inline	uint32				BytesPerPixel() const
-									{ return fBytesPerRow; }
+									{ return fBytesPerPixel; }
 			BRect				Bounds() const;
+	inline	int32				Left() const
+									{ return fLeft; }
+	inline	int32				Top() const
+									{ return fTop; }
 
 			void				CopyTo(PixelBuffer* buffer, BRect area) const;
 
@@ -47,6 +51,9 @@ protected:
 									uint32 bytesPerRow,
 									bool adopt);
 
+	virtual PixelBuffer*		_Create(const BRect bounds) const = 0;
+
+			PixelBuffer*		_CropUnclipped(BRect bounds) const;
 
 protected:
 			uint8*				fBits;
