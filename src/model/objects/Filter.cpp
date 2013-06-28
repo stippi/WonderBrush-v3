@@ -13,17 +13,15 @@
 
 // constructor
 Filter::Filter()
-	:
-	Object(),
-	fFilterRadius(20.0)
+	: Object()
+	, fFilterRadius(20.0)
 {
 }
 
 // constructor
 Filter::Filter(float radius)
-	:
-	Object(),
-	fFilterRadius(radius)
+	: Object()
+	, fFilterRadius(radius)
 {
 }
 
