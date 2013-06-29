@@ -182,11 +182,8 @@ void
 Paint::AddProperties(PropertyObject* object, uint32 flags) const
 {
 	uint32 typeID = PROPERTY_FILL_PAINT_TYPE;
-	uint32 colorID = PROPERTY_FILL_PAINT_COLOR;
-	if ((flags & STROKE_PAINT) != 0) {
+	if ((flags & STROKE_PAINT) != 0)
 		typeID = PROPERTY_STROKE_PAINT_TYPE;
-		colorID = PROPERTY_STROKE_PAINT_COLOR;
-	}
 
 	AddTypeProperty(object, typeID, fType);
 
@@ -195,7 +192,8 @@ Paint::AddProperties(PropertyObject* object, uint32 flags) const
 		case NONE:
 			break;
 		case COLOR:
-			object->AddProperty(new ColorProperty(colorID, Color()));
+			if (fColor.Get() != NULL)
+				fColor->AddProperties(object, flags);
 			break;
 		case GRADIENT:
 			// TODO: ...
@@ -215,11 +213,8 @@ Paint::SetToPropertyObject(const PropertyObject* object, uint32 flags)
 	BaseObject::SetToPropertyObject(object, flags);
 
 	uint32 typeID = PROPERTY_FILL_PAINT_TYPE;
-	uint32 colorID = PROPERTY_FILL_PAINT_COLOR;
-	if ((flags & STROKE_PAINT) != 0) {
+	if ((flags & STROKE_PAINT) != 0)
 		typeID = PROPERTY_STROKE_PAINT_TYPE;
-		colorID = PROPERTY_STROKE_PAINT_COLOR;
-	}
 
 	// Adopt the type first
 	OptionProperty* typeProperty = dynamic_cast<OptionProperty*>(
@@ -237,13 +232,11 @@ Paint::SetToPropertyObject(const PropertyObject* object, uint32 flags)
 		case NONE:
 			break;
 		case COLOR:
-		{
-			ColorProperty* colorProperty = dynamic_cast<ColorProperty*>(
-				object->FindProperty(colorID));
-			if (colorProperty != NULL)
-				SetColor(colorProperty->Value());
+			if (fColor.Get() != NULL) {
+				if (fColor->SetToPropertyObject(object, flags))
+					Notify();
+			}
 			break;
-		}
 		case GRADIENT:
 			// TODO: ...
 			break;

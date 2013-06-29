@@ -9,6 +9,9 @@
 
 #include <OS.h>
 
+#include "ColorProperty.h"
+#include "CommonPropertyIDs.h"
+#include "Paint.h"
 #include "ui_defines.h"
 
 // constructor
@@ -40,11 +43,48 @@ Color::~Color()
 {
 }
 
+// #pragma mark - ColorProvider
+
 // GetColor
 rgb_color
 Color::GetColor() const
 {
 	return fColor;
+}
+
+// #pragma mark - BaseObject
+
+// AddProperties
+void
+Color::AddProperties(PropertyObject* object, uint32 flags) const
+{
+	ColorProvider::AddProperties(object, flags);
+
+	uint32 colorID = PROPERTY_FILL_PAINT_COLOR;
+	if ((flags & Paint::STROKE_PAINT) != 0)
+		colorID = PROPERTY_STROKE_PAINT_COLOR;
+
+	object->AddProperty(new (std::nothrow) ColorProperty(colorID, GetColor()));
+}
+
+// SetToPropertyObject
+bool
+Color::SetToPropertyObject(const PropertyObject* object, uint32 flags)
+{
+	AutoNotificationSuspender _(this);
+
+	ColorProvider::SetToPropertyObject(object, flags);
+
+	uint32 colorID = PROPERTY_FILL_PAINT_COLOR;
+	if ((flags & Paint::STROKE_PAINT) != 0)
+		colorID = PROPERTY_STROKE_PAINT_COLOR;
+
+	ColorProperty* colorProperty = dynamic_cast<ColorProperty*>(
+		object->FindProperty(colorID));
+	if (colorProperty != NULL)
+		SetColor(colorProperty->Value());
+
+	return HasPendingNotifications();
 }
 
 // DefaultName
@@ -53,6 +93,8 @@ Color::DefaultName() const
 {
 	return "Color";
 }
+
+// #pragma mark - Color
 
 // SetColor
 Color&

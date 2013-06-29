@@ -15,10 +15,18 @@ public:
 								Color(const rgb_color& color);
 	virtual						~Color();
 
+	// ColorProvider interface
 	virtual	rgb_color			GetColor() const;
 
+	// BaseObject interface
+	virtual	void				AddProperties(PropertyObject* object,
+									uint32 flags = 0) const;
+	virtual	bool				SetToPropertyObject(
+									const PropertyObject* object,
+									uint32 flags = 0);
 	virtual	const char*			DefaultName() const;
 
+	// Color
 	inline						operator rgb_color() const
 									{ return fColor; }
 
