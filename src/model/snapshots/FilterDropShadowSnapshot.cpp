@@ -89,6 +89,9 @@ FilterDropShadowSnapshot::Render(RenderEngine& engine, RenderBuffer* bitmap,
 	source.InsetBy(-extend, -extend);
 	source.OffsetBy(-fLayoutedOffsetX, -fLayoutedOffsetY);
 
+	if (source.Width() <= 0 || source.Height() <= 0)
+		return;
+
 	AlphaBuffer alphaBuffer(source);
 	
 	source = source & bitmap->Bounds();
