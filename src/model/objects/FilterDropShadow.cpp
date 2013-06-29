@@ -63,8 +63,10 @@ FilterDropShadow::AddProperties(PropertyObject* object, uint32 flags) const
 	object->AddProperty(new (std::nothrow) FloatProperty(
 		PROPERTY_OPACITY, fOpacity, 0.0f, 255.0f));
 
-	if (fColorProvider.Get() != NULL)
-		fColorProvider->AddProperties(object, flags);
+	if (fColorProvider.Get() != NULL) {
+		fColorProvider->AddProperties(object,
+			flags | BaseObject::DONT_ADD_NAME);
+	}
 }
 
 // SetToPropertyObject
@@ -85,7 +87,8 @@ FilterDropShadow::SetToPropertyObject(const PropertyObject* object, uint32 flags
 	SetOpacity(object->Value(PROPERTY_OPACITY, fOpacity));
 
 	if (fColorProvider.Get() != NULL) {
-		if (fColorProvider->SetToPropertyObject(object, flags)) {
+		if (fColorProvider->SetToPropertyObject(object,
+				flags | BaseObject::DONT_ADD_NAME)) {
 			Notify();
 			UpdateChangeCounter();
 			InvalidateParent();

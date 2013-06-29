@@ -90,8 +90,10 @@ BaseObject::MakePropertyObject() const
 void
 BaseObject::AddProperties(PropertyObject* object, uint32 flags) const
 {
-	object->AddProperty(new(std::nothrow) StringProperty(PROPERTY_NAME,
-		fName.String()));
+	if ((flags & DONT_ADD_NAME) == 0) {
+		object->AddProperty(new(std::nothrow) StringProperty(PROPERTY_NAME,
+			fName.String()));
+	}
 }
 
 // SetToPropertyObject
@@ -100,9 +102,11 @@ BaseObject::SetToPropertyObject(const PropertyObject* object, uint32 flags)
 {
 	AutoNotificationSuspender _(this);
 
-	BString name;
-	if (object->GetValue(PROPERTY_NAME, name))
-		SetName(name.String());
+	if ((flags & DONT_ADD_NAME) == 0) {
+		BString name;
+		if (object->GetValue(PROPERTY_NAME, name))
+			SetName(name.String());
+	}
 
 	return HasPendingNotifications();
 }

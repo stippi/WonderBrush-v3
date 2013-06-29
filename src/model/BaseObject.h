@@ -18,6 +18,11 @@ class BMessage;
 
 class BaseObject : public Notifier, public Referenceable {
 public:
+	enum {
+		DONT_ADD_NAME = 1 << 2,
+	};
+
+public:
 								BaseObject();
 								BaseObject(const BaseObject& other);
 								BaseObject(BMessage* archive);

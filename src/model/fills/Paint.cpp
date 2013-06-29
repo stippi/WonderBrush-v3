@@ -192,8 +192,10 @@ Paint::AddProperties(PropertyObject* object, uint32 flags) const
 		case NONE:
 			break;
 		case COLOR:
-			if (fColor.Get() != NULL)
-				fColor->AddProperties(object, flags);
+			if (fColor.Get() != NULL) {
+				fColor->AddProperties(object,
+					flags | BaseObject::DONT_ADD_NAME);
+			}
 			break;
 		case GRADIENT:
 			// TODO: ...
@@ -233,8 +235,10 @@ Paint::SetToPropertyObject(const PropertyObject* object, uint32 flags)
 			break;
 		case COLOR:
 			if (fColor.Get() != NULL) {
-				if (fColor->SetToPropertyObject(object, flags))
+				if (fColor->SetToPropertyObject(object,
+						flags | BaseObject::DONT_ADD_NAME)) {
 					Notify();
+				}
 			}
 			break;
 		case GRADIENT:
