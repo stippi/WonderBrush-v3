@@ -583,11 +583,12 @@ ColorSlider::_DrawColorLineX(uint8* bits, int height, int bpr,
 void
 ColorSlider::_TrackMouse(BPoint where)
 {
-	if (fOrientation == B_VERTICAL) {
-		SetValue((int)where.y - 2);
-	} else {
-		BRect b(_BitmapRect());
+	BRect b(_BitmapRect());
+
+	if (fOrientation == B_VERTICAL)
+		SetValue((int)(((where.y - b.top) / b.Height()) * 255.0));
+	else
 		SetValue(255 - (int)(((where.x - b.left) / b.Width()) * 255.0));
-	}
+
 	Invoke();
 }
