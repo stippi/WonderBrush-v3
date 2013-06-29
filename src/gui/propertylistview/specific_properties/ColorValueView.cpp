@@ -63,12 +63,13 @@ void
 ColorValueView::FrameResized(float width, float height)
 {
 	BRect b(Bounds());
-	b.InsetBy(2.0, 2.0);
-	b.left = floorf(b.left + (b.Width() / 2.0) - b.Height() / 2.0);
-	b.right = b.left + b.Height();
+	b.InsetBy(1.0, 1.0);
+	b.left += 4.0;//floorf(b.left + (b.Width() / 2.0) - b.Height() / 2.0);
+	b.right -= 4.0;//b.left + b.Height();
 	
 	fSwatchView->MoveTo(b.LeftTop());
 	fSwatchView->ResizeTo(b.Width(), b.Height());
+	fSwatchView->Invalidate();
 }
 
 // MakeFocus
