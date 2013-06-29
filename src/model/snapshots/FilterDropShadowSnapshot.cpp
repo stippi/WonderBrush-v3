@@ -15,8 +15,9 @@
 #include "GaussFilter.h"
 #include "LayoutContext.h"
 #include "RenderBuffer.h"
+#include "RenderEngine.h"
 #include "StackBlurFilter.h"
-
+#include "ui_defines.h"
 
 // constructor
 FilterDropShadowSnapshot::FilterDropShadowSnapshot(
@@ -58,6 +59,10 @@ FilterDropShadowSnapshot::Sync()
 		fOffsetX = fOriginal->OffsetX();
 		fOffsetY = fOriginal->OffsetY();
 		fOpacity = fOriginal->Opacity();
+		if (fOriginal->Color().Get() != NULL)
+			fColor = fOriginal->Color()->GetColor();
+		else
+			fColor = kBlack;
 		return true;
 	}
 	return false;
@@ -152,22 +157,24 @@ FilterDropShadowSnapshot::Render(RenderEngine& engine, RenderBuffer* bitmap,
 	src += ((left - (int32)fLayoutedOffsetX) - alphaBuffer.Left()) * 2
 		+ ((top - (int32)fLayoutedOffsetY) - alphaBuffer.Top()) * srcBPR;
 	
-	uint16 c[3];
-	c[0] = 0;
-	c[1] = 0;
-	c[2] = 0;
 	for (int32 y = top; y <= bottom; y++) {
 
 		uint16* d = (uint16*)dst;
 		uint16* s = (uint16*)src;
 
 		for (int32 x = left; x <= right; x++) {
+			agg::rgba16 color(
+				RenderEngine::GammaToLinear(fColor.red),
+				RenderEngine::GammaToLinear(fColor.green),
+				RenderEngine::GammaToLinear(fColor.blue),
+				s[0]);
+			color.premultiply();
 
 			uint16 alpha = 65535 - d[3];
 
-			d[0] = (uint16)((((uint32)c[0] * alpha) / 65535) + d[0]);
-			d[1] = (uint16)((((uint32)c[1] * alpha) / 65535) + d[1]);
-			d[2] = (uint16)((((uint32)c[2] * alpha) / 65535) + d[2]);
+			d[0] = (uint16)((((uint32)color.b * alpha) / 65535) + d[0]);
+			d[1] = (uint16)((((uint32)color.g * alpha) / 65535) + d[1]);
+			d[2] = (uint16)((((uint32)color.r * alpha) / 65535) + d[2]);
 			d[3] = (uint16)(65535 - (((uint32)alpha * (65535 - s[0])) / 65535));
 
 			d += 4;

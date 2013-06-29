@@ -6,6 +6,8 @@
 #ifndef FILTER_DROP_SHADOW_SNAPSHOT_H
 #define FILTER_DROP_SHADOW_SNAPSHOT_H
 
+#include <GraphicsDefs.h>
+
 #include "ObjectSnapshot.h"
 
 class FilterDropShadow;
@@ -34,6 +36,7 @@ class FilterDropShadowSnapshot : public ObjectSnapshot {
 			float				fLayoutedFilterRadius;
 			float				fLayoutedOffsetX;
 			float				fLayoutedOffsetY;
+			rgb_color			fColor;
 };
 
 #endif // FILTER_DROP_SHADOW_SNAPSHOT_H

@@ -7,6 +7,7 @@
 
 #include <new>
 
+#include "Color.h"
 #include "FilterDropShadowSnapshot.h"
 
 // constructor
@@ -16,6 +17,7 @@ FilterDropShadow::FilterDropShadow()
 	, fOffsetX(0.0)
 	, fOffsetY(0.0)
 	, fOpacity(255.0)
+	, fColorProvider(new (std::nothrow) ::Color(), true)
 {
 }
 
@@ -26,6 +28,7 @@ FilterDropShadow::FilterDropShadow(float radius)
 	, fOffsetX(0.0)
 	, fOffsetY(0.0)
 	, fOpacity(255.0)
+	, fColorProvider(new (std::nothrow) ::Color(), true)
 {
 }
 
@@ -47,7 +50,7 @@ FilterDropShadow::DefaultName() const
 void
 FilterDropShadow::AddProperties(PropertyObject* object, uint32 flags) const
 {
-	BaseObject::AddProperties(object, flags);
+	Object::AddProperties(object, flags);
 
 	object->AddProperty(new (std::nothrow) FloatProperty(
 		PROPERTY_FILTER_RADIUS, fFilterRadius, 0.0f, 10000.0f));
@@ -59,6 +62,9 @@ FilterDropShadow::AddProperties(PropertyObject* object, uint32 flags) const
 
 	object->AddProperty(new (std::nothrow) FloatProperty(
 		PROPERTY_OPACITY, fOpacity, 0.0f, 255.0f));
+
+	if (fColorProvider.Get() != NULL)
+		fColorProvider->AddProperties(object, flags);
 }
 
 // SetToPropertyObject
@@ -66,7 +72,7 @@ bool
 FilterDropShadow::SetToPropertyObject(const PropertyObject* object, uint32 flags)
 {
 	AutoNotificationSuspender _(this);
-	BaseObject::SetToPropertyObject(object, flags);
+	Object::SetToPropertyObject(object, flags);
 
 	// filter radius
 	SetFilterRadius(object->Value(PROPERTY_FILTER_RADIUS, fFilterRadius));
@@ -77,6 +83,14 @@ FilterDropShadow::SetToPropertyObject(const PropertyObject* object, uint32 flags
 
 	// opacity
 	SetOpacity(object->Value(PROPERTY_OPACITY, fOpacity));
+
+	if (fColorProvider.Get() != NULL) {
+		if (fColorProvider->SetToPropertyObject(object, flags)) {
+			Notify();
+			UpdateChangeCounter();
+			InvalidateParent();
+		}
+	}
 
 	return HasPendingNotifications();
 }

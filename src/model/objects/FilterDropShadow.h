@@ -6,6 +6,7 @@
 #ifndef FILTER_DROP_SHADOW_H
 #define FILTER_DROP_SHADOW_H
 
+#include "ColorProvider.h"
 #include "Object.h"
 
 class FilterDropShadow : public Object {
@@ -46,6 +47,10 @@ public:
 	inline	float				Opacity() const
 									{ return fOpacity; }
 
+			void				SetColor(const ColorProviderRef& color);
+	inline	const ColorProviderRef&	Color() const
+									{ return fColorProvider; }
+
 private:
 			void				_SetMember(float& member, float value);
 
@@ -54,6 +59,7 @@ private:
  			float				fOffsetX;
  			float				fOffsetY;
  			float				fOpacity;
+ 			ColorProviderRef	fColorProvider;
 };
 
 #endif // FILTER_DROP_SHADOW_H
