@@ -47,6 +47,10 @@ private:
 			void				_Invoke(const BMessage* message);
 			void				_DragColor();
 
+protected:
+			void				DrawSwatch(BRect area,
+									PlatformDrawContext& drawContext);
+
 private:
 			PlatformDelegate*	fPlatformDelegate;
 

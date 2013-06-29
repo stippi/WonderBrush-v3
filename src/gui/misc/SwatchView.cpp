@@ -66,50 +66,7 @@ blend_color(rgb_color& a, const rgb_color& b, float alpha)
 void
 SwatchView::PlatformDraw(PlatformDrawContext& drawContext)
 {
-	BRect r(Bounds());
-
-	rgb_color colorLight = tint_color(fColor, B_LIGHTEN_1_TINT);
-	rgb_color colorShadow = tint_color(fColor, B_DARKEN_1_TINT);
-
-	if (fColor.alpha < 255) {
-		// left/top
-		float alpha = fColor.alpha / 255.0;
-
-		rgb_color h = colorLight;
-		blend_color(h, kAlphaHigh, alpha);
-		rgb_color l = colorLight;
-		blend_color(l, kAlphaLow, alpha);
-
-		if (fBorderStyle == B_PLAIN_BORDER) {
-			rgb_color leftTopHighColor = h;
-			rgb_color leftTopLowColor = l;
-
-			h = colorShadow;
-			blend_color(h, kAlphaHigh, alpha);
-			l = colorShadow;
-			blend_color(l, kAlphaLow, alpha);
-
-			fPlatformDelegate->DrawDottedBorder(drawContext, r,
-				leftTopHighColor, leftTopLowColor, h, l);
-
-			r.InsetBy(1.0, 1.0);
-		}
-
-		// fill
-		h = fColor;
-		blend_color(h, kAlphaHigh, alpha);
-		l = fColor;
-		blend_color(l, kAlphaLow, alpha);
-
-		fPlatformDelegate->FillDottedRect(drawContext, r, h, l);
-	} else {
-		if (fBorderStyle == B_PLAIN_BORDER) {
-			fPlatformDelegate->DrawPlainBorder(drawContext, r, colorLight,
-				colorShadow);
-			r.InsetBy(1.0, 1.0);
-		}
-		fPlatformDelegate->FillPlainRect(drawContext, r, fColor);
-	}
+	DrawSwatch(Bounds(), drawContext);
 }
 
 // MessageReceived
@@ -193,6 +150,54 @@ SwatchView::SetDroppedMessage(BMessage* message)
 {
 	delete fDroppedMessage;
 	fDroppedMessage = message;
+}
+
+// DrawSwatch
+void
+SwatchView::DrawSwatch(BRect r, PlatformDrawContext& drawContext)
+{
+	rgb_color colorLight = tint_color(fColor, B_LIGHTEN_1_TINT);
+	rgb_color colorShadow = tint_color(fColor, B_DARKEN_1_TINT);
+
+	if (fColor.alpha < 255) {
+		// left/top
+		float alpha = fColor.alpha / 255.0;
+
+		rgb_color h = colorLight;
+		blend_color(h, kAlphaHigh, alpha);
+		rgb_color l = colorLight;
+		blend_color(l, kAlphaLow, alpha);
+
+		if (fBorderStyle == B_PLAIN_BORDER) {
+			rgb_color leftTopHighColor = h;
+			rgb_color leftTopLowColor = l;
+
+			h = colorShadow;
+			blend_color(h, kAlphaHigh, alpha);
+			l = colorShadow;
+			blend_color(l, kAlphaLow, alpha);
+
+			fPlatformDelegate->DrawDottedBorder(drawContext, r,
+				leftTopHighColor, leftTopLowColor, h, l);
+
+			r.InsetBy(1.0, 1.0);
+		}
+
+		// fill
+		h = fColor;
+		blend_color(h, kAlphaHigh, alpha);
+		l = fColor;
+		blend_color(l, kAlphaLow, alpha);
+
+		fPlatformDelegate->FillDottedRect(drawContext, r, h, l);
+	} else {
+		if (fBorderStyle == B_PLAIN_BORDER) {
+			fPlatformDelegate->DrawPlainBorder(drawContext, r, colorLight,
+				colorShadow);
+			r.InsetBy(1.0, 1.0);
+		}
+		fPlatformDelegate->FillPlainRect(drawContext, r, fColor);
+	}
 }
 
 // _Invoke
