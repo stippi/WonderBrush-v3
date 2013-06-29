@@ -5,6 +5,8 @@
 
 #include "InspectorView.h"
 
+#include <stdio.h>
+
 #include "EditManager.h"
 #include "Messenger.h"
 #include "Property.h"

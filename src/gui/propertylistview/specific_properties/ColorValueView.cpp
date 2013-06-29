@@ -134,7 +134,7 @@ bool
 ColorValueView::AdoptProperty(Property* property)
 {
 	ColorProperty* p = dynamic_cast<ColorProperty*>(property);
-	if (p) {
+	if (p != NULL) {
 		rgb_color ownColor = fProperty->Value();
 		rgb_color color = p->Value();
 		if (ownColor != color) {

@@ -130,7 +130,7 @@ bool
 ColorProperty::SetValue(const Property* other)
 {
 	const ColorProperty* c = dynamic_cast<const ColorProperty*>(other);
-	if (c)
+	if (c != NULL)
 		return SetValue(c->Value());
 	return false;
 }

@@ -42,6 +42,7 @@ SwatchValueView::MakeFocus(bool focused)
 void
 SwatchValueView::Draw(BRect updateRect)
 {
+	SetHighColor(Color());
 	BRect b(Bounds());
 	if (BView* parent = Parent()) {
 		SetLowColor(tint_color(parent->LowColor(), B_DARKEN_1_TINT));
