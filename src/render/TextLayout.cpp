@@ -1,5 +1,5 @@
 /*
- * Copyright 2012 Stephan Aßmus <superstippi@gmx.de>
+ * Copyright 2012-2013 Stephan Aßmus <superstippi@gmx.de>
  * All rights reserved.
  *
  * Parts of the code:
@@ -751,7 +751,10 @@ TextLayout::getOffset(double x, double y, bool& rightOfCenter)
 //		printf("\n");
 	}
 
-	rightOfCenter = true;
+	// Account for trailing line break at end of line, the
+	// returned offset should be before that.
+	rightOfCenter = fGlyphInfoBuffer[end].charCode != '\n';
+
 	return end;
 }
 
