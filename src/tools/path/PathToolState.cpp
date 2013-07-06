@@ -488,10 +488,16 @@ public:
 
 		fOrigin = origin;
 		Path* path = fPathRef.Get();
+		if (path == NULL)
+			return;
+
+		int32 nextIndex = fIndex;
+		if (nextIndex == path->CountPoints())
+			nextIndex = 0;
 		if (path != NULL
 			&& path->GetPointsAt(fIndex - 1,
 				fPrevious[0], fPrevious[1], fPrevious[2], &fPreviousConnected)
-			&& path->GetPointsAt(fIndex,
+			&& path->GetPointsAt(nextIndex,
 				fNext[0], fNext[1], fNext[2], &fNextConnected)
 			&& _InsertPoint(path, origin, fIndex)) {
 			fPointAdded = true;
@@ -514,8 +520,12 @@ public:
 				path->SetPoint(fIndex - 1,
 					fPrevious[0], fPrevious[1], fPrevious[2],
 					fPreviousConnected);
-				path->SetPoint(fIndex,
+				int32 nextIndex = fIndex;
+				if (nextIndex == path->CountPoints())
+					nextIndex = 0;
+				path->SetPoint(nextIndex,
 					fNext[0], fNext[1], fNext[2], fNextConnected);
+
 				_InsertPoint(path, current, fIndex);
 			} else {
 				// Switch to DragState for dragging the inserted point
@@ -584,8 +594,12 @@ private:
 
 			path->GetPointAt(index - 1, previous);
 			path->GetPointOutAt(index - 1, previousOut);
-			path->GetPointAt(index, next);
-			path->GetPointInAt(index, nextIn);
+
+			int32 nextIndex = index;
+			if (nextIndex == path->CountPoints())
+				nextIndex = 0;
+			path->GetPointAt(nextIndex, next);
+			path->GetPointInAt(nextIndex, nextIn);
 
 			where = _ScalePoint(previousOut, nextIn, scale);
 
@@ -603,7 +617,11 @@ private:
 //					fSelection->Items(), fSelection->CountItems());
 
 				path->SetPointOut(index - 1, previousOut);
-				path->SetPointIn(index + 1, nextIn);
+
+				nextIndex = index + 1;
+				if (nextIndex == path->CountPoints())
+					nextIndex = 0;
+				path->SetPointIn(nextIndex, nextIn);
 
 //				fCurrentPathPoint = index;
 //				_ShiftSelection(fCurrentPathPoint, 1);
