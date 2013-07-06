@@ -49,7 +49,6 @@ public:
 
 	virtual void SetOrigin(BPoint origin)
 	{
-		fParent->TransformCanvasToObject(&origin);
 		DragState::SetOrigin(origin);
 	}
 
@@ -58,12 +57,13 @@ public:
 		BPoint objectCurrent = current;
 		fParent->TransformCanvasToObject(&objectCurrent);
 
-		BPoint leftTopOffset = objectCurrent - fOrigin;
+		BPoint objectOrigin = fOrigin;
+		fParent->TransformCanvasToObject(&objectOrigin);
 
+		BPoint leftTopOffset = objectCurrent - objectOrigin;
 		fParent->OffsetTextBy(leftTopOffset);
 
 		fOrigin = current;
-		fParent->TransformCanvasToObject(&fOrigin);
 	}
 
 	virtual BCursor ViewCursor(BPoint current) const
@@ -625,7 +625,7 @@ TextToolState::ObjectChanged(const Notifier* object)
 {
 	if (fText != NULL && object == fText) {
 		BMessage message(MSG_TEXT_CHANGED);
-		if (message.AddPointer("object", fText) == B_OK)
+		if (message.AddPointer("text", fText) == B_OK)
 			View()->PostMessage(message);
 	}
 	if (object == fCurrentColor && !fIgnoreColorColorNotifiactions) {
