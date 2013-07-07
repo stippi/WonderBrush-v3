@@ -13,6 +13,7 @@
 
 
 class Document;
+class EditContext;
 class Object;
 
 
@@ -32,10 +33,12 @@ class ObjectTreeView : public ColumnTreeView, public Selection::Controller,
 	public Selection::Listener {
 public:
 								ObjectTreeView(BRect frame, Document* document,
-									Selection* selection);
+									Selection* selection,
+									EditContext& editContext);
 #ifdef __HAIKU__
 								ObjectTreeView(Document* document,
-									Selection* selection);
+									Selection* selection,
+									EditContext& editContext);
 #endif
 	virtual						~ObjectTreeView();
 
@@ -96,6 +99,7 @@ private:
 private:
 			Document*			fDocument;
 			Selection*			fSelection;
+			EditContext&		fEditContext;
 			LayerObserver		fLayerObserver;
 			bool				fIgnoreSelectionChanged;
 };

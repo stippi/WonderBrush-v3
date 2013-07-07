@@ -36,8 +36,10 @@ class CanvasView : public StateView, public Scrollable {
 public:
 								CanvasView(BRect frame,
 									Document* document,
+									EditContext& editContext,
 									RenderManager* manager);
 								CanvasView(Document* document,
+									EditContext& editContext,
 									RenderManager* manager);
 
 	virtual						~CanvasView();

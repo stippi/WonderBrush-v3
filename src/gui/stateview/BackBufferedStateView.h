@@ -6,13 +6,13 @@
 class BBitmap;
 
 class BackBufferedStateView : public StateView {
- public:
-								BackBufferedStateView(BRect frame,
-									const char* name, uint32 resizingMode,
-									uint32 flags);
+public:
+								BackBufferedStateView(EditContext& editContext,
+									BRect frame, const char* name,
+									uint32 resizingMode, uint32 flags);
 #ifdef __HAIKU__
-								BackBufferedStateView(const char* name,
-									uint32 flags);
+								BackBufferedStateView(EditContext& editContext,
+									const char* name, uint32 flags);
 #endif
 
 	virtual						~BackBufferedStateView();

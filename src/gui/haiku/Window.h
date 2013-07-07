@@ -9,6 +9,7 @@
 #include <Window.h>
 
 #include "CurrentColor.h"
+#include "EditContext.h"
 #include "ListenerAdapter.h"
 #include "Selection.h"
 
@@ -77,6 +78,7 @@ private:
 			ListenerAdapter		fEditManagerListener;
 			Selection			fSelection;
 			SelectionListener*	fSelectionListener;
+			EditContext			fEditContext;
 			CurrentColor		fCurrentColor;
 
 			BMenu*				fFileMenu;

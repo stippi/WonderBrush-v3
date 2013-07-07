@@ -31,7 +31,7 @@ public:
 			&& *fStyle->FillPaint() != fFillPaint ? B_OK : B_ERROR;
 	}
 
-	virtual	status_t Perform()
+	virtual	status_t Perform(EditContext& context)
 	{
 		Paint oldPaint = *fStyle->FillPaint();
 		fStyle->SetFillPaint(fFillPaint);
@@ -40,9 +40,9 @@ public:
 		return B_OK;
 	}
 
-	virtual status_t Undo()
+	virtual status_t Undo(EditContext& context)
 	{
-		return Perform();
+		return Perform(context);
 	}
 
 	virtual void GetName(BString& name)

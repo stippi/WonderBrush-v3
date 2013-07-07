@@ -29,17 +29,17 @@ EditManager::~EditManager()
 
 // Perform
 status_t
-EditManager::Perform(UndoableEdit* edit)
+EditManager::Perform(UndoableEdit* edit, EditContext& context)
 {
 	if (edit == NULL)
 		return B_BAD_VALUE;
 
-	return Perform(UndoableEditRef(edit, true));
+	return Perform(UndoableEditRef(edit, true), context);
 }
 
 // Perform
 status_t
-EditManager::Perform(const UndoableEditRef& edit)
+EditManager::Perform(const UndoableEditRef& edit, EditContext& context)
 {
 	if (!fLocker->WriteLock())
 		return B_ERROR;
@@ -49,12 +49,12 @@ EditManager::Perform(const UndoableEditRef& edit)
 		ret = edit->InitCheck();
 
 	if (ret == B_OK)
-		ret = edit->Perform();
+		ret = edit->Perform(context);
 
 	if (ret == B_OK) {
 		ret = _AddEdit(edit);
 		if (ret != B_OK)
-			edit->Undo();
+			edit->Undo(context);
 	}
 
 	fLocker->WriteUnlock();
@@ -66,7 +66,7 @@ EditManager::Perform(const UndoableEditRef& edit)
 
 // Undo
 status_t
-EditManager::Undo()
+EditManager::Undo(EditContext& context)
 {
 	if (!fLocker->WriteLock())
 		return B_ERROR;
@@ -75,7 +75,7 @@ EditManager::Undo()
 	if (!fUndoHistory.IsEmpty()) {
 		UndoableEditRef edit(fUndoHistory.Top());
 		fUndoHistory.Pop();
-		status = edit->Undo();
+		status = edit->Undo(context);
 		if (status == B_OK)
 			fRedoHistory.Push(edit);
 		else
@@ -90,7 +90,7 @@ EditManager::Undo()
 
 // Redo
 status_t
-EditManager::Redo()
+EditManager::Redo(EditContext& context)
 {
 	if (!fLocker->WriteLock())
 		return B_ERROR;
@@ -99,7 +99,7 @@ EditManager::Redo()
 	if (!fRedoHistory.IsEmpty()) {
 		UndoableEditRef edit(fRedoHistory.Top());
 		fRedoHistory.Pop();
-		status = edit->Redo();
+		status = edit->Redo(context);
 		if (status == B_OK)
 			fUndoHistory.Push(edit);
 		else

@@ -107,6 +107,7 @@ Application WonderBrush :
 
 	# edits/base
 	CompoundEdit.cpp
+	EditContext.cpp
 	EditManager.cpp
 	EditStack.cpp
 	UndoableEdit.cpp

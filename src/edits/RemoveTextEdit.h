@@ -33,7 +33,7 @@ public:
 		return fText != NULL && fLength > 0 ? B_OK : B_ERROR;
 	}
 
-	virtual	status_t Perform()
+	virtual	status_t Perform(EditContext& context)
 	{
 		fRemovedText = fText->GetSubString(fOffset, fLength);
 
@@ -45,7 +45,7 @@ public:
 		return B_OK;
 	}
 
-	virtual status_t Undo()
+	virtual status_t Undo(EditContext& context)
 	{
 		if (fRemovedStyles == NULL)
 			return B_ERROR;

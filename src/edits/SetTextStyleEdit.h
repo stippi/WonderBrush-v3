@@ -177,13 +177,13 @@ public:
 			? B_OK : B_ERROR;
 	}
 
-	virtual	status_t Perform()
+	virtual	status_t Perform(EditContext& context)
 	{
 		fText->ReplaceStyles(fOffset, fString.CountChars(), *fNewStyles);
 		return B_OK;
 	}
 
-	virtual status_t Undo()
+	virtual status_t Undo(EditContext& context)
 	{
 		fText->ReplaceStyles(fOffset, fString.CountChars(), *fOldStyles);
 		return B_OK;
@@ -245,7 +245,7 @@ private:
 
 			CharacterStyle* characterStyle = new(std::nothrow) CharacterStyle(
 				modifier.ModifyStyle(*(run->GetStyle().Get())));
-			
+
 			if (characterStyle == NULL) {
 				delete newStyles;
 				return;
@@ -255,7 +255,7 @@ private:
 
 			StyleRun replacementRun(styleRef);
 			replacementRun.SetLength(run->GetLength());
-		
+
 			if (!newStyles->Append(replacementRun)) {
 				delete newStyles;
 				return;

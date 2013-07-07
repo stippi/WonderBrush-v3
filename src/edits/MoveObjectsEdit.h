@@ -22,8 +22,8 @@ public:
 
 	virtual	status_t			InitCheck();
 
-	virtual	status_t			Perform();
-	virtual status_t			Undo();
+	virtual	status_t			Perform(EditContext& context);
+	virtual status_t			Undo(EditContext& context);
 
 	virtual void				GetName(BString& name);
 

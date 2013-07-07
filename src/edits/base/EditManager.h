@@ -10,6 +10,7 @@
 #include "UndoableEdit.h"
 
 class BString;
+class EditContext;
 class RWLocker;
 
 class EditManager : public Notifier {
@@ -17,11 +18,13 @@ public:
 								EditManager(RWLocker* locker);
 	virtual						~EditManager();
 
-			status_t			Perform(UndoableEdit* edit);
-			status_t			Perform(const UndoableEditRef& edit);
+			status_t			Perform(UndoableEdit* edit,
+									EditContext& context);
+			status_t			Perform(const UndoableEditRef& edit,
+									EditContext& context);
 
-			status_t			Undo();
-			status_t			Redo();
+			status_t			Undo(EditContext& context);
+			status_t			Redo(EditContext& context);
 
 			bool				GetUndoName(BString& name);
 			bool				GetRedoName(BString& name);

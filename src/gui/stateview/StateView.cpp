@@ -118,8 +118,8 @@ private:
 // #pragma mark -
 
 // constructor
-StateView::StateView(BRect frame, const char* name, uint32 resizingMode,
-		uint32 flags)
+StateView::StateView(EditContext& editContext, BRect frame, const char* name,
+		uint32 resizingMode, uint32 flags)
 	:
 	PlatformViewMixin<BView>(frame, name, resizingMode, flags),
 	fCurrentState(NULL),
@@ -129,6 +129,8 @@ StateView::StateView(BRect frame, const char* name, uint32 resizingMode,
 	fLastMouseInfo(),
 
 	fEditManager(NULL),
+	fEditContext(editContext),
+
 	fLocker(NULL),
 
 	fEventFilter(NULL),
@@ -141,7 +143,7 @@ StateView::StateView(BRect frame, const char* name, uint32 resizingMode,
 
 
 // constructor
-StateView::StateView(const char* name, uint32 flags)
+StateView::StateView(EditContext& editContext, const char* name, uint32 flags)
 	:
 	PlatformViewMixin<BView>(name, flags),
 	fCurrentState(NULL),
@@ -151,6 +153,7 @@ StateView::StateView(const char* name, uint32 flags)
 	fLastMouseInfo(),
 
 	fEditManager(NULL),
+	fEditContext(editContext),
 	fLocker(NULL),
 
 	fEventFilter(NULL),
@@ -622,7 +625,7 @@ status_t
 StateView::PerformEdit(const UndoableEditRef& edit)
 {
 	if (fEditManager != NULL)
-		return fEditManager->Perform(edit);
+		return fEditManager->Perform(edit, fEditContext);
 
 	return B_NO_INIT;
 }

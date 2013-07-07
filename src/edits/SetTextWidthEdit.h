@@ -28,7 +28,7 @@ public:
 		return fText->Width() != fWidth ? B_OK : B_ERROR;
 	}
 
-	virtual	status_t Perform()
+	virtual	status_t Perform(EditContext& context)
 	{
 		double previousWidth = fText->Width();
 		fText->SetWidth(fWidth);
@@ -37,9 +37,9 @@ public:
 		return B_OK;
 	}
 
-	virtual status_t Undo()
+	virtual status_t Undo(EditContext& context)
 	{
-		return Perform();
+		return Perform(context);
 	}
 
 	virtual void GetName(BString& name)

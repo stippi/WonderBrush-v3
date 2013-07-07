@@ -40,7 +40,7 @@ public:
 			? B_OK : B_NO_INIT;
 	}
 
-	virtual status_t Perform()
+	virtual status_t Perform(EditContext& context)
 	{
 		for (int32 i = 0; i < fObjectCount; i++) {
 			if (fObjects[i])
@@ -49,7 +49,7 @@ public:
 		return B_OK;
 	}
 
-	virtual status_t Undo()
+	virtual status_t Undo(EditContext& context)
 	{
 		for (int32 i = 0; i < fObjectCount; i++) {
 			if (fObjects[i])

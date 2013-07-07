@@ -26,7 +26,7 @@ public:
 		return fObject && fNextName != fObject->Name() ? B_OK : B_ERROR;
 	}
 
-	virtual	status_t Perform()
+	virtual	status_t Perform(EditContext& context)
 	{
 		BString oldName = fObject->Name();
 		fObject->SetName(fNextName.String());
@@ -35,9 +35,9 @@ public:
 		return B_OK;
 	}
 
-	virtual status_t Undo()
+	virtual status_t Undo(EditContext& context)
 	{
-		return Perform();
+		return Perform(context);
 	}
 
 	virtual void GetName(BString& name)

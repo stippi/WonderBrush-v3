@@ -49,7 +49,7 @@ public:
 		return B_OK;
 	}
 
-	virtual status_t Perform()
+	virtual status_t Perform(EditContext& context)
 	{
 		// Object already added, but make sure it's selected as well.
 		if (fSelection != NULL)
@@ -58,7 +58,7 @@ public:
 		return B_OK;
 	}
 
-	virtual status_t Undo()
+	virtual status_t Undo(EditContext& context)
 	{
 		fInsertionLayer->SuspendUpdates(true);
 
@@ -72,7 +72,7 @@ public:
 		return B_OK;
 	}
 
-	virtual status_t Redo()
+	virtual status_t Redo(EditContext& context)
 	{
 		fInsertionLayer->SuspendUpdates(true);
 

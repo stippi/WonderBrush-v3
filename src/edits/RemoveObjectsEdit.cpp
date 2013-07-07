@@ -77,7 +77,7 @@ RemoveObjectsEdit::InitCheck()
 
 // Perform
 status_t
-RemoveObjectsEdit::Perform()
+RemoveObjectsEdit::Perform(EditContext& context)
 {
 	if (fSelection != NULL)
 		fSelection->DeselectAll(this);
@@ -92,7 +92,7 @@ RemoveObjectsEdit::Perform()
 
 // Undo
 status_t
-RemoveObjectsEdit::Undo()
+RemoveObjectsEdit::Undo(EditContext& context)
 {
 	if (fSelection != NULL)
 		fSelection->DeselectAll(this);

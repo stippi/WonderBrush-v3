@@ -26,8 +26,9 @@ enum {
 };
 
 // constructor
-CanvasView::CanvasView(BRect frame, Document* document, RenderManager* manager)
-	: StateView(frame, "canvas view", B_FOLLOW_NONE,
+CanvasView::CanvasView(BRect frame, Document* document, EditContext& editContext,
+		RenderManager* manager)
+	: StateView(editContext, frame, "canvas view", B_FOLLOW_NONE,
 		B_WILL_DRAW | B_FRAME_EVENTS)
 	, fPlatformDelegate(new PlatformDelegate(this))
 	, fDocument(document)
@@ -49,8 +50,9 @@ CanvasView::CanvasView(BRect frame, Document* document, RenderManager* manager)
 
 
 // constructor
-CanvasView::CanvasView(Document* document, RenderManager* manager)
-	: StateView("canvas view", B_WILL_DRAW | B_FRAME_EVENTS)
+CanvasView::CanvasView(Document* document, EditContext& editContext,
+		RenderManager* manager)
+	: StateView(editContext, "canvas view", B_WILL_DRAW | B_FRAME_EVENTS)
 	, fPlatformDelegate(new PlatformDelegate(this))
 	, fDocument(document)
 	, fRenderManager(manager)

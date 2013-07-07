@@ -10,9 +10,9 @@
 using std::nothrow;
 
 // constructor
-BackBufferedStateView::BackBufferedStateView(BRect frame, const char* name,
-		uint32 resizingMode, uint32 flags)
-	: StateView(frame, name, resizingMode, flags | B_FRAME_EVENTS)
+BackBufferedStateView::BackBufferedStateView(EditContext& editContext,
+		BRect frame, const char* name, uint32 resizingMode, uint32 flags)
+	: StateView(editContext, frame, name, resizingMode, flags | B_FRAME_EVENTS)
 	, fOffscreenBitmap(NULL)
 	, fOffscreenView(NULL)
 	, fSyncToRetrace(false)
@@ -24,8 +24,9 @@ BackBufferedStateView::BackBufferedStateView(BRect frame, const char* name,
 #ifdef __HAIKU__
 
 // constructor
-BackBufferedStateView::BackBufferedStateView(const char* name, uint32 flags)
-	: StateView(name, flags | B_FRAME_EVENTS)
+BackBufferedStateView::BackBufferedStateView(EditContext& editContext,
+		const char* name, uint32 flags)
+	: StateView(editContext, name, flags | B_FRAME_EVENTS)
 	, fOffscreenBitmap(NULL)
 	, fOffscreenView(NULL)
 	, fSyncToRetrace(false)

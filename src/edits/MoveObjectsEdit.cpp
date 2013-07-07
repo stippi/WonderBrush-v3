@@ -133,7 +133,7 @@ MoveObjectsEdit::InitCheck()
 
 // Perform
 status_t
-MoveObjectsEdit::Perform()
+MoveObjectsEdit::Perform(EditContext& context)
 {
 	fInsertionLayer->SuspendUpdates(true);
 
@@ -166,7 +166,7 @@ MoveObjectsEdit::Perform()
 
 // Undo
 status_t
-MoveObjectsEdit::Undo()
+MoveObjectsEdit::Undo(EditContext& context)
 {
 	fInsertionLayer->SuspendUpdates(true);
 

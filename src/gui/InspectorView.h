@@ -11,13 +11,14 @@
 #include "Selection.h"
 
 class BaseObject;
+class EditContext;
 class EditManager;
 class Selection;
 
 class InspectorView : public PropertyListView, public Selection::Listener,
 	public Listener {
 public:
-								InspectorView();
+								InspectorView(EditContext& editContext);
 	virtual						~InspectorView();
 
 	// BView interface
@@ -48,6 +49,7 @@ private:
 
 			Selection*			fSelection;
 			EditManager*		fEditManager;
+			EditContext&		fEditContext;
 
 			BaseObject*			fObject;
 			bool				fIgnoreObjectChange;

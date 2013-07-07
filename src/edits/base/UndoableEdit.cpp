@@ -37,23 +37,23 @@ UndoableEdit::InitCheck()
 
 // Perform
 status_t
-UndoableEdit::Perform()
+UndoableEdit::Perform(EditContext& context)
 {
 	return B_ERROR;
 }
 
 // Undo
 status_t
-UndoableEdit::Undo()
+UndoableEdit::Undo(EditContext& context)
 {
 	return B_ERROR;
 }
 
 // Redo
 status_t
-UndoableEdit::Redo()
+UndoableEdit::Redo(EditContext& context)
 {
-	return Perform();
+	return Perform(context);
 }
 
 // GetName

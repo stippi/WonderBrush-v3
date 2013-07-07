@@ -59,11 +59,12 @@ enum {
 
 // constructor
 ObjectTreeView::ObjectTreeView(BRect frame, Document* document,
-		Selection* selection)
+		Selection* selection, EditContext& editContext)
 	:
 	ColumnTreeView(frame),
 	fDocument(document),
 	fSelection(selection),
+	fEditContext(editContext),
 	fLayerObserver(this),
 	fIgnoreSelectionChanged(false)
 {
@@ -73,11 +74,13 @@ ObjectTreeView::ObjectTreeView(BRect frame, Document* document,
 #ifdef __HAIKU__
 
 // constructor
-ObjectTreeView::ObjectTreeView(Document* document, Selection* selection)
+ObjectTreeView::ObjectTreeView(Document* document, Selection* selection,
+		EditContext& editContext)
 	:
 	ColumnTreeView(),
 	fDocument(document),
 	fSelection(selection),
+	fEditContext(editContext),
 	fLayerObserver(this),
 	fIgnoreSelectionChanged(false)
 {
@@ -404,7 +407,7 @@ ObjectTreeView::HandleDrop(const BMessage& dragMessage, ColumnTreeItem* super,
 		return;
 	}
 
-	fDocument->EditManager()->Perform(command);
+	fDocument->EditManager()->Perform(command, fEditContext);
 }
 
 // SelectionChanged
@@ -597,7 +600,7 @@ ObjectTreeView::_HandleRenameObject(BMessage* message)
 		// rename via command
 		RenameObjectEdit* command = new (nothrow) RenameObjectEdit(object,
 			name);
-		fDocument->EditManager()->Perform(command);
+		fDocument->EditManager()->Perform(command, fEditContext);
 	}
 	object->RemoveReference();
 

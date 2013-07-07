@@ -18,11 +18,12 @@ enum {
 };
 
 // constructor
-InspectorView::InspectorView()
+InspectorView::InspectorView(EditContext& editContext)
 	:
 	PropertyListView(),
 	fSelection(NULL),
 	fEditManager(NULL),
+	fEditContext(editContext),
 	fObject(NULL),
 	fIgnoreObjectChange(false)
 {
@@ -53,12 +54,12 @@ InspectorView::MessageReceived(BMessage* message)
 			}
 			break;
 		}
-		
+
 		default:
 			PropertyListView::MessageReceived(message);
 			break;
 	}
-}	
+}
 
 // Draw
 void
@@ -120,7 +121,7 @@ InspectorView::PropertyChanged(const Property* previous,
 		oldObject, newObject);
 
 	fIgnoreObjectChange = true;
-	fEditManager->Perform(edit);
+	fEditManager->Perform(edit, fEditContext);
 	fIgnoreObjectChange = false;
 }
 

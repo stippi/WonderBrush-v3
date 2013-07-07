@@ -157,7 +157,8 @@ Window::Window(BRect frame, const char* title, Document* document,
 	fPropertyMenu = new BMenu("Property");
 	menuBar->AddItem(fPropertyMenu);
 
-	fLayerTreeView = new ObjectTreeView(fDocument.Get(), &fSelection);
+	fLayerTreeView = new ObjectTreeView(fDocument.Get(), &fSelection,
+		fEditContext);
 //	fLayerTreeView->SetModel(fLayerTreeModel);
 	fLayerTreeView->SetModel(new DefaultColumnTreeModel);
 	ScrollView* objectTreeScrollView = new ScrollView(fLayerTreeView,
@@ -166,7 +167,8 @@ Window::Window(BRect frame, const char* title, Document* document,
 		"layer tree", B_WILL_DRAW | B_FRAME_EVENTS, B_PLAIN_BORDER,
 		BORDER_BOTTOM);
 
-	fResourceTreeView = new ResourceTreeView(fDocument.Get(), &fSelection);
+	fResourceTreeView = new ResourceTreeView(fDocument.Get(), &fSelection,
+		fEditContext);
 	fResourceTreeView->SetModel(new DefaultColumnTreeModel);
 	ScrollView* resourceTreeScrollView = new ScrollView(fResourceTreeView,
 		SCROLL_HORIZONTAL | SCROLL_VERTICAL/* | SCROLL_HORIZONTAL_MAGIC
@@ -177,7 +179,7 @@ Window::Window(BRect frame, const char* title, Document* document,
 	fRenderManager = new RenderManager(fDocument.Get());
 	// TODO: Check error
 	fRenderManager->Init();
-	fView = new CanvasView(fDocument.Get(), fRenderManager);
+	fView = new CanvasView(fDocument.Get(), fEditContext, fRenderManager);
 	ScrollView* canvasScrollView = new ScrollView(fView,
 		SCROLL_HORIZONTAL | SCROLL_VERTICAL | SCROLL_NO_FRAME
 		| SCROLL_VISIBLE_RECT_IS_CHILD_BOUNDS, "canvas",
@@ -290,7 +292,7 @@ exportButton->SetEnabled(false);
 	fSwatchGroup = new SwatchGroup("swatch group");
 	fSwatchGroup->SetCurrentColor(&fCurrentColor);
 
-	fInspectorView = new InspectorView();
+	fInspectorView = new InspectorView(fEditContext);
 	fInspectorView->SetMenu(fPropertyMenu);
 	fInspectorView->SetEditManager(fDocument->EditManager());
 	fInspectorView->SetSelection(&fSelection);
@@ -422,10 +424,10 @@ Window::MessageReceived(BMessage* message)
 {
 	switch (message->what) {
 		case MSG_UNDO:
-			fDocument->EditManager()->Undo();
+			fDocument->EditManager()->Undo(fEditContext);
 			break;
 		case MSG_REDO:
-			fDocument->EditManager()->Redo();
+			fDocument->EditManager()->Redo(fEditContext);
 			break;
 
 		case MSG_OBJECT_CHANGED:
@@ -816,7 +818,8 @@ Window::_AddObject(Layer* parentLayer, int32 insertIndex, Object* object)
 
 	fLayerTreeView->DeselectAll();
 	fDocument->EditManager()->Perform(
-		new(std::nothrow) ObjectAddedEdit(object, &fSelection));
+		new(std::nothrow) ObjectAddedEdit(object, &fSelection),
+		fEditContext);
 }
 
 // _RemoveObjects
@@ -845,7 +848,8 @@ Window::_RemoveObjects()
 	}
 
 	fDocument->EditManager()->Perform(
-		new(std::nothrow) RemoveObjectsEdit(list, &fSelection));
+		new(std::nothrow) RemoveObjectsEdit(list, &fSelection),
+		fEditContext);
 }
 
 // _ResetTransformation
@@ -891,5 +895,6 @@ Window::_ResetTransformation()
 		}
 	}
 
-	fDocument->EditManager()->Perform(UndoableEditRef(compoundEdit, true));
+	fDocument->EditManager()->Perform(UndoableEditRef(compoundEdit, true),
+		fEditContext);
 }

@@ -8,6 +8,7 @@
 #include "UndoableEdit.h"
 
 class BMessageFilter;
+class EditContext;
 class EditManager;
 class RWLocker;
 class ViewState;
@@ -32,9 +33,11 @@ class StateView : public PlatformViewMixin<BView> {
 public:
 	class KeyEvent;
 
-								StateView(BRect frame, const char* name,
+								StateView(EditContext& editContext,
+									BRect frame, const char* name,
 									uint32 resizingMode, uint32 flags);
-								StateView(const char* name, uint32 flags);
+								StateView(EditContext& editContext,
+									const char* name, uint32 flags);
 	virtual						~StateView();
 
 	// BView interface
@@ -132,6 +135,7 @@ protected:
 			::MouseInfo			fLastMouseInfo;
 
 			::EditManager*		fEditManager;
+			EditContext&		fEditContext;
 			RWLocker*			fLocker;
 
 			BMessageFilter*		fEventFilter;

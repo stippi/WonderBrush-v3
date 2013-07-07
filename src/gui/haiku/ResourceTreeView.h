@@ -12,6 +12,8 @@
 #include "ListenerAdapter.h"
 #include "Selection.h"
 
+class EditContext;
+
 class ResourceColumnTreeItem : public EasyColumnTreeItem {
 public:
 			BaseObject*			object;
@@ -27,11 +29,13 @@ public:
 class ResourceTreeView : public ColumnTreeView, public Selection::Controller,
 	public Selection::Listener {
 public:
-								ResourceTreeView(BRect frame, Document* document,
-									Selection* selection);
+								ResourceTreeView(BRect frame,
+									Document* document, Selection* selection,
+									EditContext& editContext);
 #ifdef __HAIKU__
 								ResourceTreeView(Document* document,
-									Selection* selection);
+									Selection* selection,
+									EditContext& editContext);
 #endif
 	virtual						~ResourceTreeView();
 
@@ -76,6 +80,7 @@ private:
 private:
 			Document*			fDocument;
 			Selection*			fSelection;
+			EditContext&		fEditContext;
 			ResourceList::Observer fResourceObserver;
 			bool				fIgnoreSelectionChanged;
 };

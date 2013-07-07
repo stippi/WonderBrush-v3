@@ -29,7 +29,7 @@ public:
 			? B_OK : B_ERROR;
 	}
 
-	virtual	status_t Perform()
+	virtual	status_t Perform(EditContext& context)
 	{
 		uint32 previousAlignment = fText->Alignment();
 		fText->SetAlignment(fAlignment);
@@ -38,9 +38,9 @@ public:
 		return B_OK;
 	}
 
-	virtual status_t Undo()
+	virtual status_t Undo(EditContext& context)
 	{
-		return Perform();
+		return Perform(context);
 	}
 
 	virtual void GetName(BString& name)

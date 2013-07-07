@@ -29,14 +29,14 @@ CompoundEdit::InitCheck()
 
 // Perform
 status_t
-CompoundEdit::Perform()
+CompoundEdit::Perform(EditContext& context)
 {
 	status_t status = B_OK;
 
 	int32 count = fEdits.CountItems();
 	int32 i = 0;
 	for (; i < count; i++) {
-		status = fEdits.ItemAtFast(i)->Perform();
+		status = fEdits.ItemAtFast(i)->Perform(context);
 		if (status != B_OK)
 			break;
 	}
@@ -45,7 +45,7 @@ CompoundEdit::Perform()
 		// roll back
 		i--;
 		for (; i >= 0; i--) {
-			fEdits.ItemAtFast(i)->Undo();
+			fEdits.ItemAtFast(i)->Undo(context);
 		}
 	}
 
@@ -54,14 +54,14 @@ CompoundEdit::Perform()
 
 // Undo
 status_t
-CompoundEdit::Undo()
+CompoundEdit::Undo(EditContext& context)
 {
 	status_t status = B_OK;
 
 	int32 count = fEdits.CountItems();
 	int32 i = count - 1;
 	for (; i >= 0; i--) {
-		status = fEdits.ItemAtFast(i)->Undo();
+		status = fEdits.ItemAtFast(i)->Undo(context);
 		if (status != B_OK)
 			break;
 	}
@@ -70,7 +70,7 @@ CompoundEdit::Undo()
 		// roll back
 		i++;
 		for (; i < count; i++) {
-			fEdits.ItemAtFast(i)->Redo();
+			fEdits.ItemAtFast(i)->Redo(context);
 		}
 	}
 
@@ -79,14 +79,14 @@ CompoundEdit::Undo()
 
 // Redo
 status_t
-CompoundEdit::Redo()
+CompoundEdit::Redo(EditContext& context)
 {
 	status_t status = B_OK;
 
 	int32 count = fEdits.CountItems();
 	int32 i = 0;
 	for (; i < count; i++) {
-		status = fEdits.ItemAtFast(i)->Redo();
+		status = fEdits.ItemAtFast(i)->Redo(context);
 		if (status != B_OK)
 			break;
 	}
@@ -95,7 +95,7 @@ CompoundEdit::Redo()
 		// roll back
 		i--;
 		for (; i >= 0; i--) {
-			fEdits.ItemAtFast(i)->Undo();
+			fEdits.ItemAtFast(i)->Undo(context);
 		}
 	}
 

@@ -59,11 +59,12 @@ enum {
 
 // constructor
 ResourceTreeView::ResourceTreeView(BRect frame, Document* document,
-		Selection* selection)
+		Selection* selection, EditContext& editContext)
 	:
 	ColumnTreeView(frame),
 	fDocument(document),
 	fSelection(selection),
+	fEditContext(editContext),
 	fResourceObserver(this),
 	fIgnoreSelectionChanged(false)
 {
@@ -73,11 +74,13 @@ ResourceTreeView::ResourceTreeView(BRect frame, Document* document,
 #ifdef __HAIKU__
 
 // constructor
-ResourceTreeView::ResourceTreeView(Document* document, Selection* selection)
+ResourceTreeView::ResourceTreeView(Document* document, Selection* selection,
+		EditContext& editContext)
 	:
 	ColumnTreeView(),
 	fDocument(document),
 	fSelection(selection),
+	fEditContext(editContext),
 	fResourceObserver(this),
 	fIgnoreSelectionChanged(false)
 {
@@ -377,7 +380,7 @@ ResourceTreeView::_HandleRenameObject(BMessage* message)
 		// rename via edit
 		RenameObjectEdit* edit = new (nothrow) RenameObjectEdit(object,
 			name);
-		fDocument->EditManager()->Perform(edit);
+		fDocument->EditManager()->Perform(edit, fEditContext);
 	}
 	object->RemoveReference();
 

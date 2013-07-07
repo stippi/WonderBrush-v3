@@ -55,7 +55,7 @@ public:
 		return B_OK;
 	}
 
-	virtual status_t Perform()
+	virtual status_t Perform(EditContext& context)
 	{
 		fInsertionLayer->SuspendUpdates(true);
 
@@ -80,7 +80,7 @@ public:
 		return B_OK;
 	}
 
-	virtual status_t Undo()
+	virtual status_t Undo(EditContext& context)
 	{
 		fInsertionLayer->SuspendUpdates(true);
 

@@ -38,7 +38,7 @@ public:
 		return fText.Get() != NULL && fString.Length() > 0 ? B_OK : B_ERROR;
 	}
 
-	virtual	status_t Perform()
+	virtual	status_t Perform(EditContext& context)
 	{
 		fText->Insert(fOffset, fString.String(), fFont, fGlyphSpacing,
 			fFauxWeight, fFauxItalic, fStyleRef);
@@ -46,7 +46,7 @@ public:
 		return B_OK;
 	}
 
-	virtual status_t Undo()
+	virtual status_t Undo(EditContext& context)
 	{
 		fText->Remove(fOffset, fString.CountChars());
 
