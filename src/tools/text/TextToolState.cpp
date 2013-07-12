@@ -368,7 +368,7 @@ TextToolState::MessageReceived(BMessage* message, UndoableEdit** _edit)
 				SetObjectToCanvasTransformation(fText->Transformation());
 				UpdateBounds();
 				UpdateDragState();
-				_AdoptStyleAtOffset(_SelectionStart());
+				_AdoptStyleAtOffset(fCaretOffset - 1);
 			}
 			break;
 		}
