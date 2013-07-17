@@ -74,6 +74,8 @@ public:
 			void				SetColor(const rgb_color& color);
 	inline	rgb_color			Color() const
 									{ return fColor->GetColor(); }
+	inline	const ColorProviderRef& GetColorProvider() const
+									{ return fColor; }
 
 			void				SetGradient(const ::Gradient* gradient);
 	inline	::Gradient*			Gradient() const
