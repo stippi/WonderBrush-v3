@@ -8,6 +8,7 @@
 #include <TranslationUtils.h>
 
 #include "BrushStroke.h"
+#include "ColorShade.h"
 #include "Document.h"
 #include "Filter.h"
 #include "FilterDropShadow.h"
@@ -43,8 +44,6 @@ WonderBrushBase::WonderBrushBase(BRect bounds)
 	fDocument->RootLayer()->AddObject(new Filter(10.0));
 	fDocument->RootLayer()->AddObject(new Rect(BRect(30, 40, 120, 200),
 		(rgb_color){ 97, 215, 255, 255 }));
-	fDocument->RootLayer()->AddObject(new Rect(BRect(100, 140, 180, 170),
-		(rgb_color){ 255, 215, 20, 100 }));
 
 	Layer* subLayer = new Layer(bounds);
 	fDocument->RootLayer()->AddObject(subLayer);
@@ -81,6 +80,20 @@ WonderBrushBase::WonderBrushBase(BRect bounds)
 
 	Layer* shadowLayer = new Layer(bounds);
 	fDocument->RootLayer()->AddObject(shadowLayer);
+
+	Rect* rect = new Rect(BRect(100, 140, 180, 170),
+		(rgb_color){ 255, 215, 20, 100 });
+	Style* rectStyle = rect->Style();
+
+	ColorShade* shade = new ColorShade(
+		rectStyle->FillPaint()->GetColorProvider());
+	shade->SetHue(1.0f);
+	shade->SetValue(-0.25f);
+
+	rectStyle->SetStrokePaint(Paint(ColorProviderRef(shade, true)));
+	rectStyle->SetStrokeProperties(StrokeProperties(4.0f, RoundJoin));
+
+	fDocument->RootLayer()->AddObject(rect);
 
 	BBitmap* bitmap = BTranslationUtils::GetBitmap(
 		"/boot/home/Desktop/gamma_dalai_lama_gray.jpg");
