@@ -43,7 +43,10 @@ enum {
 	PROPERTY_DETECT_ORIENTATION			= 'ador',
 
 	PROPERTY_FILTER_RADIUS				= 'flrd',
+
+	PROPERTY_HSV_HUE					= 'hue ',
 	PROPERTY_SATURATION					= 'strn',
+	PROPERTY_HSV_VALUE					= 'vlue',
 
 	PROPERTY_GROUP_STROKE_PAINT			= 'strk',
 	PROPERTY_GROUP_FILL_PAINT			= 'fill',
