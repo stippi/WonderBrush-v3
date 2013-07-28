@@ -79,7 +79,7 @@ public:
 				fCount * sizeof(ItemType)) == 0;
 		} else {
 			for (uint32 i = 0; i < other.fCount; i++) {
-				if (*ItemAtFast(i) != *other.ItemAtFast(i))
+				if (ItemAtFast(i) != other.ItemAtFast(i))
 					return false;
 			}
 		}
