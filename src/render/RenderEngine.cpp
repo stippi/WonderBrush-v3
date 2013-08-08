@@ -405,11 +405,17 @@ RenderEngine::InitGammaTables()
 	for (uint32 i = 2; i < 65536; i++) {
 		sLinearToGamma[i] = round(pow(i / 65535.0, kInverseGamma) * 255.0);
 	}
+//	for (int i = 0; i < 65536; i += 256)
+//		printf("sLinearToGamma[%d] = %d\n", i, sLinearToGamma[i]);
+//
+//	for (int i = 0; i < 1024; i += 4)
+//		printf("sLinearToGamma[%d] = %d\n", i, sLinearToGamma[i]);
+
 #else
 	for (uint32 i = 0; i < 256; i++)
 		sGammaToLinear[i] = i << 8 | i;
-	for (uint32 i = 0; i < 16384; i++)
-		sLinearToGamma[i] = i / 64;
+	for (uint32 i = 0; i < 65536; i++)
+		sLinearToGamma[i] = i >> 8;
 #endif
 	return true;
 }
