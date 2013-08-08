@@ -10,6 +10,10 @@
 
 #include <Bitmap.h>
 
+#include <agg_blur.h>
+#include <agg_pixfmt_gray.h>
+#include <agg_rendering_buffer.h>
+
 #include "AlphaBuffer.h"
 #include "FilterDropShadow.h"
 #include "GaussFilter.h"
@@ -34,6 +38,10 @@ FilterDropShadowSnapshot::FilterDropShadowSnapshot(
 	, fLayoutedOffsetX(fOffsetX)
 	, fLayoutedOffsetY(fOffsetY)
 {
+	if (fOriginal->Color().Get() != NULL)
+		fColor = fOriginal->Color()->GetColor();
+	else
+		fColor = kBlack;
 }
 
 // destructor
@@ -75,8 +83,12 @@ FilterDropShadowSnapshot::Layout(LayoutContext& context, uint32 flags)
 	ObjectSnapshot::Layout(context, flags);
 	double scale = LayoutedState().Matrix.Scale();
 	fLayoutedFilterRadius = fFilterRadius * scale;
-	fLayoutedOffsetX = fOffsetX * scale;
-	fLayoutedOffsetY = fOffsetY * scale;
+//	fLayoutedOffsetX = fOffsetX * scale;
+//	fLayoutedOffsetY = fOffsetY * scale;
+
+	fLayoutedOffsetX = fOffsetX;
+	fLayoutedOffsetY = fOffsetY;
+	LayoutedState().Matrix.Transform(&fLayoutedOffsetX, &fLayoutedOffsetY);
 }
 
 // Render
@@ -138,8 +150,17 @@ FilterDropShadowSnapshot::Render(RenderEngine& engine, RenderBuffer* bitmap,
 		src += srcBPR;
 	}
 
-	StackBlurFilter filter;
-	filter.FilterGray16(&alphaBuffer, fLayoutedFilterRadius);
+//	StackBlurFilter filter;
+//	filter.FilterGray16(&alphaBuffer, fLayoutedFilterRadius);
+
+	agg::rendering_buffer aggBuffer;
+	aggBuffer.attach(alphaBuffer.Bits(), alphaBuffer.Width(),
+		alphaBuffer.Height(), alphaBuffer.BytesPerRow());
+	agg::pixfmt_gray16 pixelFormat(aggBuffer);
+	
+	agg::stack_blur<agg::gray16, agg::stack_blur_calc_gray<> > stackBlur;
+	stackBlur.blur(pixelFormat, agg::uround(fLayoutedFilterRadius));
+//
 
 	source = alphaBuffer.Bounds();
 	source.InsetBy(extend, extend);

@@ -11,6 +11,10 @@
 
 #include <Bitmap.h>
 
+#include <agg_blur.h>
+#include <agg_pixfmt_rgba.h>
+#include <agg_rendering_buffer.h>
+
 #include "Filter.h"
 #include "GaussFilter.h"
 #include "LayoutContext.h"
@@ -77,8 +81,8 @@ FilterSnapshot::Render(RenderEngine& engine, RenderBuffer* bitmap,
 		// stack blur is really fast and independent
 		// of the filter radius, but limited to 254
 		// filter radius maximum
-		StackBlurFilter filter;
-		filter.FilterRGBA64(&buffer, fLayoutedFilterRadius);
+//		StackBlurFilter filter;
+//		filter.FilterRGBA64(&buffer, fLayoutedFilterRadius);
 //	} else {
 //		// gauss filter supports any radius and is
 //		// independent of the radius as well, but
@@ -87,6 +91,17 @@ FilterSnapshot::Render(RenderEngine& engine, RenderBuffer* bitmap,
 //		GaussFilter filter;
 //		filter.FilterRGBA64(&buffer, fLayoutedFilterRadius);
 //	}
+
+	agg::rendering_buffer aggBuffer;
+	aggBuffer.attach(buffer.Bits(), buffer.Width(), buffer.Height(),
+		buffer.BytesPerRow());
+	agg::pixfmt_bgra64_pre pixelFormat(aggBuffer);
+	
+	agg::stack_blur<agg::rgba16, agg::stack_blur_calc_rgba<> > stackBlur;
+	stackBlur.blur(pixelFormat, agg::uround(fLayoutedFilterRadius));
+
+//	agg::recursive_blur<agg::rgba16, agg::recursive_blur_calc_rgba<> > recursiveBlur;
+//	recursiveBlur.blur(pixelFormat, fLayoutedFilterRadius);
 
 	source.InsetBy(extend, extend);
 	buffer.CopyTo(bitmap, source);

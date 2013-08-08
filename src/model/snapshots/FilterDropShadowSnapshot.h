@@ -34,8 +34,8 @@ class FilterDropShadowSnapshot : public ObjectSnapshot {
 			float				fOffsetY;
 			float				fOpacity;
 			float				fLayoutedFilterRadius;
-			float				fLayoutedOffsetX;
-			float				fLayoutedOffsetY;
+			double				fLayoutedOffsetX;
+			double				fLayoutedOffsetY;
 			rgb_color			fColor;
 };
 
