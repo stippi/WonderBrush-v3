@@ -8,8 +8,9 @@
 #include <Application.h>
 #include <Directory.h>
 #include <File.h>
-#include <FindDirectory.h>
 #include <Path.h>
+#include <PathFinder.h>
+#include <StringList.h>
 
 #include "FontCache.h"
 #include "FontRegistry.h"
@@ -36,13 +37,12 @@ public:
 		FontRegistry* registry = FontRegistry::Default();
 		if (registry->Lock()) {
 			// Use font files from system, common and user fonts folders
-			BPath path;
-			if (find_directory(B_SYSTEM_FONTS_DIRECTORY, &path) == B_OK)
-				registry->AddFontDirectory(path.Path());
-			if (find_directory(B_COMMON_FONTS_DIRECTORY, &path) == B_OK)
-				registry->AddFontDirectory(path.Path());
-			if (find_directory(B_USER_FONTS_DIRECTORY, &path) == B_OK)
-				registry->AddFontDirectory(path.Path());
+			BStringList paths;
+			BPathFinder::FindPaths(B_FIND_PATH_FONTS_DIRECTORY, NULL,
+				B_FIND_PATH_EXISTING_ONLY, paths);
+			int32 count = paths.CountStrings();
+			for (int32 i = 0; i < count; i++)
+				registry->AddFontDirectory(paths.StringAt(i));
 
 			registry->StartWatchingAll(this);
 			registry->Scan();
