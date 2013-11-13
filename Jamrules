@@ -11,9 +11,22 @@ if $(OS) = HAIKU {
 	# /boot/develop/lib/x86 to judge whether this is a BeOS compatible and thus
 	# gcc 2 platform. This is not entirely correct, but should be good enough
 	# for the time being.
-	local hasLibStdC++.R4 = [ Glob /boot/develop/lib/x86 : libstdc++.r4.so ] ;
-	if ! $(hasLibStdC++.R4) {
-		IS_GCC_4_PLATFORM = 1 ;
+	local isGCC2Primary = [ Glob /boot/system/develop/lib/x86 : libstdc++.r4.so ] ;
+	local path ;
+	for path in $(PATH) {
+		if $(path) = /boot/system/bin {
+			if ! $(isGCC2Primary) {
+				IS_GCC_4_PLATFORM = 1 ;
+			}
+			break ;
+		}
+	
+		if $(path:D) = /boot/system/bin {
+			if $(path:B) != x86_gcc2 {
+				IS_GCC_4_PLATFORM = 1 ;
+			}
+			break ;
+		}
 	}
 } else {
 	IS_GCC_4_PLATFORM = 1 ;

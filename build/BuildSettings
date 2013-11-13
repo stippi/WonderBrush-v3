@@ -17,17 +17,19 @@ LIBNETAPI = netapi ;	# default, may be changed to bnetapi (see below)
 
 if $(OSPLAT) = X86 {
 	# check for Haiku...
-	local haveHaiku = [ GLOB /boot/develop/headers/posix/arpa : inet.h ] ;
+	local haveHaiku = [ GLOB /boot/system/develop/headers/posix/arpa : inet.h ] ;
 	if $(haveHaiku)	{
 		CCFLAGS += -DCOMPILE_FOR_BONE -DCOMPILE_FOR_HAIKU ;
 		C++FLAGS += -DCOMPILE_FOR_BONE -DCOMPILE_FOR_HAIKU ;
 		# avoid resolving the wrong AGG symbols (in libbe.so) on GCC4
-		CFLAGS += -fvisibility=hidden ;
-		C++FLAGS += -fvisibility=hidden ;
+		if $(IS_GCC_4_PLATFORM) {
+			CFLAGS += -fvisibility=hidden ;
+			C++FLAGS += -fvisibility=hidden ;
+		}
 		NETWORK_LIBS += network ;
 		PLATFORM = haiku ;
 		COMMON_FOLDER = /boot/common ;
-		SYSHDRS += /boot/develop/headers/3rdparty/freetype2 ;
+		SYSHDRS += /boot/system/develop/headers/freetype2 ;
 	}
 	# check for BONE...
 	local haveBone = [ GLOB /boot/develop/headers/be/bone/arpa : inet.h ] ;
@@ -48,7 +50,7 @@ if $(OSPLAT) = X86 {
 		PLATFORM = zeta ;
 	}
 	# check for libbnetapi...
-	local haveLibbnetapi = [ GLOB /boot/develop/lib/x86 : libbnetapi.so ] ;
+	local haveLibbnetapi = [ GLOB /boot/system/develop/lib/x86 : libbnetapi.so ] ;
 	if $(haveLibbnetapi) {
 		LIBNETAPI = bnetapi ;
 	}
