@@ -125,11 +125,10 @@ Exporter::_ExportThread()
 	
 		// add to recent document list
 		be_roster->AddToRecentDocuments(&fRef);
-		// mark command stack state as saved,
-		fDocument->EditManager()->Save();
-			// NOTE: EditManager is thread safe
 	
 		if (fDocument->WriteLock()) {
+			// mark command stack state as saved,
+			fDocument->EditManager()->Save();
 			// set ref and name of document
 //			fDocument->SetRef(fRef);
 			fDocument->SetName(fRef.name);
