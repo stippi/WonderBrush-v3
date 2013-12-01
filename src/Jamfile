@@ -12,6 +12,7 @@ local sourceDirs =
 	gui/tools
 	gui/tools/$(WONDERBRUSH_PLATFORM)
 	import_export
+	import_export/message
 	model
 	model/document
 	model/fills
@@ -68,6 +69,7 @@ SubDirHdrs [ FDirName $(TOP) src gui scrollview ] ;
 SubDirHdrs [ FDirName $(TOP) src gui scrollview $(WONDERBRUSH_PLATFORM) ] ;
 SubDirHdrs [ FDirName $(TOP) src gui stateview ] ;
 SubDirHdrs [ FDirName $(TOP) src import_export ] ;
+SubDirHdrs [ FDirName $(TOP) src import_export message ] ;
 SubDirHdrs [ FDirName $(TOP) src model ] ;
 SubDirHdrs [ FDirName $(TOP) src model document ] ;
 SubDirHdrs [ FDirName $(TOP) src model fills ] ;
@@ -154,6 +156,9 @@ Application WonderBrush :
 	# import_export
 	Exporter.cpp
 	Importer.cpp
+
+	# import_export/message
+	MessageExporter.cpp
 
 	# model
 	BaseObject.cpp
