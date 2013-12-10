@@ -181,10 +181,10 @@ Text::SetText(const char* utf8String, const Font& font, const StyleRef& style)
 }
 
 // GetText
-const char*
+const BString&
 Text::GetText() const
 {
-	return fText.String();
+	return fText;
 }
 
 // GetCharCount

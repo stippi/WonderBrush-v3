@@ -54,7 +54,7 @@ public:
 			void				SetText(const char* utf8String,
 									const Font& font, const StyleRef& style);
 
-			const char*			GetText() const;
+			const BString&		GetText() const;
 
 			int32				GetCharCount() const;
 
