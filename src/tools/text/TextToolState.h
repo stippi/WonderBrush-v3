@@ -102,6 +102,9 @@ public:
 
 			void				SetCaret(const BPoint& location, bool select);
 
+			void				Copy(int32 textOffset, int32 length) const;
+			void				Paste();
+
 private:
 			void				_UpdateConfigView() const;
 			void				_UpdateConfigViewSelection() const;

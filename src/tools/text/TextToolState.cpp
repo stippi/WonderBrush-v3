@@ -9,6 +9,7 @@
 #include "TextToolState.h"
 #include "TextToolStatePlatformDelegate.h"
 
+#include <Clipboard.h>
 #include <Cursor.h>
 #include <MessageRunner.h>
 #include <Shape.h>
@@ -360,6 +361,14 @@ TextToolState::MessageReceived(BMessage* message, UndoableEdit** _edit)
 	bool handled = true;
 
 	switch (message->what) {
+		case B_COPY:
+			Copy(_SelectionStart(), _SelectionLength());
+			break;
+
+		case B_PASTE:
+			Paste();
+			break;
+
 		case MSG_TEXT_CHANGED:
 		{
 			Text* text;
@@ -958,6 +967,59 @@ TextToolState::SetCaret(const BPoint& location, bool select)
 		caretOffset++;
 
 	_SetCaretOffset(caretOffset, true, select, true);
+}
+
+// Copy
+void
+TextToolState::Copy(int32 textOffset, int32 length) const
+{
+	if (length == 0 || fText == NULL)
+		return;
+
+	BClipboard* clipboard = be_clipboard;
+
+	if (clipboard == NULL || !clipboard->Lock())
+		return;
+	
+	clipboard->Clear();
+
+	BMessage* data = clipboard->Data();
+	if (data != NULL) {
+		BString clip;
+		fText->GetText().CopyInto(clip, textOffset, length);
+		data->AddData("text/plain", B_MIME_TYPE, clip.String(), clip.Length());
+		
+		// TODO: Support for "application/x-vnd.Be-text_run_array"
+		
+		clipboard->Commit();
+	}
+
+	clipboard->Unlock();
+}
+
+// Paste
+void
+TextToolState::Paste()
+{
+	if (fText == NULL)
+		return;
+
+	BClipboard* clipboard = be_clipboard;
+
+	if (clipboard == NULL || !clipboard->Lock())
+		return;
+
+	BMessage* data = clipboard->Data();
+	const char* text = NULL;
+	ssize_t length = 0;
+	if (data != NULL && data->FindData("text/plain", B_MIME_TYPE,
+			(const void**)&text, &length) == B_OK) {
+		BString string(text, length);
+		Insert(fCaretOffset, string.String());
+	}
+
+	clipboard->Unlock();
+
 }
 
 // #pragma mark - private
