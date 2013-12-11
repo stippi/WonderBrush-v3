@@ -24,6 +24,7 @@
 #include "Document.h"
 #include "Layer.h"
 #include "ObjectAddedEdit.h"
+#include "PathAddPointEdit.h"
 #include "support.h"
 #include "Shape.h"
 #include "StyleSetFillPaintEdit.h"
@@ -419,7 +420,13 @@ public:
 
 		fOrigin = origin;
 		Path* path = fPathRef.Get();
-		if (path != NULL && path->AddPoint(origin)) {
+		if (path != NULL) {
+			
+			fParent->View()->PerformEdit(
+				new(std::nothrow) PathAddPointEdit(fParent->fShape, path,
+					origin, fParent->fSelection)
+			);
+
 			fPointAdded = true;
 			fParent->_SelectPoint(PathPoint(path, path->CountPoints() - 1,
 				POINT_ALL), false);
@@ -898,6 +905,7 @@ PathToolState::MessageReceived(BMessage* message, UndoableEdit** _edit)
 			UpdateBounds();
 			handled = true;
 			break;
+
 		case MSG_SHAPE_CHANGED:
 			if (fShape != NULL) {
 				SetObjectToCanvasTransformation(fShape->Transformation());
@@ -906,6 +914,11 @@ PathToolState::MessageReceived(BMessage* message, UndoableEdit** _edit)
 				_AdoptShapePaint();
 			}
 			break;
+
+		case B_SELECT_ALL:
+			
+			break;
+
 		default:
 			handled = DragStateViewState::MessageReceived(message, _edit);
 	}
