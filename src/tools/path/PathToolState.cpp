@@ -26,6 +26,7 @@
 #include "ObjectAddedEdit.h"
 #include "PathAddPointEdit.h"
 #include "PathMovePointEdit.h"
+#include "PathToggleClosedEdit.h"
 #include "support.h"
 #include "Shape.h"
 #include "StyleSetFillPaintEdit.h"
@@ -726,9 +727,9 @@ public:
 
 	virtual void SetOrigin(BPoint origin)
 	{
-		Path* path = fPathRef.Get();
-		if (path != NULL)
-			path->SetClosed(true);
+		fParent->View()->PerformEdit(
+			new(std::nothrow) PathToggleClosedEdit(fParent->fShape, fPathRef,
+				fParent->fSelection));
 	}
 
 	virtual void DragTo(BPoint current, uint32 modifiers)
@@ -1432,7 +1433,6 @@ PathToolState::CreateShape(BPoint canvasLocation)
 
 	View()->PerformEdit(new(std::nothrow) ObjectAddedEdit(shape,
 		fSelection));
-
 
 	return true;
 }
