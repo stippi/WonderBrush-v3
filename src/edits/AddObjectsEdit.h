@@ -6,8 +6,8 @@
 #ifndef ADD_OBJECTS_EDIT_H
 #define ADD_OBJECTS_EDIT_H
 
-#include "UndoableEdit.h"
 #include "Selection.h"
+#include "UndoableEdit.h"
 
 class Layer;
 class Object;
