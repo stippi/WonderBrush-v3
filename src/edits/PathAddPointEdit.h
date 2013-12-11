@@ -47,6 +47,13 @@ public:
 			return B_NO_MEMORY;
 	}
 
+	virtual	bool CombineWithNext(const UndoableEdit* _next)
+	{
+		// TODO: Combine with PathMovePointEdits
+		return false;
+	}
+
+
 	virtual void GetName(BString& name)
 	{
 		name << "Add control point";
