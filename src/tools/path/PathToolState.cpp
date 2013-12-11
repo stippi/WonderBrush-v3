@@ -25,6 +25,7 @@
 #include "Layer.h"
 #include "ObjectAddedEdit.h"
 #include "PathAddPointEdit.h"
+#include "PathMovePointEdit.h"
 #include "support.h"
 #include "Shape.h"
 #include "StyleSetFillPaintEdit.h"
@@ -214,30 +215,30 @@ public:
 		fParent->TransformCanvasToObject(&current);
 
 		current = current - fClickOffset;
-		Path* path = fPathPoint.GetPath();
 
+		int32 mode;
 		switch (fDragMode) {
 			case DRAG_MODE_MOVE_POINT:
-				if (path != NULL)
-					path->SetPoint(fPathPoint.GetIndex(), current);
+				mode = PathMovePointEdit::MOVE_POINT;
 				break;
 			case DRAG_MODE_MOVE_POINT_IN:
-				if (path != NULL)
-					path->SetPointIn(fPathPoint.GetIndex(), current);
+				mode = PathMovePointEdit::MOVE_POINT_IN;
 				break;
 			case DRAG_MODE_MOVE_POINT_OUT:
-				if (path != NULL)
-					path->SetPointOut(fPathPoint.GetIndex(), current, false);
+				mode = PathMovePointEdit::MOVE_POINT_OUT;
 				break;
 			case DRAG_MODE_MOVE_POINT_OUT_MIRROR_IN:
-				if (path != NULL)
-					path->SetPointOut(fPathPoint.GetIndex(), current, true);
-				break;
-			case DRAG_MODE_MOVE_SELECTION:
+				mode = PathMovePointEdit::MOVE_POINT_OUT_MIRROR_IN;
 				break;
 			default:
-				break;
+				return;
 		}
+
+		fParent->View()->PerformEdit(
+			new(std::nothrow) PathMovePointEdit(fParent->fShape,
+				fPathPoint.GetPath(), fPathPoint.GetIndex(), current, mode,
+				fParent->fSelection)
+		);
 	}
 
 	virtual BCursor ViewCursor(BPoint current) const
