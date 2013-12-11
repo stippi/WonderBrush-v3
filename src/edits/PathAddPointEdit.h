@@ -58,4 +58,4 @@ private:
 			BPoint				fPoint;
 };
 
-#endif // REMOVE_TEXT_EDIT_H
+#endif // PATH_ADD_POINT_EDIT_H
