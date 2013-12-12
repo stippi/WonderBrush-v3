@@ -14,7 +14,8 @@
 #include "SetPropertiesEdit.h"
 
 enum {
-	MSG_OBJECT_CHANGED	= 'objc'
+	MSG_OBJECT_CHANGED	= 'objc',
+	MSG_SET_OBJECT		= 'seto'
 };
 
 // constructor
@@ -51,6 +52,19 @@ InspectorView::MessageReceived(BMessage* message)
 				// Remove the extra reference that was transferred with
 				// the message
 				object->RemoveReference();
+			}
+			break;
+		}
+
+		case MSG_SET_OBJECT:
+		{
+			BaseObject* object;
+			if (message->FindPointer("object", (void**)&object) == B_OK) {
+				_SetObject(object);
+				// Remove the extra reference that was transferred with
+				// the message
+				if (object != NULL)
+					object->RemoveReference();
 			}
 			break;
 		}
@@ -150,7 +164,11 @@ void
 InspectorView::ObjectSelected(const Selectable& selected,
 	const Selection::Controller* controller)
 {
-	_SetObject(selected.Get());
+	BMessage message(MSG_SET_OBJECT);
+	if (selected.Get() != NULL)
+		selected->AddReference();
+	message.AddPointer("object", selected.Get());
+	BMessenger(this).SendMessage(&message);
 }
 
 // ObjectDeselected
@@ -158,8 +176,11 @@ void
 InspectorView::ObjectDeselected(const Selectable& selected,
 	const Selection::Controller* controller)
 {
-	if (selected.Get() == fObject)
-		_SetObject(NULL);
+	if (selected.Get() == fObject) {
+		BMessage message(MSG_SET_OBJECT);
+		message.AddPointer("object", NULL);
+		BMessenger(this).SendMessage(&message);
+	}
 }
 
 // #pragma mark -
