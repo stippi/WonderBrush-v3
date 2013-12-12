@@ -29,6 +29,9 @@ public:
 	virtual	bool				CombineWithPrevious(
 									const UndoableEdit* previous);
 
+	inline	bigtime_t			TimeStamp() const
+									{ return fTimeStamp; }
+
 protected:
 			bigtime_t			fTimeStamp;
 };

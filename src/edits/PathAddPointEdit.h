@@ -7,6 +7,7 @@
 
 #include "ShapeEdit.h"
 #include "Path.h"
+#include "PathMovePointEdit.h"
 
 class PathAddPointEdit : public ShapeEdit {
 public:
@@ -16,6 +17,9 @@ public:
 		, fPath(path)
 		, fIndex(-1)
 		, fPoint(point)
+		, fPointIn(point)
+		, fPointOut(point)
+		, fConnected(true)
 	{
 	}
 
@@ -32,7 +36,7 @@ public:
 	{
 		SelectShape();
 		fIndex = fPath->CountPoints();
-		if (fPath->AddPoint(fPoint))
+		if (fPath->AddPoint(fPoint, fPointIn, fPointOut, fConnected))
 			return B_OK;
 		else
 			return B_NO_MEMORY;
@@ -49,8 +53,23 @@ public:
 
 	virtual	bool CombineWithNext(const UndoableEdit* _next)
 	{
-		// TODO: Combine with PathMovePointEdits
-		return false;
+		const PathMovePointEdit* next
+			= dynamic_cast<const PathMovePointEdit*>(_next);
+
+		if (next == NULL || next->fPath != fPath
+			|| next->fIndex != fIndex
+			|| next->TimeStamp() - fTimeStamp > 500000) {
+			return false;
+		}
+
+		// Store current path point state after the PathMovePointEdit
+		// has performed
+		fPath->GetPointsAt(fIndex, fPoint, fPointIn, fPointOut,
+			&fConnected);
+
+		fTimeStamp = next->TimeStamp();
+
+		return true;
 	}
 
 
@@ -63,6 +82,9 @@ private:
 			PathRef				fPath;
 			int32				fIndex;
 			BPoint				fPoint;
+			BPoint				fPointIn;
+			BPoint				fPointOut;
+			bool				fConnected;
 };
 
 #endif // PATH_ADD_POINT_EDIT_H

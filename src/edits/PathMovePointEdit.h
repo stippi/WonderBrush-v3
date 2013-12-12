@@ -8,6 +8,8 @@
 #include "ShapeEdit.h"
 #include "Path.h"
 
+class PathAddPointEdit;
+
 class PathMovePointEdit : public ShapeEdit {
 public:
 
@@ -79,7 +81,7 @@ public:
 		const PathMovePointEdit* next
 			= dynamic_cast<const PathMovePointEdit*>(_next);
 
-		if (next == NULL || next->fPath.Get() != fPath.Get()
+		if (next == NULL || next->fPath != fPath
 			|| next->fIndex != fIndex || next->fMode != fMode
 			|| next->fTimeStamp - fTimeStamp > 500000) {
 			return false;
@@ -94,6 +96,9 @@ public:
 	{
 		name << "Move control point";
 	}
+
+private:
+			friend class PathAddPointEdit;
 
 private:
 			PathRef				fPath;
