@@ -56,8 +56,8 @@ public:
 		const PathMovePointEdit* next
 			= dynamic_cast<const PathMovePointEdit*>(_next);
 
-		if (next == NULL || next->fPath != fPath
-			|| next->fIndex != fIndex
+		if (next == NULL || next->GetPath() != fPath
+			|| next->PointIndex() != fIndex
 			|| next->TimeStamp() - fTimeStamp > 500000) {
 			return false;
 		}

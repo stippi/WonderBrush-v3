@@ -8,8 +8,6 @@
 #include "ShapeEdit.h"
 #include "Path.h"
 
-class PathAddPointEdit;
-
 class PathMovePointEdit : public ShapeEdit {
 public:
 
@@ -97,8 +95,15 @@ public:
 		name << "Move control point";
 	}
 
-private:
-			friend class PathAddPointEdit;
+	inline const PathRef& GetPath() const
+	{
+		return fPath;
+	}
+
+	inline int32 PointIndex() const
+	{
+		return fIndex;
+	}
 
 private:
 			PathRef				fPath;
