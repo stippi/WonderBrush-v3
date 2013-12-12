@@ -27,6 +27,7 @@
 #include "PathAddPointEdit.h"
 #include "PathMovePointEdit.h"
 #include "PathToggleClosedEdit.h"
+#include "PathToggleSharpEdit.h"
 #include "support.h"
 #include "Shape.h"
 #include "StyleSetFillPaintEdit.h"
@@ -332,30 +333,25 @@ public:
 		fOrigin = origin;
 
 		Path* path = fPathPoint.GetPath();
-		int32 index = fPathPoint.GetIndex();
-		BPoint point;
-		BPoint pointIn;
-		BPoint pointOut;
-		if (fPathPoint.GetPoint(point)
-			&& fPathPoint.GetPointIn(pointIn)
-			&& fPathPoint.GetPointOut(pointOut)) {
-			switch (fDragMode) {
-				case DRAG_MODE_MOVE_POINT_IN:
-					path->SetPoint(index, point, pointIn, pointOut, false);
-					fParent->fDragPathPointState->SetPathPoint(PathPoint(path,
-						index, POINT_IN));
-					break;
-				case DRAG_MODE_MOVE_POINT_OUT:
-					path->SetPoint(index, point, pointIn, pointOut, false);
-					fParent->fDragPathPointState->SetPathPoint(PathPoint(path,
-						index, POINT_OUT));
-					break;
-				case DRAG_MODE_MOVE_POINT_OUT_MIRROR_IN:
-					path->SetPoint(index, point, point, point, true);
-					fParent->fDragPathPointState->SetPathPoint(PathPoint(path,
-						index, POINT_OUT));
-					break;
-			}
+		if (fPathPoint.IsValid()) {
+			int32 index = fPathPoint.GetIndex();
+			
+			bool resetPoint = fDragMode == DRAG_MODE_MOVE_POINT_OUT_MIRROR_IN;
+
+			int32 which;
+			if (fDragMode == DRAG_MODE_MOVE_POINT_IN)
+				which = POINT_IN;
+			else
+				which = POINT_OUT;
+			
+			fParent->View()->PerformEdit(
+				new(std::nothrow) PathToggleSharpEdit(
+					fParent->fShape, fPathPoint.GetPath(),
+					fPathPoint.GetIndex(), resetPoint, fParent->fSelection)
+			);
+
+			fParent->fDragPathPointState->SetPathPoint(PathPoint(path,
+				index, which));
 			fParent->fDragPathPointState->SetDragMode(fDragMode);
 			fParent->_SelectPoint(PathPoint(path, index, POINT_ALL), false);
 		} else {
