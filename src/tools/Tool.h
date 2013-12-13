@@ -58,6 +58,9 @@ public:
 	virtual	void				SetOption(uint32 option, const char* value);
 	// TODO: More overloaded versions.
 
+			void				NotifyConfirmableEditStarted();
+			void				NotifyConfirmableEditFinished();
+
 protected:
 	virtual	ViewState*			MakeViewState(StateView* view,
 									Document* document,
@@ -65,9 +68,6 @@ protected:
 									CurrentColor* color) = 0;
 	virtual	ToolConfigView*		MakeConfigView() = 0;
 	virtual	IconButton*			MakeIcon() = 0;
-
-			void				NotifyConfirmableEditStarted();
-			void				NotifyConfirmableEditFinished();
 
 protected:
 			ViewState*			fViewState;
