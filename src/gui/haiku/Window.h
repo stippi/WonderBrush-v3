@@ -71,6 +71,7 @@ private:
 
 private:
 			class SelectionListener;
+			class ToolListener;
 
 			CanvasView*			fView;
 			Reference<Document>	fDocument;
@@ -109,6 +110,8 @@ private:
 
 			BList				fTools;
 			int32				fCurrentToolIndex;
+			Tool*				fCurrentTool;
+			ToolListener*		fToolListener;
 };
 
 #endif // WINDOW_H

@@ -40,6 +40,7 @@
 #include "RectangleTool.h"
 #include "TextTool.h"
 #include "ToolConfigView.h"
+#include "ToolListener.h"
 #include "TransformObjectEdit.h"
 #include "TransformTool.h"
 #include "RemoveObjectsEdit.h"
@@ -52,6 +53,8 @@
 enum {
 	MSG_UNDO						= 'undo',
 	MSG_REDO						= 'redo',
+	MSG_CONFIRM						= 'cnfm',
+	MSG_CANCEL						= 'cncl',
 	MSG_SET_TOOL					= 'sltl',
 	MSG_ADD_LAYER					= 'addl',
 	MSG_ADD_FILTER					= 'addf',
@@ -111,6 +114,38 @@ private:
 
 // #pragma mark -
 
+enum {
+	MSG_CONFIRMABLE_EDIT_STARTED	= 'cest',
+	MSG_CONFIRMABLE_EDIT_FINISHED	= 'cefn',
+};
+
+class Window::ToolListener : public ::ToolListener {
+public:
+	ToolListener(const BMessenger& messenger)
+		: fMessenger(messenger)
+	{
+	}
+
+	virtual ~ToolListener()
+	{
+	}
+
+	virtual void ConfirmableEditStarted()
+	{
+		fMessenger.SendMessage(MSG_CONFIRMABLE_EDIT_STARTED);
+	}
+
+	virtual void ConfirmableEditFinished()
+	{
+		fMessenger.SendMessage(MSG_CONFIRMABLE_EDIT_FINISHED);
+	}
+
+private:
+	BMessenger fMessenger;
+};
+
+// #pragma mark -
+
 // constructor
 Window::Window(BRect frame, const char* title, Document* document,
 			Layer* layer)
@@ -120,6 +155,9 @@ Window::Window(BRect frame, const char* title, Document* document,
 	, fRenderManager(NULL)
 	, fEditManagerListener(this)
 //	, fLayerTreeModel(new LayerTreeModel(fDocument))
+	, fCurrentToolIndex(-1)
+	, fCurrentTool(NULL)
+	, fToolListener(new Window::ToolListener(BMessenger(this)))
 {
 	// TODO: fix for when document == NULL
 
@@ -259,10 +297,12 @@ exportButton->SetEnabled(false);
 	fRedoIcon = new IconButton("redo", 0, NULL, new BMessage(MSG_REDO));
 	fRedoIcon->SetIcon(302, iconSize);
 	fRedoIcon->TrimIcon(toolIconBounds);
-	fConfirmIcon = new IconButton("confirm", 0);
+	fConfirmIcon = new IconButton("confirm", 0, NULL,
+		new BMessage(MSG_CONFIRM));
 	fConfirmIcon->SetIcon(303, iconSize);
 	fConfirmIcon->TrimIcon(toolIconBounds);
-	fCancelIcon = new IconButton("cancel", 0);
+	fCancelIcon = new IconButton("cancel", 0, NULL,
+		new BMessage(MSG_CANCEL));
 	fCancelIcon->SetIcon(304, iconSize);
 	fCancelIcon->TrimIcon(toolIconBounds);
 
@@ -430,6 +470,15 @@ Window::MessageReceived(BMessage* message)
 			fDocument->EditManager()->Redo(fEditContext);
 			break;
 
+		case MSG_CONFIRM:
+			if (fCurrentTool != NULL)
+				fCurrentTool->Confirm();
+			break;
+		case MSG_CANCEL:
+			if (fCurrentTool != NULL)
+				fCurrentTool->Cancel();
+			break;
+
 		case MSG_OBJECT_CHANGED:
 		{
 			Notifier* notifier;
@@ -464,6 +513,16 @@ Window::MessageReceived(BMessage* message)
 
 		case MSG_REMOVE:
 			_RemoveObjects();
+			break;
+
+		case MSG_CONFIRMABLE_EDIT_STARTED:
+			fConfirmIcon->SetEnabled(true);
+			fCancelIcon->SetEnabled(true);
+			break;
+
+		case MSG_CONFIRMABLE_EDIT_FINISHED:
+			fConfirmIcon->SetEnabled(false);
+			fCancelIcon->SetEnabled(false);
 			break;
 
 		default:
@@ -627,8 +686,16 @@ Window::_InitTools()
 void
 Window::_SetTool(int32 index)
 {
-	if (Tool* tool = (Tool*)fTools.ItemAt(index)) {
-		fView->SetState(tool->ToolViewState(fView, fDocument.Get(),
+	if (fCurrentTool != NULL) {
+		fCurrentTool->Confirm();
+		fCurrentTool->RemoveListener(fToolListener);
+	}
+
+	fCurrentTool = (Tool*)fTools.ItemAt(index);
+
+	if (fCurrentTool != NULL) {
+		fCurrentTool->AddListener(fToolListener);
+		fView->SetState(fCurrentTool->ToolViewState(fView, fDocument.Get(),
 			&fSelection, &fCurrentColor));
 		fToolConfigLayout->SetVisibleItem(index);
 		fToolIconControl->SetValue(index);
