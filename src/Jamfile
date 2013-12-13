@@ -259,6 +259,7 @@ Application WonderBrush :
 	# tools
 	DragStateViewState.cpp
 	Tool.cpp
+	ToolListener.cpp
 	TransformViewState.cpp
 
 	# tools/brush
