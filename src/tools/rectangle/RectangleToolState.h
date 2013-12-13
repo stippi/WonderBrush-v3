@@ -79,6 +79,7 @@ public:
 			void				SetRectangle(Rect* rectangle,
 									bool modifySelection = false);
 
+			void				SetArea(const BRect& area);
 			void				SetRoundCornerRadius(double radius);
 
 			void				Confirm();

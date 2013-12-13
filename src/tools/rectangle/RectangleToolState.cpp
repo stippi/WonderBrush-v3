@@ -25,6 +25,7 @@
 #include "Layer.h"
 #include "ObjectAddedEdit.h"
 #include "Rect.h"
+#include "RectangleAreaEdit.h"
 #include "RectangleTool.h"
 #include "StyleSetFillPaintEdit.h"
 #include "support.h"
@@ -115,7 +116,8 @@ public:
 
 		BRect area = fStartArea;
 		area.OffsetBy(offset);
-		fParent->fRectangle->SetArea(area);
+
+		fParent->SetArea(area);
 	}
 
 	virtual BCursor ViewCursor(BPoint current) const
@@ -205,8 +207,7 @@ public:
 			area.bottom = temp;
 		}
 
-		// TODO: Use UndoableEdit
-		fParent->fRectangle->SetArea(area);
+		fParent->SetArea(area);
 	}
 
 	virtual BCursor ViewCursor(BPoint current) const
@@ -347,8 +348,7 @@ public:
 			area.bottom = temp;
 		}
 
-		// TODO: Use UndoableEdit
-		fParent->fRectangle->SetArea(area);
+		fParent->SetArea(area);
 	}
 
 	virtual BCursor ViewCursor(BPoint current) const
@@ -843,6 +843,15 @@ RectangleToolState::SetRectangle(Rect* rectangle, bool modifySelection)
 //		SetObjectToCanvasTransformation(Transformable());
 		UpdateBounds();
 	}
+}
+
+// SetArea
+void
+RectangleToolState::SetArea(const BRect& area)
+{
+	View()->PerformEdit(
+		new(std::nothrow) RectangleAreaEdit(fRectangle, area, fSelection)
+	);
 }
 
 // SetRoundCornerRadius
