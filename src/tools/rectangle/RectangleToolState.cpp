@@ -26,6 +26,7 @@
 #include "ObjectAddedEdit.h"
 #include "Rect.h"
 #include "RectangleAreaEdit.h"
+#include "RectangleRadiusEdit.h"
 #include "RectangleTool.h"
 #include "StyleSetFillPaintEdit.h"
 #include "support.h"
@@ -863,9 +864,9 @@ RectangleToolState::SetRoundCornerRadius(double radius)
 	
 	fRoundCornerRadius = radius;
 	
-	// TODO: UndoableEdit
-	if (fRectangle != NULL)
-		fRectangle->SetRoundCornerRadius(fRoundCornerRadius);
+	View()->PerformEdit(
+		new(std::nothrow) RectangleRadiusEdit(fRectangle, radius, fSelection)
+	);
 }
 
 // Confirm
