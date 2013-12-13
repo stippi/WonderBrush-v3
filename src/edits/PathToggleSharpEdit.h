@@ -5,15 +5,15 @@
 #ifndef PATH_TOGGLE_SHARP_EDIT_H
 #define PATH_TOGGLE_SHARP_EDIT_H
 
-#include "ShapeEdit.h"
+#include "ObjectEdit.h"
 #include "Path.h"
 #include "PathMovePointEdit.h"
 
-class PathToggleSharpEdit : public ShapeEdit {
+class PathToggleSharpEdit : public ObjectEdit<Shape> {
 public:
 	PathToggleSharpEdit(Shape* shape, const PathRef& path, int32 index,
 			bool resetPoint, Selection* selection)
-		: ShapeEdit(shape, selection)
+		: ObjectEdit(shape, selection)
 		, fPath(path)
 		, fIndex(-1)
 		, fResetPoint(resetPoint)
@@ -36,7 +36,7 @@ public:
 
 	virtual	status_t Perform(EditContext& context)
 	{
-		SelectShape();
+		SelectObject();
 		
 		if (fResetPoint)
 			fPath->SetPoint(fIndex, fPoint, fPoint, fPoint, true);
@@ -48,7 +48,7 @@ public:
 
 	virtual status_t Undo(EditContext& context)
 	{
-		SelectShape();
+		SelectObject();
 
 		BPoint point(fPoint);
 		BPoint pointIn(fPointIn);

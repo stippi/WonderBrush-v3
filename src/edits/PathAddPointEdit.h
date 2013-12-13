@@ -5,15 +5,15 @@
 #ifndef PATH_ADD_POINT_EDIT_H
 #define PATH_ADD_POINT_EDIT_H
 
-#include "ShapeEdit.h"
+#include "ObjectEdit.h"
 #include "Path.h"
 #include "PathMovePointEdit.h"
 
-class PathAddPointEdit : public ShapeEdit {
+class PathAddPointEdit : public ObjectEdit<Shape> {
 public:
 	PathAddPointEdit(Shape* shape, const PathRef& path, BPoint point,
 			Selection* selection)
-		: ShapeEdit(shape, selection)
+		: ObjectEdit(shape, selection)
 		, fPath(path)
 		, fIndex(-1)
 		, fPoint(point)
@@ -34,7 +34,7 @@ public:
 
 	virtual	status_t Perform(EditContext& context)
 	{
-		SelectShape();
+		SelectObject();
 		fIndex = fPath->CountPoints();
 		if (fPath->AddPoint(fPoint, fPointIn, fPointOut, fConnected))
 			return B_OK;
@@ -44,7 +44,7 @@ public:
 
 	virtual status_t Undo(EditContext& context)
 	{
-		SelectShape();
+		SelectObject();
 		if (fPath->RemovePoint(fIndex))
 			return B_OK;
 		else

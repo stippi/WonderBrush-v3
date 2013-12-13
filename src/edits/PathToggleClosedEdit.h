@@ -5,14 +5,14 @@
 #ifndef PATH_TOGGLE_CLOSED_EDIT_H
 #define PATH_TOGGLE_CLOSED_EDIT_H
 
-#include "ShapeEdit.h"
+#include "ObjectEdit.h"
 #include "Path.h"
 
-class PathToggleClosedEdit : public ShapeEdit {
+class PathToggleClosedEdit : public ObjectEdit<Shape> {
 public:
 	PathToggleClosedEdit(Shape* shape, const PathRef& path,
 			Selection* selection)
-		: ShapeEdit(shape, selection)
+		: ObjectEdit(shape, selection)
 		, fPath(path)
 	{
 	}
@@ -28,7 +28,7 @@ public:
 
 	virtual	status_t Perform(EditContext& context)
 	{
-		SelectShape();
+		SelectObject();
 		fPath->SetClosed(!fPath->IsClosed());
 		return B_OK;
 	}

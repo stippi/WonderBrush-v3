@@ -5,10 +5,10 @@
 #ifndef PATH_MOVE_POINT_EDIT_H
 #define PATH_MOVE_POINT_EDIT_H
 
-#include "ShapeEdit.h"
+#include "ObjectEdit.h"
 #include "Path.h"
 
-class PathMovePointEdit : public ShapeEdit {
+class PathMovePointEdit : public ObjectEdit<Shape> {
 public:
 
 	enum {
@@ -20,7 +20,7 @@ public:
 
 	PathMovePointEdit(Shape* shape, const PathRef& path, int32 index,
 		BPoint point, int32 mode, Selection* selection)
-		: ShapeEdit(shape, selection)
+		: ObjectEdit(shape, selection)
 		, fPath(path)
 		, fIndex(index)
 		, fPoint(point)
@@ -40,7 +40,7 @@ public:
 
 	virtual	status_t Perform(EditContext& context)
 	{
-		SelectShape();
+		SelectObject();
 
 		BPoint point;
 		switch (fMode) {
