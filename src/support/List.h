@@ -1,13 +1,17 @@
 /*
- * Copyright 2009-2012, Stephan Aßmus <superstippi@gmx.de>
+ * Copyright 2009-2013, Stephan Aßmus <superstippi@gmx.de>
+ * All rights reserved. Distributed under the terms of the MIT License.
  */
 #ifndef LIST_H
 #define LIST_H
 
+
 #include <new>
 #include <stdlib.h>
+#include <string.h>
 
 #include <SupportDefs.h>
+
 
 template <typename ItemType, bool PlainOldData, uint32 BlockSize = 8>
 class List {
@@ -115,12 +119,34 @@ public:
 		return false;
 	}
 
+	inline bool Add(const ItemType& copyFrom, int32 index)
+	{
+		if (index < 0 || index >= (int32)fCount)
+			return false;
+
+		if (!_Resize(fCount + 1))
+			return false;
+
+		int32 nextIndex = index + 1;
+		if ((int32)fCount > nextIndex)
+			memmove(fItems + nextIndex, fItems + index,
+				(fCount - nextIndex) * sizeof(ItemType));
+
+		ItemType* item = fItems + index;
+		if (!PlainOldData)
+			new (item) ItemType(copyFrom);
+		else
+			*item = copyFrom;
+
+		return true;
+	}
+
 	inline void Remove()
 	{
 		if (fCount > 0)
 			_Resize(fCount - 1);
 	}
-	
+
 	inline void Remove(int32 index)
 	{
 		if (index < 0 || index >= (int32)fCount)
@@ -132,16 +158,38 @@ public:
 		}
 
 		int32 nextIndex = index + 1;
-		if ((int32)fCount > nextIndex)
+		if ((int32)fCount > nextIndex) {
 			memcpy(fItems + index, fItems + nextIndex,
 				(fCount - nextIndex) * sizeof(ItemType));
-		
+		}
+
 		fCount--;
+	}
+
+	inline void Remove(const ItemType& item)
+	{
+		Remove(IndexOf(item));
+
+	}
+
+	inline bool Replace(int32 index, const ItemType& copyFrom)
+	{
+		if (index < 0 || index >= (int32)fCount)
+			return false;
+
+		ItemType* item = fItems + index;
+		// Initialize the new object from the original.
+		if (!PlainOldData) {
+			item->~ItemType();
+			new (item) ItemType(copyFrom);
+		} else
+			*item = copyFrom;
+		return true;
 	}
 
 	inline const ItemType& ItemAt(int32 index) const
 	{
-		if (index >= (int32)fCount)
+		if (index < 0 || index >= (int32)fCount)
 			return fNullItem;
 		return ItemAtFast(index);
 	}
@@ -153,7 +201,23 @@ public:
 
 	inline const ItemType& LastItem() const
 	{
+		if (fCount == 0)
+			return fNullItem;
 		return ItemAt((int32)fCount - 1);
+	}
+
+	inline int32 IndexOf(const ItemType& item) const
+	{
+		for (uint32 i = 0; i < fCount; i++) {
+			if (ItemAtFast(i) == item)
+				return i;
+		}
+		return -1;
+	}
+
+	inline bool Contains(const ItemType& item) const
+	{
+		return IndexOf(item) >= 0;
 	}
 
 private:
@@ -188,5 +252,6 @@ private:
 	uint32			fCount;
 	uint32			fAllocatedCount;
 };
+
 
 #endif // LIST_H
