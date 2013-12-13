@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2009, Stephan Aßmus <superstippi@gmx.de>
+ * Copyright 2006-2013, Stephan Aßmus <superstippi@gmx.de>
  * All rights reserved.
  */
 
@@ -8,6 +8,8 @@
 
 #include <Handler.h>
 
+#include "List.h"
+
 class BMessage;
 class CurrentColor;
 class Document;
@@ -15,6 +17,7 @@ class IconButton;
 class Selection;
 class StateView;
 class ToolConfigView;
+class ToolListener;
 class ViewState;
 
 // NOTE: A Tool object is added to the MainWindow,
@@ -42,10 +45,12 @@ public:
 
 	virtual	const char*			ShortHelpMessage();
 
-	// apply or cancel the changes of
-	// more complex editing
+	// apply or cancel the changes of more complex editing
 	virtual	status_t			Confirm();
 	virtual	status_t			Cancel();
+
+			bool				AddListener(ToolListener* listener);
+			void				RemoveListener(ToolListener* listener);
 
 	virtual	void				SetOption(uint32 option, bool value);
 	virtual	void				SetOption(uint32 option, float value);
@@ -61,9 +66,16 @@ protected:
 	virtual	ToolConfigView*		MakeConfigView() = 0;
 	virtual	IconButton*			MakeIcon() = 0;
 
+			void				NotifyConfirmableEditStarted();
+			void				NotifyConfirmableEditFinished();
+
+protected:
 			ViewState*			fViewState;
 			ToolConfigView*		fConfigView;
 			IconButton*			fIcon;
+
+	typedef List<ToolListener*, true> ToolListenerList;
+			ToolListenerList	fToolListeners;
 };
 
 #endif	// TOOL_H

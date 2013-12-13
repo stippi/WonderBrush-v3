@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2009, Stephan Aßmus <superstippi@gmx.de>
+ * Copyright 2006-2013, Stephan Aßmus <superstippi@gmx.de>
  * All rights reserved.
  */
 
@@ -7,6 +7,7 @@
 
 #include <stdio.h>
 
+#include "ToolListener.h"
 #include "ViewState.h"
 
 // constructor
@@ -100,6 +101,20 @@ Tool::Cancel()
 	return B_OK;
 }
 
+// AddListener
+bool
+Tool::AddListener(ToolListener* listener)
+{
+	return fToolListeners.Add(listener);
+}
+
+// RemoveListener
+void
+Tool::RemoveListener(ToolListener* listener)
+{
+	fToolListeners.Remove(listener);
+}
+
 // #pragma mark -
 
 // SetOption
@@ -124,6 +139,24 @@ Tool::SetOption(uint32 option, int32 value)
 void
 Tool::SetOption(uint32 option, const char* value)
 {
+}
+
+// NotifyConfirmableEditStarted
+void
+Tool::NotifyConfirmableEditStarted()
+{
+	int count = fToolListeners.CountItems();
+	for (int i = 0; i < count; i++)
+		fToolListeners.ItemAtFast(i)->ConfirmableEditStarted();
+}
+
+// NotifyConfirmableEditFinished
+void
+Tool::NotifyConfirmableEditFinished()
+{
+	int count = fToolListeners.CountItems();
+	for (int i = 0; i < count; i++)
+		fToolListeners.ItemAtFast(i)->ConfirmableEditFinished();
 }
 
 
