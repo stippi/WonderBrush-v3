@@ -20,12 +20,14 @@ class BShape;
 class CurrentColor;
 class Document;
 class Layer;
+class RectangleTool;
 
 class RectangleToolState : public DragStateViewState,
 	public Selection::Controller, public Selection::Listener,
 	public Listener {
 public:
 								RectangleToolState(StateView* view,
+									RectangleTool* tool,
 									Document* document, Selection* selection,
 									CurrentColor* color,
 									const BMessenger& configView);
@@ -79,6 +81,9 @@ public:
 
 			void				SetRoundCornerRadius(double radius);
 
+			void				Confirm();
+			void				Cancel();
+
 private:
 			void				_DrawControls(PlatformDrawContext& drawContext);
 
@@ -98,6 +103,8 @@ private:
 			friend class DragSideState;
 
 private:
+			RectangleTool*		fTool;
+
 			PlatformDelegate*	fPlatformDelegate;
 
 			CreateRectangleState*	fCreateRectangleState;

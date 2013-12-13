@@ -25,6 +25,7 @@
 #include "Layer.h"
 #include "ObjectAddedEdit.h"
 #include "Rect.h"
+#include "RectangleTool.h"
 #include "StyleSetFillPaintEdit.h"
 #include "support.h"
 #include "TransformObjectEdit.h"
@@ -423,10 +424,12 @@ private:
 // #pragma mark -
 
 // constructor
-RectangleToolState::RectangleToolState(StateView* view, Document* document,
-		Selection* selection, CurrentColor* color,
+RectangleToolState::RectangleToolState(StateView* view, RectangleTool* tool,
+		Document* document, Selection* selection, CurrentColor* color,
 		const BMessenger& configView)
 	: DragStateViewState(view)
+
+	, fTool(tool)
 
 	, fPlatformDelegate(new PlatformDelegate(this))
 
@@ -815,6 +818,7 @@ RectangleToolState::SetRectangle(Rect* rectangle, bool modifySelection)
 	if (fRectangle != NULL) {
 		fRectangle->RemoveListener(this);
 		fRectangle->RemoveReference();
+		fTool->NotifyConfirmableEditFinished();
 	}
 
 	fRectangle = rectangle;
@@ -822,6 +826,7 @@ RectangleToolState::SetRectangle(Rect* rectangle, bool modifySelection)
 	if (fRectangle != NULL) {
 		fRectangle->AddReference();
 		fRectangle->AddListener(this);
+		fTool->NotifyConfirmableEditStarted();
 	}
 
 	if (rectangle != NULL) {
@@ -852,6 +857,21 @@ RectangleToolState::SetRoundCornerRadius(double radius)
 	// TODO: UndoableEdit
 	if (fRectangle != NULL)
 		fRectangle->SetRoundCornerRadius(fRoundCornerRadius);
+}
+
+// Confirm
+void
+RectangleToolState::Confirm()
+{
+	SetRectangle(NULL, true);
+}
+
+// Cancel
+void
+RectangleToolState::Cancel()
+{
+	// TODO: Restore Rectangle to when editing began
+	SetRectangle(NULL, true);
 }
 
 // #pragma mark - private

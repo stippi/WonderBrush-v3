@@ -49,12 +49,30 @@ RectangleTool::ShortHelpMessage()
 
 // #pragma mark -
 
+// Confirm
+status_t
+RectangleTool::Confirm()
+{
+	((RectangleToolState*)ToolViewState())->Confirm();
+	return B_OK;
+}
+
+// Cancel
+status_t
+RectangleTool::Cancel()
+{
+	((RectangleToolState*)ToolViewState())->Cancel();
+	return B_OK;
+}
+
+// #pragma mark -
+
 // MakeViewState
 ViewState*
 RectangleTool::MakeViewState(StateView* view, Document* document,
 	Selection* selection, CurrentColor* color)
 {
-	return new(std::nothrow) RectangleToolState(view, document, selection,
+	return new(std::nothrow) RectangleToolState(view, this, document, selection,
 		color, BMessenger(ConfigView()));
 }
 
