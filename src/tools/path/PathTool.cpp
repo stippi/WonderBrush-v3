@@ -49,12 +49,30 @@ PathTool::ShortHelpMessage()
 
 // #pragma mark -
 
+// Confirm
+status_t
+PathTool::Confirm()
+{
+	((PathToolState*)ToolViewState())->Confirm();
+	return B_OK;
+}
+
+// Cancel
+status_t
+PathTool::Cancel()
+{
+	((PathToolState*)ToolViewState())->Cancel();
+	return B_OK;
+}
+
+// #pragma mark -
+
 // MakeViewState
 ViewState*
 PathTool::MakeViewState(StateView* view, Document* document,
 	Selection* selection, CurrentColor* color)
 {
-	return new(std::nothrow) PathToolState(view, document, selection,
+	return new(std::nothrow) PathToolState(view, this, document, selection,
 		color, BMessenger(ConfigView()));
 }
 

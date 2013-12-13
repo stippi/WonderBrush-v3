@@ -21,12 +21,13 @@ class BShape;
 class CurrentColor;
 class Document;
 class Layer;
+class PathTool;
 
 class PathToolState : public DragStateViewState,
 	public Selection::Controller, public Selection::Listener,
 	public Listener, public Path::Listener {
 public:
-								PathToolState(StateView* view,
+								PathToolState(StateView* view, PathTool* tool,
 									Document* document, Selection* selection,
 									CurrentColor* color,
 									const BMessenger& configView);
@@ -86,6 +87,9 @@ public:
 
 			void				SetShape(Shape* shape,
 									bool modifySelection = false);
+
+			void				Confirm();
+			void				Cancel();
 
 private:
 			void				_DrawControls(PlatformDrawContext& drawContext);
@@ -257,6 +261,8 @@ private:
 			void				_AdoptShapePaint();
 
 private:
+			PathTool*			fTool;
+
 			PlatformDelegate*	fPlatformDelegate;
 
 			PickShapeState*		fPickShapeState;

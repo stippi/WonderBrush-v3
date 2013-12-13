@@ -28,6 +28,7 @@
 #include "PathMovePointEdit.h"
 #include "PathToggleClosedEdit.h"
 #include "PathToggleSharpEdit.h"
+#include "PathTool.h"
 #include "support.h"
 #include "Shape.h"
 #include "StyleSetFillPaintEdit.h"
@@ -806,10 +807,12 @@ private:
 // #pragma mark -
 
 // constructor
-PathToolState::PathToolState(StateView* view, Document* document,
-		Selection* selection, CurrentColor* color,
+PathToolState::PathToolState(StateView* view, PathTool* tool,
+		Document* document, Selection* selection, CurrentColor* color,
 		const BMessenger& configView)
 	: DragStateViewState(view)
+
+	, fTool(tool)
 
 	, fPlatformDelegate(new PlatformDelegate(this))
 
@@ -1493,6 +1496,7 @@ PathToolState::SetShape(Shape* shape, bool modifySelection)
 	if (fShape != NULL) {
 		fShape->RemoveListener(this);
 		fShape->RemoveReference();
+		fTool->NotifyConfirmableEditFinished();
 	}
 
 	fShape = shape;
@@ -1500,6 +1504,7 @@ PathToolState::SetShape(Shape* shape, bool modifySelection)
 	if (fShape != NULL) {
 		fShape->AddReference();
 		fShape->AddListener(this);
+		fTool->NotifyConfirmableEditStarted();
 	}
 
 	if (shape != NULL) {
@@ -1522,6 +1527,21 @@ PathToolState::SetShape(Shape* shape, bool modifySelection)
 			fSelection->DeselectAll(this);
 		UpdateBounds();
 	}
+}
+
+// Confirm
+void
+PathToolState::Confirm()
+{
+	SetShape(NULL, true);
+}
+
+// Cancel
+void
+PathToolState::Cancel()
+{
+	// TODO: Restore Shape to when editing began
+	SetShape(NULL, true);
 }
 
 // #pragma mark - private

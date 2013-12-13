@@ -19,6 +19,10 @@ public:
 
 	virtual	const char*			ShortHelpMessage();
 
+	// apply or cancel the changes of more complex editing
+	virtual	status_t			Confirm();
+	virtual	status_t			Cancel();
+
 	virtual	void				SetOption(uint32 option, bool value);
 	virtual	void				SetOption(uint32 option, float value);
 	virtual	void				SetOption(uint32 option, int32 value);
@@ -30,8 +34,6 @@ private:
 									CurrentColor* color);
 	virtual	ToolConfigView*		MakeConfigView();
 	virtual	IconButton*			MakeIcon();
-
-private:
 };
 
 #endif	// PATH_TOOL_H
