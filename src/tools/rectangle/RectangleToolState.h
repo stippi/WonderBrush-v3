@@ -93,11 +93,13 @@ private:
 private:
 			class PlatformDelegate;
 
+			class PickRectangleState;
 			class CreateRectangleState;
 			class DragBoxState;
 			class DragCornerState;
 			class DragSideState;
 			
+			friend class PickRectangleState;
 			friend class CreateRectangleState;
 			friend class DragBoxState;
 			friend class DragCornerState;
@@ -108,7 +110,8 @@ private:
 
 			PlatformDelegate*	fPlatformDelegate;
 
-			CreateRectangleState*	fCreateRectangleState;
+			PickRectangleState*	fPickRectangleState;
+			CreateRectangleState* fCreateRectangleState;
 			DragBoxState*		fDragBoxState;
 			DragCornerState*	fDragCornerState;
 			DragSideState*		fDragSideState;

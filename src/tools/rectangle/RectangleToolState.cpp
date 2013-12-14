@@ -37,6 +37,48 @@ enum {
 	MSG_UPDATE_BOUNDS	= 'ptub',
 };
 
+// PickRectangleState
+class RectangleToolState::PickRectangleState
+	: public DragStateViewState::DragState {
+public:
+	PickRectangleState(RectangleToolState* parent)
+		: DragState(parent)
+		, fParent(parent)
+		, fRectangle(NULL)
+	{
+	}
+
+	virtual void SetOrigin(BPoint origin)
+	{
+		fParent->SetRectangle(fRectangle, true);
+	}
+
+	virtual void DragTo(BPoint current, uint32 modifiers)
+	{
+	}
+
+	virtual BCursor ViewCursor(BPoint current) const
+	{
+		if (fRectangle != NULL)
+			return BCursor(B_CURSOR_ID_FOLLOW_LINK);
+		return BCursor(B_CURSOR_ID_SYSTEM_DEFAULT);
+	}
+
+	virtual const char* CommandName() const
+	{
+		return "Pick rectangle";
+	}
+
+	void SetRectangle(Rect* rectangle)
+	{
+		fRectangle = rectangle;
+	}
+
+private:
+	RectangleToolState*		fParent;
+	Rect*					fRectangle;
+};
+
 // CreateRectangleState
 class RectangleToolState::CreateRectangleState
 	: public DragStateViewState::DragState {
@@ -434,6 +476,7 @@ RectangleToolState::RectangleToolState(StateView* view, RectangleTool* tool,
 
 	, fPlatformDelegate(new PlatformDelegate(this))
 
+	, fPickRectangleState(new(std::nothrow) PickRectangleState(this))
 	, fCreateRectangleState(new(std::nothrow) CreateRectangleState(this))
 	, fDragBoxState(new(std::nothrow) DragBoxState(this))
 	, fDragCornerState(new(std::nothrow) DragCornerState(this))
@@ -468,6 +511,7 @@ RectangleToolState::~RectangleToolState()
 	fCurrentColor->RemoveListener(this);
 	fSelection->RemoveListener(this);
 
+	delete fPickRectangleState;
 	delete fCreateRectangleState;
 	delete fDragBoxState;
 	delete fDragCornerState;
@@ -682,6 +726,17 @@ RectangleToolState::DragStateFor(BPoint canvasWhere, float zoomLevel) const
 		return NULL;
 	}
 	
+	if ((Modifiers() & B_COMMAND_KEY) != 0) {
+		// If there is still no state, switch to the PickObjectsState
+		// and try to find an object. If nothing is picked, unset on mouse down.
+		Object* pickedObject = NULL;
+		fDocument->RootLayer()->HitTest(canvasWhere, NULL, &pickedObject, true);
+
+		Rect* pickedRectangle = dynamic_cast<Rect*>(pickedObject);
+		fPickRectangleState->SetRectangle(pickedRectangle);
+		return fPickRectangleState;
+	}
+
 	return fCreateRectangleState;
 }
 
