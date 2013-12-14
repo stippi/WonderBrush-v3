@@ -11,6 +11,11 @@
 class BMessage;
 class BPositionIO;
 
+class ObjectSnapshot;
+class RectSnapshot;
+class ShapeSnapshot;
+class TextSnapshot;
+
 class MessageExporter : public Exporter {
 public:
 								MessageExporter();
@@ -22,6 +27,29 @@ public:
 	virtual	const char*			MIMEType();
 
 private:
+			status_t			_ExportRoot(
+									const LayerSnapshot* rootSnapshot,
+									BMessage& archive);
+
+			status_t			_ExportLayer(
+									const LayerSnapshot* layer,
+									BMessage& archive);
+
+			status_t			_ExportObject(
+									const ObjectSnapshot* object,
+									BMessage& archive);
+
+			status_t			_ExportRectangle(
+									const RectSnapshot* rect,
+									BMessage& archive);
+
+			status_t			_ExportShape(
+									const ShapeSnapshot* shape,
+									BMessage& archive);
+
+			status_t			_ExportText(
+									const TextSnapshot* text,
+									BMessage& archive);
 };
 
 #endif // MESSAGE_EXPORTER_H
