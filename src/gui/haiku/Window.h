@@ -19,6 +19,7 @@ class BSplitView;
 class CanvasView;
 class ColumnTreeModel;
 class Document;
+class Exporter;
 class IconButton;
 class IconOptionsControl;
 class InspectorView;
@@ -69,6 +70,9 @@ private:
 			void				_RemoveObjects();
 			void				_ResetTransformation();
 
+			void				_Save();
+			void				_Save(Exporter* exporter) const;
+
 private:
 			class SelectionListener;
 			class ToolListener;
@@ -112,6 +116,8 @@ private:
 			int32				fCurrentToolIndex;
 			Tool*				fCurrentTool;
 			ToolListener*		fToolListener;
+
+			Exporter*			fExporter;
 };
 
 #endif // WINDOW_H

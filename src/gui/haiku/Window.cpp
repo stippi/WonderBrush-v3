@@ -33,6 +33,7 @@
 #include "IconOptionsControl.h"
 #include "InspectorView.h"
 //#include "LayerTreeModel.h"
+#include "MessageExporter.h"
 #include "NavigatorView.h"
 #include "ObjectAddedEdit.h"
 #include "ObjectTreeView.h"
@@ -51,6 +52,7 @@
 #include "WonderBrush.h"
 
 enum {
+	MSG_SAVE						= 'save',
 	MSG_UNDO						= 'undo',
 	MSG_REDO						= 'redo',
 	MSG_CONFIRM						= 'cnfm',
@@ -158,6 +160,7 @@ Window::Window(BRect frame, const char* title, Document* document,
 	, fCurrentToolIndex(-1)
 	, fCurrentTool(NULL)
 	, fToolListener(new Window::ToolListener(BMessenger(this)))
+	, fExporter(NULL)
 {
 	// TODO: fix for when document == NULL
 
@@ -170,6 +173,8 @@ Window::Window(BRect frame, const char* title, Document* document,
 	BMenuItem* newDocumentMI = new BMenuItem("New document",
 		new BMessage(MSG_NEW_DOCUMENT), 'N');
 	fFileMenu->AddItem(newDocumentMI);
+	fFileMenu->AddItem(new BMenuItem("Save",
+		new BMessage(MSG_SAVE), 'S'));
 	fFileMenu->AddItem(new BMenuItem("Quit",
 		new BMessage(B_QUIT_REQUESTED), 'Q'));
 
@@ -456,6 +461,8 @@ Window::~Window()
 	fView->SetState(NULL);
 	for (int32 i = fTools.CountItems() - 1; i >= 0; i--)
 		delete (Tool*)fTools.ItemAtFast(i);
+
+	delete fExporter;
 }
 
 // MessageReceived
@@ -463,6 +470,10 @@ void
 Window::MessageReceived(BMessage* message)
 {
 	switch (message->what) {
+		case MSG_SAVE:
+			_Save();
+			break;
+
 		case MSG_UNDO:
 			fDocument->EditManager()->Undo(fEditContext);
 			break;
@@ -964,4 +975,29 @@ Window::_ResetTransformation()
 
 	fDocument->EditManager()->Perform(UndoableEditRef(compoundEdit, true),
 		fEditContext);
+}
+
+// #pragma mark -
+
+// _Save
+void
+Window::_Save()
+{
+	if (fExporter == NULL)
+		fExporter = new(std::nothrow) MessageExporter();
+
+	if (fExporter == NULL)
+		return;
+
+	_Save(fExporter);
+}
+
+// _Save
+void
+Window::_Save(Exporter* exporter) const
+{
+	entry_ref ref;
+	get_ref_for_path("/boot/home/Desktop/export_text.wbi", &ref);
+	
+	exporter->Export(fDocument.Get(), ref);
 }
