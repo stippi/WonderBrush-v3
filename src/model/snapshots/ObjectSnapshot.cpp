@@ -10,6 +10,7 @@
 ObjectSnapshot::ObjectSnapshot(const Object* object)
 	: Transformable(object->LocalTransformation())
 	, fChangeCounter(object->ChangeCounter())
+	, fName(object->Name())
 {
 }
 
@@ -29,6 +30,7 @@ ObjectSnapshot::Sync()
 
 	SetTransformable(Original()->LocalTransformation());
 	fChangeCounter = Original()->ChangeCounter();
+	fName = Original()->Name();
 	return true;
 }
 

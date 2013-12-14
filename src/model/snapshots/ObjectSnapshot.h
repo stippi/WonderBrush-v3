@@ -41,9 +41,13 @@ public:
 	inline	const LayoutState&	LayoutedState() const
 									{ return fLayoutedState; }
 
+	inline	const BString&		Name() const
+									{ return fName; }
+
 private:
 			uint32				fChangeCounter;
 			LayoutState			fLayoutedState;
+			BString				fName;
 };
 
 #endif // OBJECT_SNAPSHOT_H
