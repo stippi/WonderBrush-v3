@@ -22,6 +22,12 @@ public:
 	virtual	void				Render(RenderEngine& engine,
 									RenderBuffer* bitmap, BRect area) const;
 
+	// RectSnapshot
+	inline	const BRect&		Area() const
+									{ return fArea; }
+	inline	double				RoundCornerRadius() const
+									{ return fRoundCornerRadius; }
+
 private:
 			const Rect*			fOriginal;
 			BRect				fArea;
