@@ -111,7 +111,10 @@ MessageExporter::_ExportObject(const ObjectSnapshot* object,
 	BMessage& archive)
 {
 	BMessage objectArchive;
-	status_t ret = objectArchive.AddString("name", object->Name());
+	status_t ret = B_OK;
+	
+	if (object->Name().Length() > 0)
+		ret = objectArchive.AddString("name", object->Name());
 	if (ret != B_OK)
 		return ret;
 
@@ -151,7 +154,7 @@ MessageExporter::_ExportRectangle(const RectSnapshot* rect,
 	status_t ret = B_OK;
 	if (ret == B_OK)
 		ret = archive.AddRect("area", rect->Area());
-	if (ret == B_OK)
+	if (ret == B_OK && rect->RoundCornerRadius() != 0.0)
 		ret = archive.AddDouble("radius", rect->RoundCornerRadius());
 	return ret;
 }
