@@ -43,6 +43,7 @@ public:
 	virtual	const char*			DefaultName() const = 0;
 			void				SetName(const char* name);
 			const char*			Name() const;
+			const BString&		GivenName() const;
 
 private:
 			BString				fName;

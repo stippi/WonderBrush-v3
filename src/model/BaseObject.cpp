@@ -111,6 +111,8 @@ BaseObject::SetToPropertyObject(const PropertyObject* object, uint32 flags)
 	return HasPendingNotifications();
 }
 
+// #pragma mark -
+
 // SetName
 void
 BaseObject::SetName(const char* name)
@@ -131,3 +133,9 @@ BaseObject::Name() const
 	return DefaultName();
 }
 
+// GivenName
+const BString&
+BaseObject::GivenName() const
+{
+	return fName;
+}
