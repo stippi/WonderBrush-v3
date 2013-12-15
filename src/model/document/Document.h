@@ -55,9 +55,12 @@ public:
 	inline	const ResourceList&	GlobalResources() const
 									{ return fGlobalResources; }
 
+			void				PrintToStream();
+
 private:
 			bool				_HasLayer(Layer* parent, Layer* child) const;
 
+private:
 			::EditManager*		fEditManager;
 			Layer*				fRootLayer;
 

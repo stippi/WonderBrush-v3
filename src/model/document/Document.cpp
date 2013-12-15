@@ -9,6 +9,7 @@
 
 #include <new>
 
+#include "DocumentVisitor.h"
 #include "EditManager.h"
 #include "Layer.h"
 #include "Object.h"
@@ -28,10 +29,12 @@ Document::Listener::~Listener()
 
 // #pragma mark -
 
+static const char* kLockName = "document rw lock";
+
 // constructor
 Document::Document(const BRect& bounds)
 	:
-	RWLocker("document rw lock"),
+	RWLocker(kLockName),
 	fEditManager(new(std::nothrow) ::EditManager(this)),
 	fRootLayer(new(std::nothrow) Layer(bounds)),
 	fGlobalResources(),
@@ -100,6 +103,117 @@ Document::HasLayer(Layer* layer) const
 	return _HasLayer(fRootLayer, layer);
 }
 
+class Indentation {
+public:
+	Indentation()
+		: level(0)
+	{
+	}
+
+	void Increase()
+	{
+		level++;
+	}
+
+	void Decrease()
+	{
+		level--;
+	}
+
+	int32	level;
+};
+
+class PrintVisitor : public DocumentVisitor<Indentation> {
+public:
+	typedef DocumentVisitor<Indentation> inherited;
+	
+	PrintVisitor(Document* document)
+	{
+		Indentation indentation;
+		VisitDocument(document, &indentation);
+	}
+
+	virtual bool VisitLayer(Layer* layer, Indentation* context)
+	{
+		_PrintIndented("Layer {", context);
+		context->Increase();
+
+		if (!inherited::VisitLayer(layer, context))
+			return false;
+
+		context->Decrease();
+		_PrintIndented("}", context);
+		return true;
+	}
+
+	virtual bool VisitFilter(Filter* filter, Indentation* context)
+	{
+		_PrintIndented("Gaussian", context);
+		return true;
+	}
+
+	virtual bool VisitFilterDropShadow(FilterDropShadow* dropShadow,
+		Indentation* context)
+	{
+		_PrintIndented("Drop shadow", context);
+		return true;
+	}
+
+	virtual bool VisitFilterSaturation(FilterSaturation* saturation,
+		Indentation* context)
+	{
+		_PrintIndented("Saturation", context);
+		return true;
+	}
+
+	virtual bool VisitBrushStroke(BrushStroke* stroke, Indentation* context)
+	{
+		_PrintIndented("BrushStroke", context);
+		return true;
+	}
+
+	virtual bool VisitImage(Image* image, Indentation* context)
+	{
+		_PrintIndented("Image", context);
+		return true;
+	}
+
+	virtual bool VisitRect(Rect* rect, Indentation* context)
+	{
+		_PrintIndented("Rect", context);
+		return true;
+	}
+
+	virtual bool VisitShape(Shape* shape, Indentation* context)
+	{
+		_PrintIndented("Shape", context);
+		return true;
+	}
+
+	virtual bool VisitText(Text* text, Indentation* context)
+	{
+		_PrintIndented("Text", context);
+		return true;
+	}
+
+private:
+	void _PrintIndented(const char* string, Indentation* context)
+	{
+		for (int32 i = 0; i < context->level; i++)
+			printf(" ");
+		printf("%s\n", string);
+	}
+};
+
+// PrintToStream
+void
+Document::PrintToStream()
+{
+	PrintVisitor visitor(this);
+}
+
+// #pragma mark -
+
 // _HasLayer
 bool
 Document::_HasLayer(Layer* parent, Layer* child) const
@@ -117,4 +231,5 @@ Document::_HasLayer(Layer* parent, Layer* child) const
 
 	return false;
 }
+
 
