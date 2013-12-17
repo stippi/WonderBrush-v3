@@ -79,3 +79,6 @@ PropertyObject Interface erweitern:
 
 Alternative Ansicht für die Layer und Objekte: Die Ansicht zeigt nur die Objekte des aktuellen Layers. Bei Doppelklick auf ein Layer verschiebt sich die Ansicht nach links um ihre Breite (mit schnellem Scrolleffekt) und zeigt jetzt die Objekte des geklickten Layers. Man kann in der Hierarchie nach rechts (rein/tiefer) und links (raus/höher) über Pfeilknöpfe, zusätzlich könnte es ein "Breadcrumb" Control geben, so dass man im aktuellen Pfad springen kann. Dieser könnte von oben nach unten verlaufen. Der Pfad ändert sich durch expliziten Doppelklick auf ein Layer, bleibt aber ansonsten stabil, wenn der Nutzer nur kurz zwischen den Ebenen hin- und herspringt.
 
+
+Slice-Tool:
+Slices sind rechteckige Bereiche auf der Bildfläche, die der Nutzer anlegen, definieren und benennen kann. Beim Exportieren kann man alle Slices exportieren, was jeweils den Bereich unter dem Namen exportiert. Ausgewählt wird der Zielordner und vielleicht ein Dateiname, wo ein Wildcard mit dem Namen des jeweiligen Slices ersetzt wird.
