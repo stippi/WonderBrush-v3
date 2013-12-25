@@ -19,6 +19,7 @@ public:
 	virtual	rgb_color			GetColor() const;
 
 	// BaseObject interface
+	virtual	BaseObject*			Clone(ResourceResolver& resolver) const;
 	virtual	void				AddProperties(PropertyObject* object,
 									uint32 flags = 0) const;
 	virtual	bool				SetToPropertyObject(

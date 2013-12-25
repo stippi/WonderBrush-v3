@@ -43,6 +43,7 @@ public:
 	virtual						~Paint();
 
 	// BaseObject interface
+	virtual	BaseObject*			Clone(ResourceResolver& resolver) const;
 	virtual	status_t			Unarchive(const BMessage* archive);
 	virtual	status_t			Archive(BMessage* into,
 									bool deep = true) const;
@@ -60,7 +61,6 @@ public:
 			Paint&				operator=(const Paint& other);
 			bool				operator==(const Paint& other) const;
 			bool				operator!=(const Paint& other) const;
-			Paint*				Clone() const;
 			bool				HasTransparency() const;
 			size_t				HashKey() const;
 

@@ -79,6 +79,13 @@ Brush::~Brush()
 {
 }
 
+// Clone
+BaseObject*
+Brush::Clone(ResourceResolver& resolver) const
+{
+	return new(std::nothrow) Brush(*this);
+}
+
 // Unarchive
 status_t
 Brush::Unarchive(const BMessage* archive)

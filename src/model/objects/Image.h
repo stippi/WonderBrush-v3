@@ -8,9 +8,12 @@
 #include <List.h>
 
 #include "BoundedObject.h"
+#include "Referenceable.h"
 
 class Image;
 class RenderBuffer;
+
+typedef Reference<RenderBuffer> RenderBufferRef;
 
 class ImageListener {
 public:
@@ -23,9 +26,12 @@ public:
 class Image : public BoundedObject {
 public:
 								Image(RenderBuffer* buffer);
+								Image(const Image& other);
 	virtual						~Image();
 
 	// Object interface
+	virtual	BaseObject*			Clone(ResourceResolver& resolver) const;
+
 	virtual	ObjectSnapshot*		Snapshot() const;
 
 	virtual	const char*			DefaultName() const;
@@ -37,7 +43,7 @@ public:
 
 	// Image
 	inline	RenderBuffer*		Buffer() const
-									{ return fBuffer; }
+									{ return fBuffer.Get(); }
 
 			bool				AddListener(ImageListener* listener);
 			void				RemoveListener(ImageListener* listener);
@@ -46,7 +52,7 @@ private:
 			void				_NotifyDeleted();
 
 private:
-			RenderBuffer*		fBuffer;
+			RenderBufferRef		fBuffer;
 
 			BList				fListeners;
 };

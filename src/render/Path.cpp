@@ -137,6 +137,13 @@ Path::~Path()
 
 // #pragma mark - BaseObject
 
+// Clone
+BaseObject*
+Path::Clone(ResourceResolver& resolver) const
+{
+	return new(std::nothrow) Path(*this);
+}
+
 // DefaultName
 const char*
 Path::DefaultName() const

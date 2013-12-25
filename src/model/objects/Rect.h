@@ -16,12 +16,16 @@ public:
 								Rect();
 								Rect(const BRect& area,
 									const rgb_color& color);
+								Rect(const Rect& other,
+									ResourceResolver& resolver);
 	virtual						~Rect();
+
+	// BaseObject interface
+	virtual	BaseObject*			Clone(ResourceResolver& resolver) const;
+	virtual	const char*			DefaultName() const;
 
 	// Object interface
 	virtual	ObjectSnapshot*		Snapshot() const;
-
-	virtual	const char*			DefaultName() const;
 
 	virtual	bool				HitTest(const BPoint& canvasPoint);
 

@@ -12,6 +12,8 @@
 
 #include <new>
 
+#include "ResourceResolver.h"
+
 // constructor
 BaseObject::BaseObject()
 	: Notifier(),
@@ -44,6 +46,14 @@ BaseObject::BaseObject(BMessage* archive)
 // destructor
 BaseObject::~BaseObject()
 {
+}
+
+// Clone
+BaseObject*
+BaseObject::Clone() const
+{
+	ResourceResolver resolver;
+	return Clone(resolver);
 }
 
 // #pragma mark -

@@ -24,10 +24,40 @@ Text::Text(const rgb_color& color)
 	InitBounds();
 }
 
+// constructor
+Text::Text(const Text& other, ResourceResolver& resolver)
+	: Styleable(other, resolver)
+	, fText(other.fText)
+	, fCharCount(other.fCharCount)
+	, fTextLayout(FontCache::getInstance())
+	// TODO: Needs to pass resolver and use the correct global styles
+	// from the resolver!
+	, fStyleRuns(new(std::nothrow) StyleRunList(*other.fStyleRuns))
+{
+	InitBounds();
+	UpdateLayout();
+}
+
 // destructor
 Text::~Text()
 {
 	delete fStyleRuns;
+}
+
+// #pragma mark -
+
+// Clone
+BaseObject*
+Text::Clone(ResourceResolver& resolver) const
+{
+	return new(std::nothrow) Text(*this, resolver);
+}
+
+// DefaultName
+const char*
+Text::DefaultName() const
+{
+	return "Text";
 }
 
 // #pragma mark -
@@ -37,13 +67,6 @@ ObjectSnapshot*
 Text::Snapshot() const
 {
 	return new TextSnapshot(this);
-}
-
-// DefaultName
-const char*
-Text::DefaultName() const
-{
-	return "Text";
 }
 
 // HitTest

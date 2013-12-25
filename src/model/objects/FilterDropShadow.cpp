@@ -22,6 +22,19 @@ FilterDropShadow::FilterDropShadow()
 }
 
 // constructor
+FilterDropShadow::FilterDropShadow(const FilterDropShadow& other,
+		ResourceResolver& resolver)
+	: Object(other)
+	, fFilterRadius(other.fFilterRadius)
+	, fOffsetX(other.fOffsetX)
+	, fOffsetY(other.fOffsetY)
+	, fOpacity(other.fOpacity)
+	, fColorProvider((ColorProvider*)other.fColorProvider->Clone(resolver),
+		true)
+{
+}
+
+// constructor
 FilterDropShadow::FilterDropShadow(float radius)
 	: Object()
 	, fFilterRadius(radius)
@@ -38,6 +51,13 @@ FilterDropShadow::~FilterDropShadow()
 }
 
 // #pragma mark - BaseObject
+
+// Clone
+BaseObject*
+FilterDropShadow::Clone(ResourceResolver& resolver) const
+{
+	return new(std::nothrow) FilterDropShadow(*this, resolver);
+}
 
 // DefaultName
 const char*

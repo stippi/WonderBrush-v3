@@ -10,10 +10,12 @@
 class FilterSaturation : public Object {
 public:
 								FilterSaturation();
+								FilterSaturation(const FilterSaturation& other);
 								FilterSaturation(float saturation);
 	virtual						~FilterSaturation();
 
 	// BaseObject interface
+	virtual	BaseObject*			Clone(ResourceResolver& resolver) const;
 	virtual	const char*			DefaultName() const;
 	virtual	void				AddProperties(PropertyObject* object,
 									uint32 flags = 0) const;

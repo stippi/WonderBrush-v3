@@ -54,6 +54,13 @@ Color::GetColor() const
 
 // #pragma mark - BaseObject
 
+// Clone
+BaseObject*
+Color::Clone(ResourceResolver& resolver) const
+{
+	return new(std::nothrow) Color(*this);
+}
+
 // AddProperties
 void
 Color::AddProperties(PropertyObject* object, uint32 flags) const

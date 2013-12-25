@@ -163,6 +163,7 @@ Application WonderBrush :
 	# model
 	BaseObject.cpp
 	CurrentColor.cpp
+	ResourceResolver.cpp
 	Selectable.cpp
 	Selection.cpp
 
@@ -336,6 +337,7 @@ Application Resizer :
 			ColorShade.o
 			Gradient.o
 			Paint.o
+			ResourceResolver.o
 			StrokeProperties.o
 
 			# support
@@ -391,6 +393,7 @@ Application Denoiser :
 			ColorShade.o
 			Gradient.o
 			Paint.o
+			ResourceResolver.o
 			StrokeProperties.o
 
 			# support

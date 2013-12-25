@@ -26,9 +26,34 @@ Rect::Rect(const BRect& area, const rgb_color& color)
 	InitBounds();
 }
 
+// constructor
+Rect::Rect(const Rect& other, ResourceResolver& resolver)
+	: Styleable(other)
+	, fArea(other.fArea)
+	, fRoundCornerRadius(other.fRoundCornerRadius)
+{
+	InitBounds();
+}
+
 // destructor
 Rect::~Rect()
 {
+}
+
+// #pragma mark -
+
+// Clone
+BaseObject*
+Rect::Clone(ResourceResolver& resolver) const
+{
+	return new(std::nothrow) Rect(*this, resolver);
+}
+
+// DefaultName
+const char*
+Rect::DefaultName() const
+{
+	return "Rect";
 }
 
 // #pragma mark -
@@ -38,13 +63,6 @@ ObjectSnapshot*
 Rect::Snapshot() const
 {
 	return new RectSnapshot(this);
-}
-
-// DefaultName
-const char*
-Rect::DefaultName() const
-{
-	return "Rect";
 }
 
 // HitTest

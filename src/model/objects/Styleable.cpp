@@ -28,6 +28,13 @@ Styleable::Styleable(const rgb_color& color)
 	fStyle->SetFillPaint(Paint(color));
 }
 
+// constructor
+Styleable::Styleable(const Styleable& other, ResourceResolver& resolver)
+	: BoundedObject(other)
+	, fStyle((::Style*)other.fStyle->Clone(resolver), true)
+{
+}
+
 // destructor
 Styleable::~Styleable()
 {

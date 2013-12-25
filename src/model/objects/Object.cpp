@@ -19,6 +19,16 @@ Object::Object()
 {
 }
 
+// constructor
+Object::Object(const Object& other)
+	:
+	Transformable(other),
+	BaseObject(other),
+	fChangeCounter(0),
+	fParent(NULL)
+{
+}
+
 // destructor
 Object::~Object()
 {

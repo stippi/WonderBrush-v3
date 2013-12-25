@@ -49,6 +49,54 @@ Document::~Document()
 	delete fRootLayer;
 }
 
+// Clone
+BaseObject*
+Document::Clone(ResourceResolver&) const
+{
+	Document* clone = new Document(Bounds());
+
+	// Clone global resources
+	const ResourceList& source = fGlobalResources;
+	ResourceList& target = clone->GlobalResources();
+	int32 count = source.CountObjects();
+	for (int32 i = 0; i < count; i++) {
+		BaseObject* object = source.ObjectAtFast(i);
+		BaseObject* clone = object->Clone();
+		if (clone == NULL || !target.AddObject(clone)) {
+			delete clone;
+			break;
+		}
+	}
+
+	// Implement a ResourceResolver that will mapped from the
+	// resources of this document, to the cloned resources in
+	// the cloned document
+	class ClonedDocumentResolver : public ResourceResolver {
+	public:
+		ClonedDocumentResolver(const ResourceList& source,
+			const ResourceList& target)
+			: fSource(source)
+			, fTarget(target)
+		{
+		}
+		
+		virtual BaseObject* Resolve(BaseObject* object)
+		{
+			int32 index = fSource.IndexOf(object);
+			return fTarget.ObjectAt(index);
+		}
+
+	private:
+		const ResourceList&	fSource;
+		const ResourceList& fTarget;
+	} resolver(source, target);
+
+	// Clone all objects on the root layer, using the custom resolver
+	fRootLayer->CloneObjects(clone->RootLayer(), resolver);
+
+	return clone;
+}
+
 // #pragma mark -
 
 // DefaultName

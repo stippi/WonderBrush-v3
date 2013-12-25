@@ -71,10 +71,39 @@ Shape::Shape(const PathRef& path, const rgb_color& color)
 	InitBounds();
 }
 
+// constructor
+Shape::Shape(const Shape& other, ResourceResolver& resolver)
+	: Styleable(other)
+	, fPathListener(new(std::nothrow) PathListener(this))
+{
+	int32 count = other.Paths().CountItems();
+	for (int32 i = 0; i < count; i++) {
+		const PathRef& path = other.Paths().ItemAtFast(i);
+		AddPath(PathRef((Path*)path->Clone(resolver), true));
+	}
+	InitBounds();
+}
+
 // destructor
 Shape::~Shape()
 {
 	delete fPathListener;
+}
+
+// #pragma mark -
+
+// Clone
+BaseObject*
+Shape::Clone(ResourceResolver& resolver) const
+{
+	return new(std::nothrow) Shape(*this, resolver);
+}
+
+// DefaultName
+const char*
+Shape::DefaultName() const
+{
+	return "Shape";
 }
 
 // #pragma mark -
@@ -110,13 +139,6 @@ bool
 Shape::SetToPropertyObject(const PropertyObject* object, uint32 flags)
 {
 	return Styleable::SetToPropertyObject(object, flags);
-}
-
-// DefaultName
-const char*
-Shape::DefaultName() const
-{
-	return "Shape";
 }
 
 // HitTest

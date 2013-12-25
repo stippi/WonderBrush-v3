@@ -14,6 +14,7 @@
 #include "Property.h"
 #include "Paint.h"
 #include "rgb_hsv.h"
+#include "ResourceResolver.h"
 #include "ui_defines.h"
 
 // constructor
@@ -28,7 +29,7 @@ ColorShade::ColorShade()
 }
 
 // constructor
-ColorShade::ColorShade(const ColorShade& other)
+ColorShade::ColorShade(const ColorShade& other, ResourceResolver& resolver)
 	:
 	ColorProvider(),
 	fColorProvider(),
@@ -36,7 +37,10 @@ ColorShade::ColorShade(const ColorShade& other)
 	fSaturation(other.fSaturation),
 	fValue(other.fValue)
 {
-	SetColorProvider(other.fColorProvider);
+	BaseObject* object = resolver.Resolve(other.fColorProvider.Get());
+	ColorProvider* provider = dynamic_cast<ColorProvider*>(object);
+	if (provider != NULL)
+		SetColorProvider(ColorProviderRef(provider));
 }
 
 // constructor
@@ -92,6 +96,13 @@ ColorShade::GetColor() const
 }
 
 // #pragma mark - BaseObject
+
+// Clone
+BaseObject*
+ColorShade::Clone(ResourceResolver& resolver) const
+{
+	return new(std::nothrow) ColorShade(*this, resolver);
+}
 
 // AddProperties
 void

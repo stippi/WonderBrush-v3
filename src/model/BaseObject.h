@@ -15,6 +15,7 @@
 #include "Referenceable.h"
 
 class BMessage;
+class ResourceResolver;
 
 class BaseObject : public Notifier, public Referenceable {
 public:
@@ -29,6 +30,9 @@ public:
 	virtual						~BaseObject();
 
 	// BaseObject
+			BaseObject*			Clone() const;
+	virtual BaseObject*			Clone(ResourceResolver& resolver) const = 0;
+
 	virtual	status_t			Unarchive(const BMessage* archive);
 	virtual status_t			Archive(BMessage* into,
 										bool deep = true) const;

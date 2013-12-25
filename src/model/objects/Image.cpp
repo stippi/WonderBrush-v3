@@ -33,19 +33,30 @@ Image::Image(RenderBuffer* buffer)
 	, fBuffer(buffer)
 	, fListeners(4)
 {
-	if (fBuffer != NULL)
-		fBuffer->AddReference();
+}
+
+// constructor
+Image::Image(const Image& other)
+	: BoundedObject()
+	, fBuffer(other.fBuffer)
+	, fListeners(4)
+{
 }
 
 // destructor
 Image::~Image()
 {
 	_NotifyDeleted();
-	if (fBuffer != NULL)
-		fBuffer->RemoveReference();
 }
 
 // #pragma mark -
+
+// Clone
+BaseObject*
+Image::Clone(ResourceResolver& resolver) const
+{
+	return new(std::nothrow) Image(*this);
+}
 
 // Snapshot
 ObjectSnapshot*
@@ -65,6 +76,8 @@ Image::DefaultName() const
 bool
 Image::HitTest(const BPoint& canvasPoint)
 {
+	if (fBuffer.Get() == NULL)
+		return false;
 	RenderEngine engine(Transformation());
 	return engine.HitTest(fBuffer->Bounds(), canvasPoint);
 }

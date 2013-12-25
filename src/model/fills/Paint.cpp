@@ -113,6 +113,13 @@ Paint::~Paint()
 
 // #pragma mark -
 
+// Clone
+BaseObject*
+Paint::Clone(ResourceResolver& resolver) const
+{
+	return new(std::nothrow) Paint(*this);
+}
+
 // Unarchive
 status_t
 Paint::Unarchive(const BMessage* archive)
@@ -316,13 +323,6 @@ bool
 Paint::operator!=(const Paint& other) const
 {
 	return !(*this == other);
-}
-
-// Clone
-Paint*
-Paint::Clone() const
-{
-	return new(std::nothrow) Paint(*this);
 }
 
 // HasTransparency

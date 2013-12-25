@@ -1,9 +1,6 @@
 /*
- * Copyright 2007, Haiku. All rights reserved.
- * Distributed under the terms of the MIT License.
- *
- * Authors:
- *		Stephan Aßmus <superstippi@gmx.de>
+ * Copyright 2007-2013, Haiku. Stephan Aßmus <superstippi@gmx.de>
+ * All rights reserved. Distributed under the terms of the MIT License.
  */
 #include "Filter.h"
 
@@ -15,6 +12,13 @@
 Filter::Filter()
 	: Object()
 	, fFilterRadius(20.0)
+{
+}
+
+// constructor
+Filter::Filter(const Filter& other)
+	: Object(other)
+	, fFilterRadius(other.fFilterRadius)
 {
 }
 
@@ -31,6 +35,13 @@ Filter::~Filter()
 }
 
 // #pragma mark - BaseObject
+
+// Clone
+BaseObject*
+Filter::Clone(ResourceResolver& resolver) const
+{
+	return new(std::nothrow) Filter(*this);
+}
 
 // DefaultName
 const char*

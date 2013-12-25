@@ -52,6 +52,7 @@ public:
 	virtual						~Path();
 
 	// BaseObject
+	virtual	BaseObject*			Clone(ResourceResolver& resolver) const;
 	virtual	const char*			DefaultName() const;
 
 	virtual	status_t			Archive(BMessage* into,

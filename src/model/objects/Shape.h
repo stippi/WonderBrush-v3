@@ -22,7 +22,13 @@ public:
 								Shape();
 								Shape(const PathRef& path,
 									const rgb_color& color);
+								Shape(const Shape& other,
+									ResourceResolver& resolver);
 	virtual						~Shape();
+
+	// BaseObject interface
+	virtual	BaseObject*			Clone(ResourceResolver& resolver) const;
+	virtual	const char*			DefaultName() const;
 
 	// Object interface
 	virtual	ObjectSnapshot*		Snapshot() const;
@@ -34,8 +40,6 @@ public:
 	virtual	bool				SetToPropertyObject(
 									const PropertyObject* object,
 									uint32 flags = 0);
-
-	virtual	const char*			DefaultName() const;
 
 	virtual	bool				HitTest(const BPoint& canvasPoint);
 

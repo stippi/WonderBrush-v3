@@ -166,6 +166,13 @@ StrokeProperties::~StrokeProperties()
 
 // #pragma mark -
 
+// Clone
+BaseObject*
+StrokeProperties::Clone(ResourceResolver& resolver) const
+{
+	return new(std::nothrow) StrokeProperties(*this);
+}
+
 // Unarchive
 status_t
 StrokeProperties::Unarchive(const BMessage* archive)

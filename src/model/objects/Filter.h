@@ -1,9 +1,6 @@
 /*
- * Copyright 2007, Haiku. All rights reserved.
- * Distributed under the terms of the MIT License.
- *
- * Authors:
- *		Stephan Aßmus <superstippi@gmx.de>
+ * Copyright 2007-2013, Haiku. Stephan Aßmus <superstippi@gmx.de>
+ * All rights reserved. Distributed under the terms of the MIT License.
  */
 #ifndef FILTER_H
 #define FILTER_H
@@ -11,12 +8,14 @@
 #include "Object.h"
 
 class Filter : public Object {
- public:
+public:
 								Filter();
+								Filter(const Filter& other);
 								Filter(float radius);
 	virtual						~Filter();
 
 	// BaseObject interface
+	virtual	BaseObject*			Clone(ResourceResolver& resolver) const;
 	virtual	const char*			DefaultName() const;
 	virtual	void				AddProperties(PropertyObject* object,
 									uint32 flags = 0) const;
@@ -36,7 +35,7 @@ class Filter : public Object {
 	inline	float				FilterRadius() const
 									{ return fFilterRadius; }
 
- private:
+private:
  			float				fFilterRadius;
 };
 

@@ -77,6 +77,16 @@ BrushStroke::BrushStroke()
 		fPaint->AddListener(this);
 }
 
+// constructor
+BrushStroke::BrushStroke(const BrushStroke& other, ResourceResolver& resolver)
+	: BoundedObject(other)
+	, fBrush((::Brush*)other.fBrush->Clone(resolver), true)
+	, fPaint((::Paint*)other.fPaint->Clone(resolver), true)
+{
+	if (fPaint.Get() != NULL)
+		fPaint->AddListener(this);
+}
+
 // destructor
 BrushStroke::~BrushStroke()
 {
@@ -86,11 +96,11 @@ BrushStroke::~BrushStroke()
 
 // #pragma mark -
 
-// Snapshot
-ObjectSnapshot*
-BrushStroke::Snapshot() const
+// Clone
+BaseObject*
+BrushStroke::Clone(ResourceResolver& resolver) const
 {
-	return new(std::nothrow) BrushStrokeSnapshot(this);
+	return new(std::nothrow) BrushStroke(*this, resolver);
 }
 
 // DefaultName
@@ -101,6 +111,13 @@ BrushStroke::DefaultName() const
 }
 
 // #pragma mark -
+
+// Snapshot
+ObjectSnapshot*
+BrushStroke::Snapshot() const
+{
+	return new(std::nothrow) BrushStrokeSnapshot(this);
+}
 
 // AddProperties
 void

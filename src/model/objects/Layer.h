@@ -58,6 +58,8 @@ public:
 	// Object interface
 	virtual	ObjectSnapshot*		Snapshot() const;
 
+	virtual	BaseObject*			Clone(ResourceResolver& resolver) const;
+
 	virtual	bool				HitTest(const BPoint& canvasPoint);
 
 	// Layer
@@ -70,6 +72,9 @@ public:
 			int32				IndexOf(Object* object) const;
 			int32				CountObjects() const;
 			bool				HasObject(Object* object) const;
+
+			void				CloneObjects(Layer* target,
+									ResourceResolver& resolver) const;
 
 			void				SuspendUpdates(bool suspend);
 			void				Invalidate(const BRect& area,

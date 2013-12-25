@@ -12,7 +12,8 @@
 class ColorShade : public ColorProvider, public Listener {
 public:
 								ColorShade();
-								ColorShade(const ColorShade& other);
+								ColorShade(const ColorShade& other,
+									ResourceResolver& resolver);
 								ColorShade(const ColorProviderRef& provider);
 	virtual						~ColorShade();
 
@@ -20,6 +21,7 @@ public:
 	virtual	rgb_color			GetColor() const;
 
 	// BaseObject interface
+	virtual	BaseObject*			Clone(ResourceResolver& resolver) const;
 	virtual	void				AddProperties(PropertyObject* object,
 									uint32 flags = 0) const;
 	virtual	bool				SetToPropertyObject(

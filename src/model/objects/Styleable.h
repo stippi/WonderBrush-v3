@@ -15,6 +15,8 @@ class Styleable : public BoundedObject, public Listener {
 public:
 								Styleable();
 								Styleable(const rgb_color& color);
+								Styleable(const Styleable& other,
+									ResourceResolver& resolver);
 	virtual						~Styleable();
 
 	// Object interface

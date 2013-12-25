@@ -236,6 +236,22 @@ Layer::Snapshot() const
 	return new (nothrow) LayerSnapshot(this);
 }
 
+// Clone
+BaseObject*
+Layer::Clone(ResourceResolver& resolver) const
+{
+	Layer* layer = new(std::nothrow) Layer(fBounds);
+	if (layer == NULL)
+		return NULL;
+
+	layer->SetGlobalAlpha(fGlobalAlpha);
+	layer->SetBlendingMode(fBlendingMode);
+
+	CloneObjects(layer, resolver);
+
+	return layer;
+}
+
 // HitTest
 bool
 Layer::HitTest(const BPoint& canvasPoint)
@@ -362,6 +378,21 @@ bool
 Layer::HasObject(Object* object) const
 {
 	return fObjects.HasItem(object);
+}
+
+// CloneObjects
+void
+Layer::CloneObjects(Layer* target, ResourceResolver& resolver) const
+{
+	int32 count = CountObjects();
+	for (int32 i = 0; i < count; i++) {
+		Object* object = ObjectAtFast(i);
+		Object* clone = (Object*)object->Clone(resolver);
+		if (clone == NULL || !target->AddObject(clone)) {
+			delete clone;
+			break;
+		}
+	}
 }
 
 // #pragma mark -

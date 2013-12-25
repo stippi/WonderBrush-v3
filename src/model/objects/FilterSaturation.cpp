@@ -17,6 +17,14 @@ FilterSaturation::FilterSaturation()
 }
 
 // constructor
+FilterSaturation::FilterSaturation(const FilterSaturation& other)
+	:
+	Object(other),
+	fSaturation(other.fSaturation)
+{
+}
+
+// constructor
 FilterSaturation::FilterSaturation(float saturation)
 	:
 	Object(),
@@ -30,6 +38,14 @@ FilterSaturation::~FilterSaturation()
 }
 
 // #pragma mark - BaseObject
+
+// Clone
+BaseObject*
+FilterSaturation::Clone(ResourceResolver& resolver) const
+{
+	return new(std::nothrow) FilterSaturation(*this);
+}
+
 
 // DefaultName
 const char*

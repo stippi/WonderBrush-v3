@@ -10,6 +10,7 @@
 
 #include "BaseObject.h"
 #include "List.h"
+#include "ResourceResolver.h"
 #include "Transformable.h"
 
 
@@ -22,6 +23,7 @@ typedef List<BaseObjectRef, false> AssetList;
 class Object : public Transformable, public BaseObject {
 public:
 								Object();
+								Object(const Object& other);
 	virtual						~Object();
 
 	virtual	ObjectSnapshot*		Snapshot() const = 0;

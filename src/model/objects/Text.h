@@ -27,12 +27,16 @@ enum {
 class Text : public Styleable {
 public:
 								Text(const rgb_color& color);
+								Text(const Text& other,
+									ResourceResolver& resolver);
 	virtual						~Text();
+
+	// BaseObject interface
+	virtual	BaseObject*			Clone(ResourceResolver& resolver) const;
+	virtual	const char*			DefaultName() const;
 
 	// Object interface
 	virtual	ObjectSnapshot*		Snapshot() const;
-
-	virtual	const char*			DefaultName() const;
 
 	virtual	bool				HitTest(const BPoint& canvasPoint);
 

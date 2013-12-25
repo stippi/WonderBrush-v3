@@ -33,12 +33,16 @@ typedef ObjectCache<StrokePoint, false> Stroke;
 class BrushStroke : public BoundedObject, public Listener {
 public:
 								BrushStroke();
+								BrushStroke(const BrushStroke& other,
+									ResourceResolver& resolver);
 	virtual						~BrushStroke();
+
+	// BaseObject interface
+	virtual	BaseObject*			Clone(ResourceResolver& resolver) const;
+	virtual	const char*			DefaultName() const;
 
 	// Object interface
 	virtual	ObjectSnapshot*		Snapshot() const;
-
-	virtual	const char*			DefaultName() const;
 
 	virtual	void				AddProperties(PropertyObject* object,
 									uint32 flags = 0) const;

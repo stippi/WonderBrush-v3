@@ -32,6 +32,8 @@ public:
 								Document(const BRect& bounds);
 	virtual						~Document();
 
+	virtual	BaseObject*			Clone(ResourceResolver& resolver) const;
+
 	// BaseObject interface
 	virtual	const char*			DefaultName() const;
 
@@ -68,5 +70,7 @@ private:
 
 			BList				fListeners;
 };
+
+typedef Reference<Document> DocumentRef;
 
 #endif // DOCUMENT_H

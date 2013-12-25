@@ -53,6 +53,13 @@ Style::~Style()
 
 // #pragma mark - BaseObject
 
+// Clone
+BaseObject*
+Style::Clone(ResourceResolver& resolver) const
+{
+	return new(std::nothrow) Style(*this);
+}
+
 // Unarchive
 status_t
 Style::Unarchive(const BMessage* archive)
