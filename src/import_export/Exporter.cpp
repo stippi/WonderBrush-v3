@@ -19,10 +19,8 @@
 #include <Roster.h>
 #include <String.h>
 
-#include "Document.h"
 #include "EditManager.h"
 #include "Layer.h"
-#include "LayerSnapshot.h"
 
 #undef B_TRANSLATION_CONTEXT
 #define B_TRANSLATION_CONTEXT "WonderBrush-Exporter"
@@ -31,8 +29,7 @@ using std::nothrow;
 
 
 Exporter::Exporter()
-	: fDocument(NULL),
-	  fRootSnapshot(NULL),
+	: fDocument(),
 	  fRef(),
 	  fExportThread(-1),
 	  fSelfDestroy(false)
@@ -43,26 +40,20 @@ Exporter::Exporter()
 Exporter::~Exporter()
 {
 	WaitForExportThread();
-
-	delete fRootSnapshot;
 }
 
 
 status_t
-Exporter::Export(Document* document, const entry_ref& ref)
+Exporter::Export(const DocumentRef& document, const entry_ref& ref)
 {
-	if (!document || ref.name == NULL)
+	if (document.Get() == NULL || ref.name == NULL)
 		return B_BAD_VALUE;
 
-	fDocument = document;
+	fDocument.SetTo((Document*)document->BaseObject::Clone(), true);
 
-	AutoReadLocker locker(fDocument);
+	AutoReadLocker locker(fDocument.Get());
 	if (!locker.IsLocked())
 		return B_ERROR;
-
-	fRootSnapshot = (LayerSnapshot*)fDocument->RootLayer()->Snapshot();
-	if (fRootSnapshot == NULL)
-		return B_NO_MEMORY;
 
 	fRef = ref;
 
@@ -109,7 +100,7 @@ Exporter::_ExportThreadEntry(void* cookie)
 int32
 Exporter::_ExportThread()
 {
-	status_t ret = _Export(fRootSnapshot, &fRef);
+	status_t ret = _Export(fDocument, &fRef);
 	if (ret != B_OK) {
 		// inform user of failure at this point
 		BString helper(B_TRANSLATE("Saving your document failed!"));
@@ -125,16 +116,6 @@ Exporter::_ExportThread()
 	
 		// add to recent document list
 		be_roster->AddToRecentDocuments(&fRef);
-	
-		if (fDocument->WriteLock()) {
-			// mark command stack state as saved,
-			fDocument->EditManager()->Save();
-			// set ref and name of document
-//			fDocument->SetRef(fRef);
-			fDocument->SetName(fRef.name);
-
-			fDocument->WriteUnlock();
-		}
 	}
 
 	if (fSelfDestroy)
@@ -145,7 +126,7 @@ Exporter::_ExportThread()
 
 
 status_t
-Exporter::_Export(const LayerSnapshot* rootSnapshot, const entry_ref* docRef)
+Exporter::_Export(const DocumentRef& document, const entry_ref* docRef)
 {
 	// TODO: reenable the commented out code, but make it work
 	// the opposite direction, ie *copy* the file contents
@@ -182,7 +163,7 @@ Exporter::_Export(const LayerSnapshot* rootSnapshot, const entry_ref* docRef)
 	if (ret == B_OK) {
 		try {
 			// export using the virtual Export() version
-			ret = Export(rootSnapshot, &outFile);
+			ret = Export(document, &outFile);
 		} catch (...) {
 			fprintf(stderr, "Exporter::_Export() - "
 				"unkown exception occured!\n");

@@ -8,8 +8,9 @@
 #include <Entry.h>
 #include <OS.h>
 
+#include "Document.h"
+
 class BPositionIO;
-class Document;
 class LayerSnapshot;
 
 class Exporter {
@@ -17,10 +18,10 @@ public:
 								Exporter();
 	virtual						~Exporter();
 
-			status_t			Export(Document* document,
+			status_t			Export(const DocumentRef& document,
 									const entry_ref& ref);
 
-	virtual	status_t			Export(const LayerSnapshot* rootSnapshot,
+	virtual	status_t			Export(const DocumentRef& document,
 									BPositionIO* stream) = 0;
 
 	virtual	const char*			MIMEType() = 0;
@@ -32,12 +33,11 @@ public:
 private:
 	static	int32				_ExportThreadEntry(void* cookie);
 			int32				_ExportThread();
-			status_t			_Export(const LayerSnapshot* rootSnapshot,
+			status_t			_Export(const DocumentRef& document,
 									const entry_ref* docRef);
 
 private:
-			Document*			fDocument;
-			LayerSnapshot*		fRootSnapshot;
+			DocumentRef			fDocument;
 			entry_ref			fRef;
 			thread_id			fExportThread;
 			bool				fSelfDestroy;

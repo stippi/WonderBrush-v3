@@ -1,9 +1,6 @@
 /*
- * Copyright 2006, Haiku. All rights reserved.
- * Distributed under the terms of the MIT License.
- *
- * Authors:
- *		Stephan Aßmus <superstippi@gmx.de>
+ * Copyright 2006-2013, Stephan Aßmus <superstippi@gmx.de>.
+ * All rights reserved. Distributed under the terms of the MIT License.
  */
 
 #include "BitmapExporter.h"
@@ -13,14 +10,26 @@
 #include <TranslatorFormats.h>
 #include <TranslatorRoster.h>
 
-#include "Icon.h"
-#include "IconRenderer.h"
+#include "Document.h"
+#include "RenderManager.h"
 
 // constructor
-BitmapExporter::BitmapExporter(uint32 size)
-	: Exporter(),
-	  fFormat(B_PNG_FORMAT),
-	  fSize(size)
+BitmapExporter::BitmapExporter(const BRect& bounds)
+	:
+	Exporter(),
+	fFormat(B_PNG_FORMAT),
+	fWidth(bounds.IntegerWidth() + 1),
+	fHeight(bounds.IntegerHeight() + 1)
+{
+}
+
+// constructor
+BitmapExporter::BitmapExporter(uint32 width, uint32 height)
+	:
+	Exporter(),
+	fFormat(B_PNG_FORMAT),
+	fWidth(width),
+	fHeight(height)
 {
 }
 
@@ -31,37 +40,35 @@ BitmapExporter::~BitmapExporter()
 
 // Export
 status_t
-BitmapExporter::Export(const Icon* icon, BPositionIO* stream)
+BitmapExporter::Export(const DocumentRef& document, BPositionIO* stream)
 {
-	if (fSize == 0)
+	if (fWidth == 0 || fHeight == 0)
 		return B_NO_INIT;
 
-	// render icon into bitmap with given size and transparent background
-	uint32 bitmapFlags = 0;
+	// Attach RenderManager to document
+	RenderManager renderer(document.Get());
 
-	#if __HAIKU__
-	bitmapFlags |= B_BITMAP_NO_SERVER_LINK;
-	#endif
-
-	BBitmap bitmap(BRect(0, 0, fSize - 1, fSize - 1),
-				   bitmapFlags, B_RGBA32);
-
-	status_t ret  = bitmap.InitCheck();
-	if (ret < B_OK)
+	status_t ret = renderer.Init();
+	if (ret != B_OK)
 		return ret;
+	
+	// Trigger render
+	renderer.AllAreasInvalidated();
 
-	IconRenderer renderer(&bitmap);
-	renderer.SetIcon(icon);
-	renderer.SetScale(fSize / 64.0);
-	renderer.Render();
-//	renderer.Demultiply(&bitmap);
+	// Wait for it to finish
+	while (!renderer.RenderingDone()) {
+		printf("Waiting for rendering to finish.\n");
+		snooze(250000);
+	}
+
+	renderer.LockDisplay();
 
 	// save bitmap to translator
 	BTranslatorRoster* roster = BTranslatorRoster::Default();
 	if (!roster)
 		return B_ERROR;
 
-	BBitmapStream bitmapStream(&bitmap);
+	BBitmapStream bitmapStream(const_cast<BBitmap*>(renderer.DisplayBitmap()));
 	ret = roster->Translate(&bitmapStream, NULL, NULL, stream, fFormat, 0);
 
 	BBitmap* dummy;

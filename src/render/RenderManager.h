@@ -94,6 +94,7 @@ public:
 
 			bool				DoNextRenderJob(RenderThread* thread);
 			void				WakeUpRenderThreads();
+			bool				RenderingDone();
 
 private:
 			typedef HashMap<HashKey32<const Layer*>, BRect*> DirtyMap;

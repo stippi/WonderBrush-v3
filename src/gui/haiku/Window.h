@@ -19,6 +19,7 @@ class BSplitView;
 class CanvasView;
 class ColumnTreeModel;
 class Document;
+class DocumentSaver;
 class Exporter;
 class IconButton;
 class IconOptionsControl;
@@ -70,8 +71,18 @@ private:
 			void				_RemoveObjects();
 			void				_ResetTransformation();
 
+			bool				_CheckSaveDocument(
+									const BMessage* currentMessage);
+			void				_PickUpActionBeforeSave();
+
 			void				_Save();
 			void				_Save(Exporter* exporter) const;
+
+			DocumentSaver*		_CreateSaver(const entry_ref& ref,
+									uint32 exportMode) const;
+
+			const char*			_FileName(bool preferExporter) const;
+			void				_UpdateWindowTitle();
 
 private:
 			class SelectionListener;
@@ -117,6 +128,7 @@ private:
 			Tool*				fCurrentTool;
 			ToolListener*		fToolListener;
 
+			BMessage*			fMessageAfterSave;
 			Exporter*			fExporter;
 };
 

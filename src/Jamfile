@@ -12,6 +12,7 @@ local sourceDirs =
 	gui/tools
 	gui/tools/$(WONDERBRUSH_PLATFORM)
 	import_export
+	import_export/bitmap
 	import_export/message
 	model
 	model/document
@@ -22,6 +23,7 @@ local sourceDirs =
 	platform/$(WONDERBRUSH_PLATFORM)
 	render
 	render/text
+	savers
 	support
 	tools
 	tools/brush
@@ -69,6 +71,7 @@ SubDirHdrs [ FDirName $(TOP) src gui scrollview ] ;
 SubDirHdrs [ FDirName $(TOP) src gui scrollview $(WONDERBRUSH_PLATFORM) ] ;
 SubDirHdrs [ FDirName $(TOP) src gui stateview ] ;
 SubDirHdrs [ FDirName $(TOP) src import_export ] ;
+SubDirHdrs [ FDirName $(TOP) src import_export bitmap ] ;
 SubDirHdrs [ FDirName $(TOP) src import_export message ] ;
 SubDirHdrs [ FDirName $(TOP) src model ] ;
 SubDirHdrs [ FDirName $(TOP) src model document ] ;
@@ -80,6 +83,7 @@ SubDirHdrs [ FDirName $(TOP) src model property
 SubDirHdrs [ FDirName $(TOP) src model snapshots ] ;
 SubDirHdrs [ FDirName $(TOP) src model text ] ;
 SubDirHdrs [ FDirName $(TOP) src render ] ;
+SubDirHdrs [ FDirName $(TOP) src savers ] ;
 SubDirHdrs [ FDirName $(TOP) src support ] ;
 SubDirHdrs [ FDirName $(TOP) src tools ] ;
 SubDirHdrs [ FDirName $(TOP) src tools brush ] ;
@@ -151,11 +155,15 @@ Application WonderBrush :
 	# gui/<platform>
 	ObjectTreeView.cpp
 	ResourceTreeView.cpp
+	SavePanel.cpp
 	Window.cpp
 
 	# import_export
 	Exporter.cpp
 	Importer.cpp
+
+	# import_export/bitmap
+	BitmapExporter.cpp
 
 	# import_export/message
 	MessageExporter.cpp
@@ -239,6 +247,14 @@ Application WonderBrush :
 #	FontCache.cpp
 #	FontCacheEntry.cpp
 	FontRegistry.cpp
+
+	# savers
+	AttributeSaver.cpp
+	BitmapSetSaver.cpp
+	DocumentSaver.cpp
+	FileSaver.cpp
+	NativeSaver.cpp
+	SimpleFileSaver.cpp
 
 	# support
 	AbstractLOAdapter.cpp

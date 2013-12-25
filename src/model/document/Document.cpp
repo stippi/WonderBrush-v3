@@ -9,6 +9,7 @@
 
 #include <new>
 
+#include "DocumentSaver.h"
 #include "DocumentVisitor.h"
 #include "EditManager.h"
 #include "Layer.h"
@@ -38,7 +39,9 @@ Document::Document(const BRect& bounds)
 	fEditManager(new(std::nothrow) ::EditManager(this)),
 	fRootLayer(new(std::nothrow) Layer(bounds)),
 	fGlobalResources(),
-	fListeners(8)
+	fListeners(8),
+	fNativeSaver(NULL),
+	fExportSaver(NULL)
 {
 }
 
@@ -47,6 +50,8 @@ Document::~Document()
 {
 	delete fEditManager;
 	delete fRootLayer;
+	delete fNativeSaver;
+	delete fExportSaver;
 }
 
 // Clone
@@ -163,6 +168,24 @@ Document::IsEmpty() const
 
 	return true;
 }
+
+// SetNativeSaver
+void
+Document::SetNativeSaver(DocumentSaver* saver)
+{
+	delete fNativeSaver;
+	fNativeSaver = saver;
+}
+
+// SetExportSaver
+void
+Document::SetExportSaver(DocumentSaver* saver)
+{
+	delete fExportSaver;
+	fExportSaver = saver;
+}
+
+// #pragma mark -
 
 class Indentation {
 public:

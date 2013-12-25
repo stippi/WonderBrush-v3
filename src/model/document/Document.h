@@ -13,6 +13,7 @@
 #include "RWLocker.h"
 
 class BaseObject;
+class DocumentSaver;
 class EditManager;
 class Layer;
 class Path;
@@ -59,6 +60,14 @@ public:
 
 			bool				IsEmpty() const;
 
+			void				SetNativeSaver(DocumentSaver* saver);
+	inline	DocumentSaver*		NativeSaver() const
+									{ return fNativeSaver; }
+
+			void				SetExportSaver(DocumentSaver* saver);
+	inline	DocumentSaver*		ExportSaver() const
+									{ return fExportSaver; }
+
 			void				PrintToStream();
 
 private:
@@ -71,6 +80,9 @@ private:
 			ResourceList		fGlobalResources;
 
 			BList				fListeners;
+
+			DocumentSaver*		fNativeSaver;
+			DocumentSaver*		fExportSaver;
 };
 
 typedef Reference<Document> DocumentRef;

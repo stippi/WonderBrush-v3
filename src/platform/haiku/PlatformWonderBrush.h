@@ -8,13 +8,14 @@
 #include <Application.h>
 #include <Directory.h>
 #include <File.h>
+#include <FilePanel.h>
 #include <Path.h>
 #include <PathFinder.h>
 #include <StringList.h>
 
 #include "FontCache.h"
 #include "FontRegistry.h"
-
+#include "SavePanel.h"
 
 template<typename BaseClass>
 class PlatformWonderBrush : public BApplication, protected BaseClass {
@@ -106,6 +107,10 @@ protected:
 
 		return B_OK;
 	}
+
+private:
+			BFilePanel*			fOpenPanel;
+			SavePanel*			fSavePanel;
 };
 
 

@@ -580,6 +580,14 @@ RenderManager::WakeUpRenderThreads()
 	}
 }
 
+// RenderingDone
+bool
+RenderManager::RenderingDone()
+{
+	AutoLocker<BLocker> _(fRenderQueueLock);
+	return fWaitingRenderThreadCount < fRenderThreadCount;
+}
+
 
 // #pragma mark -
 

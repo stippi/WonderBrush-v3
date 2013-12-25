@@ -5,9 +5,11 @@
 
 #include "Window.h"
 
+#include <Alert.h>
 #include <Application.h>
 #include <Bitmap.h>
 #include <Box.h>
+#include <Catalog.h>
 #include <CardLayout.h>
 #include <LayoutBuilder.h>
 #include <LayoutUtils.h>
@@ -20,11 +22,14 @@
 #include <String.h>
 #include <TabView.h>
 
+#include "BitmapExporter.h"
+#include "BitmapSetSaver.h"
 #include "BrushTool.h"
 #include "CanvasView.h"
 #include "CompoundEdit.h"
 #include "DefaultColumnTreeModel.h"
 #include "Document.h"
+#include "DocumentSaver.h"
 #include "EditManager.h"
 #include "Filter.h"
 #include "FilterDropShadow.h"
@@ -34,6 +39,7 @@
 #include "InspectorView.h"
 //#include "LayerTreeModel.h"
 #include "MessageExporter.h"
+#include "NativeSaver.h"
 #include "NavigatorView.h"
 #include "ObjectAddedEdit.h"
 #include "ObjectTreeView.h"
@@ -48,11 +54,17 @@
 #include "RenderManager.h"
 #include "ResourceTreeView.h"
 #include "ScrollView.h"
+#include "SimpleFileSaver.h"
 #include "SwatchGroup.h"
 #include "WonderBrush.h"
 
+#define B_TRANSLATION_CONTEXT "Window"
+
 enum {
 	MSG_SAVE						= 'save',
+	MSG_SAVE_AS						= 'svas',
+	MSG_EXPORT						= 'expt',
+	MSG_EXPORT_AS					= 'exas',
 	MSG_UNDO						= 'undo',
 	MSG_REDO						= 'redo',
 	MSG_CONFIRM						= 'cnfm',
@@ -160,6 +172,7 @@ Window::Window(BRect frame, const char* title, Document* document,
 	, fCurrentToolIndex(-1)
 	, fCurrentTool(NULL)
 	, fToolListener(new Window::ToolListener(BMessenger(this)))
+	, fMessageAfterSave(NULL)
 	, fExporter(NULL)
 {
 	// TODO: fix for when document == NULL
@@ -462,6 +475,7 @@ Window::~Window()
 	for (int32 i = fTools.CountItems() - 1; i >= 0; i--)
 		delete (Tool*)fTools.ItemAtFast(i);
 
+	delete fMessageAfterSave;
 	delete fExporter;
 }
 
@@ -470,9 +484,81 @@ void
 Window::MessageReceived(BMessage* message)
 {
 	switch (message->what) {
-		case MSG_SAVE:
-			_Save();
+		case MSG_OPEN:
+			// If our document is empty, we want the file to open in this
+			// window.
+			if (fDocument->IsEmpty()) {
+				fDocument->AddReference();
+				message->AddPointer("document", fDocument.Get());
+			}
+			be_app->PostMessage(message);
 			break;
+
+		case MSG_SAVE:
+		case MSG_EXPORT:
+		{
+			DocumentSaver* saver;
+			if (message->what == MSG_SAVE)
+				saver = fDocument->NativeSaver();
+			else
+				saver = fDocument->ExportSaver();
+			if (saver != NULL) {
+				saver->Save(fDocument);
+				_PickUpActionBeforeSave();
+				break;
+			} // else fall through
+		}
+		case MSG_SAVE_AS:
+		case MSG_EXPORT_AS:
+		{
+			int32 exportMode;
+			if (message->FindInt32("export mode", &exportMode) < B_OK)
+				exportMode = EXPORT_MODE_MESSAGE;
+			entry_ref ref;
+			const char* name;
+			if (message->FindRef("directory", &ref) == B_OK
+				&& message->FindString("name", &name) == B_OK) {
+				// this message comes from the file panel
+				BDirectory dir(&ref);
+				BEntry entry;
+				if (dir.InitCheck() >= B_OK
+					&& entry.SetTo(&dir, name, true) >= B_OK
+					&& entry.GetRef(&ref) >= B_OK) {
+
+					// create the document saver and remember it for later
+					DocumentSaver* saver = _CreateSaver(ref, exportMode);
+					if (saver != NULL) {
+						if (fDocument->WriteLock()) {
+							if (exportMode == EXPORT_MODE_MESSAGE)
+								fDocument->SetNativeSaver(saver);
+							else
+								fDocument->SetExportSaver(saver);
+							_UpdateWindowTitle();
+							fDocument->WriteUnlock();
+						}
+						saver->Save(fDocument);
+						_PickUpActionBeforeSave();
+					}
+				}
+// TODO: ...
+//				_SyncPanels(fSavePanel, fOpenPanel);
+			} else {
+				// configure the file panel
+				uint32 requestRefWhat = MSG_SAVE_AS;
+				bool isExportMode = message->what == MSG_EXPORT_AS
+					|| message->what == MSG_EXPORT;
+				if (isExportMode)
+					requestRefWhat = MSG_EXPORT_AS;
+				const char* saveText = _FileName(isExportMode);
+
+				BMessage requestRef(requestRefWhat);
+				if (saveText != NULL)
+					requestRef.AddString("save text", saveText);
+				requestRef.AddMessenger("target", BMessenger(this, this));
+				be_app->PostMessage(&requestRef);
+			}
+			break;
+		}
 
 		case MSG_UNDO:
 			fDocument->EditManager()->Undo(fEditContext);
@@ -545,6 +631,9 @@ Window::MessageReceived(BMessage* message)
 bool
 Window::QuitRequested()
 {
+	if (!_CheckSaveDocument(CurrentMessage()))
+		return false;
+
 	BMessage quitMessage(MSG_WINDOW_QUIT);
 	quitMessage.AddRect("window frame", Frame());
 
@@ -979,6 +1068,62 @@ Window::_ResetTransformation()
 
 // #pragma mark -
 
+// _CheckSaveDocument
+bool
+Window::_CheckSaveDocument(const BMessage* currentMessage)
+{
+	if (fDocument->IsEmpty() || fDocument->EditManager()->IsSaved())
+		return true;
+
+	// Make sure the user sees us.
+	Activate();
+
+	BAlert* alert = new BAlert("save", 
+		B_TRANSLATE("Save changes before closing?"),
+			B_TRANSLATE("Cancel"), B_TRANSLATE("Don't save"),
+			B_TRANSLATE("Save"), B_WIDTH_AS_USUAL, B_OFFSET_SPACING,
+			B_WARNING_ALERT);
+	alert->SetShortcut(0, B_ESCAPE);
+	alert->SetShortcut(1, 'd');
+	alert->SetShortcut(2, 's');
+	int32 choice = alert->Go();
+	switch (choice) {
+		case 0:
+			// cancel
+			return false;
+		case 1:
+			// don't save
+			return true;
+		case 2:
+		default:
+			// cancel (save first) but pick up what we were doing before
+			PostMessage(MSG_SAVE);
+			if (currentMessage != NULL) {
+				delete fMessageAfterSave;
+				fMessageAfterSave = new BMessage(*currentMessage);
+			}
+			return false;
+	}
+}
+
+// _PickUpActionBeforeSave
+void
+Window::_PickUpActionBeforeSave()
+{
+	if (fDocument->WriteLock()) {
+		fDocument->EditManager()->Save();
+		fDocument->WriteUnlock();
+	}
+
+	if (fMessageAfterSave == NULL)
+		return;
+
+	PostMessage(fMessageAfterSave);
+	delete fMessageAfterSave;
+	fMessageAfterSave = NULL;
+}
+
+
 // _Save
 void
 Window::_Save()
@@ -997,7 +1142,89 @@ void
 Window::_Save(Exporter* exporter) const
 {
 	entry_ref ref;
-	get_ref_for_path("/boot/home/Desktop/export_text.wbi", &ref);
+	get_ref_for_path("/boot/home/Desktop/export_test.wbi", &ref);
 	
 	exporter->Export(fDocument.Get(), ref);
 }
+
+// _CreateSaver
+DocumentSaver*
+Window::_CreateSaver(const entry_ref& ref, uint32 exportMode) const
+{
+	DocumentSaver* saver;
+
+	switch (exportMode) {
+//		case EXPORT_MODE_FLAT_ICON:
+//			saver = new SimpleFileSaver(new FlatIconExporter(), ref);
+//			break;
+//
+//		case EXPORT_MODE_ICON_ATTR:
+//		case EXPORT_MODE_ICON_MIME_ATTR: {
+//			const char* attrName
+//				= exportMode == EXPORT_MODE_ICON_ATTR ?
+//					kVectorAttrNodeName : kVectorAttrMimeName;
+//			saver = new AttributeSaver(ref, attrName);
+//			break;
+//		}
+
+//		case EXPORT_MODE_ICON_RDEF:
+//			saver = new SimpleFileSaver(new RDefExporter(), ref);
+//			break;
+//		case EXPORT_MODE_ICON_SOURCE:
+//			saver = new SimpleFileSaver(new SourceExporter(), ref);
+//			break;
+
+		case EXPORT_MODE_BITMAP:
+			saver = new SimpleFileSaver(new BitmapExporter(
+				fDocument->Bounds()), ref);
+			break;
+
+		case EXPORT_MODE_BITMAP_SET:
+			saver = new BitmapSetSaver(ref);
+			break;
+
+//		case EXPORT_MODE_SVG:
+//			saver = new SimpleFileSaver(new SVGExporter(), ref);
+//			break;
+
+		case EXPORT_MODE_MESSAGE:
+		default:
+			saver = new NativeSaver(ref);
+			break;
+	}
+
+	return saver;
+}
+
+// _FileName
+const char*
+Window::_FileName(bool preferExporter) const
+{
+	FileSaver* saver1;
+	FileSaver* saver2;
+	if (preferExporter) {
+		saver1 = dynamic_cast<FileSaver*>(fDocument->ExportSaver());
+		saver2 = dynamic_cast<FileSaver*>(fDocument->NativeSaver());
+	} else {
+		saver1 = dynamic_cast<FileSaver*>(fDocument->NativeSaver());
+		saver2 = dynamic_cast<FileSaver*>(fDocument->ExportSaver());
+	}
+	const char* fileName = NULL;
+	if (saver1 != NULL)
+		fileName = saver1->Ref()->name;
+	if ((fileName == NULL || fileName[0] == '\0') && saver2 != NULL)
+		fileName = saver2->Ref()->name;
+	return fileName;
+}
+
+// _UpdateWindowTitle
+void
+Window::_UpdateWindowTitle()
+{
+	const char* fileName = _FileName(false);
+	if (fileName != NULL)
+		SetTitle(fileName);
+	else
+		SetTitle(B_TRANSLATE_SYSTEM_NAME("WonderBrush"));
+}
+
