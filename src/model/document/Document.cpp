@@ -151,6 +151,19 @@ Document::HasLayer(Layer* layer) const
 	return _HasLayer(fRootLayer, layer);
 }
 
+// IsEmpty
+bool
+Document::IsEmpty() const
+{
+	if (fRootLayer->CountObjects() > 0)
+		return false;
+	
+	if (fGlobalResources.CountObjects() > 0)
+		return false;
+
+	return true;
+}
+
 class Indentation {
 public:
 	Indentation()

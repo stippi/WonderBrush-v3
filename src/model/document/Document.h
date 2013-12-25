@@ -57,6 +57,8 @@ public:
 	inline	const ResourceList&	GlobalResources() const
 									{ return fGlobalResources; }
 
+			bool				IsEmpty() const;
+
 			void				PrintToStream();
 
 private:
