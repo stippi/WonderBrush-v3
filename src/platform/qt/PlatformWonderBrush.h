@@ -55,6 +55,16 @@ public:
 //	}
 
 protected:
+	virtual void Open(BMessage* message)
+	{
+		// TODO: See Haiku version
+	}
+
+	virtual void SaveAs(BMessage* message)
+	{
+		// TODO: See Haiku version
+	}
+
 	status_t OpenSettingsFile(BFile& file, bool forWriting)
 	{
 		// create WonderBrush settings dir, if not existing yet

@@ -17,6 +17,8 @@
 #include "FontRegistry.h"
 #include "SavePanel.h"
 
+class Window;
+
 template<typename BaseClass>
 class PlatformWonderBrush : public BApplication, protected BaseClass {
 public:
@@ -31,6 +33,15 @@ public:
 		BApplication("application/x-vnd.Yellowbites.WonderBrush2"),
 		BaseClass(bounds)
 	{
+		// create file panels
+		BMessenger messenger(this, this);
+		BMessage message(B_REFS_RECEIVED);
+		fOpenPanel = new BFilePanel(B_OPEN_PANEL, &messenger, NULL, B_FILE_NODE,
+			true, &message);
+	
+		message.what = MSG_SAVE_AS;
+		fSavePanel = new SavePanel("save panel", &messenger, NULL, B_FILE_NODE
+			| B_DIRECTORY_NODE | B_SYMLINK_NODE, false, &message);
 	}
 
 	virtual void ReadyToRun()
@@ -60,6 +71,31 @@ public:
 	}
 
 protected:
+	virtual void Open(BMessage* message)
+	{
+		BMessage openMessage(B_REFS_RECEIVED);
+		Window* window;
+		if (message->FindPointer("window", (void**)&window) == B_OK)
+			openMessage.AddPointer("window", window);
+		fOpenPanel->SetMessage(&openMessage);
+		fOpenPanel->Show();
+	}
+
+	virtual void SaveAs(BMessage* message)
+	{
+		BMessenger messenger;
+		if (message->FindMessenger("target", &messenger) != B_OK)
+			return;
+
+		fSavePanel->SetExportMode(message->what == MSG_EXPORT_AS);
+//		fSavePanel->Refresh();
+		const char* saveText;
+		if (message->FindString("save text", &saveText) == B_OK)
+			fSavePanel->SetSaveText(saveText);
+		fSavePanel->SetTarget(messenger);
+		fSavePanel->Show();
+	}
+
 	status_t OpenSettingsFile(BFile& file, bool forWriting)
 	{
 		BPath path;

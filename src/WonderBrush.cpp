@@ -265,6 +265,15 @@ WonderBrush::MessageReceived(BMessage* message)
 				PostMessage(B_QUIT_REQUESTED, this);
 			break;
 
+		case MSG_OPEN:
+			Open(message);
+			break;
+
+		case MSG_SAVE_AS:
+		case MSG_EXPORT_AS:
+			SaveAs(message);
+			break;
+
 		default:
 			BaseClass::MessageReceived(message);
 			break;

@@ -61,10 +61,6 @@
 #define B_TRANSLATION_CONTEXT "Window"
 
 enum {
-	MSG_SAVE						= 'save',
-	MSG_SAVE_AS						= 'svas',
-	MSG_EXPORT						= 'expt',
-	MSG_EXPORT_AS					= 'exas',
 	MSG_UNDO						= 'undo',
 	MSG_REDO						= 'redo',
 	MSG_CONFIRM						= 'cnfm',

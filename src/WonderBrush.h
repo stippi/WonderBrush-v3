@@ -4,15 +4,19 @@
 #include <Message.h>
 #include <Rect.h>
 
-#include "PlatformWonderBrush.h"
-
-
 enum {
 	MSG_OPEN						= 'open',
+	MSG_SAVE						= 'save',
+	MSG_SAVE_AS						= 'svas',
+	MSG_EXPORT						= 'expt',
+	MSG_EXPORT_AS					= 'exas',
 	MSG_NEW_WINDOW					= 'nwnd',
 	MSG_NEW_DOCUMENT				= 'ndoc',
 	MSG_WINDOW_QUIT					= 'wndq'
 };
+
+
+#include "PlatformWonderBrush.h"
 
 
 enum {
@@ -41,6 +45,9 @@ protected:
 	virtual	void				NewWindow() = 0;
 	virtual	void				NewDocument() = 0;
 	virtual	void				WindowQuit(BMessage* message) = 0;
+
+	virtual	void				Open(BMessage* message) = 0;
+	virtual	void				SaveAs(BMessage* message) = 0;
 
 	virtual	status_t			OpenSettingsFile(BFile& file,
 									bool forWriting) = 0;
