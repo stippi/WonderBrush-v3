@@ -53,6 +53,7 @@ BitmapExporter::Export(const DocumentRef& document, BPositionIO* stream)
 		return ret;
 	
 	// Trigger render
+	renderer.AreaInvalidated(document->RootLayer(), document->Bounds());
 	renderer.AllAreasInvalidated();
 
 	// Wait for it to finish
@@ -61,7 +62,8 @@ BitmapExporter::Export(const DocumentRef& document, BPositionIO* stream)
 		snooze(250000);
 	}
 
-	renderer.LockDisplay();
+	if (!renderer.LockDisplay())
+		return B_ERROR;
 
 	// save bitmap to translator
 	BTranslatorRoster* roster = BTranslatorRoster::Default();
@@ -73,6 +75,8 @@ BitmapExporter::Export(const DocumentRef& document, BPositionIO* stream)
 
 	BBitmap* dummy;
 	bitmapStream.DetachBitmap(&dummy);
+
+	renderer.UnlockDisplay();
 
 	return ret;
 }
