@@ -585,7 +585,7 @@ bool
 RenderManager::RenderingDone()
 {
 	AutoLocker<BLocker> _(fRenderQueueLock);
-	return fWaitingRenderThreadCount < fRenderThreadCount;
+	return fWaitingRenderThreadCount == fRenderThreadCount;
 }
 
 
