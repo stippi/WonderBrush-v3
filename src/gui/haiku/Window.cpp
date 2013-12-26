@@ -182,8 +182,19 @@ Window::Window(BRect frame, const char* title, Document* document,
 	BMenuItem* newDocumentMI = new BMenuItem("New document",
 		new BMessage(MSG_NEW_DOCUMENT), 'N');
 	fFileMenu->AddItem(newDocumentMI);
+	fFileMenu->AddItem(new BMenuItem("Open" B_UTF8_ELLIPSIS,
+		new BMessage(MSG_OPEN), 'O'));
+	fFileMenu->AddSeparatorItem();
 	fFileMenu->AddItem(new BMenuItem("Save",
 		new BMessage(MSG_SAVE), 'S'));
+	fFileMenu->AddItem(new BMenuItem("Save as" B_UTF8_ELLIPSIS,
+		new BMessage(MSG_SAVE_AS), 'S', B_SHIFT_KEY));
+	fFileMenu->AddSeparatorItem();
+	fFileMenu->AddItem(new BMenuItem("Export",
+		new BMessage(MSG_EXPORT), 'S', B_OPTION_KEY));
+	fFileMenu->AddItem(new BMenuItem("Export as" B_UTF8_ELLIPSIS,
+		new BMessage(MSG_EXPORT_AS), 'S', B_SHIFT_KEY | B_OPTION_KEY));
+	fFileMenu->AddSeparatorItem();
 	fFileMenu->AddItem(new BMenuItem("Quit",
 		new BMessage(B_QUIT_REQUESTED), 'Q'));
 
