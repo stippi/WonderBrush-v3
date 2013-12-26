@@ -9,6 +9,7 @@
 class BoundedObject : public Object {
 public:
 								BoundedObject();
+								BoundedObject(const BoundedObject& other);
 	virtual						~BoundedObject();
 
 	virtual	BRect				Bounds() = 0;

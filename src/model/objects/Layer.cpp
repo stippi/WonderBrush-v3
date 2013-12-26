@@ -244,6 +244,7 @@ Layer::Clone(ResourceResolver& resolver) const
 	if (layer == NULL)
 		return NULL;
 
+	layer->SetTransformable(*this);
 	layer->SetGlobalAlpha(fGlobalAlpha);
 	layer->SetBlendingMode(fBlendingMode);
 

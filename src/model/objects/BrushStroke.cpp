@@ -82,6 +82,7 @@ BrushStroke::BrushStroke(const BrushStroke& other, ResourceResolver& resolver)
 	: BoundedObject(other)
 	, fBrush((::Brush*)other.fBrush->Clone(resolver), true)
 	, fPaint((::Paint*)other.fPaint->Clone(resolver), true)
+	, fStroke(other.fStroke)
 {
 	if (fPaint.Get() != NULL)
 		fPaint->AddListener(this);

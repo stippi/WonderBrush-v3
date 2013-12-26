@@ -35,6 +35,9 @@ Text::Text(const Text& other, ResourceResolver& resolver)
 	, fStyleRuns(new(std::nothrow) StyleRunList(*other.fStyleRuns))
 {
 	InitBounds();
+	
+	fTextLayout = other.fTextLayout;
+	
 	UpdateLayout();
 }
 

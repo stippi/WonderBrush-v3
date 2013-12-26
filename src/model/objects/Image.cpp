@@ -37,7 +37,7 @@ Image::Image(RenderBuffer* buffer)
 
 // constructor
 Image::Image(const Image& other)
-	: BoundedObject()
+	: BoundedObject(other)
 	, fBuffer(other.fBuffer)
 	, fListeners(4)
 {

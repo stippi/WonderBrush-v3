@@ -11,6 +11,13 @@ BoundedObject::BoundedObject()
 {
 }
 
+// constructor
+BoundedObject::BoundedObject(const BoundedObject& other)
+	: Object(other)
+	, fTransformedBounds(other.fTransformedBounds)
+{
+}
+
 // destructor
 BoundedObject::~BoundedObject()
 {
