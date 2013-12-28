@@ -160,13 +160,13 @@ Application WonderBrush :
 
 	# import_export
 	Exporter.cpp
-	Importer.cpp
 
 	# import_export/bitmap
 	BitmapExporter.cpp
 
 	# import_export/message
 	MessageExporter.cpp
+	MessageImporter.cpp
 
 	# model
 	BaseObject.cpp
@@ -348,12 +348,12 @@ Application Resizer :
 
 			# model
 			BaseObject.o
+			CloneContext.o
 			Color.o
 			ColorProvider.o
 			ColorShade.o
 			Gradient.o
 			Paint.o
-			ResourceResolver.o
 			StrokeProperties.o
 
 			# support
@@ -404,12 +404,12 @@ Application Denoiser :
 
 			# model
 			BaseObject.o
+			CloneContext.o
 			Color.o
 			ColorProvider.o
 			ColorShade.o
 			Gradient.o
 			Paint.o
-			ResourceResolver.o
 			StrokeProperties.o
 
 			# support
