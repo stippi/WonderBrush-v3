@@ -170,8 +170,8 @@ Application WonderBrush :
 
 	# model
 	BaseObject.cpp
+	CloneContext.cpp
 	CurrentColor.cpp
-	ResourceResolver.cpp
 	Selectable.cpp
 	Selection.cpp
 

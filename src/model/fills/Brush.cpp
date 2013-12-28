@@ -81,7 +81,7 @@ Brush::~Brush()
 
 // Clone
 BaseObject*
-Brush::Clone(ResourceResolver& resolver) const
+Brush::Clone(CloneContext& context) const
 {
 	return new(std::nothrow) Brush(*this);
 }

@@ -32,7 +32,7 @@ public:
 	virtual						~Brush();
 
 	// BaseObject interface
-	virtual	BaseObject*			Clone(ResourceResolver& resolver) const;
+	virtual	BaseObject*			Clone(CloneContext& context) const;
 	virtual	status_t			Unarchive(const BMessage* archive);
 	virtual	status_t			Archive(BMessage* into,
 									bool deep = true) const;

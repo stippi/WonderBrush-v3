@@ -34,11 +34,11 @@ class BrushStroke : public BoundedObject, public Listener {
 public:
 								BrushStroke();
 								BrushStroke(const BrushStroke& other,
-									ResourceResolver& resolver);
+									CloneContext& context);
 	virtual						~BrushStroke();
 
 	// BaseObject interface
-	virtual	BaseObject*			Clone(ResourceResolver& resolver) const;
+	virtual	BaseObject*			Clone(CloneContext& context) const;
 	virtual	const char*			DefaultName() const;
 
 	// Object interface

@@ -168,7 +168,7 @@ StrokeProperties::~StrokeProperties()
 
 // Clone
 BaseObject*
-StrokeProperties::Clone(ResourceResolver& resolver) const
+StrokeProperties::Clone(CloneContext& context) const
 {
 	return new(std::nothrow) StrokeProperties(*this);
 }

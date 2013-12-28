@@ -30,7 +30,7 @@ public:
 	virtual						~Image();
 
 	// Object interface
-	virtual	BaseObject*			Clone(ResourceResolver& resolver) const;
+	virtual	BaseObject*			Clone(CloneContext& context) const;
 
 	virtual	ObjectSnapshot*		Snapshot() const;
 

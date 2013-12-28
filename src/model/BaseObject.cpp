@@ -12,7 +12,7 @@
 
 #include <new>
 
-#include "ResourceResolver.h"
+#include "CloneContext.h"
 
 // constructor
 BaseObject::BaseObject()
@@ -52,8 +52,8 @@ BaseObject::~BaseObject()
 BaseObject*
 BaseObject::Clone() const
 {
-	ResourceResolver resolver;
-	return Clone(resolver);
+	CloneContext context;
+	return Clone(context);
 }
 
 // #pragma mark -
@@ -62,26 +62,27 @@ BaseObject::Clone() const
 status_t
 BaseObject::Unarchive(const BMessage* archive)
 {
-	if (!archive)
+	if (archive == NULL)
 		return B_BAD_VALUE;
 
 	const char* name;
-	status_t ret = archive->FindString("name", &name);
-
-	if (ret == B_OK)
+	if (archive->FindString("name", &name) == B_OK)
 		fName = name;
 
-	return ret;
+	return B_OK;
 }
 
 // Archive
 status_t
 BaseObject::Archive(BMessage* into, bool deep) const
 {
-	if (!into)
+	if (into == NULL)
 		return B_BAD_VALUE;
 
-	return into->AddString("name", fName.String());
+	if (fName.Length() > 0)
+		return into->AddString("name", fName.String());
+
+	return B_OK;
 }
 
 // MakePropertyObject

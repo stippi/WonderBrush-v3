@@ -15,7 +15,7 @@ public:
 	virtual						~Filter();
 
 	// BaseObject interface
-	virtual	BaseObject*			Clone(ResourceResolver& resolver) const;
+	virtual	BaseObject*			Clone(CloneContext& context) const;
 	virtual	const char*			DefaultName() const;
 	virtual	void				AddProperties(PropertyObject* object,
 									uint32 flags = 0) const;

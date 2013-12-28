@@ -10,7 +10,7 @@
 
 #include "BaseObject.h"
 #include "List.h"
-#include "ResourceResolver.h"
+#include "CloneContext.h"
 #include "Transformable.h"
 
 

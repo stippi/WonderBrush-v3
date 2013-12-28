@@ -34,7 +34,8 @@ public:
 	};
 
 								Paint();
-								Paint(const Paint& other);
+								Paint(const Paint& other,
+									CloneContext& context);
 								Paint(const rgb_color& color);
 								Paint(const ColorProviderRef& color);
 								Paint(const ::Gradient* gradient);
@@ -43,7 +44,7 @@ public:
 	virtual						~Paint();
 
 	// BaseObject interface
-	virtual	BaseObject*			Clone(ResourceResolver& resolver) const;
+	virtual	BaseObject*			Clone(CloneContext& context) const;
 	virtual	status_t			Unarchive(const BMessage* archive);
 	virtual	status_t			Archive(BMessage* into,
 									bool deep = true) const;

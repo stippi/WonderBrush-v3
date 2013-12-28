@@ -38,7 +38,7 @@ Filter::~Filter()
 
 // Clone
 BaseObject*
-Filter::Clone(ResourceResolver& resolver) const
+Filter::Clone(CloneContext& context) const
 {
 	return new(std::nothrow) Filter(*this);
 }

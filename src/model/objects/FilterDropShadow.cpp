@@ -23,15 +23,15 @@ FilterDropShadow::FilterDropShadow()
 
 // constructor
 FilterDropShadow::FilterDropShadow(const FilterDropShadow& other,
-		ResourceResolver& resolver)
+		CloneContext& context)
 	: Object(other)
 	, fFilterRadius(other.fFilterRadius)
 	, fOffsetX(other.fOffsetX)
 	, fOffsetY(other.fOffsetY)
 	, fOpacity(other.fOpacity)
-	, fColorProvider((ColorProvider*)other.fColorProvider->Clone(resolver),
-		true)
+	, fColorProvider()
 {
+	context.Clone(other.fColorProvider.Get(), fColorProvider);
 }
 
 // constructor
@@ -54,9 +54,9 @@ FilterDropShadow::~FilterDropShadow()
 
 // Clone
 BaseObject*
-FilterDropShadow::Clone(ResourceResolver& resolver) const
+FilterDropShadow::Clone(CloneContext& context) const
 {
-	return new(std::nothrow) FilterDropShadow(*this, resolver);
+	return new(std::nothrow) FilterDropShadow(*this, context);
 }
 
 // DefaultName

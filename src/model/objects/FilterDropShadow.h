@@ -13,12 +13,12 @@ class FilterDropShadow : public Object {
 public:
 								FilterDropShadow();
 								FilterDropShadow(const FilterDropShadow& other,
-									ResourceResolver& resolver);
+									CloneContext& context);
 								FilterDropShadow(float radius);
 	virtual						~FilterDropShadow();
 
 	// BaseObject interface
-	virtual	BaseObject*			Clone(ResourceResolver& resolver) const;
+	virtual	BaseObject*			Clone(CloneContext& context) const;
 	virtual	const char*			DefaultName() const;
 	virtual	void				AddProperties(PropertyObject* object,
 									uint32 flags = 0) const;

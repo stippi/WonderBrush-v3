@@ -28,11 +28,11 @@ class Text : public Styleable {
 public:
 								Text(const rgb_color& color);
 								Text(const Text& other,
-									ResourceResolver& resolver);
+									CloneContext& context);
 	virtual						~Text();
 
 	// BaseObject interface
-	virtual	BaseObject*			Clone(ResourceResolver& resolver) const;
+	virtual	BaseObject*			Clone(CloneContext& context) const;
 	virtual	const char*			DefaultName() const;
 
 	// Object interface

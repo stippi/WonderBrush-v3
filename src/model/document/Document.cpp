@@ -56,7 +56,7 @@ Document::~Document()
 
 // Clone
 BaseObject*
-Document::Clone(ResourceResolver&) const
+Document::Clone(CloneContext&) const
 {
 	Document* clone = new Document(Bounds());
 
@@ -76,28 +76,32 @@ Document::Clone(ResourceResolver&) const
 	// Implement a ResourceResolver that will mapped from the
 	// resources of this document, to the cloned resources in
 	// the cloned document
-	class ClonedDocumentResolver : public ResourceResolver {
+	class CloneDocumentContext : public CloneContext {
 	public:
-		ClonedDocumentResolver(const ResourceList& source,
+		CloneDocumentContext(const ResourceList& source,
 			const ResourceList& target)
 			: fSource(source)
 			, fTarget(target)
 		{
 		}
 		
-		virtual BaseObject* Resolve(BaseObject* object)
+		virtual BaseObjectRef Clone(BaseObject* object)
 		{
 			int32 index = fSource.IndexOf(object);
-			return fTarget.ObjectAt(index);
+			if (index >= 0)
+				return BaseObjectRef(fTarget.ObjectAt(index));
+			
+			BaseObject* clone = object->Clone(*this);
+			return BaseObjectRef(clone, true);
 		}
 
 	private:
 		const ResourceList&	fSource;
 		const ResourceList& fTarget;
-	} resolver(source, target);
+	} context(source, target);
 
 	// Clone all objects on the root layer, using the custom resolver
-	fRootLayer->CloneObjects(clone->RootLayer(), resolver);
+	fRootLayer->CloneObjects(clone->RootLayer(), context);
 
 	return clone;
 }

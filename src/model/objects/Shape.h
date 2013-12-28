@@ -23,11 +23,11 @@ public:
 								Shape(const PathRef& path,
 									const rgb_color& color);
 								Shape(const Shape& other,
-									ResourceResolver& resolver);
+									CloneContext& context);
 	virtual						~Shape();
 
 	// BaseObject interface
-	virtual	BaseObject*			Clone(ResourceResolver& resolver) const;
+	virtual	BaseObject*			Clone(CloneContext& context) const;
 	virtual	const char*			DefaultName() const;
 
 	// Object interface

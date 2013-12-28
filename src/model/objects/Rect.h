@@ -17,11 +17,11 @@ public:
 								Rect(const BRect& area,
 									const rgb_color& color);
 								Rect(const Rect& other,
-									ResourceResolver& resolver);
+									CloneContext& context);
 	virtual						~Rect();
 
 	// BaseObject interface
-	virtual	BaseObject*			Clone(ResourceResolver& resolver) const;
+	virtual	BaseObject*			Clone(CloneContext& context) const;
 	virtual	const char*			DefaultName() const;
 
 	// Object interface

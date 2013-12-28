@@ -406,9 +406,10 @@ bool
 TextLayout::addStyleRun(int start, const Font& font,
 	double metricsAscent, double metricsDescent, double metricsWidth,
 	double glyphSpacing, double fauxWeight, double fauxItalic,
-	const Color& fgColor, const Color& bgColor,
-	bool strikeOut, const Color& strikeOutColor,
-	bool underline, unsigned underlineStyle, const Color& underlineColor)
+	const TextRenderer::Color& fgColor, const TextRenderer::Color& bgColor,
+	bool strikeOut, const TextRenderer::Color& strikeOutColor,
+	bool underline, unsigned underlineStyle,
+	const TextRenderer::Color& underlineColor)
 {
 //printf("TextLayout::addStyleRun(%d, font('%s', %.1f, %u), "
 //	"color(%d, %d, %d)) (index: %u)\n",
@@ -990,8 +991,8 @@ TextLayout::getTextBounds(int textOffset, double& x1, double& y1,
 
 
 bool
-TextLayout::init(const char* text, FontEngine& fontEngine,
-	FontManager& fontManager, bool hinting, double scaleX,
+TextLayout::init(const char* text, TextRenderer::FontEngine& fontEngine,
+	TextRenderer::FontManager& fontManager, bool hinting, double scaleX,
 	unsigned subpixelScale)
 {
 	AutoWriteLocker _(FontCache::getInstance());
@@ -1073,7 +1074,8 @@ TextLayout::init(const char* text, FontEngine& fontEngine,
 
 
 void
-TextLayout::layout(FontEngine& fontEngine, FontManager& fontManager,
+TextLayout::layout(TextRenderer::FontEngine& fontEngine,
+	TextRenderer::FontManager& fontManager,
 	bool kerning, double scaleX, unsigned subpixelScale)
 {
 	fLineInfoCount = 0;

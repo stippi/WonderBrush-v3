@@ -42,16 +42,16 @@ private:
 		double						fauxWeight;
 		double						fauxItalic;
 
-		Color						fgColor;
+		TextRenderer::Color			fgColor;
 
-		Color						bgColor;
+		TextRenderer::Color			bgColor;
 
 		bool						strikeOut;
-		Color						strikeOutColor;
+		TextRenderer::Color			strikeOutColor;
 
 		bool						underline;
 		unsigned					underlineStyle;
-		Color						underlineColor;
+		TextRenderer::Color			underlineColor;
 	};
 
 	struct GlyphInfo {
@@ -126,9 +126,10 @@ public:
 	bool addStyleRun(int start, const Font& font,
 		double metricsAscent, double metricsDescent, double metricsWidth,
 		double glyphSpacing, double fauxWeight, double fauxItalic,
-		const Color& fgColor, const Color& bgColor,
-		bool strikeOut, const Color& strikeOutColor,
-		bool underline, unsigned underlineStyle, const Color& underlineColor);
+		const TextRenderer::Color& fgColor, const TextRenderer::Color& bgColor,
+		bool strikeOut, const TextRenderer::Color& strikeOutColor,
+		bool underline, unsigned underlineStyle,
+		const TextRenderer::Color& underlineColor);
 
 	void layout();
 
@@ -146,8 +147,10 @@ public:
 
 	inline bool getInfo(int index, Font& font,
 		double& glyphSpacing, double& fauxWeight, double& fauxItalic,
-		Color& fgColor, bool& strikeOut, Color& strikeColor,
-		bool& underline, unsigned& underlineStyle, Color& underlineColor) const
+		TextRenderer::Color& fgColor, bool& strikeOut,
+		TextRenderer::Color& strikeColor,
+		bool& underline, unsigned& underlineStyle,
+		TextRenderer::Color& underlineColor) const
 	{
 		if (index < 0 || index >= (int)fGlyphInfoCount)
 			return false;
@@ -185,8 +188,9 @@ public:
 
 	inline void getInfo(int index, const agg::glyph_cache** glyph, double* x,
 		double* y, double* height, double* fauxWeight, double* fauxItalic,
-		Color& fgColor, bool& strikeOut, Color& strikeColor, bool& underline,
-		unsigned& underlineStyle, Color& underlineColor) const
+		TextRenderer::Color& fgColor, bool& strikeOut,
+		TextRenderer::Color& strikeColor, bool& underline,
+		unsigned& underlineStyle, TextRenderer::Color& underlineColor) const
 	{
 		*glyph = fGlyphInfoBuffer[index].glyph;
 		*x = fGlyphInfoBuffer[index].x;
@@ -219,7 +223,7 @@ public:
 
 	inline void getInfo(unsigned index, unsigned* lineIndex,
 		double* x, double* advanceX, double* lineTop, double* lineBottom,
-		Color& bgColor) const
+		TextRenderer::Color& bgColor) const
 	{
 		*lineIndex = fGlyphInfoBuffer[index].lineIndex;
 
@@ -288,11 +292,12 @@ public:
 		double& x2, double& y2);
 
 private:
-	bool init(const char* text, FontEngine& fontEngine,
-		FontManager& fontManager, bool hinting, double scaleX,
+	bool init(const char* text, TextRenderer::FontEngine& fontEngine,
+		TextRenderer::FontManager& fontManager, bool hinting, double scaleX,
 		unsigned subpixelScale);
 
-	void layout(FontEngine& fontEngine, FontManager& fontManager,
+	void layout(TextRenderer::FontEngine& fontEngine,
+		TextRenderer::FontManager& fontManager,
 		bool kerning, double scaleX, unsigned subpixelScale);
 	void applyAlignment(const double width);
 

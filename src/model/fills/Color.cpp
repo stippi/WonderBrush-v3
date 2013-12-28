@@ -56,7 +56,7 @@ Color::GetColor() const
 
 // Clone
 BaseObject*
-Color::Clone(ResourceResolver& resolver) const
+Color::Clone(CloneContext& context) const
 {
 	return new(std::nothrow) Color(*this);
 }

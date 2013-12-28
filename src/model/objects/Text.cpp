@@ -25,14 +25,12 @@ Text::Text(const rgb_color& color)
 }
 
 // constructor
-Text::Text(const Text& other, ResourceResolver& resolver)
-	: Styleable(other, resolver)
+Text::Text(const Text& other, CloneContext& context)
+	: Styleable(other, context)
 	, fText(other.fText)
 	, fCharCount(other.fCharCount)
 	, fTextLayout(FontCache::getInstance())
-	// TODO: Needs to pass resolver and use the correct global styles
-	// from the resolver!
-	, fStyleRuns(new(std::nothrow) StyleRunList(*other.fStyleRuns))
+	, fStyleRuns(new(std::nothrow) StyleRunList(*other.fStyleRuns, context))
 {
 	InitBounds();
 	
@@ -51,9 +49,9 @@ Text::~Text()
 
 // Clone
 BaseObject*
-Text::Clone(ResourceResolver& resolver) const
+Text::Clone(CloneContext& context) const
 {
-	return new(std::nothrow) Text(*this, resolver);
+	return new(std::nothrow) Text(*this, context);
 }
 
 // DefaultName
@@ -571,20 +569,20 @@ Text::UpdateLayout()
 			characterStyle->GetGlyphSpacing(),
 			characterStyle->GetFauxWeight(),
 			characterStyle->GetFauxItalic(),
-			Color(
+			TextRenderer::Color(
 				RenderEngine::GammaToLinear(color.red),
 				RenderEngine::GammaToLinear(color.green),
 				RenderEngine::GammaToLinear(color.blue),
 				(color.alpha << 8) | 255
 			).premultiply(),
-			Color(
+			TextRenderer::Color(
 				RenderEngine::GammaToLinear(255),
 				RenderEngine::GammaToLinear(255),
 				RenderEngine::GammaToLinear(255),
 				(255 << 8) | 255
 			).premultiply(),
-			false, Color(0, 0, 0, 0),
-			false, 0, Color(0, 0, 0, 0)
+			false, TextRenderer::Color(0, 0, 0, 0),
+			false, 0, TextRenderer::Color(0, 0, 0, 0)
 		);
 
 		start += run->GetLength();

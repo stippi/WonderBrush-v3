@@ -7,12 +7,15 @@
 
 #include <List.h>
 
+class CloneContext;
 class StyleRun;
 
 class StyleRunList {
 public:
 								StyleRunList();
 								StyleRunList(const StyleRunList& other);
+								StyleRunList(const StyleRunList& other,
+									CloneContext& context);
 	virtual						~StyleRunList();
 
 				StyleRunList&	operator=(const StyleRunList& other);

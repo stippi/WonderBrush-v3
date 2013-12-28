@@ -17,19 +17,19 @@ public:
 
 	static FontCache* getInstance();
 
-	inline FontEngine& getFontEngine()
+	inline TextRenderer::FontEngine& getFontEngine()
 	{
 		return fFontEngine;
 	}
 
-	inline FontManager& getFontManager()
+	inline TextRenderer::FontManager& getFontManager()
 	{
 		return fFontManager;
 	}
 
 private:
-	FontEngine			fFontEngine;
-	FontManager			fFontManager;
+	TextRenderer::FontEngine	fFontEngine;
+	TextRenderer::FontManager	fFontManager;
 };
 
 #endif // FONT_CACHE_H

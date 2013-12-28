@@ -41,7 +41,7 @@ FilterSaturation::~FilterSaturation()
 
 // Clone
 BaseObject*
-FilterSaturation::Clone(ResourceResolver& resolver) const
+FilterSaturation::Clone(CloneContext& context) const
 {
 	return new(std::nothrow) FilterSaturation(*this);
 }

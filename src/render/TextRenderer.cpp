@@ -10,7 +10,7 @@
 
 
 static inline bool
-operator!=(const Color& a, const Color& b)
+operator!=(const TextRenderer::Color& a, const TextRenderer::Color& b)
 {
 	return a.r != b.r || a.g != b.g || a.b != b.b || a.a != b.a;
 }
@@ -121,14 +121,14 @@ TextRenderer::setBackground(int red, int green, int blue, int alpha)
 }
 
 
-FontEngine&
+TextRenderer::FontEngine&
 TextRenderer::getFontEngine() const
 {
 	return fFontCache->getFontEngine();
 }
 
 
-FontManager&
+TextRenderer::FontManager&
 TextRenderer::getFontManager() const
 {
 	return fFontCache->getFontManager();

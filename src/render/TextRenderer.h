@@ -25,38 +25,38 @@
 #include "RenderEngine.h"
 
 
-typedef agg::rendering_buffer							RenderingBuffer;
-
-typedef agg::rgba16										Color;
-
-typedef agg::scanline_u8								ScanlineUnpacked;
-
-typedef agg::renderer_base<PixelFormat>					Renderer;
-typedef agg::renderer_scanline_aa_solid<Renderer>		RendererSolid;
-
-typedef agg::primary_weights							PrimaryWeights;
-typedef agg::pixfmt_lcd_bgra16							PixelFormatLCD;
-typedef agg::renderer_base<PixelFormatLCD>				RendererLCD;
-typedef agg::renderer_scanline_aa_solid<RendererLCD>	RendererSolidLCD;
-
-typedef agg::path_storage								PathStorage;
-
-typedef agg::font_engine_freetype_int32					FontEngine;
-typedef agg::font_cache_manager<FontEngine>				FontManager;
-
-typedef agg::gamma_lut<>								GammaLUT;
-
-typedef agg::serialized_integer_path_adaptor<int32, 6>	PathAdaptor;
-typedef agg::conv_curve<PathAdaptor>					Glyph;
-typedef agg::conv_transform<Glyph, Transformation>		TransformedGlyph;
-typedef FauxWeight<TransformedGlyph>					FauxWeightGlyph;
-
-
 class FontCache;
 class TextLayout;
 
 
 class TextRenderer {
+public:
+	typedef agg::rendering_buffer							RenderingBuffer;
+
+	typedef agg::rgba16										Color;
+
+	typedef agg::scanline_u8								ScanlineUnpacked;
+
+	typedef agg::renderer_base<PixelFormat>					Renderer;
+	typedef agg::renderer_scanline_aa_solid<Renderer>		RendererSolid;
+
+	typedef agg::primary_weights							PrimaryWeights;
+	typedef agg::pixfmt_lcd_bgra16							PixelFormatLCD;
+	typedef agg::renderer_base<PixelFormatLCD>				RendererLCD;
+	typedef agg::renderer_scanline_aa_solid<RendererLCD>	RendererSolidLCD;
+
+	typedef agg::path_storage								PathStorage;
+
+	typedef agg::font_engine_freetype_int32					FontEngine;
+	typedef agg::font_cache_manager<FontEngine>				FontManager;
+
+	typedef agg::gamma_lut<>								GammaLUT;
+
+	typedef agg::serialized_integer_path_adaptor<int32, 6>	PathAdaptor;
+	typedef agg::conv_curve<PathAdaptor>					Glyph;
+	typedef agg::conv_transform<Glyph, Transformation>		TransformedGlyph;
+	typedef FauxWeight<TransformedGlyph>					FauxWeightGlyph;
+
 public:
 	TextRenderer(FontCache* fontCache);
 

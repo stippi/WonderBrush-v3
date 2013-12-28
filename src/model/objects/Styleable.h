@@ -16,7 +16,7 @@ public:
 								Styleable();
 								Styleable(const rgb_color& color);
 								Styleable(const Styleable& other,
-									ResourceResolver& resolver);
+									CloneContext& context);
 	virtual						~Styleable();
 
 	// Object interface

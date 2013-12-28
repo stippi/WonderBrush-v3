@@ -58,7 +58,7 @@ public:
 	// Object interface
 	virtual	ObjectSnapshot*		Snapshot() const;
 
-	virtual	BaseObject*			Clone(ResourceResolver& resolver) const;
+	virtual	BaseObject*			Clone(CloneContext& context) const;
 
 	virtual	bool				HitTest(const BPoint& canvasPoint);
 
@@ -74,7 +74,7 @@ public:
 			bool				HasObject(Object* object) const;
 
 			void				CloneObjects(Layer* target,
-									ResourceResolver& resolver) const;
+									CloneContext& context) const;
 
 			void				SuspendUpdates(bool suspend);
 			void				Invalidate(const BRect& area,

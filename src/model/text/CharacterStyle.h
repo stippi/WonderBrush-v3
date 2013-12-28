@@ -1,5 +1,5 @@
 /*
- * Copyright 2012 Stephan Aßmus <superstippi@gmx.de>
+ * Copyright 2012-2013 Stephan Aßmus <superstippi@gmx.de>
  * All rights reserved.
  */
 #ifndef CHARACTER_STYLE_H
@@ -7,6 +7,8 @@
 
 #include "Font.h"
 #include "Style.h"
+
+class CloneContext;
 
 class CharacterStyle : public Referenceable {
 public:
@@ -16,6 +18,8 @@ public:
 										const StyleRef& style);
 
 									CharacterStyle(const CharacterStyle& other);
+									CharacterStyle(const CharacterStyle& other,
+										CloneContext& context);
 
 			bool					operator==(
 										const CharacterStyle& other) const;

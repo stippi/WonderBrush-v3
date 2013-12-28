@@ -1,5 +1,5 @@
 /*
- * Copyright 2012 Stephan Aßmus <superstippi@gmx.de>
+ * Copyright 2012-2013 Stephan Aßmus <superstippi@gmx.de>
  * All rights reserved.
  */
 #ifndef STYLE_RUN_H
@@ -7,11 +7,15 @@
 
 #include "CharacterStyle.h"
 
+class CloneContext;
+
 class StyleRun {
 public:
 								StyleRun(
 									const CharacterStyleRef& characterStyle);
 								StyleRun(const StyleRun& other);
+								StyleRun(const StyleRun& other,
+									CloneContext& context);
 
 			StyleRun&			operator=(const StyleRun& other);
 			bool				operator==(const StyleRun& other) const;

@@ -238,7 +238,7 @@ Layer::Snapshot() const
 
 // Clone
 BaseObject*
-Layer::Clone(ResourceResolver& resolver) const
+Layer::Clone(CloneContext& context) const
 {
 	Layer* layer = new(std::nothrow) Layer(fBounds);
 	if (layer == NULL)
@@ -248,7 +248,7 @@ Layer::Clone(ResourceResolver& resolver) const
 	layer->SetGlobalAlpha(fGlobalAlpha);
 	layer->SetBlendingMode(fBlendingMode);
 
-	CloneObjects(layer, resolver);
+	CloneObjects(layer, context);
 
 	return layer;
 }
@@ -383,12 +383,12 @@ Layer::HasObject(Object* object) const
 
 // CloneObjects
 void
-Layer::CloneObjects(Layer* target, ResourceResolver& resolver) const
+Layer::CloneObjects(Layer* target, CloneContext& context) const
 {
 	int32 count = CountObjects();
 	for (int32 i = 0; i < count; i++) {
 		Object* object = ObjectAtFast(i);
-		Object* clone = (Object*)object->Clone(resolver);
+		Object* clone = (Object*)object->Clone(context);
 		if (clone == NULL || !target->AddObject(clone)) {
 			delete clone;
 			break;

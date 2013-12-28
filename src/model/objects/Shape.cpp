@@ -72,14 +72,17 @@ Shape::Shape(const PathRef& path, const rgb_color& color)
 }
 
 // constructor
-Shape::Shape(const Shape& other, ResourceResolver& resolver)
-	: Styleable(other)
+Shape::Shape(const Shape& other, CloneContext& context)
+	: Styleable(other, context)
 	, fPathListener(new(std::nothrow) PathListener(this))
 {
 	int32 count = other.Paths().CountItems();
 	for (int32 i = 0; i < count; i++) {
 		const PathRef& path = other.Paths().ItemAtFast(i);
-		AddPath(PathRef((Path*)path->Clone(resolver), true));
+		PathRef clonedPath;
+		context.Clone(path.Get(), clonedPath);
+		if (clonedPath.Get() != NULL)
+			AddPath(clonedPath);
 	}
 	InitBounds();
 }
@@ -94,9 +97,9 @@ Shape::~Shape()
 
 // Clone
 BaseObject*
-Shape::Clone(ResourceResolver& resolver) const
+Shape::Clone(CloneContext& context) const
 {
-	return new(std::nothrow) Shape(*this, resolver);
+	return new(std::nothrow) Shape(*this, context);
 }
 
 // DefaultName

@@ -29,10 +29,11 @@ Styleable::Styleable(const rgb_color& color)
 }
 
 // constructor
-Styleable::Styleable(const Styleable& other, ResourceResolver& resolver)
+Styleable::Styleable(const Styleable& other, CloneContext& context)
 	: BoundedObject(other)
-	, fStyle((::Style*)other.fStyle->Clone(resolver), true)
+	, fStyle()
 {
+	context.Clone(other.fStyle.Get(), fStyle);
 }
 
 // destructor

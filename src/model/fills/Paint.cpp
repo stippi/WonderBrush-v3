@@ -11,6 +11,7 @@
 
 #include <Message.h>
 
+#include "CloneContext.h"
 #include "Color.h"
 #include "ColorProperty.h"
 #include "Gradient.h"
@@ -32,7 +33,7 @@ Paint::Paint()
 }
 
 // constructor
-Paint::Paint(const Paint& other)
+Paint::Paint(const Paint& other, CloneContext& context)
 	: BaseObject(other)
 	, fType(NONE)
 	, fColor(other.fColor)
@@ -44,6 +45,8 @@ Paint::Paint(const Paint& other)
 	, fGammaCorrectedColorsValid(false)
 {
 	*this = other;
+
+	context.Clone(other.fColor.Get(), fColor);
 }
 
 // constructor
@@ -115,9 +118,9 @@ Paint::~Paint()
 
 // Clone
 BaseObject*
-Paint::Clone(ResourceResolver& resolver) const
+Paint::Clone(CloneContext& context) const
 {
-	return new(std::nothrow) Paint(*this);
+	return new(std::nothrow) Paint(*this, context);
 }
 
 // Unarchive

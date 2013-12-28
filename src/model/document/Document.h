@@ -33,7 +33,7 @@ public:
 								Document(const BRect& bounds);
 	virtual						~Document();
 
-	virtual	BaseObject*			Clone(ResourceResolver& resolver) const;
+	virtual	BaseObject*			Clone(CloneContext& context) const;
 
 	// BaseObject interface
 	virtual	const char*			DefaultName() const;

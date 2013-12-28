@@ -1394,12 +1394,12 @@ TextToolState::_AdoptStyleAtOffset(int32 textOffset)
 	double glyphSpacing;
 	double fauxWeight;
 	double fauxItalic;
-	Color fgColor;
+	TextRenderer::Color fgColor;
 	bool strikeOut;
-	Color strikeColor;
+	TextRenderer::Color strikeColor;
 	bool underline;
 	unsigned underlineStyle;
-	Color underlineColor;
+	TextRenderer::Color underlineColor;
 
 	if (!layout.getInfo(textOffset, font, glyphSpacing, fauxWeight, fauxItalic,
 			fgColor, strikeOut, strikeColor, underline, underlineStyle,

@@ -68,7 +68,8 @@ TextSnapshot::Render(RenderEngine& engine, RenderBuffer* bitmap,
 		renderer.drawText(
 			const_cast<TextLayout*>(&fTextLayout),
 			0, 0, -1, -1,
-			Color(255, 255, 255), Color(80, 128, 255),
+			TextRenderer::Color(255, 255, 255),
+			TextRenderer::Color(80, 128, 255),
 			TEXT_TRANSPARENT
 		);
 		FontCache::getInstance()->ReadUnlock();

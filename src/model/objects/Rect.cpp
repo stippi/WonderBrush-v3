@@ -27,8 +27,8 @@ Rect::Rect(const BRect& area, const rgb_color& color)
 }
 
 // constructor
-Rect::Rect(const Rect& other, ResourceResolver& resolver)
-	: Styleable(other)
+Rect::Rect(const Rect& other, CloneContext& context)
+	: Styleable(other, context)
 	, fArea(other.fArea)
 	, fRoundCornerRadius(other.fRoundCornerRadius)
 {
@@ -44,9 +44,9 @@ Rect::~Rect()
 
 // Clone
 BaseObject*
-Rect::Clone(ResourceResolver& resolver) const
+Rect::Clone(CloneContext& context) const
 {
-	return new(std::nothrow) Rect(*this, resolver);
+	return new(std::nothrow) Rect(*this, context);
 }
 
 // DefaultName

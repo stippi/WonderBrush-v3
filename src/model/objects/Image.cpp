@@ -53,7 +53,7 @@ Image::~Image()
 
 // Clone
 BaseObject*
-Image::Clone(ResourceResolver& resolver) const
+Image::Clone(CloneContext& context) const
 {
 	return new(std::nothrow) Image(*this);
 }

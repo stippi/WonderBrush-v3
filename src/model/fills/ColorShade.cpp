@@ -10,11 +10,11 @@
 
 #include <OS.h>
 
+#include "CloneContext.h"
 #include "CommonPropertyIDs.h"
 #include "Property.h"
 #include "Paint.h"
 #include "rgb_hsv.h"
-#include "ResourceResolver.h"
 #include "ui_defines.h"
 
 // constructor
@@ -29,7 +29,7 @@ ColorShade::ColorShade()
 }
 
 // constructor
-ColorShade::ColorShade(const ColorShade& other, ResourceResolver& resolver)
+ColorShade::ColorShade(const ColorShade& other, CloneContext& context)
 	:
 	ColorProvider(),
 	fColorProvider(),
@@ -37,8 +37,8 @@ ColorShade::ColorShade(const ColorShade& other, ResourceResolver& resolver)
 	fSaturation(other.fSaturation),
 	fValue(other.fValue)
 {
-	BaseObject* object = resolver.Resolve(other.fColorProvider.Get());
-	ColorProvider* provider = dynamic_cast<ColorProvider*>(object);
+	BaseObjectRef ref = context.Clone(other.fColorProvider.Get());
+	ColorProvider* provider = dynamic_cast<ColorProvider*>(ref.Get());
 	if (provider != NULL)
 		SetColorProvider(ColorProviderRef(provider));
 }
@@ -99,9 +99,9 @@ ColorShade::GetColor() const
 
 // Clone
 BaseObject*
-ColorShade::Clone(ResourceResolver& resolver) const
+ColorShade::Clone(CloneContext& context) const
 {
-	return new(std::nothrow) ColorShade(*this, resolver);
+	return new(std::nothrow) ColorShade(*this, context);
 }
 
 // AddProperties

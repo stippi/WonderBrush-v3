@@ -1,9 +1,11 @@
 /*
- * Copyright 2012 Stephan Aßmus <superstippi@gmx.de>
+ * Copyright 2012-2013 Stephan Aßmus <superstippi@gmx.de>
  * All rights reserved.
  */
 
 #include "CharacterStyle.h"
+
+#include "CloneContext.h"
 
 // constructor
 CharacterStyle::CharacterStyle(const Font& font, double glyphSpacing,
@@ -24,6 +26,18 @@ CharacterStyle::CharacterStyle(const CharacterStyle& other)
 	, fFauxItalic(other.fFauxItalic)
 	, fStyle(other.fStyle.Get())
 {
+}
+
+// constructor
+CharacterStyle::CharacterStyle(const CharacterStyle& other,
+		CloneContext& context)
+	: fFont(other.fFont)
+	, fGlyphSpacing(other.fGlyphSpacing)
+	, fFauxWeight(other.fFauxWeight)
+	, fFauxItalic(other.fFauxItalic)
+	, fStyle()
+{
+	context.Clone(other.fStyle.Get(), fStyle);
 }
 
 // ==

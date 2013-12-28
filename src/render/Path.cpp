@@ -139,7 +139,7 @@ Path::~Path()
 
 // Clone
 BaseObject*
-Path::Clone(ResourceResolver& resolver) const
+Path::Clone(CloneContext& context) const
 {
 	return new(std::nothrow) Path(*this);
 }

@@ -22,6 +22,19 @@ StyleRunList::StyleRunList(const StyleRunList& other)
 	*this = other;
 }
 
+// constructor
+StyleRunList::StyleRunList(const StyleRunList& other, CloneContext& context)
+	: fRuns(4)
+{
+	int32 count = other.fRuns.CountItems();
+	for (int32 i = 0; i < count; i++) {
+		StyleRun* run = (StyleRun*)other.fRuns.ItemAtFast(i);
+		StyleRun clone(*run, context);
+		if (!Append(clone))
+			break;
+	}
+}
+
 // =
 StyleRunList&
 StyleRunList::operator=(const StyleRunList& other)

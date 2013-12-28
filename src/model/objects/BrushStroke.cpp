@@ -78,12 +78,15 @@ BrushStroke::BrushStroke()
 }
 
 // constructor
-BrushStroke::BrushStroke(const BrushStroke& other, ResourceResolver& resolver)
+BrushStroke::BrushStroke(const BrushStroke& other, CloneContext& context)
 	: BoundedObject(other)
-	, fBrush((::Brush*)other.fBrush->Clone(resolver), true)
-	, fPaint((::Paint*)other.fPaint->Clone(resolver), true)
+	, fBrush()
+	, fPaint()
 	, fStroke(other.fStroke)
 {
+	context.Clone(other.fBrush.Get(), fBrush);
+	context.Clone(other.fPaint.Get(), fPaint);
+
 	if (fPaint.Get() != NULL)
 		fPaint->AddListener(this);
 }
@@ -99,9 +102,9 @@ BrushStroke::~BrushStroke()
 
 // Clone
 BaseObject*
-BrushStroke::Clone(ResourceResolver& resolver) const
+BrushStroke::Clone(CloneContext& context) const
 {
-	return new(std::nothrow) BrushStroke(*this, resolver);
+	return new(std::nothrow) BrushStroke(*this, context);
 }
 
 // DefaultName

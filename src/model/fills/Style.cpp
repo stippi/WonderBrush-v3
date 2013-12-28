@@ -32,7 +32,7 @@ Style::Style()
 }
 
 // constructor
-Style::Style(const Style& other)
+Style::Style(const Style& other, CloneContext& context)
 	:
 	BaseObject(other),
 	fSetProperties(0),
@@ -55,9 +55,9 @@ Style::~Style()
 
 // Clone
 BaseObject*
-Style::Clone(ResourceResolver& resolver) const
+Style::Clone(CloneContext& context) const
 {
-	return new(std::nothrow) Style(*this);
+	return new(std::nothrow) Style(*this, context);
 }
 
 // Unarchive

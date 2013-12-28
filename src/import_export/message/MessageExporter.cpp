@@ -11,6 +11,8 @@
 #include <TypeConstants.h>
 
 #include "DocumentVisitor.h"
+#include "Color.h"
+#include "ColorShade.h"
 
 // constructor
 MessageExporter::MessageExporter()
@@ -28,14 +30,24 @@ class ArchiveVisitor : public DocumentVisitor<BMessage> {
 	typedef DocumentVisitor<BMessage> inherited;
 	
 public:
-	ArchiveVisitor()
-		: status(B_OK)
+	ArchiveVisitor(const DocumentRef& document, BMessage* archive)
+		: fDocument(document)
+		, status(B_OK)
 	{
+		VisitDocument(fDocument.Get(), archive);
 	}	
 	
 	virtual bool VisitDocument(Document* document, BMessage* context)
 	{
-		return inherited::VisitDocument(document, context);
+		status = context->AddRect("bounds", document->Bounds());
+		if (status == B_OK) {
+			BMessage resources;
+			status = _StoreResources(document->GlobalResources(), &resources);
+			if (status == B_OK)
+				status = context->AddMessage("resources", &resources);
+		}
+		
+		return status == B_OK && !inherited::VisitDocument(document, context);
 	}
 
 	virtual bool VisitLayer(Layer* layer, BMessage* context)
@@ -63,6 +75,12 @@ public:
 			status = context->AddMessage("object", &archive);
 		
 		return status == B_OK;
+	}
+
+	virtual bool VisitBoundedObject(BoundedObject* boundedObject,
+		BMessage* context)
+	{
+		return inherited::VisitBoundedObject(boundedObject, context);
 	}
 
 	virtual bool VisitFilter(Filter* filter, BMessage* context)
@@ -97,26 +115,194 @@ public:
 		return status == B_OK;
 	}
 
+	virtual bool VisitStyleable(Styleable* styleable, BMessage* context)
+	{
+		BMessage styleArchive;
+		status = _StoreResourceOrIndex(styleable->Style(), &styleArchive);
+		if (status == B_OK)
+			status = context->AddMessage("style", &styleArchive);
+		if (status != B_OK)
+			return false;
+		return inherited::VisitStyleable(styleable, context);
+	}
+
 	virtual bool VisitRect(Rect* rect, BMessage* context)
 	{
 		status = context->AddString(kType, "Rect");
+		if (status == B_OK)
+			status = context->AddRect("area", rect->Area());
+		if (status == B_OK && rect->RoundCornerRadius() != 0.0)
+			status = context->AddDouble("radius", rect->RoundCornerRadius());
 		return status == B_OK;
 	}
 
 	virtual bool VisitShape(Shape* shape, BMessage* context)
 	{
 		status = context->AddString(kType, "Shape");
+		const PathList& paths = shape->Paths();
+		int32 pathCount = paths.CountItems();
+		for (int32 i = 0; i < pathCount; i++) {
+			BMessage pathArchive;
+			const PathRef& path = paths.ItemAtFast(i);
+			printf("path: %p\n", path.Get());
+			status = _StoreResourceOrIndex(path.Get(), &pathArchive);
+			if (status != B_OK)
+				break;
+			status = context->AddMessage("path", &pathArchive);
+		}
 		return status == B_OK;
 	}
 
 	virtual bool VisitText(Text* text, BMessage* context)
 	{
 		status = context->AddString(kType, "Text");
+		if (status == B_OK && text->GetCharCount() > 0)
+			status = context->AddString("text", text->GetText());
 		return status == B_OK;
 	}
 
+private:
+	status_t _StoreResources(const ResourceList& resources,
+		BMessage* archive) const
+	{
+		int32 count = resources.CountObjects();
+		for (int32 i = 0; i < count; i++) {
+			BaseObject* object = resources.ObjectAtFast(i);
+			printf("storing: %p\n", object);
+			BMessage objectArchive;
+			status_t ret = _StoreResource(object, &objectArchive);
+			if (ret == B_OK)
+				ret = archive->AddMessage("object", &objectArchive);
+			if (ret != B_OK)
+				return ret;
+		}
+		return B_OK;
+	}
+
+	status_t _StoreResource(BaseObject* object, BMessage* archive) const
+	{
+		Path* path = dynamic_cast<Path*>(object);
+		if (path != NULL)
+			return _StorePath(path, archive);
+
+		Style* style = dynamic_cast<Style*>(object);
+		if (style != NULL)
+			return _StoreStyle(style, archive);
+
+		ColorProvider* provider = dynamic_cast<ColorProvider*>(object);
+		if (provider != NULL)
+			return _StoreColorProvider(provider, archive);
+
+		Brush* brush = dynamic_cast<Brush*>(object);
+		if (brush != NULL)
+			return _StoreBrush(brush, archive);
+	
+		fprintf(stderr, "Unkown resource object type!\n");
+		return B_OK;
+	}
+
+	status_t _StorePath(Path* path, BMessage* archive) const
+	{
+		status_t ret = path->Archive(archive, true);
+		if (ret != B_OK)
+			return ret;
+		return archive->AddString(kType, "Path");
+	}
+
+	status_t _StoreStyle(Style* style, BMessage* archive) const
+	{
+		status_t ret = style->Archive(archive, true);
+		if (ret != B_OK)
+			return ret;
+		return archive->AddString(kType, "Style");
+	}
+
+	status_t _StoreColorProvider(ColorProvider* provider,
+		BMessage* archive) const
+	{
+		Color* color = dynamic_cast<Color*>(provider);
+		if (color != NULL)
+			return _StoreColor(color, archive);
+
+		ColorShade* shade = dynamic_cast<ColorShade*>(provider);
+		if (shade != NULL)
+			return _StoreColorShade(shade, archive);
+	
+		fprintf(stderr, "Unkown ColorProvider type!\n");
+		return B_OK;
+	}
+
+	status_t _StoreColor(Color* color, BMessage* archive) const
+	{
+		const rgb_color& rgba = color->GetColor();
+		
+		status_t ret = B_OK;
+		if (ret == B_OK)
+			ret = archive->AddInt32("r", rgba.red);
+		if (ret == B_OK)
+			ret = archive->AddInt32("g", rgba.green);
+		if (ret == B_OK)
+			ret = archive->AddInt32("b", rgba.blue);
+		if (ret == B_OK)
+			ret = archive->AddInt32("a", rgba.alpha);
+
+		if (ret == B_OK)
+			ret = archive->AddString(kType, "Color");
+			
+		return ret;
+	}
+
+	status_t _StoreColorShade(ColorShade* shade, BMessage* archive) const
+	{
+		status_t ret = B_OK;
+
+		if (ret == B_OK)
+			ret = archive->AddFloat("h", shade->Hue());
+		if (ret == B_OK)
+			ret = archive->AddFloat("s", shade->Saturation());
+		if (ret == B_OK)
+			ret = archive->AddFloat("v", shade->Value());
+
+		const ColorProviderRef& provider = shade->GetColorProvider();
+		if (ret == B_OK)
+			ret = _StoreResourceOrIndex(provider.Get(), archive);
+
+		if (ret == B_OK)
+			ret = archive->AddString(kType, "ColorShade");
+			
+		return ret;
+	}
+
+	status_t _StoreBrush(Brush* brush, BMessage* archive) const
+	{
+		status_t ret = brush->Archive(archive, true);
+		if (ret != B_OK)
+			return ret;
+		return archive->AddString(kType, "Brush");
+	}
+
+	status_t _StoreResourceOrIndex(BaseObject* object, BMessage* archive) const
+	{
+		if (object == NULL)
+			return B_OK;
+		
+		int32 index = _GlobalResourceIndex(object);
+		if (index >= 0)
+			return archive->AddInt32("resource", index);
+	
+		return _StoreResource(object, archive);
+	}
+
+	int32 _GlobalResourceIndex(BaseObject* object) const
+	{
+		return fDocument->GlobalResources().IndexOf(object);
+	}
+
+private:
+	DocumentRef		fDocument;
+
 public:
-	status_t	status;
+	status_t		status;
 };
 
 // Export
@@ -142,8 +328,7 @@ MessageExporter::Export(const DocumentRef& document, BPositionIO* stream)
 	if (ret == B_OK) {
 		BMessage archive;
 		
-		ArchiveVisitor visitor;
-		visitor.VisitDocument(document.Get(), &archive);
+		ArchiveVisitor visitor(document, &archive);
 		ret = visitor.status;
 
 		archive.PrintToStream();
