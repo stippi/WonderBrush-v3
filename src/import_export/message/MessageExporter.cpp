@@ -56,7 +56,11 @@ public:
 		if (!inherited::VisitLayer(layer, &archive))
 			return false;
 
-		return context->AddMessage("layer", &archive) == B_OK;
+		status = archive.AddString(kType, "Layer");
+		if (status == B_OK)
+			status = context->AddMessage("object", &archive);
+
+		return status == B_OK;
 	}
 
 	virtual bool VisitObject(Object* object, BMessage* context)
@@ -211,10 +215,100 @@ private:
 
 	status_t _StoreStyle(Style* style, BMessage* archive) const
 	{
-		status_t ret = style->Archive(archive, true);
-		if (ret != B_OK)
-			return ret;
-		return archive->AddString(kType, "Style");
+		status_t ret = archive->AddString(kType, "Style");
+
+		Paint* fillPaint = style->FillPaint();
+		if (ret == B_OK && fillPaint != NULL
+			&& fillPaint->Type() != Paint::NONE) {
+			BMessage paintArchive;
+			ret = _StorePaint(fillPaint, &paintArchive);
+			if (ret == B_OK)
+				ret = archive->AddMessage("fill paint", &paintArchive);
+		}
+
+		Paint* strokePaint = style->StrokePaint();
+		if (ret == B_OK && strokePaint != NULL
+			&& strokePaint->Type() != Paint::NONE) {
+			BMessage paintArchive;
+			ret = _StorePaint(strokePaint, &paintArchive);
+			if (ret == B_OK)
+				ret = archive->AddMessage("stroke paint", &paintArchive);
+		}
+
+		StrokeProperties* strokeProperties = style->StrokeProperties();
+		if (ret == B_OK && strokeProperties != NULL
+			&& strokeProperties->SetProperties() != 0) {
+			BMessage propertiesArchive;
+			ret = _StoreStrokeProperties(strokeProperties, &propertiesArchive);
+			if (ret == B_OK) {
+				ret = archive->AddMessage("stroke properties",
+					&propertiesArchive);
+			}
+		}
+
+		return ret;
+	}
+
+	status_t _StorePaint(Paint* paint, BMessage* archive) const
+	{
+		status_t ret = B_OK;
+
+		switch (paint->Type()) {
+			default:
+			case Paint::NONE:
+				break;
+
+			case Paint::COLOR:
+			{
+				const ColorProviderRef& ref = paint->GetColorProvider();
+				if (ref.Get() != NULL) {
+					BMessage providerArchive;
+					ret = _StoreColorProvider(ref.Get(), &providerArchive);
+					if (ret == B_OK)
+						ret = archive->AddMessage("color", &providerArchive);
+				}
+				break;
+			}
+
+			case Paint::GRADIENT:
+				fprintf(stderr,
+					"MessageExporter::_StorePaint() - Implement GRADIENT!\n");
+				break;
+
+			case Paint::PATTERN:
+				fprintf(stderr,
+					"MessageExporter::_StorePaint() - Implement PATTERN!\n");
+				break;
+		}
+
+		return ret;
+	}
+
+	status_t _StoreStrokeProperties(StrokeProperties* properties,
+		BMessage* archive) const
+	{
+		uint32 flags = properties->SetProperties();
+		status_t ret = B_OK;
+
+		if (ret == B_OK && (flags & STROKE_WIDTH) != 0)
+			ret = archive->AddFloat("width", properties->Width());
+
+		if (ret == B_OK && (flags & STROKE_MITER_LIMIT) != 0)
+			ret = archive->AddFloat("miter limit", properties->MiterLimit());
+
+		if (ret == B_OK && (flags & STROKE_CAP_MODE) != 0)
+			ret = archive->AddInt32("cap mode", properties->CapMode());
+
+		if (ret == B_OK && (flags & STROKE_JOIN_MODE) != 0)
+			ret = archive->AddInt32("join mode", properties->JoinMode());
+
+		if (ret == B_OK && (flags & STROKE_POSITION) != 0)
+			ret = archive->AddInt32("position", properties->StrokePosition());
+
+		if (ret == B_OK)
+			ret = archive->AddString(kType, "StrokeProperties");
+
+		return ret;
 	}
 
 	status_t _StoreColorProvider(ColorProvider* provider,
@@ -335,6 +429,8 @@ MessageExporter::Export(const DocumentRef& document, BPositionIO* stream)
 
 		if (ret == B_OK)
 			ret = archive.Flatten(stream);
+		else
+			fprintf(stderr, "Error archiving document: %s\n", strerror(ret));
 	}
 
 	return ret;
