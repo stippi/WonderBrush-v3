@@ -185,6 +185,19 @@ FilterDropShadow::SetOpacity(float opacity)
 	_SetMember(fOpacity, opacity);
 }
 
+// SetColor
+void
+FilterDropShadow::SetColor(const ColorProviderRef& color)
+{
+	if (fColorProvider != color) {
+		fColorProvider = color;
+
+		UpdateChangeCounter();
+		InvalidateParent();
+		Notify();
+	}
+}
+
 // #pragma mark -
 
 // _SetMember
