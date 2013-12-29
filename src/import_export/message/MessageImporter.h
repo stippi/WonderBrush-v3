@@ -9,6 +9,9 @@
 
 class BMessage;
 class BPositionIO;
+class BaseObject;
+class BoundedObject;
+class Object;
 class Styleable;
 
 class MessageImporter {
@@ -70,6 +73,12 @@ private:
 									Container* container) const;
 
 			void				_RestoreStyleable(Styleable* styleable,
+									const BMessage& archive) const;
+			void				_RestoreBoundedObject(BoundedObject* object,
+									const BMessage& archive) const;
+			void				_RestoreObject(Object* object,
+									const BMessage& archive) const;
+			void				_RestoreBaseObject(BaseObject* object,
 									const BMessage& archive) const;
 
 private:

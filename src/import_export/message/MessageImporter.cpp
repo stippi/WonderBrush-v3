@@ -366,6 +366,8 @@ void
 MessageImporter::_RestoreStyleable(Styleable* styleable,
 	const BMessage& archive) const
 {
+	_RestoreBoundedObject(styleable, archive);
+
 	BMessage styleArchive;
 	if (archive.FindMessage("style", &styleArchive) != B_OK)
 		return;
@@ -374,5 +376,30 @@ MessageImporter::_RestoreStyleable(Styleable* styleable,
 	Style* style = dynamic_cast<Style*>(styleRef.Get());
 	if (style != NULL)
 		styleable->SetStyle(style);
+}
+
+// _RestoreBoundedObject
+void
+MessageImporter::_RestoreBoundedObject(BoundedObject* object,
+	const BMessage& archive) const
+{
+	_RestoreObject(object, archive);
+}
+
+// _RestoreObject
+void
+MessageImporter::_RestoreObject(Object* object, const BMessage& archive) const
+{
+	_RestoreBaseObject(object, archive);
+}
+
+// _RestoreBaseObject
+void
+MessageImporter::_RestoreBaseObject(BaseObject* object,
+	const BMessage& archive) const
+{
+	BString name;
+	if (archive.FindString("name", &name) == B_OK)
+		object->SetName(name);
 }
 
