@@ -93,7 +93,12 @@ MessageImporter::ImportDocument(const BMessage& archive) const
 	if (ret != B_OK)
 		return ret;
 
-	return ImportObjects(archive, fDocument->RootLayer());
+	BMessage rootLayer;
+	ret = archive.FindMessage("object", &rootLayer);
+	if (ret != B_OK)
+		return ret;
+
+	return ImportObjects(rootLayer, fDocument->RootLayer());
 }
 
 // ImportGlobalResources
