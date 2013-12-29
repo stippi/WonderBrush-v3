@@ -566,7 +566,7 @@ MessageImporter::ImportStyle(const BMessage& archive) const
 		}
 
 		BMessage strokePropertiesArchive;
-		if (archive.FindMessage("stroke paint",
+		if (archive.FindMessage("stroke properties",
 				&strokePropertiesArchive) == B_OK) {
 			BaseObjectRef ref = ImportObject(strokePropertiesArchive);
 			StrokeProperties* strokeProperties
