@@ -47,7 +47,7 @@ public:
 
 								Path();
 								Path(const Path& other);
-								Path(BMessage* archive);
+								Path(const BMessage* archive);
 
 	virtual						~Path();
 

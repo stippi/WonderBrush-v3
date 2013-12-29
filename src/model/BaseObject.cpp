@@ -33,7 +33,7 @@ BaseObject::BaseObject(const BaseObject& other)
 }
 
 // archive constructor
-BaseObject::BaseObject(BMessage* archive)
+BaseObject::BaseObject(const BMessage* archive)
 	: Notifier(),
 	  Referenceable(),
 

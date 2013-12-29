@@ -26,7 +26,7 @@ public:
 public:
 								BaseObject();
 								BaseObject(const BaseObject& other);
-								BaseObject(BMessage* archive);
+								BaseObject(const BMessage* archive);
 	virtual						~BaseObject();
 
 	// BaseObject

@@ -74,7 +74,7 @@ Path::Path(const Path& other)
 }
 
 // constructor
-Path::Path(BMessage* archive)
+Path::Path(const BMessage* archive)
 	:
 	BArchivable(),
 	BaseObject(archive),
