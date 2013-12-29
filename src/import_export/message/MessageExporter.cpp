@@ -11,6 +11,7 @@
 #include <TypeConstants.h>
 
 #include "bitmap_compression.h"
+#include "Brush.h"
 #include "DocumentVisitor.h"
 #include "CharacterStyle.h"
 #include "Color.h"
@@ -131,12 +132,46 @@ public:
 		return status == B_OK;
 	}
 
-	virtual bool VisitBrushStroke(BrushStroke* stroke, BMessage* context)
+	virtual bool VisitBrushStroke(BrushStroke* brushStroke, BMessage* context)
 	{
 		status = context->AddString(kType, "BrushStroke");
-		// TODO: Brush
-		// TODO: Stroke
-		// TODO: Color
+		if (status == B_OK) {
+			BMessage brushArchive;
+			status = _StoreResourceOrIndex(brushStroke->Brush(), &brushArchive);
+			if (status == B_OK)
+				status = context->AddMessage("brush", &brushArchive);
+		}
+
+		if (status == B_OK) {
+			BMessage paintArchive;
+			status = _StoreResourceOrIndex(brushStroke->Paint(), &paintArchive);
+			if (status == B_OK)
+				status = context->AddMessage("paint", &paintArchive);
+		}	
+
+		if (status == B_OK) {
+			BMessage strokeArchive;
+			const Stroke& stroke = brushStroke->Stroke();
+			int32 count = stroke.CountObjects();
+			for (int32 i = 0; i < count; i++) {
+				StrokePoint* point = stroke.ObjectAt(i);
+				status = strokeArchive.AddPoint("point", point->point);
+				if (status == B_OK) {
+					status = strokeArchive.AddFloat("pressure",
+						point->pressure);
+				}
+				if (status == B_OK)
+					status = strokeArchive.AddFloat("tilt-x", point->tiltX);
+				if (status == B_OK)
+					status = strokeArchive.AddFloat("tilt-y", point->tiltY);
+				if (status != B_OK)
+					break;
+			}
+
+			if (status == B_OK)
+				status = context->AddMessage("stroke", &strokeArchive);
+		}	
+
 		return status == B_OK;
 	}
 
@@ -257,6 +292,10 @@ private:
 		Brush* brush = dynamic_cast<Brush*>(object);
 		if (brush != NULL)
 			return _StoreBrush(brush, archive);
+
+		Paint* paint = dynamic_cast<Paint*>(object);
+		if (paint != NULL)
+			return _StorePaint(paint, archive);
 	
 		fprintf(stderr, "Unkown resource object type!\n");
 		return B_OK;

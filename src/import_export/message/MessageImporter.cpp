@@ -198,8 +198,46 @@ MessageImporter::ImportObject(const BMessage& archive) const
 BaseObjectRef
 MessageImporter::ImportBrushStroke(const BMessage& archive) const
 {
-	// TODO
-	return BaseObjectRef();
+	BrushStroke* brushStroke = new BrushStroke();
+	if (brushStroke != NULL) {
+		BMessage brushArchive;
+		if (archive.FindMessage("brush", &brushArchive) == B_OK) {
+			BaseObjectRef ref = ImportObject(brushArchive);
+			Brush* brush = dynamic_cast<Brush*>(ref.Get());
+			if (brush != NULL)
+				brushStroke->SetBrush(brush);
+		}
+
+		BMessage paintArchive;
+		if (archive.FindMessage("paint", &paintArchive) == B_OK) {
+			BaseObjectRef ref = ImportObject(paintArchive);
+			Paint* paint = dynamic_cast<Paint*>(ref.Get());
+			if (paint != NULL)
+				brushStroke->SetPaint(paint);
+		}
+
+		BMessage strokeArchive;
+		if (archive.FindMessage("stroke", &strokeArchive) == B_OK) {
+			for (int32 i = 0;; i++) {
+				BPoint point;
+				float pressure;
+				float tiltX;
+				float tiltY;
+				if (strokeArchive.FindPoint("point", i, &point) != B_OK
+					|| strokeArchive.FindFloat("pressure", i,
+						&pressure) != B_OK
+					|| strokeArchive.FindFloat("tilt-x", i, &tiltX) != B_OK
+					|| strokeArchive.FindFloat("tilt-y", i, &tiltY) != B_OK
+					|| !brushStroke->AppendPoint(
+							StrokePoint(point, pressure, tiltX, tiltY))) {
+					break;
+				}
+			}
+		}
+
+		_RestoreBoundedObject(brushStroke, archive);
+	}
+	return BaseObjectRef(brushStroke, true);
 }
 
 // ImportFilterGaussianBlur
