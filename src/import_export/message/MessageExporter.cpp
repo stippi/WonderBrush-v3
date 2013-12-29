@@ -57,6 +57,10 @@ public:
 			return false;
 
 		status = archive.AddString(kType, "Layer");
+
+		if (status == B_OK)
+			status = _StoreObject(layer, &archive);
+
 		if (status == B_OK)
 			status = context->AddMessage("object", &archive);
 
@@ -69,11 +73,7 @@ public:
 		if (!inherited::VisitObject(object, &archive))
 			return false;
 		
-		status = B_OK;
-
-		const BString& name = object->GivenName();
-		if (status == B_OK && name.Length() > 0)
-			status = archive.AddString("name", name);
+		status = _StoreObject(object, &archive);
 
 		if (status == B_OK)
 			status = context->AddMessage("object", &archive);
@@ -90,6 +90,8 @@ public:
 	virtual bool VisitFilter(Filter* filter, BMessage* context)
 	{
 		status = context->AddString(kType, "FilterGaussianBlur");
+		if (status == B_OK)
+			status = context->AddFloat("radius", filter->FilterRadius());
 		return status == B_OK;
 	}
 
@@ -97,6 +99,21 @@ public:
 		BMessage* context)
 	{
 		status = context->AddString(kType, "FilterDropShadow");
+		if (status == B_OK)
+			status = context->AddFloat("radius", dropShadow->FilterRadius());
+		if (status == B_OK)
+			status = context->AddFloat("offset-x", dropShadow->OffsetX());
+		if (status == B_OK)
+			status = context->AddFloat("offset-y", dropShadow->OffsetY());
+		if (status == B_OK)
+			status = context->AddFloat("opacity", dropShadow->Opacity());
+		if (status == B_OK && dropShadow->Color().Get() != NULL) {
+			BMessage colorArchive;
+			status = _StoreColorProvider(dropShadow->Color().Get(),
+				&colorArchive);
+			if (status == B_OK)
+				status = context->AddMessage("color", &colorArchive);
+		}
 		return status == B_OK;
 	}
 
@@ -104,18 +121,24 @@ public:
 		BMessage* context)
 	{
 		status = context->AddString(kType, "FilterSaturation");
+		if (status == B_OK)
+			status = context->AddFloat("saturation", saturation->Saturation());
 		return status == B_OK;
 	}
 
 	virtual bool VisitBrushStroke(BrushStroke* stroke, BMessage* context)
 	{
 		status = context->AddString(kType, "BrushStroke");
+		// TODO: Brush
+		// TODO: Stroke
+		// TODO: Color
 		return status == B_OK;
 	}
 
 	virtual bool VisitImage(Image* image, BMessage* context)
 	{
 		status = context->AddString(kType, "Image");
+		// TODO: Image data
 		return status == B_OK;
 	}
 
@@ -162,10 +185,29 @@ public:
 		status = context->AddString(kType, "Text");
 		if (status == B_OK && text->GetCharCount() > 0)
 			status = context->AddString("text", text->GetText());
+		// TODO: StyleRuns
 		return status == B_OK;
 	}
 
 private:
+	status_t _StoreObject(Object* object, BMessage* archive) const
+	{
+		status_t ret = B_OK;
+
+		const BString& name = object->GivenName();
+		if (name.Length() > 0)
+			ret = archive->AddString("name", name);
+
+		if (ret == B_OK && !object->IsIdentity()) {
+			double matrix[Transformable::MatrixSize];
+			object->StoreTo(matrix);
+			ret = archive->AddData("matrix", B_DOUBLE_TYPE,
+				matrix, sizeof(matrix));
+		}
+
+		return ret;
+	}
+
 	status_t _StoreResources(const ResourceList& resources,
 		BMessage* archive) const
 	{
