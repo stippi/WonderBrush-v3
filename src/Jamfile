@@ -258,6 +258,7 @@ Application WonderBrush :
 
 	# support
 	AbstractLOAdapter.cpp
+	bitmap_compression.cpp
 	bitmap_support.cpp
 	Debug.cpp
 	HashString.cpp
@@ -328,6 +329,7 @@ Application WonderBrush :
 		translation
 		localestub
 		be
+		z
 	:
 		WonderBrush.rdef
 	;
