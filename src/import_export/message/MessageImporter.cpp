@@ -226,6 +226,9 @@ MessageImporter::ImportLayer(const BMessage& archive) const
 	Layer* layer = new(std::nothrow) Layer(fDocument->Bounds());
 	if (layer != NULL)
 		ImportObjects(archive, layer);
+
+	_RestoreObject(layer, archive);
+
 	return BaseObjectRef(layer, true);
 }
 
