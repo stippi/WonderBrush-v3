@@ -36,6 +36,8 @@ public:
 									{ return fBytesPerRow; }
 	inline	uint32				BytesPerPixel() const
 									{ return fBytesPerPixel; }
+	inline	uint32				BitsLength() const
+									{ return Height() * BytesPerRow(); }
 			BRect				Bounds() const;
 	inline	int32				Left() const
 									{ return fLeft; }
