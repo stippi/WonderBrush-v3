@@ -90,6 +90,11 @@ Shape::Shape(const Shape& other, CloneContext& context)
 // destructor
 Shape::~Shape()
 {
+	int32 count = fPaths.CountItems();
+	for (int32 i = 0; i < count; i++) {
+		const PathRef& path = fPaths.ItemAtFast(i);
+		path->RemoveListener(fPathListener);
+	}
 	delete fPathListener;
 }
 
