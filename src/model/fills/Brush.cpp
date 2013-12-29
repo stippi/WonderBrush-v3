@@ -33,6 +33,9 @@ init_gauss_table(uint8* table)
 static uint8 sGaussTable[256];
 static bool dummy = init_gauss_table(sGaussTable);
 
+static uint32 kDefaultFlags = Brush::FLAG_PRESSURE_CONTROLS_APHLA
+	| Brush::FLAG_PRESSURE_CONTROLS_RADIUS | Brush::FLAG_TILT_CONTROLS_SHAPE;
+
 // constructor
 Brush::Brush()
 	: BaseObject()
@@ -42,8 +45,7 @@ Brush::Brush()
 	, fMaxRadius(1.0f)
 	, fMinHardness(0.0f)
 	, fMaxHardness(1.0f)
-	, fFlags(FLAG_PRESSURE_CONTROLS_APHLA | FLAG_PRESSURE_CONTROLS_RADIUS
-		| FLAG_TILT_CONTROLS_SHAPE)
+	, fFlags(kDefaultFlags)
 {
 }
 
@@ -92,7 +94,23 @@ Brush::Unarchive(const BMessage* archive)
 {
 	status_t ret = BaseObject::Unarchive(archive);
 
-	// TODO: ...
+	if (archive->FindFloat("opacity-min", &fMinOpacity) != B_OK)
+		fMinOpacity = 0.0f;
+	if (archive->FindFloat("opacity-max", &fMaxOpacity) != B_OK)
+		fMaxOpacity = 1.0f;
+
+	if (archive->FindFloat("radius-min", &fMinRadius) != B_OK)
+		fMinRadius = 0.0f;
+	if (archive->FindFloat("radius-max", &fMaxRadius) != B_OK)
+		fMaxRadius = 1.0f;
+
+	if (archive->FindFloat("hardness-min", &fMinHardness) != B_OK)
+		fMinHardness = 0.0f;
+	if (archive->FindFloat("hardness-max", &fMaxHardness) != B_OK)
+		fMaxHardness = 1.0f;
+
+	if (archive->FindUInt32("flags", &fFlags) != B_OK)
+		fFlags = kDefaultFlags;
 
 	return ret;
 }
@@ -103,7 +121,26 @@ Brush::Archive(BMessage* into, bool deep) const
 {
 	status_t ret = BaseObject::Archive(into, deep);
 
-	// TODO: ...
+	if (ret == B_OK && fMinOpacity != 0.0f)
+		ret = into->AddFloat("opacity-min", fMinOpacity);
+
+	if (ret == B_OK && fMaxOpacity != 1.0f)
+		ret = into->AddFloat("opacity-max", fMaxOpacity);
+
+	if (ret == B_OK && fMinRadius != 0.0f)
+		ret = into->AddFloat("radius-min", fMinRadius);
+
+	if (ret == B_OK && fMaxRadius != 1.0f)
+		ret = into->AddFloat("radius-max", fMaxRadius);
+		
+	if (ret == B_OK && fMinHardness != 0.0f)
+		ret = into->AddFloat("hardness-min", fMinHardness);
+
+	if (ret == B_OK && fMaxHardness != 1.0f)
+		ret = into->AddFloat("hardness-max", fMaxHardness);
+
+	if (ret == B_OK && fFlags != kDefaultFlags)
+		ret = into->AddUInt32("flags", fFlags);
 
 	return ret;
 }

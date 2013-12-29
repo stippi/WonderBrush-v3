@@ -198,6 +198,7 @@ MessageImporter::ImportObject(const BMessage& archive) const
 BaseObjectRef
 MessageImporter::ImportBrushStroke(const BMessage& archive) const
 {
+	// TODO
 	return BaseObjectRef();
 }
 
