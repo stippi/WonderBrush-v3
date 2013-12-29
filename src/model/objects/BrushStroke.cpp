@@ -94,8 +94,8 @@ BrushStroke::BrushStroke(const BrushStroke& other, CloneContext& context)
 // destructor
 BrushStroke::~BrushStroke()
 {
-	SetBrush(NULL);
-	SetPaint(NULL);
+	if (fPaint.Get() != NULL)
+		fPaint->RemoveListener(this);
 }
 
 // #pragma mark -
@@ -265,6 +265,9 @@ BrushStroke::AppendPoint(const StrokePoint& point)
 			"tracking point to BrushStroke. Out of memory\n");
 		return false;
 	}
+
+	if (fBrush.Get() == NULL)
+		return true;
 
 	float radius = fBrush->Radius(point.pressure);
 	invalid = invalid
