@@ -159,6 +159,8 @@ public:
 
 	inline ObjectType* LastObject() const
 	{
+		if (fCount == 0)
+			return NULL;
 		return ObjectAt((int32)fCount - 1);
 	}
 
