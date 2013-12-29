@@ -224,11 +224,11 @@ BaseObjectRef
 MessageImporter::ImportLayer(const BMessage& archive) const
 {
 	Layer* layer = new(std::nothrow) Layer(fDocument->Bounds());
-	if (layer != NULL)
+	if (layer != NULL) {
 		ImportObjects(archive, layer);
 
-	_RestoreObject(layer, archive);
-
+		_RestoreObject(layer, archive);
+	}
 	return BaseObjectRef(layer, true);
 }
 
@@ -393,6 +393,14 @@ MessageImporter::_RestoreBoundedObject(BoundedObject* object,
 void
 MessageImporter::_RestoreObject(Object* object, const BMessage& archive) const
 {
+	const double* matrix;
+	ssize_t size;
+	if (archive.FindData("matrix", B_DOUBLE_TYPE,
+			(const void**)&matrix, &size) == B_OK
+		&& size == Transformable::MatrixSize * sizeof(double)) {
+		object->LoadFrom(matrix);
+	}
+
 	_RestoreBaseObject(object, archive);
 }
 
