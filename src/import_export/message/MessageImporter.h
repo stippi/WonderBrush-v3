@@ -9,6 +9,7 @@
 
 class BMessage;
 class BPositionIO;
+class Styleable;
 
 class MessageImporter {
 public:
@@ -22,7 +23,8 @@ public:
 			status_t			ImportGlobalResources(
 									const BMessage& archive) const;
 
-			status_t			ImportObjects(const BMessage& archive) const;
+			status_t			ImportObjects(const BMessage& archive,
+									Layer* layer) const;
 
 			BaseObjectRef		ImportObject(const BMessage& archive) const;
 
@@ -55,9 +57,19 @@ public:
 									const BMessage& archive) const;
 			BaseObjectRef		ImportPaint(
 									const BMessage& archive) const;
+			BaseObjectRef		ImportPath(
+									const BMessage& archive) const;
 			BaseObjectRef		ImportStrokeProperties(
 									const BMessage& archive) const;
 			BaseObjectRef		ImportStyle(
+									const BMessage& archive) const;
+
+private:
+			template<class Type, class Container>
+			status_t			_ImportObjects(const BMessage& archive,
+									Container* container) const;
+
+			void				_RestoreStyleable(Styleable* styleable,
 									const BMessage& archive) const;
 
 private:
