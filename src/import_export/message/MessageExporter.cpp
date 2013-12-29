@@ -11,8 +11,12 @@
 #include <TypeConstants.h>
 
 #include "DocumentVisitor.h"
+#include "CharacterStyle.h"
 #include "Color.h"
 #include "ColorShade.h"
+#include "Font.h"
+#include "StyleRun.h"
+#include "StyleRunList.h"
 
 // constructor
 MessageExporter::MessageExporter()
@@ -185,7 +189,12 @@ public:
 		status = context->AddString(kType, "Text");
 		if (status == B_OK && text->GetCharCount() > 0)
 			status = context->AddString("text", text->GetText());
-		// TODO: StyleRuns
+		if (status == B_OK && text->Width() != 0.0)
+			status = context->AddDouble("width", text->Width());
+
+		if (status == B_OK)
+			status = _StoreStyleRuns(text, context);
+
 		return status == B_OK;
 	}
 
@@ -415,6 +424,62 @@ private:
 		if (ret != B_OK)
 			return ret;
 		return archive->AddString(kType, "Brush");
+	}
+
+	status_t _StoreStyleRuns(Text* text, BMessage* archive) const
+	{
+		const StyleRunList& styleRuns = text->GetStyleRuns();
+		int32 runCount = styleRuns.CountRuns();
+		for (int32 i = 0; i < runCount; i++) {
+			const StyleRun* run = styleRuns.StyleRunAt(i);
+			BMessage runArchive;
+			status_t ret = _StoreStyleRun(run, &runArchive);
+			
+			if (ret == B_OK)
+				ret = archive->AddMessage("style run", &runArchive);
+
+			if (ret != B_OK)
+				return ret;
+		}
+		return B_OK;
+	}
+	
+	status_t _StoreStyleRun(const StyleRun* run, BMessage* archive) const
+	{
+		const CharacterStyleRef& style = run->GetStyle();
+		if (style.Get() == NULL)
+			return B_BAD_VALUE;
+
+		const Font& font = style->GetFont();
+		
+		status_t ret = archive->AddInt32("length", run->GetLength());
+
+		if (ret == B_OK)
+			ret = archive->AddString("font family", font.getFamily());
+		if (ret == B_OK)
+			ret = archive->AddString("font style", font.getStyle());
+		if (ret == B_OK)
+			ret = archive->AddDouble("font size", font.getSize());
+		if (ret == B_OK) {
+			ret = archive->AddInt32("font script level",
+				(int32)font.getScriptLevel());
+		}
+
+		if (ret == B_OK && style->GetGlyphSpacing() != 0.0)
+			ret = archive->AddDouble("glyph spacing", style->GetGlyphSpacing());
+		if (ret == B_OK && style->GetFauxWeight() != 0.0)
+			ret = archive->AddDouble("faux weight", style->GetFauxWeight());
+		if (ret == B_OK && style->GetFauxItalic() != 0.0)
+			ret = archive->AddDouble("faux italic", style->GetFauxItalic());
+
+		if (ret == B_OK && style->GetStyle().Get() != NULL) {
+			BMessage styleArchive;
+			ret = _StoreStyle(style->GetStyle().Get(), &styleArchive);
+			if (ret == B_OK)
+				ret = archive->AddMessage("style", &styleArchive);
+		}
+
+		return ret;
 	}
 
 	status_t _StoreResourceOrIndex(BaseObject* object, BMessage* archive) const

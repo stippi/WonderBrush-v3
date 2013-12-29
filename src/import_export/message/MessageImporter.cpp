@@ -20,17 +20,20 @@
 #include "Filter.h"
 #include "FilterDropShadow.h"
 #include "FilterSaturation.h"
+#include "Font.h"
 #include "Image.h"
 #include "Layer.h"
 #include "Object.h"
 #include "Paint.h"
+#include "Shape.h"
 #include "StrokeProperties.h"
 #include "Style.h"
 #include "Styleable.h"
 #include "StyleRun.h"
-#include "Shape.h"
+#include "StyleRunList.h"
 #include "Rect.h"
 #include "Text.h"
+#include "ui_defines.h"
 
 static const char* kType = "type";
 
@@ -254,6 +257,7 @@ MessageImporter::ImportFilterSaturation(const BMessage& archive) const
 BaseObjectRef
 MessageImporter::ImportImage(const BMessage& archive) const
 {
+	// TODO
 	return BaseObjectRef();
 }
 
@@ -314,7 +318,89 @@ MessageImporter::ImportShape(const BMessage& archive) const
 BaseObjectRef
 MessageImporter::ImportText(const BMessage& archive) const
 {
-	return BaseObjectRef();
+	Text* text = new(std::nothrow) Text(kBlack);
+	if (text != NULL) {
+		BString string;
+		status_t ret = archive.FindString("text", &string);
+
+		if (ret == B_OK) {
+			double width;
+			ret = archive.FindDouble("width", &width);
+			if (ret == B_OK)
+				text->SetWidth(width);
+		}
+
+		int32 length = 0;
+		StyleRunList styleRuns;
+		if (ret == B_OK) {
+			BMessage runArchive;
+			for (int32 i = 0;; i++) {
+				if (archive.FindMessage("style run", i, &runArchive) != B_OK)
+					break;
+
+				int32 runLength;
+				ret = runArchive.FindInt32("length", &runLength);
+
+				const char* fontFamily;
+				if (ret == B_OK)
+					ret = runArchive.FindString("font family", &fontFamily);
+
+				const char* fontStyle;
+				if (ret == B_OK)
+					ret = runArchive.FindString("font style", &fontStyle);
+
+				double fontSize;
+				if (ret == B_OK)
+					ret = runArchive.FindDouble("font size", &fontSize);
+
+				int32 scriptLevel = Font::NORMAL;
+				runArchive.FindInt32("font script level", &scriptLevel);
+
+				double glyphSpacing = 0.0;
+				runArchive.FindDouble("glyph spacing", &glyphSpacing);
+
+				double fauxWeight = 0.0;
+				runArchive.FindDouble("faux weight", &fauxWeight);
+
+				double fauxItalic = 0.0;
+				runArchive.FindDouble("faux italic", &fauxItalic);
+				
+				BMessage styleArchive;
+				BaseObjectRef styleRef;
+				if (ret == B_OK) {
+					ret = runArchive.FindMessage("style", &styleArchive);
+					styleRef = ImportStyle(styleArchive);
+				}
+				Style* style = dynamic_cast<Style*>(styleRef.Get());
+				
+				if (ret == B_OK && style != NULL) {
+					Font font(fontFamily, fontStyle, fontSize,
+						(Font::ScriptLevel)scriptLevel);
+					CharacterStyle* characterStyle
+						= new(std::nothrow) CharacterStyle(
+							font, glyphSpacing, fauxWeight, fauxItalic,
+							StyleRef(style)
+						);
+					if (characterStyle == NULL)
+						ret = B_NO_MEMORY;
+					else {
+						StyleRun run(CharacterStyleRef(characterStyle, true));
+						run.SetLength(runLength);
+						if (!styleRuns.Append(run))
+							ret = B_NO_MEMORY;
+						else
+							length += runLength;
+					}
+				}
+			}
+		}
+
+		if (ret == B_OK && length == string.CountChars())
+			text->Insert(0, string, styleRuns);
+	
+		_RestoreStyleable(text, archive);
+	}
+	return BaseObjectRef(text, true);
 }
 
 // #pragma mark -
@@ -323,6 +409,7 @@ MessageImporter::ImportText(const BMessage& archive) const
 BaseObjectRef
 MessageImporter::ImportBrush(const BMessage& archive) const
 {
+	// TODO
 	return BaseObjectRef();
 }
 
@@ -330,6 +417,7 @@ MessageImporter::ImportBrush(const BMessage& archive) const
 BaseObjectRef
 MessageImporter::ImportColor(const BMessage& archive) const
 {
+	// TODO
 	return BaseObjectRef();
 }
 
@@ -337,6 +425,7 @@ MessageImporter::ImportColor(const BMessage& archive) const
 BaseObjectRef
 MessageImporter::ImportColorShade(const BMessage& archive) const
 {
+	// TODO
 	return BaseObjectRef();
 }
 
@@ -344,6 +433,7 @@ MessageImporter::ImportColorShade(const BMessage& archive) const
 BaseObjectRef
 MessageImporter::ImportGradient(const BMessage& archive) const
 {
+	// TODO
 	return BaseObjectRef();
 }
 
@@ -351,6 +441,7 @@ MessageImporter::ImportGradient(const BMessage& archive) const
 BaseObjectRef
 MessageImporter::ImportPaint(const BMessage& archive) const
 {
+	// TODO
 	return BaseObjectRef();
 }
 
@@ -366,6 +457,7 @@ MessageImporter::ImportPath(const BMessage& archive) const
 BaseObjectRef
 MessageImporter::ImportStrokeProperties(const BMessage& archive) const
 {
+	// TODO
 	return BaseObjectRef();
 }
 
@@ -373,6 +465,7 @@ MessageImporter::ImportStrokeProperties(const BMessage& archive) const
 BaseObjectRef
 MessageImporter::ImportStyle(const BMessage& archive) const
 {
+	// TODO
 	return BaseObjectRef();
 }
 
