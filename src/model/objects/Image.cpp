@@ -28,6 +28,14 @@ ImageListener::Deleted(Image* rect)
 // #pragma mark -
 
 // constructor
+Image::Image()
+	: BoundedObject()
+	, fBuffer()
+	, fListeners(4)
+{
+}
+
+// constructor
 Image::Image(RenderBuffer* buffer)
 	: BoundedObject()
 	, fBuffer(buffer)
@@ -91,6 +99,18 @@ Image::Bounds()
 	if (fBuffer != NULL)
 		return fBuffer->Bounds();
 	return BRect();
+}
+
+// SetBuffer
+void
+Image::SetBuffer(const RenderBufferRef& buffer)
+{
+	if (fBuffer == buffer)
+		return;
+
+	fBuffer = buffer;
+
+	NotifyAndUpdate();
 }
 
 // #pragma mark -

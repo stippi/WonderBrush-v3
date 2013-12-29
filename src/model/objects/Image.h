@@ -25,6 +25,7 @@ public:
 
 class Image : public BoundedObject {
 public:
+								Image();
 								Image(RenderBuffer* buffer);
 								Image(const Image& other);
 	virtual						~Image();
@@ -42,6 +43,7 @@ public:
 	virtual	BRect				Bounds();
 
 	// Image
+			void				SetBuffer(const RenderBufferRef& buffer);
 	inline	RenderBuffer*		Buffer() const
 									{ return fBuffer.Get(); }
 
