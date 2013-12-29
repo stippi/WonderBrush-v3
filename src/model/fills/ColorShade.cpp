@@ -58,6 +58,7 @@ ColorShade::ColorShade(const ColorProviderRef& provider)
 // destructor
 ColorShade::~ColorShade()
 {
+	SetColorProvider(ColorProviderRef());
 }
 
 // #pragma mark - ColorProvider
