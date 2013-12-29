@@ -75,6 +75,8 @@ public:
 			void				SetColor(const rgb_color& color);
 	inline	rgb_color			Color() const
 									{ return fColor->GetColor(); }
+			void				SetColorProvider(
+									const ColorProviderRef& colorProvider);
 	inline	const ColorProviderRef& GetColorProvider() const
 									{ return fColor; }
 

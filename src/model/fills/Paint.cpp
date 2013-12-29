@@ -416,6 +416,21 @@ Paint::SetColor(const rgb_color& color)
 	Notify();
 }
 
+// SetColorProvider
+void
+Paint::SetColorProvider(const ColorProviderRef& colorProvider)
+{
+	if (fType != COLOR)
+		fType = COLOR;
+	else {
+		if (fColor == colorProvider)
+			return;
+	}
+
+	fColor = colorProvider;
+	Notify();
+}
+
 // SetGradient
 void
 Paint::SetGradient(const ::Gradient* gradient)
