@@ -10,6 +10,7 @@
 #include <Message.h>
 #include <TypeConstants.h>
 
+#include "bitmap_compression.h"
 #include "BoundedObject.h"
 #include "Brush.h"
 #include "BrushStroke.h"
@@ -25,6 +26,7 @@
 #include "Layer.h"
 #include "Object.h"
 #include "Paint.h"
+#include "RenderBuffer.h"
 #include "Shape.h"
 #include "StrokeProperties.h"
 #include "Style.h"
@@ -257,8 +259,19 @@ MessageImporter::ImportFilterSaturation(const BMessage& archive) const
 BaseObjectRef
 MessageImporter::ImportImage(const BMessage& archive) const
 {
-	// TODO
-	return BaseObjectRef();
+	Image* image = new(std::nothrow) Image();
+	if (image != NULL) {
+		RenderBuffer* buffer;
+		if (extract_bitmap(&buffer, &archive, "bitmap") == B_OK)
+			image->SetBuffer(RenderBufferRef(buffer, true));
+		else {
+			fprintf(stderr, "MessageImporter::ImportImage() - "
+				"failed to extract bitmap buffer!\n");
+		}
+
+		_RestoreBoundedObject(image, archive);
+	}
+	return BaseObjectRef(image, true);
 }
 
 // ImportLayer

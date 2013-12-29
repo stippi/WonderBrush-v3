@@ -10,6 +10,7 @@
 #include <Message.h>
 #include <TypeConstants.h>
 
+#include "bitmap_compression.h"
 #include "DocumentVisitor.h"
 #include "CharacterStyle.h"
 #include "Color.h"
@@ -142,7 +143,8 @@ public:
 	virtual bool VisitImage(Image* image, BMessage* context)
 	{
 		status = context->AddString(kType, "Image");
-		// TODO: Image data
+		if (status == B_OK)
+			status = archive_bitmap(image->Buffer(), context, "bitmap");
 		return status == B_OK;
 	}
 
