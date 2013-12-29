@@ -15,7 +15,7 @@ public:
 								MessageImporter(const DocumentRef& document);
 	virtual						~MessageImporter();
 
-			status_t			Import(BPositionIO* stream) const;
+			status_t			Import(BPositionIO& stream) const;
 
 			status_t			ImportDocument(const BMessage& archive) const;
 

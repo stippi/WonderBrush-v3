@@ -402,14 +402,14 @@ public:
 
 // Import
 status_t
-MessageImporter::Import(BPositionIO* stream) const
+MessageImporter::Import(BPositionIO& stream) const
 {
 	if (fDocument.Get() == NULL)
 		return B_NO_INIT;
 
 	uint32 magic = 0;
 	ssize_t size = sizeof(magic);
-	ssize_t read = stream->Read(&magic, size);
+	ssize_t read = stream.Read(&magic, size);
 	if (read != size) {
 		if (read < 0)
 			return (status_t)read;
@@ -421,7 +421,7 @@ MessageImporter::Import(BPositionIO* stream) const
 		return B_BAD_VALUE;
 
 	BMessage archive;
-	status_t ret = archive.Unflatten(stream);
+	status_t ret = archive.Unflatten(&stream);
 	if (ret != B_OK)
 		return ret;
 

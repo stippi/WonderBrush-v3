@@ -495,7 +495,6 @@ Window::MessageReceived(BMessage* message)
 			// If our document is empty, we want the file to open in this
 			// window.
 			if (fDocument->IsEmpty()) {
-				fDocument->AddReference();
 				message->AddPointer("document", fDocument.Get());
 			}
 			be_app->PostMessage(message);

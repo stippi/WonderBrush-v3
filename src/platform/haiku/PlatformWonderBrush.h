@@ -22,7 +22,7 @@ class Window;
 template<typename BaseClass>
 class PlatformWonderBrush : public BApplication, protected BaseClass {
 public:
-	using BaseClass::NewWindow;
+	using BaseClass::InitialWindow;
 	using BaseClass::WindowQuit;
 	using BaseClass::StoreSettings;
 	using BaseClass::RestoreSettings;
@@ -61,7 +61,7 @@ public:
 			registry->Unlock();
 		}
 		RestoreSettings();
-		NewWindow();
+		InitialWindow();
 	}
 
 	virtual	bool QuitRequested()

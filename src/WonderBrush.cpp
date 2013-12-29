@@ -2,7 +2,9 @@
 
 #include "BuildSupport.h"
 
+#include <Alert.h>
 #include <Bitmap.h>
+#include <Catalog.h>
 #include <Path.h>
 #include <String.h>
 #include <TranslationUtils.h>
@@ -16,6 +18,8 @@
 #include "FontRegistry.h"
 #include "Image.h"
 #include "Layer.h"
+#include "MessageImporter.h"
+#include "NativeSaver.h"
 #include "Rect.h"
 #include "RenderBuffer.h"
 #include "Shape.h"
@@ -24,6 +28,8 @@
 
 
 static const char* sFontsDirectory = NULL;
+
+#define B_TRANSLATION_CONTEXT "WonderBrush"
 
 
 // #pragma mark - WonderBrushBase
@@ -252,12 +258,16 @@ WonderBrush::MessageReceived(BMessage* message)
 		}
 
 		case MSG_NEW_WINDOW:
-			NewWindow();
+			NewWindow(fDocument);
 			break;
 
 		case MSG_NEW_DOCUMENT:
-			NewDocument();
+		{
+			DocumentRef document = NewDocument();
+			if (document.Get() != NULL)
+				NewWindow(document.Get());
 			break;
+		}
 
 		case MSG_WINDOW_QUIT:
 			WindowQuit(message);
@@ -280,37 +290,56 @@ WonderBrush::MessageReceived(BMessage* message)
 	}
 }
 
-
-// NewWindow
+// RefsReceived
 void
-WonderBrush::NewWindow()
+WonderBrush::RefsReceived(BMessage* message)
 {
-	fWindowFrame.OffsetBy(30, 30);
+	bool append;
+	if (message->FindBool("append", &append) != B_OK)
+		append = false;
 
-	BString windowName("WonderBrush ");
-	windowName << ++fWindowCount;
+	Document* document;
+	if (message->FindPointer("document", (void**)&document) != B_OK)
+		document = NULL;
 
-	Window* window = new Window(fWindowFrame, windowName.String(),
-		fDocument, fEditLayer);
+	// TODO: Check if the document still exists
 
-	BMessage windowSettings;
-	if (fSettings.FindMessage("window settings", &windowSettings) == B_OK)
-		window->RestoreSettings(windowSettings);
+	// When appending, we need to know a document.
+	if (append && document == NULL)
+		return;
 
-	window->Show();
+	entry_ref ref;
+	if (append) {
+		for (int32 i = 0; message->FindRef("refs", i, &ref) == B_OK; i++)
+			OpenDocument(document, ref, true);
+	} else {
+		for (int32 i = 0; message->FindRef("refs", i, &ref) == B_OK; i++) {
+			if (document != NULL && i == 0) {
+				OpenDocument(document, ref, true);
+			} else {
+				DocumentRef document = NewDocument();
+				if (OpenDocument(document.Get(), ref, true) == B_OK)
+					NewWindow(document.Get());
+			}
+		}
+	}
 }
 
-
-// NewDocument
+// InitialWindow
 void
-WonderBrush::NewDocument()
+WonderBrush::InitialWindow()
+{
+	NewWindow(fDocument);
+}
+
+// NewWindow
+Window*
+WonderBrush::NewWindow(Document* document)
 {
 	fWindowFrame.OffsetBy(30, 30);
 
 	BString windowName("WonderBrush ");
 	windowName << ++fWindowCount;
-
-	Document* document = new Document(BRect(0, 0, 799, 599));
 
 	Window* window = new Window(fWindowFrame, windowName.String(),
 		document, document->RootLayer());
@@ -320,10 +349,86 @@ WonderBrush::NewDocument()
 		window->RestoreSettings(windowSettings);
 
 	window->Show();
-
-	document->RemoveReference();
+	return window;
 }
 
+
+// NewDocument
+DocumentRef
+WonderBrush::NewDocument()
+{
+	Document* document = new Document(BRect(0, 0, 799, 599));
+	return DocumentRef(document, true);
+}
+
+enum {
+	REF_NONE = 0,
+	REF_MESSAGE,
+//	REF_BITMAP,
+//	REF_SVG
+};
+
+// OpenDocument
+status_t
+WonderBrush::OpenDocument(Document* document, const entry_ref& ref, bool append)
+{
+	AutoWriteLocker locker(document);
+
+	status_t ret;
+	if (document == NULL)
+		ret = B_NO_MEMORY;
+	else
+		ret = ImportDocument(document, ref);
+
+	if (ret != B_OK) {
+		// inform user of failure at this point
+		BString helper(B_TRANSLATE("Opening the document failed!"));
+		helper << "\n\n" << B_TRANSLATE("Error: ") << strerror(ret);
+		BAlert* alert = new BAlert(
+			B_TRANSLATE_CONTEXT("bad news", "Title of error alert"),
+			helper.String(), 
+			B_TRANSLATE_CONTEXT("Bummer", 
+				"Cancel button - error alert"),	
+			NULL, NULL);
+		// launch alert asynchronously
+		alert->SetFlags(alert->Flags() | B_CLOSE_ON_ESCAPE);
+		alert->Go(NULL);
+		return ret;
+	}
+
+	return B_OK;
+}
+
+// ImportDocument
+status_t
+WonderBrush::ImportDocument(Document* document, const entry_ref& ref) const
+{
+	DocumentRef documentRef(document);
+
+	BFile file(&ref, B_READ_ONLY);
+	status_t ret = file.InitCheck();
+	if (ret != B_OK)
+		return ret;
+
+	// try different file types
+	MessageImporter msgImporter(documentRef);
+	ret = msgImporter.Import(file);
+	if (ret == B_OK) {
+		document->SetNativeSaver(new(std::nothrow) NativeSaver(ref));
+		return B_OK;
+	}
+	
+//	file.Seek(0, SEEK_SET);
+//	SVGImporter svgImporter;
+//	ret = svgImporter.Import(icon, &ref);
+//	if (ret == B_OK) {
+//		document->SetExportSaver(
+//			new SimpleFileSaver(new SVGExporter(), ref));
+//		return B_OK;
+//	}
+
+	return B_ERROR;
+}
 
 // WindowQuit
 void

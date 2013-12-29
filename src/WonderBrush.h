@@ -1,8 +1,11 @@
 #ifndef WONDER_BRUSH_H
 #define WONDER_BRUSH_H
 
+#include <Entry.h>
 #include <Message.h>
 #include <Rect.h>
+
+#include "Document.h"
 
 enum {
 	MSG_OPEN						= 'open',
@@ -32,7 +35,6 @@ enum {
 
 
 class BFile;
-class Document;
 class Layer;
 
 
@@ -42,8 +44,9 @@ public:
 	virtual						~WonderBrushBase();
 
 protected:
-	virtual	void				NewWindow() = 0;
-	virtual	void				NewDocument() = 0;
+	virtual	void				InitialWindow() = 0;
+	virtual	Window*				NewWindow(Document* document) = 0;
+	virtual	DocumentRef			NewDocument() = 0;
 	virtual	void				WindowQuit(BMessage* message) = 0;
 
 	virtual	void				Open(BMessage* message) = 0;
@@ -76,10 +79,18 @@ public:
 									BRect bounds);
 
 	virtual	void				MessageReceived(BMessage* message);
+	virtual	void				RefsReceived(BMessage* message);
 
 protected:
-	virtual	void				NewWindow();
-	virtual	void				NewDocument();
+	virtual	void				InitialWindow();
+	virtual	Window*				NewWindow(Document* document);
+	virtual	DocumentRef			NewDocument();
+			status_t			OpenDocument(Document* document,
+									const entry_ref& ref, bool append);
+
+			status_t			ImportDocument(Document* document,
+									const entry_ref& ref) const;
+
 	virtual	void				WindowQuit(BMessage* message);
 
 	virtual	void				StoreSettings();
