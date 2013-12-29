@@ -325,9 +325,16 @@ MessageImporter::ImportText(const BMessage& archive) const
 
 		if (ret == B_OK) {
 			double width;
-			ret = archive.FindDouble("width", &width);
-			if (ret == B_OK)
+			if (archive.FindDouble("width", &width) == B_OK)
 				text->SetWidth(width);
+
+			uint32 alignment;
+			if (archive.FindUInt32("alignment", &alignment) == B_OK)
+				text->SetAlignment(alignment);
+
+			double glyphSpacing;
+			if (archive.FindDouble("glyph spacing", &glyphSpacing) == B_OK)
+				text->SetGlyphSpacing(glyphSpacing);
 		}
 
 		int32 length = 0;

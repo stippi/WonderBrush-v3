@@ -191,6 +191,10 @@ public:
 			status = context->AddString("text", text->GetText());
 		if (status == B_OK && text->Width() != 0.0)
 			status = context->AddDouble("width", text->Width());
+		if (status == B_OK && text->Alignment() != 0)
+			status = context->AddUInt32("alignment", text->Alignment());
+		if (status == B_OK && text->GlyphSpacing() != 0.0)
+			status = context->AddDouble("glyph spacing", text->GlyphSpacing());
 
 		if (status == B_OK)
 			status = _StoreStyleRuns(text, context);
