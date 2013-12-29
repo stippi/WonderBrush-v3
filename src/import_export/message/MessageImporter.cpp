@@ -391,6 +391,9 @@ MessageImporter::ImportText(const BMessage& archive) const
 						else
 							length += runLength;
 					}
+				} else {
+					fprintf(stderr, "MessageImporter::ImportText() - "
+						"Failed to restore CharacterStyle!\n");
 				}
 			}
 		}
@@ -409,24 +412,58 @@ MessageImporter::ImportText(const BMessage& archive) const
 BaseObjectRef
 MessageImporter::ImportBrush(const BMessage& archive) const
 {
-	// TODO
-	return BaseObjectRef();
+	Brush* brush = new(std::nothrow) Brush();
+	if (brush != NULL) {
+		brush->Unarchive(&archive);
+		_RestoreBaseObject(brush, archive);
+	}
+	return BaseObjectRef(brush, true);
 }
 
 // ImportColor
 BaseObjectRef
 MessageImporter::ImportColor(const BMessage& archive) const
 {
-	// TODO
-	return BaseObjectRef();
+	rgb_color rgba = kBlack;
+	archive.FindUInt8("r", &rgba.red);
+	archive.FindUInt8("g", &rgba.green);
+	archive.FindUInt8("b", &rgba.blue);
+	archive.FindUInt8("a", &rgba.alpha);
+	Color* color = new(std::nothrow) Color(rgba);
+	if (color != NULL)
+		_RestoreBaseObject(color, archive);
+	return BaseObjectRef(color, true);
 }
 
 // ImportColorShade
 BaseObjectRef
 MessageImporter::ImportColorShade(const BMessage& archive) const
 {
-	// TODO
-	return BaseObjectRef();
+	ColorShade* colorShade = new(std::nothrow) ColorShade();
+	if (colorShade != NULL) {
+		float value;
+		if (archive.FindFloat("h", &value) == B_OK)
+			colorShade->SetHue(value);
+		if (archive.FindFloat("s", &value) == B_OK)
+			colorShade->SetSaturation(value);
+		if (archive.FindFloat("v", &value) == B_OK)
+			colorShade->SetValue(value);
+	
+		BMessage providerArchive;
+		if (archive.FindMessage("provider", &providerArchive) == B_OK) {
+			BaseObjectRef ref = ImportObject(providerArchive);
+			ColorProvider* provider = dynamic_cast<ColorProvider*>(ref.Get());
+			if (provider != NULL)
+				colorShade->SetColorProvider(ColorProviderRef(provider));
+			else {
+				fprintf(stderr, "MessageImporter::ImportColorShade() - "
+					"Failed to restore ColorProvider!\n");
+			}
+		}
+	
+		_RestoreBaseObject(colorShade, archive);
+	}
+	return BaseObjectRef(colorShade, true);
 }
 
 // ImportGradient
@@ -441,8 +478,27 @@ MessageImporter::ImportGradient(const BMessage& archive) const
 BaseObjectRef
 MessageImporter::ImportPaint(const BMessage& archive) const
 {
-	// TODO
-	return BaseObjectRef();
+	Paint* paint = new(std::nothrow) Paint();
+	if (paint != NULL) {
+		// try color
+		BMessage colorArchive;
+		if (archive.FindMessage("color", &colorArchive) == B_OK) {
+			BaseObjectRef ref = ImportObject(colorArchive);
+			ColorProvider* provider = dynamic_cast<ColorProvider*>(ref.Get());
+			if (provider != NULL)
+				paint->SetColorProvider(ColorProviderRef(provider));
+			else {
+				fprintf(stderr, "MessageImporter::ImportPaint() - "
+					"Failed to restore ColorProvider!\n");
+			}
+		} else {
+			fprintf(stderr, "MessageImporter::ImportPaint() - "
+				"unkown Paint type!\n");
+		}
+		
+		_RestoreBaseObject(paint, archive);
+	}
+	return BaseObjectRef(paint, true);
 }
 
 // ImportPath
@@ -450,6 +506,8 @@ BaseObjectRef
 MessageImporter::ImportPath(const BMessage& archive) const
 {
 	Path* path = new(std::nothrow) Path(&archive);
+	if (path != NULL)
+		_RestoreBaseObject(path, archive);
 	return BaseObjectRef(path, true);
 }
 
@@ -457,16 +515,69 @@ MessageImporter::ImportPath(const BMessage& archive) const
 BaseObjectRef
 MessageImporter::ImportStrokeProperties(const BMessage& archive) const
 {
-	// TODO
-	return BaseObjectRef();
+	StrokeProperties* strokeProperties = new(std::nothrow) StrokeProperties();
+
+	if (strokeProperties != NULL) {
+		float width = 0.0f;
+		if (archive.FindFloat("width", &width) == B_OK)
+			strokeProperties->SetWidth(width);
+	
+		float miterLimit = 0.0f;
+		if (archive.FindFloat("miter limit", &miterLimit) == B_OK)
+			strokeProperties->SetMiterLimit(miterLimit);
+	
+		int32 capMode = (int32)ButtCap;
+		if (archive.FindInt32("cap mode", &capMode) == B_OK)
+			strokeProperties->SetCapMode((CapMode)capMode);
+	
+		int32 joinMode = (int32)MiterJoin;
+		if (archive.FindInt32("join mode", &joinMode) == B_OK)
+			strokeProperties->SetJoinMode((JoinMode)joinMode);
+	
+		int32 position = (int32)CenterStroke;
+		if (archive.FindInt32("position", &position) == B_OK)
+			strokeProperties->SetStrokePosition((StrokePosition)position);
+
+		_RestoreBaseObject(strokeProperties, archive);
+	}
+	return BaseObjectRef(strokeProperties, true);
 }
 
 // ImportStyle
 BaseObjectRef
 MessageImporter::ImportStyle(const BMessage& archive) const
 {
-	// TODO
-	return BaseObjectRef();
+	Style* style = new(std::nothrow) Style();
+	if (style != NULL) {
+		BMessage fillPaintArchive;
+		if (archive.FindMessage("fill paint", &fillPaintArchive) == B_OK) {
+			BaseObjectRef ref = ImportObject(fillPaintArchive);
+			Paint* paint = dynamic_cast<Paint*>(ref.Get());
+			if (paint != NULL)
+				style->SetFillPaint(*paint);
+		}
+
+		BMessage strokePaintArchive;
+		if (archive.FindMessage("stroke paint", &strokePaintArchive) == B_OK) {
+			BaseObjectRef ref = ImportObject(strokePaintArchive);
+			Paint* paint = dynamic_cast<Paint*>(ref.Get());
+			if (paint != NULL)
+				style->SetStrokePaint(*paint);
+		}
+
+		BMessage strokePropertiesArchive;
+		if (archive.FindMessage("stroke paint",
+				&strokePropertiesArchive) == B_OK) {
+			BaseObjectRef ref = ImportObject(strokePropertiesArchive);
+			StrokeProperties* strokeProperties
+				= dynamic_cast<StrokeProperties*>(ref.Get());
+			if (strokeProperties != NULL)
+				style->SetStrokeProperties(*strokeProperties);
+		}
+
+		_RestoreBaseObject(style, archive);
+	}
+	return BaseObjectRef(style, true);
 }
 
 // #pragma mark -

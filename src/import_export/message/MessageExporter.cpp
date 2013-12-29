@@ -332,6 +332,9 @@ private:
 				break;
 		}
 
+		if (ret == B_OK)
+			ret = archive->AddString(kType, "Paint");
+
 		return ret;
 	}
 
@@ -383,13 +386,13 @@ private:
 		
 		status_t ret = B_OK;
 		if (ret == B_OK)
-			ret = archive->AddInt32("r", rgba.red);
+			ret = archive->AddUInt8("r", rgba.red);
 		if (ret == B_OK)
-			ret = archive->AddInt32("g", rgba.green);
+			ret = archive->AddUInt8("g", rgba.green);
 		if (ret == B_OK)
-			ret = archive->AddInt32("b", rgba.blue);
+			ret = archive->AddUInt8("b", rgba.blue);
 		if (ret == B_OK)
-			ret = archive->AddInt32("a", rgba.alpha);
+			ret = archive->AddUInt8("a", rgba.alpha);
 
 		if (ret == B_OK)
 			ret = archive->AddString(kType, "Color");
@@ -409,8 +412,12 @@ private:
 			ret = archive->AddFloat("v", shade->Value());
 
 		const ColorProviderRef& provider = shade->GetColorProvider();
-		if (ret == B_OK)
-			ret = _StoreResourceOrIndex(provider.Get(), archive);
+		if (ret == B_OK) {
+			BMessage providerArchive;
+			ret = _StoreResourceOrIndex(provider.Get(), &providerArchive);
+			if (ret == B_OK)
+				ret = archive->AddMessage("provider", &providerArchive);
+		}
 
 		if (ret == B_OK)
 			ret = archive->AddString(kType, "ColorShade");
