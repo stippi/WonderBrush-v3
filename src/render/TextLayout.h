@@ -257,12 +257,9 @@ public:
 		return fFirstLineInset;
 	}
 
-	inline double getWidth()
+	inline double getWidth() const
 	{
-		if (fWidth > 0)
-			return fWidth;
-		else
-			return getActualWidth();
+		return fWidth;
 	}
 
 	double getActualWidth();

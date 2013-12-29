@@ -19,7 +19,7 @@ Text::Text(const rgb_color& color)
 	, fText()
 	, fCharCount(0)
 	, fTextLayout(FontCache::getInstance())
-	, fStyleRuns(new(std::nothrow) StyleRunList())
+	, fStyleRuns()
 {
 	InitBounds();
 }
@@ -30,7 +30,7 @@ Text::Text(const Text& other, CloneContext& context)
 	, fText(other.fText)
 	, fCharCount(other.fCharCount)
 	, fTextLayout(FontCache::getInstance())
-	, fStyleRuns(new(std::nothrow) StyleRunList(*other.fStyleRuns, context))
+	, fStyleRuns(other.fStyleRuns, context)
 {
 	InitBounds();
 	
@@ -42,7 +42,6 @@ Text::Text(const Text& other, CloneContext& context)
 // destructor
 Text::~Text()
 {
-	delete fStyleRuns;
 }
 
 // #pragma mark -
@@ -104,9 +103,16 @@ Text::SetWidth(double width)
 
 // Width
 double
-Text::Width()
+Text::Width() const
 {
 	return fTextLayout.getWidth();
+}
+
+// ActualWidth
+double
+Text::ActualWidth()
+{
+	return fTextLayout.getActualWidth();
 }
 
 // SetAlignment
@@ -199,7 +205,7 @@ void
 Text::SetText(const char* utf8String, const Font& font, const StyleRef& style)
 {
 	fText = "";
-	fStyleRuns->MakeEmpty();
+	fStyleRuns.MakeEmpty();
 
 	Insert(0, utf8String, font, style);
 }
@@ -216,6 +222,13 @@ int32
 Text::GetCharCount() const
 {
 	return fCharCount;
+}
+
+// GetStyleRuns
+const StyleRunList&
+Text::GetStyleRuns() const
+{
+	return fStyleRuns;
 }
 
 // Insert
@@ -265,7 +278,7 @@ Text::Insert(int32 textOffset, const char* utf8String, const Font& font,
 	StyleRun styleRun(styleRef);
 	styleRun.SetLength(charCount);
 
-	if (!fStyleRuns->Insert(textOffset, styleRun))
+	if (!fStyleRuns.Insert(textOffset, styleRun))
 		return;
 
 	fText.InsertChars(text, textOffset);
@@ -286,7 +299,7 @@ Text::Insert(int32 textOffset, const BString& utf8String,
 
 	int32 charCount = utf8String.CountChars();
 
-	if (!fStyleRuns->Insert(textOffset, styleRuns))
+	if (!fStyleRuns.Insert(textOffset, styleRuns))
 		return;
 
 	fText.InsertChars(utf8String, textOffset);
@@ -336,8 +349,8 @@ Text::ReplaceStyles(int32 textOffset, int32 length,
 	if (textOffset < 0 || textOffset > fCharCount)
 		return;
 
-	fStyleRuns->Remove(textOffset, length);
-	fStyleRuns->Insert(textOffset, styleRuns);
+	fStyleRuns.Remove(textOffset, length);
+	fStyleRuns.Insert(textOffset, styleRuns);
 
 	UpdateLayout();
 }
@@ -350,7 +363,7 @@ Text::Remove(int32 textOffset, int32 length)
 		return;
 
 	fText.RemoveChars(textOffset, length);
-	fStyleRuns->Remove(textOffset, length);
+	fStyleRuns.Remove(textOffset, length);
 	fCharCount -= length;
 
 	UpdateLayout();
@@ -373,7 +386,7 @@ Text::GetSubString(int32 textOffset, int32 length) const
 StyleRunList*
 Text::GetStyleRuns(int32 textOffset, int32 length) const
 {
-	return fStyleRuns->GetSubList(textOffset, length);
+	return fStyleRuns.GetSubList(textOffset, length);
 }
 
 // SetStyle
@@ -395,10 +408,10 @@ Text::SetStyle(int32 textOffset, int32 length, const Font& font,
 	StyleRun styleRun(styleRef);
 	styleRun.SetLength(length);
 
-	if (!fStyleRuns->Insert(textOffset, styleRun))
+	if (!fStyleRuns.Insert(textOffset, styleRun))
 		return;
 
-	fStyleRuns->Remove(textOffset + length, length);
+	fStyleRuns.Remove(textOffset + length, length);
 
 	styleRef.Detach();
 
@@ -415,7 +428,7 @@ Text::SetFont(int32 textOffset, int32 length, const char* family,
 
 	while (length > 0) {
 		// TODO: Make more efficient
-		const StyleRun* run = fStyleRuns->FindStyleRun(textOffset);
+		const StyleRun* run = fStyleRuns.FindStyleRun(textOffset);
 		const CharacterStyle* previousCharacterStyle = run->GetStyle().Get();
 		Font font = previousCharacterStyle->GetFont()
 			.setFamilyAndStyle(family, style);
@@ -431,10 +444,10 @@ Text::SetFont(int32 textOffset, int32 length, const char* family,
 		StyleRun replaceRun(styleRef);
 		replaceRun.SetLength(1);
 
-		if (!fStyleRuns->Insert(textOffset, replaceRun))
+		if (!fStyleRuns.Insert(textOffset, replaceRun))
 			return;
 
-		fStyleRuns->Remove(textOffset + 1, 1);
+		fStyleRuns.Remove(textOffset + 1, 1);
 		styleRef.Detach();
 
 		textOffset++;
@@ -453,7 +466,7 @@ Text::SetSize(int32 textOffset, int32 length, double size)
 
 	while (length > 0) {
 		// TODO: Make more efficient
-		const StyleRun* run = fStyleRuns->FindStyleRun(textOffset);
+		const StyleRun* run = fStyleRuns.FindStyleRun(textOffset);
 		const CharacterStyle* previousCharacterStyle = run->GetStyle().Get();
 		Font font = previousCharacterStyle->GetFont().setSize(size);
 
@@ -468,10 +481,10 @@ Text::SetSize(int32 textOffset, int32 length, double size)
 		StyleRun replaceRun(styleRef);
 		replaceRun.SetLength(1);
 
-		if (!fStyleRuns->Insert(textOffset, replaceRun))
+		if (!fStyleRuns.Insert(textOffset, replaceRun))
 			return;
 
-		fStyleRuns->Remove(textOffset + 1, 1);
+		fStyleRuns.Remove(textOffset + 1, 1);
 		styleRef.Detach();
 
 		textOffset++;
@@ -498,7 +511,7 @@ Text::SetColor(int32 textOffset, int32 length, const rgb_color& color)
 
 	while (length > 0) {
 		// TODO: Make more efficient
-		const StyleRun* run = fStyleRuns->FindStyleRun(textOffset);
+		const StyleRun* run = fStyleRuns.FindStyleRun(textOffset);
 
 		CharacterStyle* characterStyle = new(std::nothrow) CharacterStyle(
 			run->GetStyle()->SetStyle(styleRef));
@@ -511,10 +524,10 @@ Text::SetColor(int32 textOffset, int32 length, const rgb_color& color)
 		StyleRun replaceRun(styleRef);
 		replaceRun.SetLength(1);
 
-		if (!fStyleRuns->Insert(textOffset, replaceRun))
+		if (!fStyleRuns.Insert(textOffset, replaceRun))
 			return;
 
-		fStyleRuns->Remove(textOffset + 1, 1);
+		fStyleRuns.Remove(textOffset + 1, 1);
 		styleRef.Detach();
 
 		textOffset++;
@@ -549,8 +562,8 @@ Text::UpdateLayout()
 	fTextLayout.clearStyleRuns();
 
 	int32 start = 0;
-	for (int32 i = 0; i < fStyleRuns->CountRuns(); i++) {
-		const StyleRun* run = fStyleRuns->StyleRunAt(i);
+	for (int32 i = 0; i < fStyleRuns.CountRuns(); i++) {
+		const StyleRun* run = fStyleRuns.StyleRunAt(i);
 
 		const CharacterStyleRef& characterStyle = run->GetStyle();
 

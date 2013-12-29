@@ -12,10 +12,10 @@
 #include "Font.h"
 #include "Styleable.h"
 #include "TextLayout.h"
+#include "StyleRunList.h"
 
 class CharacterStyle;
 class StyleRun;
-class StyleRunList;
 
 enum {
 	TEXT_ALIGNMENT_LEFT		= 0,
@@ -44,7 +44,8 @@ public:
 
 	// Text
 			void				SetWidth(double width);
-			double				Width();
+			double				Width() const;
+			double				ActualWidth();
 
 			void				SetAlignment(uint32 alignment);
 			uint32				Alignment() const;
@@ -59,8 +60,8 @@ public:
 									const Font& font, const StyleRef& style);
 
 			const BString&		GetText() const;
-
 			int32				GetCharCount() const;
+			const StyleRunList&	GetStyleRuns() const;
 
 			void				Insert(int32 textOffset,
 									const char* utf8String, const Font& font,
@@ -123,7 +124,7 @@ private:
 			BString				fText;
 			int32				fCharCount;
 			TextLayout			fTextLayout;
-			StyleRunList*		fStyleRuns;
+			StyleRunList		fStyleRuns;
 };
 
 #endif // TEXT_H

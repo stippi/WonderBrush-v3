@@ -536,7 +536,7 @@ TextToolState::Bounds() const
 		return BRect(0, 0, -1, -1);
 
 	BRect bounds = fText->Bounds();
-	bounds.right = fText->Width();
+	bounds.right = fText->ActualWidth();
 	bounds.InsetBy(-15, -15);
 	TransformObjectToView(&bounds);
 	return bounds;
@@ -938,7 +938,7 @@ float
 TextToolState::Width() const
 {
 	if (fText != NULL)
-		return fText->Width();
+		return fText->ActualWidth();
 	return 0.0f;
 }
 
@@ -1082,7 +1082,7 @@ TextToolState::_DrawControls(PlatformDrawContext& drawContext)
 	BPoint origin(0.0f, -10.0f / scaleY);
 	TransformObjectToView(&origin, true);
 
-	BPoint widthOffset(fText->Width(), -10.0f / scaleY);
+	BPoint widthOffset(fText->ActualWidth(), -10.0f / scaleY);
 	TransformObjectToView(&widthOffset, true);
 
 	fPlatformDelegate->DrawControls(drawContext, origin, widthOffset);
