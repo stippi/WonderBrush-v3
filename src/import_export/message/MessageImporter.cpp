@@ -195,21 +195,59 @@ MessageImporter::ImportBrushStroke(const BMessage& archive) const
 BaseObjectRef
 MessageImporter::ImportFilterGaussianBlur(const BMessage& archive) const
 {
-	return BaseObjectRef();
+	Filter* filter = new(std::nothrow) Filter();
+	if (filter != NULL) {
+		float radius;
+		if (archive.FindFloat("radius", &radius) == B_OK)
+			filter->SetFilterRadius(radius);
+		
+		_RestoreObject(filter, archive);
+	}
+	return BaseObjectRef(filter, true);
 }
 
 // ImportFilterDropShadow
 BaseObjectRef
 MessageImporter::ImportFilterDropShadow(const BMessage& archive) const
 {
-	return BaseObjectRef();
+	FilterDropShadow* filter = new(std::nothrow) FilterDropShadow();
+	if (filter != NULL) {
+		float value;
+		if (archive.FindFloat("radius", &value) == B_OK)
+			filter->SetFilterRadius(value);
+		if (archive.FindFloat("offset-x", &value) == B_OK)
+			filter->SetOffsetX(value);
+		if (archive.FindFloat("offset-y", &value) == B_OK)
+			filter->SetOffsetY(value);
+		if (archive.FindFloat("opacity", &value) == B_OK)
+			filter->SetOpacity(value);
+
+		BMessage colorArchive;
+		if (archive.FindMessage("color", &colorArchive) == B_OK) {
+			BaseObjectRef colorRef = ImportObject(colorArchive);
+			ColorProvider* color = dynamic_cast<ColorProvider*>(colorRef.Get());
+			if (color != NULL)
+				filter->SetColor(ColorProviderRef(color));
+		}
+
+		_RestoreObject(filter, archive);
+	}
+	return BaseObjectRef(filter, true);
 }
 
 // ImportFilterSaturation
 BaseObjectRef
 MessageImporter::ImportFilterSaturation(const BMessage& archive) const
 {
-	return BaseObjectRef();
+	FilterSaturation* filter = new(std::nothrow) FilterSaturation();
+	if (filter != NULL) {
+		float saturation;
+		if (archive.FindFloat("saturation", &saturation) == B_OK)
+			filter->SetSaturation(saturation);
+		
+		_RestoreObject(filter, archive);
+	}
+	return BaseObjectRef(filter, true);
 }
 
 // ImportImage
