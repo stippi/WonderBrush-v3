@@ -257,22 +257,32 @@ Window::Window(BRect frame, const char* title, Document* document,
 		new BMessage(MSG_NEW_WINDOW), be_app);
 	newButton->SetIcon(201, iconSize);
 	newButton->TrimIcon(toolIconBounds);
-	IconButton* openButton = new IconButton("open", 0);
+	newButton->SetToolTip(B_TRANSLATE("New document" B_UTF8_ELLIPSIS));
+
+	IconButton* openButton = new IconButton("open", 0, NULL,
+		new BMessage(MSG_OPEN), this);
 	openButton->SetIcon(202, iconSize);
 	openButton->TrimIcon(toolIconBounds);
-openButton->SetEnabled(false);
-	IconButton* saveButton = new IconButton("save", 0);
+	openButton->SetToolTip(B_TRANSLATE("Open document" B_UTF8_ELLIPSIS));
+
+	IconButton* saveButton = new IconButton("save", 0, NULL,
+		new BMessage(MSG_SAVE), this);
 	saveButton->SetIcon(204, iconSize);
 	saveButton->TrimIcon(toolIconBounds);
-saveButton->SetEnabled(false);
-	IconButton* exportButton = new IconButton("export", 0);
+	saveButton->SetToolTip(B_TRANSLATE("Save document"));
+
+	IconButton* exportButton = new IconButton("export", 0, NULL,
+		new BMessage(MSG_EXPORT), this);
 	exportButton->SetIcon(203, iconSize);
 	exportButton->TrimIcon(toolIconBounds);
-exportButton->SetEnabled(false);
+	exportButton->SetToolTip(B_TRANSLATE("Export document"));
+
 	IconButton* closeButton = new IconButton("close", 0, NULL,
 		new BMessage(B_QUIT_REQUESTED), this);
 	closeButton->SetIcon(205, iconSize);
 	closeButton->TrimIcon(toolIconBounds);
+	closeButton->SetToolTip(B_TRANSLATE("Close document"));
+
 	BGroupView* fileIconGroup = new BGroupView(B_HORIZONTAL, 0.0f);
 	BLayoutBuilder::Group<>(fileIconGroup->GroupLayout())
 		.Add(newButton)
