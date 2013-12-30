@@ -13,6 +13,7 @@
 
 #include "ui_defines.h"
 
+#include "CloneContext.h"
 #include "CommonPropertyIDs.h"
 #include "PropertyObjectProperty.h"
 
@@ -41,7 +42,16 @@ Style::Style(const Style& other, CloneContext& context)
 	fStrokePaint(NULL),
 	fStrokeProperties(NULL)
 {
-	*this = other;
+	context.Clone(other.fFillPaint.Get(), fFillPaint);
+	context.Clone(other.fStrokePaint.Get(), fStrokePaint);
+	context.Clone(other.fStrokeProperties.Get(), fStrokeProperties);
+
+	if (fFillPaint.Get() != NULL)
+		fFillPaint->AddListener(this);
+	if (fStrokePaint.Get() != NULL)
+		fStrokePaint->AddListener(this);
+	if (fStrokeProperties.Get() != NULL)
+		fStrokeProperties->AddListener(this);
 }
 
 // destructor
