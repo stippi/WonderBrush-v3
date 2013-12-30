@@ -317,7 +317,7 @@ private:
 		if (ret == B_OK && fillPaint != NULL
 			&& fillPaint->Type() != Paint::NONE) {
 			BMessage paintArchive;
-			ret = _StorePaint(fillPaint, &paintArchive);
+			ret = _StoreResourceOrIndex(fillPaint, &paintArchive);
 			if (ret == B_OK)
 				ret = archive->AddMessage("fill paint", &paintArchive);
 		}
@@ -326,7 +326,7 @@ private:
 		if (ret == B_OK && strokePaint != NULL
 			&& strokePaint->Type() != Paint::NONE) {
 			BMessage paintArchive;
-			ret = _StorePaint(strokePaint, &paintArchive);
+			ret = _StoreResourceOrIndex(strokePaint, &paintArchive);
 			if (ret == B_OK)
 				ret = archive->AddMessage("stroke paint", &paintArchive);
 		}
@@ -359,7 +359,7 @@ private:
 				const ColorProviderRef& ref = paint->GetColorProvider();
 				if (ref.Get() != NULL) {
 					BMessage providerArchive;
-					ret = _StoreColorProvider(ref.Get(), &providerArchive);
+					ret = _StoreResourceOrIndex(ref.Get(), &providerArchive);
 					if (ret == B_OK)
 						ret = archive->AddMessage("color", &providerArchive);
 				}
