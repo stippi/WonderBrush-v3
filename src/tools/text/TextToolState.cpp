@@ -303,7 +303,7 @@ TextToolState::TextToolState(StateView* view, Document* document,
 
 	fCurrentColor->AddListener(this);
 
-	fStyle.Get()->SetFillPaint(Paint(fCurrentColor->Color()));
+	fStyle->FillPaint()->SetColor(fCurrentColor->Color());
 }
 
 // destructor
@@ -1446,7 +1446,7 @@ TextToolState::_SetStyle(const rgb_color& color)
 	if (style == NULL)
 		return;
 
-	style->SetFillPaint(Paint(color));
+	style->FillPaint()->SetColor(color);
 	fStyle.SetTo(style, true);
 }
 

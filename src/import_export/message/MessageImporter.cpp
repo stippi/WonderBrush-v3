@@ -618,7 +618,7 @@ MessageImporter::ImportStyle(const BMessage& archive) const
 			BaseObjectRef ref = ImportObject(fillPaintArchive);
 			Paint* paint = dynamic_cast<Paint*>(ref.Get());
 			if (paint != NULL)
-				style->SetFillPaint(*paint);
+				style->SetFillPaint(PaintRef(paint));
 		}
 
 		BMessage strokePaintArchive;
@@ -626,7 +626,7 @@ MessageImporter::ImportStyle(const BMessage& archive) const
 			BaseObjectRef ref = ImportObject(strokePaintArchive);
 			Paint* paint = dynamic_cast<Paint*>(ref.Get());
 			if (paint != NULL)
-				style->SetStrokePaint(*paint);
+				style->SetStrokePaint(PaintRef(paint));
 		}
 
 		BMessage strokePropertiesArchive;
@@ -635,8 +635,10 @@ MessageImporter::ImportStyle(const BMessage& archive) const
 			BaseObjectRef ref = ImportObject(strokePropertiesArchive);
 			StrokeProperties* strokeProperties
 				= dynamic_cast<StrokeProperties*>(ref.Get());
-			if (strokeProperties != NULL)
-				style->SetStrokeProperties(*strokeProperties);
+			if (strokeProperties != NULL) {
+				style->SetStrokeProperties(
+					StrokePropertiesRef(strokeProperties));
+			}
 		}
 
 		_RestoreBaseObject(style, archive);

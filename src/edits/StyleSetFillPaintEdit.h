@@ -13,10 +13,11 @@
 
 class StyleSetFillPaintEdit : public UndoableEdit {
 public:
-	StyleSetFillPaintEdit(Style* style, const Paint& newPaint)
+	StyleSetFillPaintEdit(Style* style, const rgb_color& color)
 		: UndoableEdit()
 		, fStyle(style)
-		, fFillPaint(newPaint)
+		, fColor(color)
+		, fOldPaint()
 	{
 	}
 
@@ -28,21 +29,23 @@ public:
 	{
 		return fStyle.Get() != NULL
 			&& fStyle->FillPaint() != NULL
-			&& *fStyle->FillPaint() != fFillPaint ? B_OK : B_ERROR;
+			&& (fStyle->FillPaint()->Type() != Paint::COLOR
+				|| fStyle->FillPaint()->Color() != fColor) ? B_OK : B_ERROR;
 	}
 
 	virtual	status_t Perform(EditContext& context)
 	{
-		Paint oldPaint = *fStyle->FillPaint();
-		fStyle->SetFillPaint(fFillPaint);
-		fFillPaint = oldPaint;
+		fOldPaint = *fStyle->FillPaint();
+		fStyle->FillPaint()->SetColor(fColor);
 
 		return B_OK;
 	}
 
 	virtual status_t Undo(EditContext& context)
 	{
-		return Perform(context);
+		*fStyle->FillPaint() = fOldPaint;
+
+		return B_OK;
 	}
 
 	virtual void GetName(BString& name)
@@ -61,13 +64,15 @@ public:
 		}
 
 		fTimeStamp = next->fTimeStamp;
+		fColor = next->fColor;
 
 		return true;
 	}
 
 private:
 			StyleRef			fStyle;
-			Paint				fFillPaint;
+			rgb_color			fColor;
+			Paint				fOldPaint;
 };
 
 #endif // STYLE_SET_FILL_PAINT_EDIT_H

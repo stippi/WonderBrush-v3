@@ -120,7 +120,7 @@ public:
 		if (style == NULL)
 			return;
 
-		style->SetFillPaint(Paint(color));
+		style->FillPaint()->SetColor(color);
 
 		_ModifyStyles(StyleModifier(StyleRef(style, true)));
 	}

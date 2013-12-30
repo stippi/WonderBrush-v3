@@ -194,7 +194,7 @@ Text::SetText(const char* utf8String, const Font& font, rgb_color color)
 	if (style == NULL)
 		return;
 
-	style->SetFillPaint(Paint(color));
+	style->SetFillPaint(PaintRef(new(std::nothrow) Paint(color), true));
 
 	StyleRef styleRef(style, true);
 	SetText(utf8String, font, styleRef);
@@ -240,7 +240,7 @@ Text::Insert(int32 textOffset, const char* utf8String, const Font& font,
 	if (style == NULL)
 		return;
 
-	style->SetFillPaint(Paint(color));
+	style->SetFillPaint(PaintRef(new(std::nothrow) Paint(color), true));
 
 	StyleRef styleRef(style, true);
 
@@ -505,7 +505,7 @@ Text::SetColor(int32 textOffset, int32 length, const rgb_color& color)
 	if (style == NULL)
 		return;
 
-	style->SetFillPaint(Paint(color));
+	style->SetFillPaint(PaintRef(new(std::nothrow) Paint(color), true));
 
 	StyleRef styleRef(style, true);
 

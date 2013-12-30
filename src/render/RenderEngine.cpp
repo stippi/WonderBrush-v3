@@ -79,9 +79,9 @@ RenderEngine::SetStyle(const Style& style)
 {
 	// TODO: Check what values are different first, before assigning,
 	// and apply them to the internal objects...
-	fState.SetFillPaint(style.FillPaint());
-	fState.SetStrokePaint(style.StrokePaint());
-	fState.SetStrokeProperties(style.StrokeProperties());
+	SetFillPaint(style.FillPaint());
+	SetStrokePaint(style.StrokePaint());
+	SetStrokeProperties(style.StrokeProperties());
 
 	// TODO: More stuff from style...
 }
@@ -91,6 +91,20 @@ void
 RenderEngine::SetFillPaint(Paint* paint)
 {
 	fState.SetFillPaint(paint);
+}
+
+// SetStrokePaint
+void
+RenderEngine::SetStrokePaint(Paint* paint)
+{
+	fState.SetStrokePaint(paint);
+}
+
+// SetStrokeProperties
+void
+RenderEngine::SetStrokeProperties(StrokeProperties* properties)
+{
+	fState.SetStrokeProperties(properties);
 }
 
 // AttachTo

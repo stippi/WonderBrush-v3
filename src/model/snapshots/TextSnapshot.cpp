@@ -52,7 +52,7 @@ void
 TextSnapshot::Render(RenderEngine& engine, RenderBuffer* bitmap,
 	BRect area) const
 {
-	engine.SetStyle(fStyle);
+	PrepareRenderEngine(engine);
 
 	TextRenderer renderer(FontCache::getInstance());
 	renderer.attachToBuffer(

@@ -22,13 +22,48 @@ public:
 
 	virtual	bool				Sync();
 
-	virtual	void				Render(RenderEngine& engine,
-									RenderBuffer* bitmap, BRect area) const;
+protected:
+			void				PrepareRenderEngine(RenderEngine& engine) const;
+
+			Paint*				FillPaint() const
+									{ return fFillPaint; }
+
+			Paint*				StrokePaint() const
+									{ return fStrokePaint; }
+
+			::StrokeProperties*	StrokeProperties() const
+									{ return fStrokeProperties; }
+
+private:
+			void				_SyncStyle();
+
+			void				_SetFillPaint(const Paint& paint);
+			void				_UnsetFillPaint();
+
+			void				_SetStrokePaint(const Paint& paint);
+			void				_UnsetStrokePaint();
+
+			void				_SetStrokeProperties(
+									const ::StrokeProperties& properties);
+			void				_UnsetStrokeProperties();
+
+			template<typename PropertyType, typename ValueType,
+				typename CacheType>
+			void				_SetProperty(PropertyType*& member,
+									const ValueType& newValue,
+									CacheType& cache);
+
+			template<typename PropertyType, typename CacheType>
+			void				_UnsetProperty(PropertyType*& member,
+									CacheType& cache);
 
 private:
 			const Styleable*	fOriginal;
-protected:
-						Style	fStyle;
+
+			SharedPaint*		fFillPaint;
+			SharedPaint*		fStrokePaint;
+
+			SharedStrokeProperties*	fStrokeProperties;
 };
 
 #endif // SHAPE_SNAPSHOT_H

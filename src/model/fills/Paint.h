@@ -106,4 +106,6 @@ private:
 	mutable	bool				fGammaCorrectedColorsValid;
 };
 
+typedef Reference<Paint> PaintRef;
+
 #endif	// PAINT_H

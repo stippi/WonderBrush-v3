@@ -1308,7 +1308,7 @@ PathToolState::ObjectChanged(const Notifier* object)
 		if (fShape != NULL) {
 			Style* style = fShape->Style();
 			View()->PerformEdit(new(std::nothrow) StyleSetFillPaintEdit(style,
-				Paint(fCurrentColor->Color())));
+				fCurrentColor->Color()));
 		}
 	}
 }
@@ -1406,7 +1406,7 @@ PathToolState::CreateShape(BPoint canvasLocation)
 		return false;
 	}
 
-	style->SetFillPaint(Paint(fCurrentColor->Color()));
+	style->FillPaint()->SetColor(fCurrentColor->Color());
 	shape->SetStyle(style);
 	style->RemoveReference();
 

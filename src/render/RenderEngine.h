@@ -79,6 +79,9 @@ public:
 			void				Reset();
 			void				SetStyle(const Style& style);
 			void				SetFillPaint(Paint* paint);
+			void				SetStrokePaint(Paint* paint);
+			void				SetStrokeProperties(
+									StrokeProperties* properties);
 
 			void				AttachTo(RenderBuffer* bitmap);
 			void				SetClipping(const BRect& area);

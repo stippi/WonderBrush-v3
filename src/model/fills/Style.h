@@ -7,13 +7,14 @@
 #define STYLE_H
 
 #include "BaseObject.h"
+#include "Listener.h"
 #include "Paint.h"
 #include "SetProperty.h"
 #include "StrokeProperties.h"
 
 class BRect;
 
-class Style : public BaseObject {
+class Style : public BaseObject, public Listener {
 public:
 								Style();
 								Style(const Style& other,
@@ -34,66 +35,57 @@ public:
 									const PropertyObject* object,
 									uint32 flags = 0);
 
+	// Listener interface
+	virtual	void				ObjectChanged(const Notifier* object);
+
 	// Style
 			bool				operator==(const Style& other) const;
 			bool				operator!=(const Style& other) const;
 
 			Style&				operator=(const Style& other);
 
-			void				SetFillPaint(const Paint& paint);
-			void				UnsetFillPaint();
+			void				SetFillPaint(const PaintRef& paint);
 			Paint*				FillPaint() const
-									{ return fFillPaint; }
+									{ return fFillPaint.Get(); }
 
-			void				SetStrokePaint(const Paint& paint);
-			void				UnsetStrokePaint();
+			void				SetStrokePaint(const PaintRef& paint);
 			Paint*				StrokePaint() const
-									{ return fStrokePaint; }
+									{ return fStrokePaint.Get(); }
 
 			void				SetStrokeProperties(
-									const ::StrokeProperties& properties);
-			void				UnsetStrokeProperties();
+									const StrokePropertiesRef& properties);
 			::StrokeProperties*	StrokeProperties() const
-									{ return fStrokeProperties; }
+									{ return fStrokeProperties.Get(); }
 
 			void				ExtendBounds(BRect& bounds) const;
 
 private:
 			template<typename PropertyType>
 			void				_SetProperty(PropertyType*& member,
-									PropertyType* newMember,
-									uint64 setProperty);
+									PropertyType* newMember);
 
 			template<typename PropertyType, typename ValueType,
 				typename CacheType>
 			void				_SetProperty(PropertyType*& member,
 									const ValueType& newValue,
-									CacheType& cache,
-									uint64 setProperty);
+									CacheType& cache);
 
 			template<typename PropertyType, typename CacheType>
 			void				_UnsetProperty(PropertyType*& member,
-									CacheType& cache,
-									uint64 setProperty);
+									CacheType& cache);
 
 			void				_AddPaintProperties(const Paint* paint,
 									uint32 groupID, uint32 paintTypeID,
 									PropertyObject* object,
 									uint32 flags) const;
-			void				_SetPaintToPropertyObject(SharedPaint*& member,
-									uint64 setProperty,
-									const PropertyObject* object,
-									uint32 flags);
 
 	static	Style&				_NullStyle();
 
 private:
-			uint64				fSetProperties;
+			Reference<Paint>	fFillPaint;
+			Reference<Paint>	fStrokePaint;
 
-			SharedPaint*		fFillPaint;
-			SharedPaint*		fStrokePaint;
-
-			SharedStrokeProperties*	fStrokeProperties;
+			Reference< ::StrokeProperties>	fStrokeProperties;
 };
 
 typedef Reference< ::Style>		StyleRef;

@@ -17,7 +17,8 @@ Styleable::Styleable()
 	: BoundedObject()
 	, fStyle(new(std::nothrow) ::Style(), true)
 {
-	fStyle->SetFillPaint(Paint(kBlack));
+	fStyle->SetFillPaint(PaintRef(new(std::nothrow) Paint(kBlack), true));
+	fStyle->AddListener(this);
 }
 
 // constructor
@@ -25,7 +26,8 @@ Styleable::Styleable(const rgb_color& color)
 	: BoundedObject()
 	, fStyle(new(std::nothrow) ::Style(), true)
 {
-	fStyle->SetFillPaint(Paint(color));
+	fStyle->SetFillPaint(PaintRef(new(std::nothrow) Paint(color), true));
+	fStyle->AddListener(this);
 }
 
 // constructor

@@ -51,7 +51,7 @@ void
 RectSnapshot::Render(RenderEngine& engine, RenderBuffer* bitmap,
 	BRect area) const
 {
-	engine.SetStyle(fStyle);
+	PrepareRenderEngine(engine);
 	engine.SetTransformation(LayoutedState().Matrix);
 
 	double radius = fRoundCornerRadius;

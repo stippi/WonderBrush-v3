@@ -412,7 +412,12 @@ Paint::SetColor(const rgb_color& color)
 			return;
 	}
 
-	fColor.SetTo(new(std::nothrow) ::Color(color));
+	::Color* colorProvider = dynamic_cast< ::Color*>(fColor.Get());
+	if (colorProvider != NULL)
+		colorProvider->SetColor(color);
+	else
+		fColor.SetTo(new(std::nothrow) ::Color(color));
+
 	Notify();
 }
 

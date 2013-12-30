@@ -87,8 +87,10 @@ WonderBrushBase::WonderBrushBase(BRect bounds)
 	Layer* shadowLayer = new Layer(bounds);
 	fDocument->RootLayer()->AddObject(shadowLayer);
 
-	Rect* rect = new Rect(BRect(100, 140, 180, 170),
+	Rect* rect = new Rect(BRect(100, 140, 220, 170),
 		(rgb_color){ 255, 215, 20, 100 });
+	rect->SetRoundCornerRadius(10.0);
+
 	Style* rectStyle = rect->Style();
 
 	ColorShade* shade = new ColorShade(
@@ -96,8 +98,10 @@ WonderBrushBase::WonderBrushBase(BRect bounds)
 	shade->SetHue(1.0f);
 	shade->SetValue(-0.25f);
 
-	rectStyle->SetStrokePaint(Paint(ColorProviderRef(shade, true)));
-	rectStyle->SetStrokeProperties(StrokeProperties(4.0f, RoundJoin));
+	rectStyle->SetStrokePaint(
+		PaintRef(new Paint(ColorProviderRef(shade, true)), true));
+	rectStyle->SetStrokeProperties(
+		StrokePropertiesRef(new StrokeProperties(8.0f, RoundJoin), true));
 
 	fDocument->RootLayer()->AddObject(rect);
 
@@ -189,10 +193,13 @@ WonderBrushBase::WonderBrushBase(BRect bounds)
 	subSubLayer->AddObject(subSubSubLayer);
 
 	Style* style = new Style();
-	style->SetFillPaint(Paint((rgb_color){ 255, 175, 252, 210 }));
-	style->SetStrokePaint(Paint((rgb_color){ 20, 60, 255, 150 }));
-	style->SetStrokeProperties(StrokeProperties(5.0f, ButtCap, RoundJoin,
-		4.0f));
+	style->SetFillPaint(
+		PaintRef(new Paint((rgb_color){ 255, 175, 252, 210 }), true));
+	style->SetStrokePaint(
+		PaintRef(new Paint((rgb_color){ 20, 60, 255, 150 }), true));
+	style->SetStrokeProperties(
+		StrokePropertiesRef(new StrokeProperties(5.0f, ButtCap, RoundJoin,
+			4.0f), true));
 	fDocument->GlobalResources().AddObject(style);
 
 	Shape* shapeWidthGlobalStyle = new Shape();

@@ -117,6 +117,8 @@ private:
 			uint32				fStrokePosition : 2;
 };
 
+typedef Reference<StrokeProperties> StrokePropertiesRef;
+
 // SetupAggConverter
 template<typename Converter>
 void

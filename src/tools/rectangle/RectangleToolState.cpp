@@ -789,7 +789,7 @@ RectangleToolState::ObjectChanged(const Notifier* object)
 		if (fRectangle != NULL) {
 			Style* style = fRectangle->Style();
 			View()->PerformEdit(new(std::nothrow) StyleSetFillPaintEdit(style,
-				Paint(fCurrentColor->Color())));
+				fCurrentColor->Color()));
 		}
 	}
 }
@@ -831,7 +831,7 @@ RectangleToolState::CreateRectangle(BPoint canvasLocation)
 		return false;
 	}
 
-	style->SetFillPaint(Paint(fCurrentColor->Color()));
+	style->FillPaint()->SetColor(fCurrentColor->Color());
 	rectangle->SetStyle(style);
 	style->RemoveReference();
 
