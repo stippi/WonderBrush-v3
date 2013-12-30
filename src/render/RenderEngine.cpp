@@ -6,6 +6,7 @@
 
 #include <new>
 
+#include <agg_conv_contour.h>
 #include <agg_image_accessors.h>
 #include <agg_renderer_scanline.h>
 #include <agg_rounded_rect.h>
@@ -226,16 +227,42 @@ RenderEngine::DrawRectangle(const BRect& rect, BRect area,
 	}
 
 	if (fState.StrokePaint() != NULL
-		&& fState.StrokePaint()->Type() != Paint::NONE) {
-		agg::conv_stroke<agg::rounded_rect> strokedRoundRect(
-			roundRect);
-		fState.StrokeProperties()->SetupAggConverter(strokedRoundRect);
+		&& fState.StrokePaint()->Type() != Paint::NONE
+		&& fState.StrokeProperties() != NULL) {
+		if (fState.StrokeProperties()->StrokePosition() == CenterStroke) {
+			agg::conv_stroke<agg::rounded_rect> strokedRoundRect(
+				roundRect);
+			fState.StrokeProperties()->SetupAggConverter(strokedRoundRect);
+	
+			agg::conv_transform<agg::conv_stroke<agg::rounded_rect>,
+					Transformable>
+				transformedRoundRect(strokedRoundRect, fState.Matrix);
+	
+			fRasterizer.reset();
+			fRasterizer.add_path(transformedRoundRect);
+		} else {
+			agg::conv_contour<agg::rounded_rect> offsetPath(
+				roundRect);
+			if (fState.StrokeProperties()->StrokePosition() == InsideStroke)
+				offsetPath.width(-fState.StrokeProperties()->Width());
+			else
+				offsetPath.width(fState.StrokeProperties()->Width());
+			offsetPath.auto_detect_orientation(true);
 
-		agg::conv_transform<agg::conv_stroke<agg::rounded_rect>, Transformable>
-			transformedRoundRect(strokedRoundRect, fState.Matrix);
-
-		fRasterizer.reset();
-		fRasterizer.add_path(transformedRoundRect);
+			agg::conv_stroke<agg::conv_contour<agg::rounded_rect> >
+				strokedPath(offsetPath);
+			fState.StrokeProperties()->SetupAggConverter(strokedPath);
+//			strokedPath.inner_join(agg::inner_miter);
+	
+			agg::conv_transform<
+				agg::conv_stroke<agg::conv_contour<
+				agg::rounded_rect> >,
+				Transformable>
+				transformedRoundRect(strokedPath, fState.Matrix);
+	
+			fRasterizer.reset();
+			fRasterizer.add_path(transformedRoundRect);
+		}
 		_RenderScanlines(false);
 	}
 }

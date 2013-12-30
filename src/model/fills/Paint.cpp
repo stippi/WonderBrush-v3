@@ -304,10 +304,11 @@ Paint::operator=(const Paint& other)
 	if (&other == this)
 		return *this;
 
-	fType = other.fType;
 	fColor = other.fColor;
 	SetGradient(other.fGradient);
 	// TODO: pattern...
+
+	fType = other.fType;
 
 	return *this;
 }

@@ -17,7 +17,7 @@ public:
 		: UndoableEdit()
 		, fStyle(style)
 		, fColor(color)
-		, fOldPaint()
+		, fOldColor()
 	{
 	}
 
@@ -35,7 +35,7 @@ public:
 
 	virtual	status_t Perform(EditContext& context)
 	{
-		fOldPaint = *fStyle->FillPaint();
+		fOldColor = fStyle->FillPaint()->Color();
 		fStyle->FillPaint()->SetColor(fColor);
 
 		return B_OK;
@@ -43,7 +43,14 @@ public:
 
 	virtual status_t Undo(EditContext& context)
 	{
-		*fStyle->FillPaint() = fOldPaint;
+		fStyle->FillPaint()->SetColor(fOldColor);
+
+		return B_OK;
+	}
+
+	virtual status_t Redo(EditContext& context)
+	{
+		fStyle->FillPaint()->SetColor(fColor);
 
 		return B_OK;
 	}
@@ -72,7 +79,7 @@ public:
 private:
 			StyleRef			fStyle;
 			rgb_color			fColor;
-			Paint				fOldPaint;
+			rgb_color			fOldColor;
 };
 
 #endif // STYLE_SET_FILL_PAINT_EDIT_H
