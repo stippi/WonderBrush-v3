@@ -299,7 +299,7 @@ Paint::DefaultName() const
 void
 Paint::ObjectChanged(const Notifier* object)
 {
-	if (object == fColor.Get()) {
+	if (object == fColor.Get() && fType == COLOR) {
 		Notify();
 	} else if (object == fGradient && fColors != NULL) {
 		fGradient->MakeGradient((uint32*)fColors, 256);
