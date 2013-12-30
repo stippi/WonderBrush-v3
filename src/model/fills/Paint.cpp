@@ -31,6 +31,7 @@ Paint::Paint()
 	, fGammaCorrectedColorsValid(false)
 {
 	SetColorProvider(ColorProviderRef(new(std::nothrow) ::Color(), true));
+	fType = NONE;
 }
 
 // constructor
