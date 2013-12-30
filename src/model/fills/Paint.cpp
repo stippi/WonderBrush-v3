@@ -22,7 +22,7 @@
 Paint::Paint()
 	: BaseObject()
 	, fType(NONE)
-	, fColor(new(std::nothrow) ::Color())
+	, fColor()
 	, fGradient(NULL)
 
 	, fColors(NULL)
@@ -30,13 +30,14 @@ Paint::Paint()
 	, fGammaCorrectedColors(NULL)
 	, fGammaCorrectedColorsValid(false)
 {
+	SetColorProvider(ColorProviderRef(new(std::nothrow) ::Color(), true));
 }
 
 // constructor
 Paint::Paint(const Paint& other, CloneContext& context)
 	: BaseObject(other)
 	, fType(NONE)
-	, fColor(other.fColor)
+	, fColor()
 	, fGradient(NULL)
 
 	, fColors(NULL)
@@ -46,14 +47,18 @@ Paint::Paint(const Paint& other, CloneContext& context)
 {
 	*this = other;
 
+	if (fColor.Get() != NULL)
+		fColor->RemoveListener(this);
 	context.Clone(other.fColor.Get(), fColor);
+	if (fColor.Get() != NULL)
+		fColor->AddListener(this);
 }
 
 // constructor
 Paint::Paint(const rgb_color& color)
 	: BaseObject()
 	, fType(COLOR)
-	, fColor(new(std::nothrow) ::Color(color))
+	, fColor()
 	, fGradient(NULL)
 
 	, fColors(NULL)
@@ -61,13 +66,14 @@ Paint::Paint(const rgb_color& color)
 	, fGammaCorrectedColors(NULL)
 	, fGammaCorrectedColorsValid(false)
 {
+	SetColorProvider(ColorProviderRef(new(std::nothrow) ::Color(color), true));
 }
 
 // constructor
 Paint::Paint(const ColorProviderRef& color)
 	: BaseObject()
 	, fType(COLOR)
-	, fColor(color)
+	, fColor()
 	, fGradient(NULL)
 
 	, fColors(NULL)
@@ -75,13 +81,14 @@ Paint::Paint(const ColorProviderRef& color)
 	, fGammaCorrectedColors(NULL)
 	, fGammaCorrectedColorsValid(false)
 {
+	SetColorProvider(color);
 }
 
 // constructor
 Paint::Paint(const ::Gradient* gradient)
 	: BaseObject()
 	, fType(GRADIENT)
-	, fColor(new(std::nothrow) ::Color())
+	, fColor()
 	, fGradient(NULL)
 
 	, fColors(NULL)
@@ -89,6 +96,7 @@ Paint::Paint(const ::Gradient* gradient)
 	, fGammaCorrectedColors(NULL)
 	, fGammaCorrectedColorsValid(false)
 {
+	SetColorProvider(ColorProviderRef(new(std::nothrow) ::Color(), true));
 	SetGradient(gradient);
 }
 
@@ -96,7 +104,7 @@ Paint::Paint(const ::Gradient* gradient)
 Paint::Paint(BMessage* archive)
 	: BaseObject()
 	, fType(NONE)
-	, fColor(new(std::nothrow) ::Color())
+	, fColor(new(std::nothrow) ::Color(), true)
 	, fGradient(NULL)
 
 	, fColors(NULL)
@@ -110,6 +118,8 @@ Paint::Paint(BMessage* archive)
 // destructor
 Paint::~Paint()
 {
+	if (fColor.Get() != NULL)
+		fColor->RemoveListener(this);
 	SetGradient(NULL);
 	// TODO: pattern...
 }
@@ -288,7 +298,9 @@ Paint::DefaultName() const
 void
 Paint::ObjectChanged(const Notifier* object)
 {
-	if (object == fGradient && fColors != NULL) {
+	if (object == fColor.Get()) {
+		Notify();
+	} else if (object == fGradient && fColors != NULL) {
 		fGradient->MakeGradient((uint32*)fColors, 256);
 		fGammaCorrectedColorsValid = false;
 		Notify();
@@ -304,7 +316,7 @@ Paint::operator=(const Paint& other)
 	if (&other == this)
 		return *this;
 
-	fColor = other.fColor;
+	SetColorProvider(other.fColor);
 	SetGradient(other.fGradient);
 	// TODO: pattern...
 
@@ -416,10 +428,10 @@ Paint::SetColor(const rgb_color& color)
 	::Color* colorProvider = dynamic_cast< ::Color*>(fColor.Get());
 	if (colorProvider != NULL)
 		colorProvider->SetColor(color);
-	else
-		fColor.SetTo(new(std::nothrow) ::Color(color));
-
-	Notify();
+	else {
+		SetColorProvider(
+			ColorProviderRef(new(std::nothrow) ::Color(color), true));
+	}
 }
 
 // SetColorProvider
@@ -433,7 +445,14 @@ Paint::SetColorProvider(const ColorProviderRef& colorProvider)
 			return;
 	}
 
+	if (fColor.Get() != NULL)
+		fColor.Get()->RemoveListener(this);
+
 	fColor = colorProvider;
+
+	if (fColor.Get() != NULL)
+		fColor.Get()->AddListener(this);
+
 	Notify();
 }
 

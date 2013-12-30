@@ -93,8 +93,13 @@ WonderBrushBase::WonderBrushBase(BRect bounds)
 
 	Style* rectStyle = rect->Style();
 
-	ColorShade* shade = new ColorShade(
-		rectStyle->FillPaint()->GetColorProvider());
+	// Publish color as resource, otherwise this connection cannot be
+	// restored when saving/loading the document.
+	const ColorProviderRef& rectColor
+		= rectStyle->FillPaint()->GetColorProvider();
+	fDocument->GlobalResources().AddObject(rectColor.Get());
+
+	ColorShade* shade = new ColorShade(rectColor);
 	shade->SetHue(1.0f);
 	shade->SetValue(-0.25f);
 
