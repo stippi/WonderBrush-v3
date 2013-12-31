@@ -31,7 +31,7 @@ Style::Style()
 	SetStrokePaint(
 		PaintRef(new(std::nothrow) Paint(), true));
 	SetStrokeProperties(
-		StrokePropertiesRef(new(std::nothrow) ::StrokeProperties(), true));
+		StrokePropertiesRef(new(std::nothrow) ::StrokeProperties(1.0f), true));
 }
 
 // constructor
