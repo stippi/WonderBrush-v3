@@ -254,7 +254,7 @@ Window::Window(BRect frame, const char* title, Document* document,
 
 	// File icon group
 	IconButton* newButton = new IconButton("new", 0, NULL,
-		new BMessage(MSG_NEW_WINDOW), be_app);
+		new BMessage(MSG_NEW_DOCUMENT), be_app);
 	newButton->SetIcon(201, iconSize);
 	newButton->TrimIcon(toolIconBounds);
 	newButton->SetToolTip(B_TRANSLATE("New document" B_UTF8_ELLIPSIS));
@@ -576,6 +576,7 @@ Window::MessageReceived(BMessage* message)
 			break;
 		}
 		case B_CANCEL:
+			// Forget what was to be done after the file panel was used.
 			delete fMessageAfterSave;
 			fMessageAfterSave = NULL;
 			break;
