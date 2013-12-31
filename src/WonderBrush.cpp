@@ -6,6 +6,7 @@
 #include <Bitmap.h>
 #include <Catalog.h>
 #include <Path.h>
+#include <Roster.h>
 #include <String.h>
 #include <TranslationUtils.h>
 
@@ -27,7 +28,7 @@
 #include "Window.h"
 
 
-static const char* sFontsDirectory = NULL;
+static BString sFontsDirectory;
 
 #define B_TRANSLATION_CONTEXT "WonderBrush"
 
@@ -42,6 +43,15 @@ WonderBrushBase::WonderBrushBase(BRect bounds)
 	fWindowFrame(bounds.OffsetToCopy(50, 50)),
 	fWindowCount(0)
 {
+	if (sFontsDirectory.Length() == 0) {
+		app_info info;
+		be_app->GetAppInfo(&info);
+		BPath path(&info.ref);
+		path.GetParent(&path);
+		if (path.SetTo(path.Path(), "data/fonts") == B_OK)
+			sFontsDirectory = path.Path();
+	}
+
 	// create dummy contents for document
 	fDocument->RootLayer()->AddObject(new Rect(BRect(50, 100, 110, 130),
 		(rgb_color){ 255, 120, 0, 120 }));
@@ -112,7 +122,7 @@ WonderBrushBase::WonderBrushBase(BRect bounds)
 
 	BBitmap* bitmap = BTranslationUtils::GetBitmap(
 		"/boot/home/Desktop/gamma_dalai_lama_gray.jpg");
-	if (bitmap == NULL && sFontsDirectory != NULL) {
+	if (bitmap == NULL && sFontsDirectory.Length() > 0) {
 		// A font directory is given. If it's the one in the sources, it is a
 		// subdir of the data directory which contains our image.
 		BPath filePath(sFontsDirectory, "../gamma_dalai_lama_gray.jpg");
@@ -538,16 +548,15 @@ main(int argc, char* argv[])
 	for (int i = 1; i < argc; i++) {
 		if (strcmp(argv[i], "--fonts") == 0 && i < argc - 1) {
 			sFontsDirectory = argv[i + 1];
-			printf("Using font folder: '%s'\n", sFontsDirectory);
+			printf("Using font folder: '%s'\n", sFontsDirectory.String());
 			break;
 		}
 	}
-
 	// Create app already here. For Qt this must be the first event loop
 	// created and FontRegistry is a BLooper which uses an event loop, too.
 	WonderBrush app(argc, argv, BRect(0, 0, 799, 599));
 
-	if (sFontsDirectory != NULL) {
+	if (sFontsDirectory.Length() > 0) {
 		FontRegistry* registry = FontRegistry::Default();
 		if (registry->Lock()) {
 			registry->AddFontDirectory(sFontsDirectory);
