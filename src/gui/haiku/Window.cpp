@@ -575,6 +575,10 @@ Window::MessageReceived(BMessage* message)
 			}
 			break;
 		}
+		case B_CANCEL:
+			delete fMessageAfterSave;
+			fMessageAfterSave = NULL;
+			break;
 
 		case MSG_UNDO:
 			fDocument->EditManager()->Undo(fEditContext);
