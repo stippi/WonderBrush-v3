@@ -6,7 +6,8 @@
 #include "BitmapImporter.h"
 
 #include <Bitmap.h>
-#include <TranslationUtils.h>
+#include <BitmapStream.h>
+#include <TranslatorRoster.h>
 
 #include "AutoDeleter.h"
 #include "Document.h"
@@ -17,6 +18,7 @@
 // constructor
 BitmapImporter::BitmapImporter(const DocumentRef& document)
 	: fDocument(document)
+	, fTranslationFormat(0)
 {
 }
 
@@ -27,12 +29,36 @@ BitmapImporter::~BitmapImporter()
 
 // Import
 status_t
-BitmapImporter::Import(BPositionIO& stream) const
+BitmapImporter::Import(BPositionIO& stream)
 {
+	fTranslationFormat = 0;
+
 	if (fDocument.Get() == NULL)
 		return B_NO_INIT;
 
-	BBitmap* bitmap = BTranslationUtils::GetBitmap(&stream);
+	BTranslatorRoster* roster = BTranslatorRoster::Default();
+	if (roster == NULL)
+		return B_ERROR;
+
+	translator_info info;
+	status_t ret = roster->Identify(&stream, NULL, &info, 0, NULL,
+		B_TRANSLATOR_BITMAP);
+	if (ret != B_OK)
+		return ret;
+
+	fTranslationFormat = info.type;
+
+	BBitmapStream bitmapStream;
+	ret = roster->Translate(&stream, &info, NULL, &bitmapStream,
+		B_TRANSLATOR_BITMAP);
+	if (ret != B_OK)
+		return ret;
+	
+	BBitmap* bitmap = NULL;
+	ret = bitmapStream.DetachBitmap(&bitmap);
+	if (ret != B_OK)
+		return ret;
+
 	if (bitmap == NULL)
 		return B_ERROR;
 	ObjectDeleter<BBitmap> bitmapDeleter(bitmap);

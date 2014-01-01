@@ -6,6 +6,8 @@
 #ifndef BITMAP_EXPORTER_H
 #define BITMAP_EXPORTER_H
 
+#include <TranslationDefs.h>
+
 #include "Exporter.h"
 
 class BitmapExporter : public Exporter {
@@ -20,8 +22,11 @@ public:
 
 	virtual	const char*			MIMEType();
 
+			void				SetFormat(uint32 format);
+
 private:
-			uint32				fFormat;
+			translation_format	fFormat;
+			translator_id		fTranslatorID;
 			uint32				fWidth;
 			uint32				fHeight;
 };

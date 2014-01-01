@@ -447,11 +447,16 @@ WonderBrush::ImportDocument(Document* document, const entry_ref& ref) const
 	BitmapImporter bitmapImporter(documentRef);;
 	ret = bitmapImporter.Import(file);
 	if (ret == B_OK) {
-		// TODO: Set the bitmap format (the same Translator as was used
-		// to open the file)!
-		document->SetExportSaver(
-			new(std::nothrow) SimpleFileSaver(
-				new(std::nothrow) BitmapExporter(), ref));
+		BitmapExporter* exporter = new(std::nothrow) BitmapExporter();
+		if (exporter != NULL) {
+			exporter->SetFormat(bitmapImporter.Format());
+			DocumentSaver* saver
+				= new(std::nothrow) SimpleFileSaver(exporter, ref);
+			if (saver == NULL)
+				delete exporter;
+			else
+				document->SetExportSaver(saver);
+		}
 		return B_OK;
 	}
 	

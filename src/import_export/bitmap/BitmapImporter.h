@@ -19,9 +19,14 @@ public:
 								BitmapImporter(const DocumentRef& document);
 	virtual						~BitmapImporter();
 
-			status_t			Import(BPositionIO& stream) const;
+			status_t			Import(BPositionIO& stream);
+
+			uint32				Format() const
+									{ return fTranslationFormat; }
 private:
 			DocumentRef			fDocument;
+
+			uint32				fTranslationFormat;
 };
 
 #endif // BITMAP_IMPORTER_H
