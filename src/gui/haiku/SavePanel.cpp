@@ -57,7 +57,7 @@ SavePanel::SavePanel(const char* name, BMessenger* target,
 	BHandler(name),
 	fConfigWindow(NULL),
 	fFormatM(NULL),
-	fExportMode(EXPORT_MODE_ICON_RDEF)
+	fExportMode(EXPORT_MODE_BITMAP)
 {
 	BWindow* window = Window();
 	if (!window || !window->Lock())
