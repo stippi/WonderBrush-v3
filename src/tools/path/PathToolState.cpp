@@ -522,6 +522,9 @@ public:
 			if (fDragInsertPosition) {
 				// Undo insertion and insert again at current pointer
 				// location
+				
+				path->SuspendNotifications(true);
+				
 				path->RemovePoint(fIndex);
 				path->SetPoint(fIndex - 1,
 					fPrevious[0], fPrevious[1], fPrevious[2],
@@ -533,6 +536,9 @@ public:
 					fNext[0], fNext[1], fNext[2], fNextConnected);
 
 				_InsertPoint(path, current, fIndex);
+
+				path->SuspendNotifications(false);
+
 			} else {
 				// Switch to DragState for dragging the inserted point
 				fParent->fDragPathPointState->SetPathPoint(PathPoint(path,
