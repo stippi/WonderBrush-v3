@@ -82,6 +82,10 @@ MessageImporter::Import(BPositionIO& stream) const
 status_t
 MessageImporter::ImportDocument(const BMessage& archive) const
 {
+	BRect bounds;
+	if (archive.FindRect("bounds", &bounds) == B_OK)
+		fDocument->SetBounds(bounds);
+	
 	BMessage resources;
 	if (archive.FindMessage("resources", &resources) != B_OK) {
 		fprintf(stderr, "MessageImporter::ImportDocument() "
