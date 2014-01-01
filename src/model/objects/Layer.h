@@ -93,6 +93,7 @@ public:
 	static	void				RemoveListenerRecursive(Layer* layer,
 									Listener* listener);
 
+			void				SetBounds(const BRect& bounds);
 			BRect				Bounds() const
 									{ return fBounds; }
 

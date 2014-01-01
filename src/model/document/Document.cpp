@@ -124,6 +124,13 @@ Document::InitCheck() const
 	return fEditManager && fRootLayer ? B_OK : B_NO_MEMORY;
 }
 
+// SetBounds
+void
+Document::SetBounds(const BRect& bounds)
+{
+	fRootLayer->SetBounds(bounds);
+}
+
 // Bounds
 BRect
 Document::Bounds() const

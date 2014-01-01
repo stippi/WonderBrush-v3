@@ -44,6 +44,7 @@ public:
 
 			status_t			InitCheck() const;
 
+			void				SetBounds(const BRect& bounds);
 			BRect				Bounds() const;
 
 			bool				AddListener(Listener* listener);

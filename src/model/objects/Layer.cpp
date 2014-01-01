@@ -540,6 +540,35 @@ Layer::RemoveListenerRecursive(Layer* layer, Listener* listener)
 	layer->RemoveListener(listener);
 }
 
+// #pragma mark -
+
+// SetBounds
+void
+Layer::SetBounds(const BRect& bounds)
+{
+	if (fBounds == bounds)
+		return;
+
+	SuspendUpdates(true);
+
+	fBounds = bounds;
+
+	int32 count = CountObjects();
+	for (int32 i = 0; i < count; i++) {
+		Object* object = ObjectAtFast(i);
+		Layer* subLayer = dynamic_cast<Layer*>(object);
+		if (subLayer != NULL) {
+			subLayer->SetBounds(bounds);
+		}
+	}
+
+	UpdateChangeCounter();
+	InvalidateParent(fBounds);
+	Notify();
+
+	SuspendUpdates(false);
+}
+
 // SetGlobalAlpha
 void
 Layer::SetGlobalAlpha(uint8 globalAlpha)
