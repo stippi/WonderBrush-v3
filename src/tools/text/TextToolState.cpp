@@ -565,7 +565,7 @@ TextToolState::DragStateFor(BPoint canvasWhere, float zoomLevel) const
 		BPoint objectWhere = canvasWhere;
 		TransformCanvasToObject(&objectWhere);
 
-		BPoint widthOffset(fText->Width(), -10.0f / scaleY / zoomLevel);
+		BPoint widthOffset(fText->ActualWidth(), -10.0f / scaleY / zoomLevel);
 		if (point_point_distance(objectWhere, widthOffset) < inset)
 			return fDragWidthState;
 
