@@ -10,6 +10,8 @@
 #include <String.h>
 #include <TranslationUtils.h>
 
+#include "BitmapImporter.h"
+#include "BitmapExporter.h"
 #include "BrushStroke.h"
 #include "ColorShade.h"
 #include "Document.h"
@@ -24,6 +26,7 @@
 #include "Rect.h"
 #include "RenderBuffer.h"
 #include "Shape.h"
+#include "SimpleFileSaver.h"
 #include "Text.h"
 #include "Window.h"
 
@@ -437,6 +440,18 @@ WonderBrush::ImportDocument(Document* document, const entry_ref& ref) const
 	ret = msgImporter.Import(file);
 	if (ret == B_OK) {
 		document->SetNativeSaver(new(std::nothrow) NativeSaver(ref));
+		return B_OK;
+	}
+
+	file.Seek(0, SEEK_SET);
+	BitmapImporter bitmapImporter(documentRef);;
+	ret = bitmapImporter.Import(file);
+	if (ret == B_OK) {
+		// TODO: Set the bitmap format (the same Translator as was used
+		// to open the file)!
+		document->SetExportSaver(
+			new(std::nothrow) SimpleFileSaver(
+				new(std::nothrow) BitmapExporter(), ref));
 		return B_OK;
 	}
 	

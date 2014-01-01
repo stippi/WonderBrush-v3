@@ -163,6 +163,7 @@ Application WonderBrush :
 
 	# import_export/bitmap
 	BitmapExporter.cpp
+	BitmapImporter.cpp
 
 	# import_export/message
 	MessageExporter.cpp

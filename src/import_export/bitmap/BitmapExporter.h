@@ -10,6 +10,7 @@
 
 class BitmapExporter : public Exporter {
 public:
+								BitmapExporter();
 								BitmapExporter(const BRect& bounds);
 								BitmapExporter(uint32 width, uint32 height);
 	virtual						~BitmapExporter();

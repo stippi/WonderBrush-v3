@@ -14,6 +14,16 @@
 #include "RenderManager.h"
 
 // constructor
+BitmapExporter::BitmapExporter()
+	:
+	Exporter(),
+	fFormat(B_PNG_FORMAT),
+	fWidth(0),
+	fHeight(0)
+{
+}
+
+// constructor
 BitmapExporter::BitmapExporter(const BRect& bounds)
 	:
 	Exporter(),
@@ -42,11 +52,10 @@ BitmapExporter::~BitmapExporter()
 status_t
 BitmapExporter::Export(const DocumentRef& document, BPositionIO* stream)
 {
-	if (fWidth == 0 || fHeight == 0)
-		return B_NO_INIT;
-
 	// Attach RenderManager to document
 	RenderManager renderer(document.Get());
+
+	// TODO: Use fWidth and fHeight if non-zero!
 
 	status_t ret = renderer.Init();
 	if (ret != B_OK)
