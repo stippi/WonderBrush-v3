@@ -49,7 +49,11 @@ Path::Path()
 	:
 	BArchivable(),
 	BaseObject(),
+
 	fListeners(20),
+	fNotificationsSuspended(0),
+	fNotificationsPending(false),
+
 	fPath(NULL),
 	fClosed(false),
 	fPointCount(0),
@@ -64,6 +68,10 @@ Path::Path(const Path& other)
 	BArchivable(),
 	BaseObject(other),
 	fListeners(20),
+
+	fNotificationsSuspended(0),
+	fNotificationsPending(false),
+
 	fPath(NULL),
 	fClosed(false),
 	fPointCount(0),
@@ -78,7 +86,11 @@ Path::Path(const BMessage* archive)
 	:
 	BArchivable(),
 	BaseObject(archive),
+
 	fListeners(20),
+	fNotificationsSuspended(0),
+	fNotificationsPending(false),
+
 	fPath(NULL),
 	fClosed(false),
 	fPointCount(0),
@@ -974,6 +986,19 @@ Path::ListenerAtFast(int32 index) const
 	return (Listener*)fListeners.ItemAtFast(index);
 }
 
+// SuspendNotifications
+void
+Path::SuspendNotifications(bool suspend)
+{
+	if (suspend) {
+		fNotificationsSuspended++;
+	} else {
+		fNotificationsSuspended--;
+		if (fNotificationsSuspended == 0 && fNotificationsPending)
+			_NotifyPathChanged();
+	}
+}
+
 // #pragma mark -
 
 // _GetAGGPathStorage
@@ -1072,10 +1097,21 @@ Path::_SetPointCount(int32 count)
 
 // #pragma mark -
 
+// _DelayNotification
+bool
+Path::_DelayNotification()
+{
+	fNotificationsPending = fNotificationsSuspended > 0;
+	return fNotificationsPending;
+}
+
 // _NotifyPointAdded
 void
-Path::_NotifyPointAdded(int32 index) const
+Path::_NotifyPointAdded(int32 index)
 {
+	if (_DelayNotification())
+		return;
+
 	BList listeners(fListeners);
 	int32 count = listeners.CountItems();
 	for (int32 i = 0; i < count; i++) {
@@ -1086,8 +1122,11 @@ Path::_NotifyPointAdded(int32 index) const
 
 // _NotifyPointChanged
 void
-Path::_NotifyPointChanged(int32 index) const
+Path::_NotifyPointChanged(int32 index)
 {
+	if (_DelayNotification())
+		return;
+
 	BList listeners(fListeners);
 	int32 count = listeners.CountItems();
 	for (int32 i = 0; i < count; i++) {
@@ -1098,8 +1137,11 @@ Path::_NotifyPointChanged(int32 index) const
 
 // _NotifyPointRemoved
 void
-Path::_NotifyPointRemoved(int32 index) const
+Path::_NotifyPointRemoved(int32 index)
 {
+	if (_DelayNotification())
+		return;
+
 	BList listeners(fListeners);
 	int32 count = listeners.CountItems();
 	for (int32 i = 0; i < count; i++) {
@@ -1110,8 +1152,11 @@ Path::_NotifyPointRemoved(int32 index) const
 
 // _NotifyPathChanged
 void
-Path::_NotifyPathChanged() const
+Path::_NotifyPathChanged()
 {
+	if (_DelayNotification())
+		return;
+
 	BList listeners(fListeners);
 	int32 count = listeners.CountItems();
 	for (int32 i = 0; i < count; i++) {
@@ -1122,8 +1167,11 @@ Path::_NotifyPathChanged() const
 
 // _NotifyClosedChanged
 void
-Path::_NotifyClosedChanged() const
+Path::_NotifyClosedChanged()
 {
+	if (_DelayNotification())
+		return;
+
 	BList listeners(fListeners);
 	int32 count = listeners.CountItems();
 	for (int32 i = 0; i < count; i++) {
@@ -1134,8 +1182,11 @@ Path::_NotifyClosedChanged() const
 
 // _NotifyPathReversed
 void
-Path::_NotifyPathReversed() const
+Path::_NotifyPathReversed()
 {
+	if (_DelayNotification())
+		return;
+
 	BList listeners(fListeners);
 	int32 count = listeners.CountItems();
 	for (int32 i = 0; i < count; i++) {

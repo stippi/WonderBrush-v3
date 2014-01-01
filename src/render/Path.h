@@ -143,6 +143,7 @@ public:
 			bool				RemoveListener(Listener* listener);
 			int32				CountListeners() const;
 			Listener*			ListenerAtFast(int32 index) const;
+			void				SuspendNotifications(bool suspend);
 
 
 private:
@@ -164,15 +165,19 @@ private:
 									const BPoint& pointOut, bool connected);
 			bool				_SetPointCount(int32 count);
 
-			void				_NotifyPointAdded(int32 index) const;
-			void				_NotifyPointChanged(int32 index) const;
-			void				_NotifyPointRemoved(int32 index) const;
-			void				_NotifyPathChanged() const;
-			void				_NotifyClosedChanged() const;
-			void				_NotifyPathReversed() const;
+			bool				_DelayNotification();
+
+			void				_NotifyPointAdded(int32 index);
+			void				_NotifyPointChanged(int32 index);
+			void				_NotifyPointRemoved(int32 index);
+			void				_NotifyPathChanged();
+			void				_NotifyClosedChanged();
+			void				_NotifyPathReversed();
 
 private:
 			BList				fListeners;
+			int32				fNotificationsSuspended;
+			bool				fNotificationsPending;
 
 			control_point*		fPath;
 			bool				fClosed;
