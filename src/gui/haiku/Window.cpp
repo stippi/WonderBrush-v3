@@ -286,8 +286,8 @@ Window::Window(BRect frame, const char* title, Document* document,
 	BGroupView* fileIconGroup = new BGroupView(B_HORIZONTAL, 0.0f);
 	BLayoutBuilder::Group<>(fileIconGroup->GroupLayout())
 		.Add(newButton)
-		.Add(new BSeparatorView(B_VERTICAL))
 		.Add(openButton)
+		.Add(new BSeparatorView(B_VERTICAL))
 		.Add(saveButton)
 		.Add(exportButton)
 		.Add(new BSeparatorView(B_VERTICAL))
@@ -579,6 +579,10 @@ Window::MessageReceived(BMessage* message)
 			// Forget what was to be done after the file panel was used.
 			delete fMessageAfterSave;
 			fMessageAfterSave = NULL;
+			break;
+
+		case B_SIMPLE_DATA:
+			be_app->PostMessage(message);
 			break;
 
 		case MSG_UNDO:
