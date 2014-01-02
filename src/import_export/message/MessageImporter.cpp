@@ -310,7 +310,7 @@ MessageImporter::ImportImage(const BMessage& archive) const
 	Image* image = new(std::nothrow) Image();
 	if (image != NULL) {
 		RenderBuffer* buffer;
-		if (extract_bitmap(&buffer, &archive, "bitmap") == B_OK)
+		if (extract_buffer(&buffer, &archive, "bitmap") == B_OK)
 			image->SetBuffer(RenderBufferRef(buffer, true));
 		else {
 			fprintf(stderr, "MessageImporter::ImportImage() - "

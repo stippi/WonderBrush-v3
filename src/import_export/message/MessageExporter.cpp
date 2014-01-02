@@ -179,7 +179,7 @@ public:
 	{
 		status = context->AddString(kType, "Image");
 		if (status == B_OK)
-			status = archive_bitmap(image->Buffer(), context, "bitmap");
+			status = archive_buffer(image->Buffer(), context, "bitmap");
 		return status == B_OK;
 	}
 
