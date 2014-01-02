@@ -18,6 +18,8 @@
 #include "OptionProperty.h"
 #include "ui_defines.h"
 
+static int kGradientArraySize = 1024;
+
 // constructor
 Paint::Paint()
 	: BaseObject()
@@ -26,9 +28,6 @@ Paint::Paint()
 	, fGradient(NULL)
 
 	, fColors(NULL)
-
-	, fGammaCorrectedColors(NULL)
-	, fGammaCorrectedColorsValid(false)
 {
 	SetColorProvider(ColorProviderRef(new(std::nothrow) ::Color(), true));
 	fType = NONE;
@@ -42,9 +41,6 @@ Paint::Paint(const Paint& other, CloneContext& context)
 	, fGradient(NULL)
 
 	, fColors(NULL)
-
-	, fGammaCorrectedColors(NULL)
-	, fGammaCorrectedColorsValid(false)
 {
 	*this = other;
 
@@ -63,9 +59,6 @@ Paint::Paint(const rgb_color& color)
 	, fGradient(NULL)
 
 	, fColors(NULL)
-
-	, fGammaCorrectedColors(NULL)
-	, fGammaCorrectedColorsValid(false)
 {
 	SetColorProvider(ColorProviderRef(new(std::nothrow) ::Color(color), true));
 }
@@ -78,9 +71,6 @@ Paint::Paint(const ColorProviderRef& color)
 	, fGradient(NULL)
 
 	, fColors(NULL)
-
-	, fGammaCorrectedColors(NULL)
-	, fGammaCorrectedColorsValid(false)
 {
 	SetColorProvider(color);
 }
@@ -93,9 +83,6 @@ Paint::Paint(const ::Gradient* gradient)
 	, fGradient(NULL)
 
 	, fColors(NULL)
-
-	, fGammaCorrectedColors(NULL)
-	, fGammaCorrectedColorsValid(false)
 {
 	SetColorProvider(ColorProviderRef(new(std::nothrow) ::Color(), true));
 	SetGradient(gradient);
@@ -109,9 +96,6 @@ Paint::Paint(BMessage* archive)
 	, fGradient(NULL)
 
 	, fColors(NULL)
-
-	, fGammaCorrectedColors(NULL)
-	, fGammaCorrectedColorsValid(false)
 {
 	Unarchive(archive);
 }
@@ -302,8 +286,7 @@ Paint::ObjectChanged(const Notifier* object)
 	if (object == fColor.Get() && fType == COLOR) {
 		Notify();
 	} else if (object == fGradient && fColors != NULL) {
-		fGradient->MakeGradient((uint32*)fColors, 256);
-		fGammaCorrectedColorsValid = false;
+		fGradient->MakeGradient(fColors, kGradientArraySize);
 		Notify();
 	}
 }
@@ -474,9 +457,8 @@ Paint::SetGradient(const ::Gradient* gradient)
 			if (fGradient != NULL) {
 				fGradient->AddListener(this);
 				// generate gradient
-				fColors = new agg::rgba8[256];
-				fGradient->MakeGradient((uint32*)fColors, 256);
-				fGammaCorrectedColorsValid = false;
+				fColors = new(std::nothrow) agg::rgba16[kGradientArraySize];
+				fGradient->MakeGradient(fColors, kGradientArraySize);
 
 				Notify();
 			}
@@ -489,39 +471,12 @@ Paint::SetGradient(const ::Gradient* gradient)
 	} else {
 		fGradient->RemoveListener(this);
 		delete[] fColors;
-		delete[] fGammaCorrectedColors;
 		fColors = NULL;
-		fGammaCorrectedColors = NULL;
 		fGradient = NULL;
 
 		Notify();
 	}
 }
-
-//// GammaCorrectedColors
-//const agg::rgba8*
-//Paint::GammaCorrectedColors(const GammaTable& table) const
-//{
-//	if (!fColors)
-//		return NULL;
-//
-//	if (!fGammaCorrectedColors)
-//		fGammaCorrectedColors = new agg::rgba8[256];
-//
-//	if (!fGammaCorrectedColorsValid) {
-//		for (int32 i = 0; i < 256; i++) {
-//			fGammaCorrectedColors[i].r = table.dir(fColors[i].r);
-//			fGammaCorrectedColors[i].g = table.dir(fColors[i].g);
-//			fGammaCorrectedColors[i].b = table.dir(fColors[i].b);
-//			fGammaCorrectedColors[i].a = fColors[i].a;
-//			fGammaCorrectedColors[i].premultiply();
-//		}
-//		fGammaCorrectedColorsValid = true;
-//	}
-//
-//	return fGammaCorrectedColors;
-//}
-
 
 //static int
 //test_paint_cache()

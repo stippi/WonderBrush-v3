@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2009, Stephan Aßmus <superstippi@gmx.de>.
+ * Copyright 2006-2014, Stephan Aßmus <superstippi@gmx.de>.
  * All rights reserved. Distributed under the terms of the MIT License.
  */
 
@@ -12,6 +12,7 @@
 
 #include <Message.h>
 
+#include "RenderEngine.h"
 #include "support.h"
 
 
@@ -459,7 +460,7 @@ gauss(double f)
 
 // MakeGradient
 void
-Gradient::MakeGradient(uint32* colors, int32 count) const
+Gradient::MakeGradient(Color* colors, int32 count) const
 {
 	ColorStop* from = ColorAt(0);
 
@@ -480,13 +481,14 @@ Gradient::MakeGradient(uint32* colors, int32 count) const
 		index = count;
 	//  make sure we fill the entire array
 	if (index > 0) {
-		uint8* c = (uint8*)&colors[0];
+		agg::rgba16 c(
+			RenderEngine::GammaToLinear(from->color.blue),
+			RenderEngine::GammaToLinear(from->color.green),
+			RenderEngine::GammaToLinear(from->color.red),
+			(from->color.alpha << 8) | from->color.alpha);
+		c.premultiply();
 		for (int32 i = 0; i < index; i++) {
-			c[0] = from->color.red;
-			c[1] = from->color.green;
-			c[2] = from->color.blue;
-			c[3] = from->color.alpha;
-			c += 4;
+			colors[i] = c;
 		}
 	}
 
@@ -522,39 +524,27 @@ Gradient::MakeGradient(uint32* colors, int32 count) const
 			offset = count - 1;
 		int32 dist = offset - index;
 		if (dist >= 0) {
-			uint8* c = (uint8*)&colors[index];
-#if GAMMA_BLEND
-			uint16 fromRed = kGammaTable[from->color.red];
-			uint16 fromGreen = kGammaTable[from->color.green];
-			uint16 fromBlue = kGammaTable[from->color.blue];
-			uint16 toRed = kGammaTable[to->color.red];
-			uint16 toGreen = kGammaTable[to->color.green];
-			uint16 toBlue = kGammaTable[to->color.blue];
+			for (int32 i = index; i <= offset; i++) {
+				float f = (float)(offset - i) / (float)(dist + 1);
+				if (fInterpolation == SMOOTH)
+					f = gauss(1.0 - f);
 
-			for (int32 i = index; i <= offset; i++) {
-				float f = (float)(offset - i) / (float)(dist + 1);
-				if (fInterpolation == SMOOTH)
-					f = gauss(1.0 - f);
-				float t = 1.0 - f;
-				c[0] = kInverseGammaTable[(uint16)floor(fromBlue * f + toBlue * t + 0.5)];
-				c[1] = kInverseGammaTable[(uint16)floor(fromGreen * f + toGreen * t + 0.5)];
-				c[2] = kInverseGammaTable[(uint16)floor(fromRed * f + toRed * t + 0.5)];
-				c[3] = (uint8)floor(from->color.alpha * f + to->color.alpha * t + 0.5);
-				c += 4;
+				agg::rgba16 a(
+					RenderEngine::GammaToLinear(from->color.blue),
+					RenderEngine::GammaToLinear(from->color.green),
+					RenderEngine::GammaToLinear(from->color.red),
+					(from->color.alpha << 8) | from->color.alpha);
+				a.premultiply();
+
+				agg::rgba16 b(
+					RenderEngine::GammaToLinear(to->color.blue),
+					RenderEngine::GammaToLinear(to->color.green),
+					RenderEngine::GammaToLinear(to->color.red),
+					(to->color.alpha << 8) | to->color.alpha);
+				b.premultiply();
+				
+				colors[i] = a.gradient(b, f);
 			}
-#else // GAMMA_BLEND
-			for (int32 i = index; i <= offset; i++) {
-				float f = (float)(offset - i) / (float)(dist + 1);
-				if (fInterpolation == SMOOTH)
-					f = gauss(1.0 - f);
-				float t = 1.0 - f;
-				c[0] = (uint8)floor(from->color.red * f + to->color.red * t + 0.5);
-				c[1] = (uint8)floor(from->color.green * f + to->color.green * t + 0.5);
-				c[2] = (uint8)floor(from->color.blue * f + to->color.blue * t + 0.5);
-				c[3] = (uint8)floor(from->color.alpha * f + to->color.alpha * t + 0.5);
-				c += 4;
-			}
-#endif // GAMMA_BLEND
 		}
 		index = offset + 1;
 		// the current "to" will be the "from" in the next interpolation
@@ -562,13 +552,14 @@ Gradient::MakeGradient(uint32* colors, int32 count) const
 	}
 	//  make sure we fill the entire array
 	if (index < count) {
-		uint8* c = (uint8*)&colors[index];
+		agg::rgba16 c(
+			RenderEngine::GammaToLinear(from->color.blue),
+			RenderEngine::GammaToLinear(from->color.green),
+			RenderEngine::GammaToLinear(from->color.red),
+			(from->color.alpha << 8) | from->color.alpha);
+		c.premultiply();
 		for (int32 i = index; i < count; i++) {
-			c[0] = from->color.red;
-			c[1] = from->color.green;
-			c[2] = from->color.blue;
-			c[3] = from->color.alpha;
-			c += 4;
+			colors[index] = c;
 		}
 	}
 }

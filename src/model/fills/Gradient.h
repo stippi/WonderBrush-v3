@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2009, Stephan Aßmus <superstippi@gmx.de>.
+ * Copyright 2006-2014, Stephan Aßmus <superstippi@gmx.de>.
  * All rights reserved. Distributed under the terms of the MIT License.
  */
 
@@ -10,6 +10,8 @@
 #include <Archivable.h>
 #include <GraphicsDefs.h>
 #include <List.h>
+
+#include <agg_color_rgba.h>
 
 #include "Notifier.h"
 #include "Transformable.h"
@@ -89,8 +91,9 @@ public:
 			bool				InheritTransformation() const
 									{ return fInheritTransformation; }
 
-			void				MakeGradient(uint32* colors,
-									int32 count) const;
+	typedef agg::rgba16	Color;
+
+			void				MakeGradient(Color* colors, int32 count) const;
 
 			void				FitToBounds(const BRect& bounds);
 			BRect				GradientArea() const;

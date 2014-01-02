@@ -84,7 +84,7 @@ public:
 	inline	::Gradient*			Gradient() const
 									{ return fGradient; }
 
-	inline	const agg::rgba8*	Colors() const
+	inline	const agg::rgba16*	Colors() const
 									{ return fColors; }
 
 //	inline	const agg::rgba8*	GammaCorrectedColors(
@@ -99,11 +99,7 @@ private:
 			::Gradient*			fGradient;
 
 			// hold gradient color array
-			agg::rgba8*			fColors;
-
-			// for caching gamma corrected gradient color array
-	mutable	agg::rgba8*			fGammaCorrectedColors;
-	mutable	bool				fGammaCorrectedColorsValid;
+			agg::rgba16*		fColors;
 };
 
 typedef Reference<Paint> PaintRef;
