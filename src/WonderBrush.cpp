@@ -29,6 +29,7 @@
 #include "SimpleFileSaver.h"
 #include "Text.h"
 #include "Window.h"
+#include "WonderBrush2Importer.h"
 
 
 static BString sFontsDirectory;
@@ -300,6 +301,10 @@ WonderBrush::MessageReceived(BMessage* message)
 				PostMessage(B_QUIT_REQUESTED, this);
 			break;
 
+		case B_SIMPLE_DATA:
+			RefsReceived(message);
+			break;
+
 		case MSG_OPEN:
 			Open(message);
 			break;
@@ -436,6 +441,8 @@ WonderBrush::ImportDocument(Document* document, const entry_ref& ref) const
 		return ret;
 
 	// try different file types
+
+	// Native WonderBrush 3.0 images
 	MessageImporter msgImporter(documentRef);
 	ret = msgImporter.Import(file);
 	if (ret == B_OK) {
@@ -443,6 +450,16 @@ WonderBrush::ImportDocument(Document* document, const entry_ref& ref) const
 		return B_OK;
 	}
 
+	// Legacy WonderBrush 2.x images
+	file.Seek(0, SEEK_SET);
+	WonderBrush2Importer legacyImporter(documentRef);
+	ret = legacyImporter.Import(file);
+	if (ret == B_OK) {
+		document->SetNativeSaver(new(std::nothrow) NativeSaver(ref));
+		return B_OK;
+	}
+
+	// Translator bitmaps
 	file.Seek(0, SEEK_SET);
 	BitmapImporter bitmapImporter(documentRef);;
 	ret = bitmapImporter.Import(file);

@@ -168,6 +168,7 @@ Application WonderBrush :
 	# import_export/message
 	MessageExporter.cpp
 	MessageImporter.cpp
+	WonderBrush2Importer.cpp
 
 	# model
 	BaseObject.cpp
