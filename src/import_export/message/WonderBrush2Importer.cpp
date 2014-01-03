@@ -22,6 +22,7 @@
 #include "FilterDropShadow.h"
 #include "FilterSaturation.h"
 #include "Font.h"
+#include "Gradient.h"
 #include "Image.h"
 #include "Layer.h"
 #include "Object.h"
@@ -151,6 +152,9 @@ WonderBrush2Importer::ImportObject(const BMessage& archive) const
 
 	if (type == "ColorRenderer")
 		return ImportColorRenderer(archive);
+
+	if (type == "GradientRenderer")
+		return ImportGradientRenderer(archive);
 
 	// unhandled!
 	fprintf(stderr, "WonderBrush2Importer::ImportObject() - "
@@ -559,6 +563,53 @@ WonderBrush2Importer::ImportColorRenderer(const BMessage& archive) const
 	return BaseObjectRef(style, true);
 }
 
+// ImportGradientRenderer
+BaseObjectRef
+WonderBrush2Importer::ImportGradientRenderer(const BMessage& archive) const
+{
+	Style* style = new(std::nothrow) Style();
+	if (style != NULL) {
+		Gradient gradient(true);
+		
+		// Gradient settings
+		int32 type;
+		if (archive.FindInt32("type", &type) == B_OK)
+			gradient.SetType((Gradient::Type)type);
+
+		int32 interpolation;
+		if (archive.FindInt32("interpolation", &interpolation) == B_OK)
+			gradient.SetInterpolation((Gradient::Interpolation)interpolation);
+
+		bool inheritTransformation;
+		if (archive.FindBool("inherit transformation",
+				&inheritTransformation) == B_OK) {
+			gradient.SetInheritTransformation(inheritTransformation);
+		}
+		
+		// Color stops
+		const void* data;
+		ssize_t size;
+		float offset;
+		for (int32 i = 0;; i++) {
+			if (archive.FindData("RGBColor", B_RGB_COLOR_TYPE, i, &data,
+					&size) == B_OK && size == sizeof(rgb_color)
+				&& archive.FindFloat("offset", i, &offset) == B_OK) {
+				rgb_color color = *(const rgb_color*)data;
+				gradient.AddColor(color, offset);
+			} else
+				break;
+		}
+
+		_RestoreTransformable(&gradient, archive);
+
+		style->SetFillPaint(PaintRef(new(std::nothrow) Paint(&gradient),
+			true));
+		style->SetStrokePaint(PaintRef(new(std::nothrow) Paint(&gradient),
+			true));
+	}
+	return BaseObjectRef(style, true);
+}
+
 // #pragma mark -
 
 // ImportGlobalResources
@@ -614,6 +665,25 @@ WonderBrush2Importer::_RestoreBoundedObject(BoundedObject* object,
 void
 WonderBrush2Importer::_RestoreObject(Object* object, const BMessage& archive) const
 {
+	_RestoreTransformable(object, archive);
+	_RestoreBaseObject(object, archive);
+}
+
+// _RestoreBaseObject
+void
+WonderBrush2Importer::_RestoreBaseObject(BaseObject* object,
+	const BMessage& archive) const
+{
+	BString name;
+	if (archive.FindString("name", &name) == B_OK)
+		object->SetName(name);
+}
+
+// _RestoreMatrix
+void
+WonderBrush2Importer::_RestoreTransformable(Transformable* transformable,
+	const BMessage& archive) const
+{
 	Transformable t;
 	double matrix[Transformable::MatrixSize];
 	t.StoreTo(matrix);
@@ -643,20 +713,7 @@ WonderBrush2Importer::_RestoreObject(Object* object, const BMessage& archive) co
 		t.w0 = matrix[6];
 		t.w1 = matrix[7];
 		t.w2 = matrix[8];
-
-		object->SetTransformable(t);
+		
+		transformable->SetTransformable(t);
 	}
-
-	_RestoreBaseObject(object, archive);
 }
-
-// _RestoreBaseObject
-void
-WonderBrush2Importer::_RestoreBaseObject(BaseObject* object,
-	const BMessage& archive) const
-{
-	BString name;
-	if (archive.FindString("name", &name) == B_OK)
-		object->SetName(name);
-}
-

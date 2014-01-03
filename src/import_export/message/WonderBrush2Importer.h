@@ -13,6 +13,7 @@ class BaseObject;
 class BoundedObject;
 class Object;
 class Styleable;
+class Transformable;
 
 class WonderBrush2Importer {
 public:
@@ -63,6 +64,8 @@ public:
 									const BMessage& archive) const;
 			BaseObjectRef		ImportColorRenderer(
 									const BMessage& archive) const;
+			BaseObjectRef		ImportGradientRenderer(
+									const BMessage& archive) const;
 
 private:
 			template<class Type, class Container>
@@ -76,6 +79,10 @@ private:
 			void				_RestoreObject(Object* object,
 									const BMessage& archive) const;
 			void				_RestoreBaseObject(BaseObject* object,
+									const BMessage& archive) const;
+
+			void				_RestoreTransformable(
+									Transformable* transformable,
 									const BMessage& archive) const;
 
 private:
