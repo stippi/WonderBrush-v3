@@ -188,7 +188,7 @@ Gradient::Archive(BMessage* into, bool deep) const
 		double matrix[size];
 		StoreTo(matrix);
 		ret = into->AddData("transformation", B_DOUBLE_TYPE,
-							matrix, size * sizeof(double));
+			matrix, size * sizeof(double));
 	}
 
 	// color stops
@@ -482,9 +482,9 @@ Gradient::MakeGradient(Color* colors, int32 count) const
 	//  make sure we fill the entire array
 	if (index > 0) {
 		agg::rgba16 c(
-			RenderEngine::GammaToLinear(from->color.blue),
-			RenderEngine::GammaToLinear(from->color.green),
 			RenderEngine::GammaToLinear(from->color.red),
+			RenderEngine::GammaToLinear(from->color.green),
+			RenderEngine::GammaToLinear(from->color.blue),
 			(from->color.alpha << 8) | from->color.alpha);
 		c.premultiply();
 		for (int32 i = 0; i < index; i++) {
@@ -530,16 +530,16 @@ Gradient::MakeGradient(Color* colors, int32 count) const
 					f = gauss(1.0 - f);
 
 				agg::rgba16 a(
-					RenderEngine::GammaToLinear(from->color.blue),
-					RenderEngine::GammaToLinear(from->color.green),
 					RenderEngine::GammaToLinear(from->color.red),
+					RenderEngine::GammaToLinear(from->color.green),
+					RenderEngine::GammaToLinear(from->color.blue),
 					(from->color.alpha << 8) | from->color.alpha);
 				a.premultiply();
 
 				agg::rgba16 b(
-					RenderEngine::GammaToLinear(to->color.blue),
-					RenderEngine::GammaToLinear(to->color.green),
 					RenderEngine::GammaToLinear(to->color.red),
+					RenderEngine::GammaToLinear(to->color.green),
+					RenderEngine::GammaToLinear(to->color.blue),
 					(to->color.alpha << 8) | to->color.alpha);
 				b.premultiply();
 				
@@ -553,9 +553,9 @@ Gradient::MakeGradient(Color* colors, int32 count) const
 	//  make sure we fill the entire array
 	if (index < count) {
 		agg::rgba16 c(
-			RenderEngine::GammaToLinear(from->color.blue),
-			RenderEngine::GammaToLinear(from->color.green),
 			RenderEngine::GammaToLinear(from->color.red),
+			RenderEngine::GammaToLinear(from->color.green),
+			RenderEngine::GammaToLinear(from->color.blue),
 			(from->color.alpha << 8) | from->color.alpha);
 		c.premultiply();
 		for (int32 i = index; i < count; i++) {
