@@ -34,6 +34,7 @@ public:
 	};
 
 								Paint();
+								Paint(const Paint& other);
 								Paint(const Paint& other,
 									CloneContext& context);
 								Paint(const rgb_color& color);

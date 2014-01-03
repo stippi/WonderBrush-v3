@@ -33,6 +33,18 @@ Paint::Paint()
 }
 
 // constructor
+Paint::Paint(const Paint& other)
+	: BaseObject(other)
+	, fType(NONE)
+	, fColor()
+	, fGradient(NULL)
+
+	, fColors(NULL)
+{
+	*this = other;
+}
+
+// constructor
 Paint::Paint(const Paint& other, CloneContext& context)
 	: BaseObject(other)
 	, fType(NONE)
@@ -104,7 +116,13 @@ Paint::~Paint()
 {
 	if (fColor.Get() != NULL)
 		fColor->RemoveListener(this);
-	SetGradient(NULL);
+
+	if (fGradient != NULL) {
+		fGradient->RemoveListener(this);
+		delete fGradient;
+	}
+	delete[] fColors;
+
 	// TODO: pattern...
 }
 
@@ -299,6 +317,8 @@ Paint::ObjectChanged(const Notifier* object)
 Paint&
 Paint::operator=(const Paint& other)
 {
+	AutoNotificationSuspender _(this);
+
 	if (&other == this)
 		return *this;
 
@@ -315,8 +335,13 @@ Paint::operator=(const Paint& other)
 bool
 Paint::operator==(const Paint& other) const
 {
+	if (this == &other)
+		return true;
 	return fType == other.fType && fColor == other.fColor
-		&& fGradient == other.fGradient;
+//		&& fGradient == other.fGradient;
+		&& ((fGradient == NULL && other.fGradient == NULL)
+			|| (fGradient != NULL && other.fGradient != NULL
+				&& *fGradient == *other.fGradient));
 		// TODO: pattern...
 }
 
@@ -473,12 +498,15 @@ Paint::SetGradient(const ::Gradient* gradient)
 			}
 		}
 	} else {
-		fGradient->RemoveListener(this);
-		delete[] fColors;
-		fColors = NULL;
-		fGradient = NULL;
-
-		Notify();
+		if (fGradient != NULL) {
+			fGradient->RemoveListener(this);
+			delete fGradient;
+			delete[] fColors;
+			fColors = NULL;
+			fGradient = NULL;
+	
+			Notify();
+		}
 	}
 }
 
