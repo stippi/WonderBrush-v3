@@ -10,6 +10,7 @@
 #include <agg_image_accessors.h>
 #include <agg_renderer_scanline.h>
 #include <agg_rounded_rect.h>
+#include <agg_span_gradient.h>
 #include <agg_span_image_filter_rgba.h>
 #include <agg_span_interpolator_linear.h>
 #include <agg_span_interpolator_trans.h>
@@ -18,6 +19,7 @@
 
 #include <CImg.h>
 
+#include "Gradient.h"
 #include "RenderBuffer.h"
 #include "SetProperty.h"
 
@@ -601,7 +603,58 @@ RenderEngine::_RenderScanlines(bool fillPaint,
 		}
 		case Paint::GRADIENT:
 		{
-			// TODO: ...
+			const agg::rgba16* gradientArray = paint->Colors();
+
+			const Gradient* gradient = paint->Gradient();
+			Transformable transform = *gradient;
+			if (gradient->InheritTransformation())
+				transform *= fState.Matrix;
+
+			switch (gradient->GetType()) {
+				case Gradient::CIRCULAR:
+				{
+					agg::gradient_radial function;
+					_RenderScanlines(gradientArray, function, transform,
+						scanlineContainer);
+					break;
+				}
+				case Gradient::DIAMOND:
+				{
+					agg::gradient_diamond function;
+					_RenderScanlines(gradientArray, function, transform,
+						scanlineContainer);
+					break;
+				}
+				case Gradient::CONIC:
+				{
+					agg::gradient_conic function;
+					_RenderScanlines(gradientArray, function, transform,
+						scanlineContainer);
+					break;
+				}
+				case Gradient::XY:
+				{
+					agg::gradient_xy function;
+					_RenderScanlines(gradientArray, function, transform,
+						scanlineContainer);
+					break;
+				}
+				case Gradient::SQRT_XY:
+				{
+					agg::gradient_sqrt_xy function;
+					_RenderScanlines(gradientArray, function, transform,
+						scanlineContainer);
+					break;
+				}
+				case Gradient::LINEAR:
+				default:
+				{
+					agg::gradient_x function;
+					_RenderScanlines(gradientArray, function, transform,
+						scanlineContainer);
+					break;
+				}
+			}
 			break;
 		}
 		case Paint::PATTERN:
@@ -641,14 +694,15 @@ RenderEngine::_RenderScanlines(agg::rgba16 color,
 }
 
 // _RenderScanlines
-template<class SpanAllocator, class SpanGenerator>
+template<class SpanAllocator, class SpanGenerator, class BaseRenderer>
 void
 RenderEngine::_RenderScanlines(SpanAllocator& spanAllocator,
-	SpanGenerator& spanGenerator, const ScanlineContainer* scanlineContainer)
+	SpanGenerator& spanGenerator, BaseRenderer& baseRenderer,
+	const ScanlineContainer* scanlineContainer)
 {
 	if (scanlineContainer == NULL) {
 		// Render current contents of fRasterizer
-		agg::render_scanlines_aa(fRasterizer, fScanline, fBaseRenderer,
+		agg::render_scanlines_aa(fRasterizer, fScanline, baseRenderer,
 			spanAllocator, spanGenerator);
 	} else {
 		// Render cached scanlines from the container
@@ -660,12 +714,41 @@ RenderEngine::_RenderScanlines(SpanAllocator& spanAllocator,
 			const Scanline* scanline = scanlineContainer->ObjectAtFast(i);
 			int y = scanline->y();
 			if (y >= top && y <= bottom) {
-				agg::render_scanline_aa(*scanline, fBaseRenderer,
+				agg::render_scanline_aa(*scanline, baseRenderer,
 					spanAllocator, spanGenerator);
 			}
 		}
 	}
 }
+
+template<class GradientFunction>
+void
+RenderEngine::_RenderScanlines(const agg::rgba16* gradient,
+	GradientFunction function, Transformable transform,
+	const ScanlineContainer* scanlines, double start, double stop)
+{
+	typedef agg::rgba16 ColorType;
+	typedef agg::span_interpolator_trans<Transformable> InterpolatorType;
+	typedef agg::pod_auto_array<ColorType, kGradientArraySize>
+		ColorArrayType;
+	typedef agg::span_gradient<ColorType, InterpolatorType, 
+		GradientFunction, ColorArrayType> SpanGradientType;
+
+	if (!transform.IsValid())
+		return;
+	
+	transform.invert();
+
+	InterpolatorType interpolator(transform);
+
+	ColorArrayType array(gradient);
+	SpanGradientType gradientGenerator(interpolator, function, array,
+		start, stop);
+
+	_RenderScanlines(fSpanAllocator, gradientGenerator, fBaseRenderer,
+		scanlines);
+}
+
 
 // _RenderAlphaScanlines
 void

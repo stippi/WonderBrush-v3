@@ -128,16 +128,27 @@ public:
 									const unsigned int interpolationType,
 									const bool fastApproximation);
 
+	static	const int32			kGradientArraySize = 1024;
+
 private:
 			// Rendering rasterizer contents or cached scanlines
 			void				_RenderScanlines(bool fillPaint,
 									const ScanlineContainer* scanlines = NULL);
 			void				_RenderScanlines(agg::rgba16 color,
 									const ScanlineContainer* scanlines = NULL);
-			template<class SpanAllocator, class SpanGenerator>
+			template<class SpanAllocator, class SpanGenerator,
+				class BaseRenderer>
 			void				_RenderScanlines(SpanAllocator& spanAllocator,
 									SpanGenerator& spanGenerator,
+									BaseRenderer& baseRenderer,
 									const ScanlineContainer* scanlines = NULL);
+
+			template<class GradientFunction>
+			void				_RenderScanlines(const agg::rgba16* gradient,
+									GradientFunction function,
+									Transformable transform,
+									const ScanlineContainer* scanlines,
+									double start = 0.0, double stop = 200.0);
 
 			// Rendering contents of alpha map
 			void				_RenderAlphaScanlines(bool fillPaint);

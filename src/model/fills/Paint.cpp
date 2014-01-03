@@ -16,9 +16,8 @@
 #include "ColorProperty.h"
 #include "Gradient.h"
 #include "OptionProperty.h"
+#include "RenderEngine.h"
 #include "ui_defines.h"
-
-static int kGradientArraySize = 1024;
 
 // constructor
 Paint::Paint()
@@ -286,7 +285,7 @@ Paint::ObjectChanged(const Notifier* object)
 	if (object == fColor.Get() && fType == COLOR) {
 		Notify();
 	} else if (object == fGradient && fColors != NULL) {
-		fGradient->MakeGradient(fColors, kGradientArraySize);
+		fGradient->MakeGradient(fColors, RenderEngine::kGradientArraySize);
 		Notify();
 	}
 }
@@ -457,8 +456,10 @@ Paint::SetGradient(const ::Gradient* gradient)
 			if (fGradient != NULL) {
 				fGradient->AddListener(this);
 				// generate gradient
-				fColors = new(std::nothrow) agg::rgba16[kGradientArraySize];
-				fGradient->MakeGradient(fColors, kGradientArraySize);
+				fColors = new(std::nothrow) agg::rgba16[
+					RenderEngine::kGradientArraySize];
+				fGradient->MakeGradient(fColors,
+					RenderEngine::kGradientArraySize);
 
 				Notify();
 			}
