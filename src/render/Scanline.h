@@ -59,6 +59,7 @@ public:
 	typedef Scanline	SelfType;
 	typedef Span*		iterator;
 	typedef const Span*	const_iterator;
+	typedef CoverType	cover_type;
 
 	~Scanline()
 	{
