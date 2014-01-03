@@ -246,7 +246,10 @@ Paint::SetToPropertyObject(const PropertyObject* object, uint32 flags)
 			}
 			break;
 		case GRADIENT:
-			// TODO: ...
+			if (fGradient == NULL) {
+				::Gradient gradient;
+				SetGradient(&gradient);
+			}
 			break;
 		case PATTERN:
 			// TODO: ...
