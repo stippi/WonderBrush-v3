@@ -166,6 +166,7 @@ Application WonderBrush :
 	BitmapImporter.cpp
 
 	# import_export/message
+	ArchiveVisitor.cpp
 	MessageExporter.cpp
 	MessageImporter.cpp
 	WonderBrush2Importer.cpp
