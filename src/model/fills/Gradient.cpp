@@ -559,16 +559,16 @@ Gradient::MakeGradient(Color* colors, int32 count) const
 					RenderEngine::GammaToLinear(from->color.green),
 					RenderEngine::GammaToLinear(from->color.blue),
 					(from->color.alpha << 8) | from->color.alpha);
-				a.premultiply();
+//				a.premultiply();
 
 				agg::rgba16 b(
 					RenderEngine::GammaToLinear(to->color.red),
 					RenderEngine::GammaToLinear(to->color.green),
 					RenderEngine::GammaToLinear(to->color.blue),
 					(to->color.alpha << 8) | to->color.alpha);
-				b.premultiply();
+//				b.premultiply();
 				
-				colors[i] = a.gradient(b, f);
+				colors[i] = a.gradient(b, 1.0 - f).premultiply();
 			}
 		}
 		index = offset + 1;
@@ -584,7 +584,7 @@ Gradient::MakeGradient(Color* colors, int32 count) const
 			(from->color.alpha << 8) | from->color.alpha);
 		c.premultiply();
 		for (int32 i = index; i < count; i++) {
-			colors[index] = c;
+			colors[i] = c;
 		}
 	}
 }
