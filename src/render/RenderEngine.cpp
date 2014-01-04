@@ -608,7 +608,7 @@ RenderEngine::_RenderScanlines(bool fillPaint,
 			const GradientRef& gradient = paint->Gradient();
 			Transformable transform(*gradient.Get());
 			if (gradient->InheritTransformation())
-				transform.PreMultiply(fState.Matrix);
+				transform.Multiply(fState.Matrix);
 
 			switch (gradient->GetType()) {
 				case Gradient::CIRCULAR:
