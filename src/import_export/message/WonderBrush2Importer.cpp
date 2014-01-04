@@ -169,39 +169,53 @@ WonderBrush2Importer::ImportBrushStroke(const BMessage& archive) const
 {
 	BrushStroke* brushStroke = new BrushStroke();
 	if (brushStroke != NULL) {
-		BMessage brushArchive;
-		if (archive.FindMessage("brush", &brushArchive) == B_OK) {
-			BaseObjectRef ref = ImportObject(brushArchive);
-			Brush* brush = dynamic_cast<Brush*>(ref.Get());
-			if (brush != NULL)
-				brushStroke->SetBrush(brush);
+		Brush* brush = new(std::nothrow) Brush();
+		if (brush != NULL) {
+			brushStroke->SetBrush(brush);
+			float value;
+			if (archive.FindFloat("min alpha", &value) == B_OK)
+				brush->SetMinOpacity(value);
+			if (archive.FindFloat("max alpha", &value) == B_OK)
+				brush->SetMaxOpacity(value);
+//			if (archive.FindFloat("min spacing", &value) == B_OK)
+//				brush->Set(value);
+//			if (archive.FindFloat("max spacing", &value) == B_OK)
+//				brush->Set(value);
+			if (archive.FindFloat("min radius", &value) == B_OK)
+				brush->SetMinRadius(value);
+			if (archive.FindFloat("max radius", &value) == B_OK)
+				brush->SetMaxRadius(value);
+			if (archive.FindFloat("min hardness", &value) == B_OK)
+				brush->SetMinHardness(value);
+			if (archive.FindFloat("max hardness", &value) == B_OK)
+				brush->SetMaxHardness(value);
+			
+			brush->RemoveReference();
 		}
 
-		BMessage paintArchive;
-		if (archive.FindMessage("paint", &paintArchive) == B_OK) {
-			BaseObjectRef ref = ImportObject(paintArchive);
-			Paint* paint = dynamic_cast<Paint*>(ref.Get());
-			if (paint != NULL)
+		BMessage rendererArchive;
+		if (archive.FindMessage("renderer", &rendererArchive) == B_OK) {
+			const void* data;
+			ssize_t size;
+			if (archive.FindData("RGBColor", B_RGB_COLOR_TYPE, &data,
+					&size) == B_OK && size == sizeof(rgb_color)) {
+				rgb_color color = *(const rgb_color*)data;
+				Paint* paint = new(std::nothrow) Paint(color);
 				brushStroke->SetPaint(paint);
+				paint->RemoveReference();
+			}
 		}
 
-		BMessage strokeArchive;
-		if (archive.FindMessage("stroke", &strokeArchive) == B_OK) {
-			for (int32 i = 0;; i++) {
-				BPoint point;
-				float pressure;
-				float tiltX;
-				float tiltY;
-				if (strokeArchive.FindPoint("point", i, &point) != B_OK
-					|| strokeArchive.FindFloat("pressure", i,
-						&pressure) != B_OK
-					|| strokeArchive.FindFloat("tilt-x", i, &tiltX) != B_OK
-					|| strokeArchive.FindFloat("tilt-y", i, &tiltY) != B_OK
-					|| !brushStroke->AppendPoint(
-							StrokePoint(point, pressure, tiltX, tiltY))) {
+		const void* data;
+		ssize_t size;
+		for (int32 i = 0;; i++) {
+			if (archive.FindData("points", B_RAW_TYPE, i, &data, &size) == B_OK
+				&& size == sizeof(StrokePoint)) {
+				const StrokePoint* strokePoint = (const StrokePoint*)data;
+				if (!brushStroke->AppendPoint(*strokePoint))
 					break;
-				}
-			}
+			} else
+				break;
 		}
 
 		_RestoreBoundedObject(brushStroke, archive);
