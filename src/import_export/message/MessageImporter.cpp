@@ -22,6 +22,7 @@
 #include "FilterDropShadow.h"
 #include "FilterSaturation.h"
 #include "Font.h"
+#include "Gradient.h"
 #include "Image.h"
 #include "Layer.h"
 #include "Object.h"
@@ -538,8 +539,8 @@ MessageImporter::ImportColorShade(const BMessage& archive) const
 BaseObjectRef
 MessageImporter::ImportGradient(const BMessage& archive) const
 {
-	// TODO
-	return BaseObjectRef();
+	Gradient* gradient = new(std::nothrow) Gradient(&archive);
+	return BaseObjectRef(gradient, true);
 }
 
 // ImportPaint
@@ -549,12 +550,21 @@ MessageImporter::ImportPaint(const BMessage& archive) const
 	Paint* paint = new(std::nothrow) Paint();
 	if (paint != NULL) {
 		// try color
-		BMessage colorArchive;
-		if (archive.FindMessage("color", &colorArchive) == B_OK) {
-			BaseObjectRef ref = ImportObject(colorArchive);
+		BMessage subArchive;
+		if (archive.FindMessage("color", &subArchive) == B_OK) {
+			BaseObjectRef ref = ImportObject(subArchive);
 			ColorProvider* provider = dynamic_cast<ColorProvider*>(ref.Get());
 			if (provider != NULL)
 				paint->SetColorProvider(ColorProviderRef(provider));
+			else {
+				fprintf(stderr, "MessageImporter::ImportPaint() - "
+					"Failed to restore ColorProvider!\n");
+			}
+		} else if (archive.FindMessage("gradient", &subArchive) == B_OK) {
+			BaseObjectRef ref = ImportObject(subArchive);
+			Gradient* gradient = dynamic_cast<Gradient*>(ref.Get());
+			if (gradient != NULL)
+				paint->SetGradient(GradientRef(gradient));
 			else {
 				fprintf(stderr, "MessageImporter::ImportPaint() - "
 					"Failed to restore ColorProvider!\n");

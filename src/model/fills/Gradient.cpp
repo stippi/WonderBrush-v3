@@ -96,8 +96,7 @@ sort_color_stops_by_offset(const void* _left, const void* _right)
 // constructor
 Gradient::Gradient(bool empty)
 	:
-	BArchivable(),
-	Notifier(),
+	BaseObject(),
 	Transformable(),
 
 	fColors(4),
@@ -112,10 +111,9 @@ Gradient::Gradient(bool empty)
 }
 
 // constructor
-Gradient::Gradient(BMessage* archive)
+Gradient::Gradient(const BMessage* archive)
 	:
-	BArchivable(archive),
-	Notifier(),
+	BaseObject(archive),
 	Transformable(),
 
 	fColors(4),
@@ -144,7 +142,7 @@ Gradient::Gradient(BMessage* archive)
 		else
 			break;
 	}
-	if (archive->FindInt32("type", (int32*)&fType) < B_OK)
+	if (archive->FindInt32("gradient type", (int32*)&fType) < B_OK)
 		fType = LINEAR;
 
 	if (archive->FindInt32("interpolation", (int32*)&fInterpolation) < B_OK)
@@ -158,8 +156,7 @@ Gradient::Gradient(BMessage* archive)
 // constructor
 Gradient::Gradient(const Gradient& other)
 	:
-	BArchivable(other),
-	Notifier(),
+	BaseObject(other),
 	Transformable(other),
 
 	fColors(4),
@@ -170,17 +167,42 @@ Gradient::Gradient(const Gradient& other)
 	SetColors(other);
 }
 
+// constructor
+Gradient::Gradient(const Gradient& other, CloneContext& context)
+	:
+	BaseObject(other),
+	Transformable(other),
+
+	fColors(4),
+	fType(other.fType),
+	fInterpolation(other.fInterpolation),
+	fInheritTransformation(other.fInheritTransformation)
+{
+	// TODO: Once ColorStops use ColorProviders, clone them via the
+	// CloneContext!
+	SetColors(other);
+}
+
 // destructor
 Gradient::~Gradient()
 {
 	_MakeEmpty();
 }
 
+// #pragma mark - BaseObject
+
+// Clone
+BaseObject*
+Gradient::Clone(CloneContext& context) const
+{
+	return new(std::nothrow) Gradient(*this, context);
+}
+
 // Archive
 status_t
 Gradient::Archive(BMessage* into, bool deep) const
 {
-	status_t ret = BArchivable::Archive(into, deep);
+	status_t ret = BaseObject::Archive(into, deep);
 
 	// transformation
 	if (ret == B_OK) {
@@ -192,29 +214,32 @@ Gradient::Archive(BMessage* into, bool deep) const
 	}
 
 	// color stops
-	if (ret >= B_OK) {
+	if (ret == B_OK) {
 		for (int32 i = 0; ColorStop* stop = ColorAt(i); i++) {
 			ret = into->AddInt32("color", (const uint32&)stop->color);
-			if (ret < B_OK)
+			if (ret != B_OK)
 				break;
 			ret = into->AddFloat("offset", stop->offset);
-			if (ret < B_OK)
+			if (ret != B_OK)
 				break;
 		}
 	}
 	// gradient and interpolation type
-	if (ret >= B_OK)
-		ret = into->AddInt32("type", (int32)fType);
-	if (ret >= B_OK)
+	if (ret == B_OK)
+		ret = into->AddInt32("gradient type", (int32)fType);
+	if (ret == B_OK)
 		ret = into->AddInt32("interpolation", (int32)fInterpolation);
-	if (ret >= B_OK)
+	if (ret == B_OK)
 		ret = into->AddBool("inherit transformation", fInheritTransformation);
 
-	// finish off
-	if (ret >= B_OK)
-		ret = into->AddString("class", "Gradient");
-
 	return ret;
+}
+
+// DefaultName
+const char*
+Gradient::DefaultName() const
+{
+	return "Gradient";
 }
 
 // #pragma mark -

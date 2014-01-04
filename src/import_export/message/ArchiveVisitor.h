@@ -10,6 +10,7 @@
 class BMessage;
 class Color;
 class ColorShade;
+class Gradient;
 
 class ArchiveVisitor : public DocumentVisitor<BMessage> {
 	typedef DocumentVisitor<BMessage> inherited;
@@ -81,6 +82,9 @@ private:
 									BMessage* archive) const;
 		
 			status_t			_StoreColorShade(ColorShade* shade,
+									BMessage* archive) const;
+		
+			status_t			_StoreGradient(const Gradient* gradient,
 									BMessage* archive) const;
 		
 			status_t			_StoreBrush(Brush* brush,

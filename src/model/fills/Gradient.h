@@ -7,18 +7,17 @@
 #define WB_GRADIENT_H
 
 
-#include <Archivable.h>
 #include <GraphicsDefs.h>
 #include <List.h>
 
 #include <agg_color_rgba.h>
 
-#include "Notifier.h"
+#include "BaseObject.h"
 #include "Transformable.h"
 
 class BMessage;
 
-class Gradient : public BArchivable, public Notifier, public Transformable {
+class Gradient : public BaseObject, public Transformable {
 public:
 	enum Type {
 		LINEAR		= 0,
@@ -48,13 +47,21 @@ public:
 
 public:
 								Gradient(bool empty = false);
-								Gradient(BMessage* archive);
+								Gradient(const BMessage* archive);
 								Gradient(const Gradient& other);
+								Gradient(const Gradient& other,
+									CloneContext& context);
 	virtual						~Gradient();
+
+	// BaseObject interface
+	virtual BaseObject*			Clone(CloneContext& context) const;
 
 			status_t			Archive(BMessage* into,
 									bool deep = true) const;
 
+	virtual	const char*			DefaultName() const;
+
+	// Gradient
 			Gradient&			operator=(const Gradient& other);
 
 			bool				operator==(const Gradient& other) const;
@@ -109,5 +116,7 @@ private:
 			Interpolation		fInterpolation;
 			bool				fInheritTransformation;
 };
+
+typedef Reference<Gradient> GradientRef;
 
 #endif	// WB_GRADIENT_H

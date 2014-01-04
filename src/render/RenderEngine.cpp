@@ -605,10 +605,10 @@ RenderEngine::_RenderScanlines(bool fillPaint,
 		{
 			const agg::rgba16* gradientArray = paint->Colors();
 
-			const Gradient* gradient = paint->Gradient();
-			Transformable transform = *gradient;
+			const GradientRef& gradient = paint->Gradient();
+			Transformable transform(*gradient.Get());
 			if (gradient->InheritTransformation())
-				transform *= fState.Matrix;
+				transform.PreMultiply(fState.Matrix);
 
 			switch (gradient->GetType()) {
 				case Gradient::CIRCULAR:

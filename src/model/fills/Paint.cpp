@@ -14,7 +14,6 @@
 #include "CloneContext.h"
 #include "Color.h"
 #include "ColorProperty.h"
-#include "Gradient.h"
 #include "OptionProperty.h"
 #include "RenderEngine.h"
 #include "ui_defines.h"
@@ -87,7 +86,7 @@ Paint::Paint(const ColorProviderRef& color)
 }
 
 // constructor
-Paint::Paint(const ::Gradient* gradient)
+Paint::Paint(const GradientRef& gradient)
 	: BaseObject()
 	, fType(GRADIENT)
 	, fColor()
@@ -117,10 +116,9 @@ Paint::~Paint()
 	if (fColor.Get() != NULL)
 		fColor->RemoveListener(this);
 
-	if (fGradient != NULL) {
+	if (fGradient.Get() != NULL)
 		fGradient->RemoveListener(this);
-		delete fGradient;
-	}
+
 	delete[] fColors;
 
 	// TODO: pattern...
@@ -264,10 +262,8 @@ Paint::SetToPropertyObject(const PropertyObject* object, uint32 flags)
 			}
 			break;
 		case GRADIENT:
-			if (fGradient == NULL) {
-				::Gradient gradient;
-				SetGradient(&gradient);
-			}
+			if (fGradient.Get() == NULL)
+				SetGradient(GradientRef(new(std::nothrow) ::Gradient(), true));
 			break;
 		case PATTERN:
 			// TODO: ...
@@ -305,7 +301,7 @@ Paint::ObjectChanged(const Notifier* object)
 {
 	if (object == fColor.Get() && fType == COLOR) {
 		Notify();
-	} else if (object == fGradient && fColors != NULL) {
+	} else if (object == fGradient.Get() && fColors != NULL) {
 		fGradient->MakeGradient(fColors, RenderEngine::kGradientArraySize);
 		Notify();
 	}
@@ -338,11 +334,8 @@ Paint::operator==(const Paint& other) const
 	if (this == &other)
 		return true;
 	return fType == other.fType && fColor == other.fColor
-//		&& fGradient == other.fGradient;
-		&& ((fGradient == NULL && other.fGradient == NULL)
-			|| (fGradient != NULL && other.fGradient != NULL
-				&& *fGradient == *other.fGradient));
-		// TODO: pattern...
+		&& fGradient == other.fGradient;
+		// TODO: pattern
 }
 
 // operator!=
@@ -365,7 +358,7 @@ Paint::HasTransparency() const
 			return fColor->GetColor().alpha < 255;
 
 		case GRADIENT:
-			if (fGradient != NULL) {
+			if (fGradient.Get() != NULL) {
 				int32 count = fGradient->CountColors();
 				for (int32 i = 0; i < count; i++) {
 					Gradient::ColorStop* stop = fGradient->ColorAtFast(i);
@@ -392,7 +385,7 @@ Paint::HashKey() const
 	hash |= (color.green & 0x0f) << 22;
 	hash |= (color.blue & 0x0f) << 18;
 	hash |= (color.alpha & 0x0f) << 14;
-	hash |= ((addr_t)fGradient & 0xff) << 6;
+	hash |= ((addr_t)fGradient.Get() & 0xff) << 6;
 
 	// TODO: pattern...
 
@@ -469,45 +462,36 @@ Paint::SetColorProvider(const ColorProviderRef& colorProvider)
 
 // SetGradient
 void
-Paint::SetGradient(const ::Gradient* gradient)
+Paint::SetGradient(const GradientRef& gradient)
 {
-	if (gradient != NULL && fType != GRADIENT)
+	if (gradient.Get() != NULL && fType != GRADIENT)
 		fType = GRADIENT;
 	else {
-		if (fGradient == NULL && gradient == NULL)
+		if (fGradient == gradient)
 			return;
 	}
 
-	if (gradient != NULL) {
-		if (fGradient == NULL) {
-			fGradient = new (std::nothrow) ::Gradient(*gradient);
-			if (fGradient != NULL) {
-				fGradient->AddListener(this);
-				// generate gradient
-				fColors = new(std::nothrow) agg::rgba16[
-					RenderEngine::kGradientArraySize];
-				fGradient->MakeGradient(fColors,
-					RenderEngine::kGradientArraySize);
+	if (fGradient.Get() != NULL)
+		fGradient->RemoveListener(this);
 
-				Notify();
-			}
-		} else {
-			if (*fGradient != *gradient) {
-				*fGradient = *gradient;
-				// Notification is triggered in ObjectChanged()
-			}
+	fGradient = gradient;
+
+	if (fGradient.Get() != NULL) {
+		fGradient->AddListener(this);
+		// generate gradient
+		if (fColors == NULL) {
+			fColors = new(std::nothrow) agg::rgba16[
+				RenderEngine::kGradientArraySize];
 		}
+		fGradient->MakeGradient(fColors,
+			RenderEngine::kGradientArraySize);
+
 	} else {
-		if (fGradient != NULL) {
-			fGradient->RemoveListener(this);
-			delete fGradient;
-			delete[] fColors;
-			fColors = NULL;
-			fGradient = NULL;
-	
-			Notify();
-		}
+		delete[] fColors;
+		fColors = NULL;
 	}
+
+	Notify();
 }
 
 //static int

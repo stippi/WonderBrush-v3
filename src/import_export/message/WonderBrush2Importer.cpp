@@ -602,10 +602,16 @@ WonderBrush2Importer::ImportGradientRenderer(const BMessage& archive) const
 
 		_RestoreTransformable(&gradient, archive);
 
-		style->SetFillPaint(PaintRef(new(std::nothrow) Paint(&gradient),
-			true));
-		style->SetStrokePaint(PaintRef(new(std::nothrow) Paint(&gradient),
-			true));
+		style->SetFillPaint(PaintRef(
+			new(std::nothrow) Paint(
+				GradientRef(new(std::nothrow) Gradient(gradient), true)
+			), true)
+		);
+		style->SetStrokePaint(PaintRef(
+			new(std::nothrow) Paint(
+				GradientRef(new(std::nothrow) Gradient(gradient), true)
+			), true)
+		);
 	}
 	return BaseObjectRef(style, true);
 }

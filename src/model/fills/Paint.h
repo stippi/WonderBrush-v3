@@ -11,6 +11,7 @@
 #include <agg_color_rgba.h>
 
 #include "ColorProvider.h"
+#include "Gradient.h"
 #include "Listener.h"
 #include "SharedObjectCache.h"
 
@@ -39,7 +40,7 @@ public:
 									CloneContext& context);
 								Paint(const rgb_color& color);
 								Paint(const ColorProviderRef& color);
-								Paint(const ::Gradient* gradient);
+								Paint(const GradientRef& gradient);
 								Paint(BMessage* archive);
 
 	virtual						~Paint();
@@ -81,8 +82,8 @@ public:
 	inline	const ColorProviderRef& GetColorProvider() const
 									{ return fColor; }
 
-			void				SetGradient(const ::Gradient* gradient);
-	inline	::Gradient*			Gradient() const
+			void				SetGradient(const GradientRef& gradient);
+	inline	const GradientRef&	Gradient() const
 									{ return fGradient; }
 
 	inline	const agg::rgba16*	Colors() const
@@ -97,7 +98,7 @@ public:
 private:
 			uint32				fType;
 			ColorProviderRef	fColor;
-			::Gradient*			fGradient;
+			GradientRef			fGradient;
 
 			// hold gradient color array
 			agg::rgba16*		fColors;

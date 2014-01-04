@@ -16,6 +16,7 @@
 #include "Color.h"
 #include "ColorShade.h"
 #include "Font.h"
+#include "Gradient.h"
 #include "StyleRun.h"
 #include "StyleRunList.h"
 
@@ -372,9 +373,16 @@ ArchiveVisitor::_StorePaint(Paint* paint, BMessage* archive) const
 		}
 
 		case Paint::GRADIENT:
-			fprintf(stderr,
-				"MessageExporter::_StorePaint() - Implement GRADIENT!\n");
+		{
+			const GradientRef& gradient = paint->Gradient();
+			if (gradient.Get() != NULL) {
+				BMessage gradientArchive;
+				ret = _StoreGradient(gradient.Get(), &gradientArchive);
+				if (ret == B_OK)
+					ret = archive->AddMessage("gradient", &gradientArchive);
+			}
 			break;
+		}
 
 		case Paint::PATTERN:
 			fprintf(stderr,
@@ -477,6 +485,16 @@ ArchiveVisitor::_StoreColorShade(ColorShade* shade, BMessage* archive) const
 		ret = archive->AddString(kType, "ColorShade");
 		
 	return ret;
+}
+
+status_t
+ArchiveVisitor::_StoreGradient(const Gradient* gradient,
+	BMessage* archive) const
+{
+	status_t ret = gradient->Archive(archive, true);
+	if (ret != B_OK)
+		return ret;
+	return archive->AddString(kType, "Gradient");
 }
 
 status_t
