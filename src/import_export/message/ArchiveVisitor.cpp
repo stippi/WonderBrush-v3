@@ -391,6 +391,10 @@ ArchiveVisitor::_StorePaint(Paint* paint, BMessage* archive) const
 			fprintf(stderr,
 				"MessageExporter::_StorePaint() - Implement PATTERN!\n");
 			break;
+
+		case Paint::ERASE:
+			ret = archive->AddBool("erase", true);
+			break;
 	}
 
 	if (ret == B_OK)

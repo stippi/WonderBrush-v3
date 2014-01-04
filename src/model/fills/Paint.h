@@ -27,7 +27,8 @@ public:
 		NONE			= 0,
 		COLOR			= 1,
 		GRADIENT		= 2,
-		PATTERN			= 3
+		PATTERN			= 3,
+		ERASE			= 4,
 	};
 	enum {
 		FILL_PAINT		= 1 << 0,

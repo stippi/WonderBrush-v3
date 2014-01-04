@@ -569,6 +569,8 @@ MessageImporter::ImportPaint(const BMessage& archive) const
 				fprintf(stderr, "MessageImporter::ImportPaint() - "
 					"Failed to restore ColorProvider!\n");
 			}
+		} else if (archive.HasBool("erase")) {
+			paint->SetType(Paint::ERASE);
 		} else {
 			fprintf(stderr, "MessageImporter::ImportPaint() - "
 				"unkown Paint type!\n");

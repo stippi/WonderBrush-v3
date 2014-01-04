@@ -6,6 +6,7 @@
 #define WONDERBRUSH_2_IMPORTER_H
 
 #include "Document.h"
+#include "Style.h"
 
 class BMessage;
 class BPositionIO;
@@ -41,22 +42,12 @@ public:
 									const BMessage& archive) const;
 			BaseObjectRef		ImportLayer(
 									const BMessage& archive) const;
-			BaseObjectRef		ImportRect(
-									const BMessage& archive) const;
 			BaseObjectRef		ImportShape(
 									const BMessage& archive) const;
 			BaseObjectRef		ImportText(
 									const BMessage& archive) const;
 
 			BaseObjectRef		ImportBrush(
-									const BMessage& archive) const;
-			BaseObjectRef		ImportColor(
-									const BMessage& archive) const;
-			BaseObjectRef		ImportColorShade(
-									const BMessage& archive) const;
-			BaseObjectRef		ImportGradient(
-									const BMessage& archive) const;
-			BaseObjectRef		ImportPaint(
 									const BMessage& archive) const;
 			BaseObjectRef		ImportPath(
 									const BMessage& archive) const;
@@ -65,6 +56,8 @@ public:
 			BaseObjectRef		ImportColorRenderer(
 									const BMessage& archive) const;
 			BaseObjectRef		ImportGradientRenderer(
+									const BMessage& archive) const;
+			BaseObjectRef		ImportEraseRenderer(
 									const BMessage& archive) const;
 
 private:
@@ -84,6 +77,9 @@ private:
 			void				_RestoreTransformable(
 									Transformable* transformable,
 									const BMessage& archive) const;
+
+			StyleRef			_ImportStyle(
+									const BMessage& rendererArchive) const;
 
 private:
 			DocumentRef			fDocument;

@@ -598,7 +598,7 @@ RenderEngine::_RenderScanlines(bool fillPaint,
 				GammaToLinear(c.blue),
 				(c.alpha << 8) | c.alpha);
 			color.premultiply();
-			_RenderScanlines(color, scanlineContainer);
+			_RenderScanlines(color, fBaseRenderer, scanlineContainer);
 			break;
 		}
 		case Paint::GRADIENT:
@@ -663,6 +663,14 @@ RenderEngine::_RenderScanlines(bool fillPaint,
 			break;
 		}
 
+		case Paint::ERASE:
+		{
+			agg::rgba16 color(255, 255, 255, (255 << 8) | 255);
+			fCompOpPixelFormat.comp_op(agg::comp_op_dst_out);
+			_RenderScanlines(color, fCompOpBaseRenderer, scanlineContainer);
+			break;
+		}
+
 		case Paint::NONE:
 		default:
 			return;
@@ -670,25 +678,26 @@ RenderEngine::_RenderScanlines(bool fillPaint,
 }
 
 // _RenderScanlines
+template<class BaseRenderer>
 void
-RenderEngine::_RenderScanlines(agg::rgba16 color,
+RenderEngine::_RenderScanlines(agg::rgba16 color, BaseRenderer& baseRenderer,
 	const ScanlineContainer* scanlineContainer)
 {
 	if (scanlineContainer == NULL) {
 		// Render current contents of fRasterizer
-		agg::render_scanlines_aa_solid(fRasterizer, fScanline, fBaseRenderer,
+		agg::render_scanlines_aa_solid(fRasterizer, fScanline, baseRenderer,
 			color);
 	} else {
 		// Render cached scanlines from the container
-		int32 top = fBaseRenderer.ymin();
-		int32 bottom = fBaseRenderer.ymax();
+		int32 top = baseRenderer.ymin();
+		int32 bottom = baseRenderer.ymax();
 
 		uint32 count = scanlineContainer->CountObjects();
 		for (uint32 i = 0; i < count; i++) {
 			const Scanline* scanline = scanlineContainer->ObjectAtFast(i);
 			int y = scanline->y();
 			if (y >= top && y <= bottom)
-				agg::render_scanline_aa_solid(*scanline, fBaseRenderer, color);
+				agg::render_scanline_aa_solid(*scanline, baseRenderer, color);
 		}
 	}
 }
@@ -706,8 +715,8 @@ RenderEngine::_RenderScanlines(SpanAllocator& spanAllocator,
 			spanAllocator, spanGenerator);
 	} else {
 		// Render cached scanlines from the container
-		int32 top = fBaseRenderer.ymin();
-		int32 bottom = fBaseRenderer.ymax();
+		int32 top = baseRenderer.ymin();
+		int32 bottom = baseRenderer.ymax();
 
 		uint32 count = scanlineContainer->CountObjects();
 		for (uint32 i = 0; i < count; i++) {
@@ -779,6 +788,11 @@ RenderEngine::_RenderAlphaScanlines(bool fillPaint)
 			break;
 		}
 		case Paint::PATTERN:
+		{
+			// TODO: ...
+			break;
+		}
+		case Paint::ERASE:
 		{
 			// TODO: ...
 			break;

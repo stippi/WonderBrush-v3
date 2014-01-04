@@ -414,6 +414,7 @@ Paint::AddTypeProperty(PropertyObject* object, uint32 propertyID, uint32 type)
 	typeProperty->AddOption(COLOR, "Color");
 	typeProperty->AddOption(GRADIENT, "Gradient");
 	typeProperty->AddOption(PATTERN, "Pattern");
+	typeProperty->AddOption(ERASE, "Erase");
 	typeProperty->SetCurrentOptionID(type);
 	object->AddProperty(typeProperty);
 }

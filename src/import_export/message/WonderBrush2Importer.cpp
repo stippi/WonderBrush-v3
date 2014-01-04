@@ -30,7 +30,6 @@
 #include "RenderBuffer.h"
 #include "Shape.h"
 #include "StrokeProperties.h"
-#include "Style.h"
 #include "Styleable.h"
 #include "StyleRun.h"
 #include "StyleRunList.h"
@@ -139,12 +138,6 @@ WonderBrush2Importer::ImportObject(const BMessage& archive) const
 	if (type == "Brush")
 		return ImportBrush(archive);
 
-	if (type == "Gradient")
-		return ImportGradient(archive);
-
-	if (type == "Paint")
-		return ImportPaint(archive);
-
 	if (type == "VectorPath")
 		return ImportPath(archive);
 
@@ -156,6 +149,9 @@ WonderBrush2Importer::ImportObject(const BMessage& archive) const
 
 	if (type == "GradientRenderer")
 		return ImportGradientRenderer(archive);
+
+	if (type == "EraseRenderer")
+		return ImportEraseRenderer(archive);
 
 	// unhandled!
 	fprintf(stderr, "WonderBrush2Importer::ImportObject() - "
@@ -196,15 +192,10 @@ WonderBrush2Importer::ImportBrushStroke(const BMessage& archive) const
 
 		BMessage rendererArchive;
 		if (archive.FindMessage("renderer", &rendererArchive) == B_OK) {
-			const void* data;
-			ssize_t size;
-			if (archive.FindData("RGBColor", B_RGB_COLOR_TYPE, &data,
-					&size) == B_OK && size == sizeof(rgb_color)) {
-				rgb_color color = *(const rgb_color*)data;
-				Paint* paint = new(std::nothrow) Paint(color);
+			BaseObjectRef ref = ImportObject(rendererArchive);
+			Paint* paint = dynamic_cast<Paint*>(ref.Get());
+			if (paint != NULL)
 				brushStroke->SetPaint(paint);
-				paint->RemoveReference();
-			}
 		}
 
 		const void* data;
@@ -329,25 +320,6 @@ WonderBrush2Importer::ImportLayer(const BMessage& archive) const
 	return BaseObjectRef(layer, true);
 }
 
-// ImportRect
-BaseObjectRef
-WonderBrush2Importer::ImportRect(const BMessage& archive) const
-{
-	Rect* rect = new(std::nothrow) Rect();
-	if (rect != NULL) {
-		BRect area;
-		if (archive.FindRect("area", &area) == B_OK)
-			rect->SetArea(area);
-
-		double roundCornerRadius;
-		if (archive.FindDouble("radius", &roundCornerRadius) == B_OK)
-			rect->SetRoundCornerRadius(roundCornerRadius);
-
-		_RestoreStyleable(rect, archive);
-	}
-	return BaseObjectRef(rect, true);
-}
-
 // ImportShape
 BaseObjectRef
 WonderBrush2Importer::ImportShape(const BMessage& archive) const
@@ -436,11 +408,10 @@ WonderBrush2Importer::ImportText(const BMessage& archive) const
 			ret = archive.FindMessage("renderer", &styleArchive);
 
 		if (ret == B_OK) {
-			BaseObjectRef ref = ImportColorRenderer(styleArchive);
-			Style* style = dynamic_cast<Style*>(ref.Get());
-			if (ret == B_OK && style != NULL) {
+			StyleRef style = _ImportStyle(styleArchive);
+			if (ret == B_OK && style.Get() != NULL) {
 				Font font(fontFamily, fontStyle, fontSize * 16.0f);
-				text->SetText(string, font, StyleRef(style));
+				text->SetText(string, font, style);
 			}
 		}
 	
@@ -467,87 +438,6 @@ WonderBrush2Importer::ImportBrush(const BMessage& archive) const
 		_RestoreBaseObject(brush, archive);
 	}
 	return BaseObjectRef(brush, true);
-}
-
-// ImportColor
-BaseObjectRef
-WonderBrush2Importer::ImportColor(const BMessage& archive) const
-{
-	rgb_color rgba = kBlack;
-	archive.FindUInt8("r", &rgba.red);
-	archive.FindUInt8("g", &rgba.green);
-	archive.FindUInt8("b", &rgba.blue);
-	archive.FindUInt8("a", &rgba.alpha);
-	Color* color = new(std::nothrow) Color(rgba);
-	if (color != NULL)
-		_RestoreBaseObject(color, archive);
-	return BaseObjectRef(color, true);
-}
-
-// ImportColorShade
-BaseObjectRef
-WonderBrush2Importer::ImportColorShade(const BMessage& archive) const
-{
-	ColorShade* colorShade = new(std::nothrow) ColorShade();
-	if (colorShade != NULL) {
-		float value;
-		if (archive.FindFloat("h", &value) == B_OK)
-			colorShade->SetHue(value);
-		if (archive.FindFloat("s", &value) == B_OK)
-			colorShade->SetSaturation(value);
-		if (archive.FindFloat("v", &value) == B_OK)
-			colorShade->SetValue(value);
-	
-		BMessage providerArchive;
-		if (archive.FindMessage("provider", &providerArchive) == B_OK) {
-			BaseObjectRef ref = ImportObject(providerArchive);
-			ColorProvider* provider = dynamic_cast<ColorProvider*>(ref.Get());
-			if (provider != NULL)
-				colorShade->SetColorProvider(ColorProviderRef(provider));
-			else {
-				fprintf(stderr, "WonderBrush2Importer::ImportColorShade() - "
-					"Failed to restore ColorProvider!\n");
-			}
-		}
-	
-		_RestoreBaseObject(colorShade, archive);
-	}
-	return BaseObjectRef(colorShade, true);
-}
-
-// ImportGradient
-BaseObjectRef
-WonderBrush2Importer::ImportGradient(const BMessage& archive) const
-{
-	// TODO
-	return BaseObjectRef();
-}
-
-// ImportPaint
-BaseObjectRef
-WonderBrush2Importer::ImportPaint(const BMessage& archive) const
-{
-	Paint* paint = new(std::nothrow) Paint();
-	if (paint != NULL) {
-		// try color
-		BMessage colorArchive;
-		if (archive.FindMessage("color", &colorArchive) == B_OK) {
-			BaseObjectRef ref = ImportObject(colorArchive);
-			ColorProvider* provider = dynamic_cast<ColorProvider*>(ref.Get());
-			if (provider != NULL)
-				paint->SetColorProvider(ColorProviderRef(provider));
-			else {
-				fprintf(stderr, "WonderBrush2Importer::ImportPaint() - "
-					"Failed to restore ColorProvider!\n");
-			}
-		} else {
-			fprintf(stderr, "WonderBrush2Importer::ImportPaint() - "
-				"unkown Paint type!\n");
-		}
-		
-		_RestoreBaseObject(paint, archive);
-	}
-	return BaseObjectRef(paint, true);
 }
 
 // ImportPath
@@ -596,71 +486,71 @@ WonderBrush2Importer::ImportStrokeProperties(const BMessage& archive) const
 BaseObjectRef
 WonderBrush2Importer::ImportColorRenderer(const BMessage& archive) const
 {
-	Style* style = new(std::nothrow) Style();
-	if (style != NULL) {
+	Paint* paint = new(std::nothrow) Paint();
+	if (paint != NULL) {
 		const void* data;
 		ssize_t size;
 		if (archive.FindData("RGBColor", B_RGB_COLOR_TYPE, &data,
 				&size) == B_OK && size == sizeof(rgb_color)) {
 			rgb_color color = *(const rgb_color*)data;
-			style->SetFillPaint(PaintRef(new(std::nothrow) Paint(color), true));
-			style->SetStrokePaint(PaintRef(new(std::nothrow) Paint(color), true));
+			paint->SetColor(color);
 		}
 	}
-	return BaseObjectRef(style, true);
+	return BaseObjectRef(paint, true);
 }
 
 // ImportGradientRenderer
 BaseObjectRef
 WonderBrush2Importer::ImportGradientRenderer(const BMessage& archive) const
 {
-	Style* style = new(std::nothrow) Style();
-	if (style != NULL) {
-		Gradient gradient(true);
-		
-		// Gradient settings
-		int32 type;
-		if (archive.FindInt32("type", &type) == B_OK)
-			gradient.SetType((Gradient::Type)type);
+	Gradient gradient(true);
+	
+	// Gradient settings
+	int32 type;
+	if (archive.FindInt32("type", &type) == B_OK)
+		gradient.SetType((Gradient::Type)type);
 
-		int32 interpolation;
-		if (archive.FindInt32("interpolation", &interpolation) == B_OK)
-			gradient.SetInterpolation((Gradient::Interpolation)interpolation);
+	int32 interpolation;
+	if (archive.FindInt32("interpolation", &interpolation) == B_OK)
+		gradient.SetInterpolation((Gradient::Interpolation)interpolation);
 
-		bool inheritTransformation;
-		if (archive.FindBool("inherit transformation",
-				&inheritTransformation) == B_OK) {
-			gradient.SetInheritTransformation(inheritTransformation);
-		}
-		
-		// Color stops
-		const void* data;
-		ssize_t size;
-		float offset;
-		for (int32 i = 0;; i++) {
-			if (archive.FindData("RGBColor", B_RGB_COLOR_TYPE, i, &data,
-					&size) == B_OK && size == sizeof(rgb_color)
-				&& archive.FindFloat("offset", i, &offset) == B_OK) {
-				rgb_color color = *(const rgb_color*)data;
-				gradient.AddColor(color, offset);
-			} else
-				break;
-		}
-
-		_RestoreTransformable(&gradient, archive);
-
-		style->SetFillPaint(PaintRef(
-			new(std::nothrow) Paint(
-				GradientRef(new(std::nothrow) Gradient(gradient), true)
-			), true)
-		);
-		style->SetStrokePaint(PaintRef(
-			new(std::nothrow) Paint(
-				GradientRef(new(std::nothrow) Gradient(gradient), true)
-			), true)
-		);
+	bool inheritTransformation;
+	if (archive.FindBool("inherit transformation",
+			&inheritTransformation) == B_OK) {
+		gradient.SetInheritTransformation(inheritTransformation);
 	}
-	return BaseObjectRef(style, true);
+	
+	// Color stops
+	const void* data;
+	ssize_t size;
+	float offset;
+	for (int32 i = 0;; i++) {
+		if (archive.FindData("RGBColor", B_RGB_COLOR_TYPE, i, &data,
+				&size) == B_OK && size == sizeof(rgb_color)
+			&& archive.FindFloat("offset", i, &offset) == B_OK) {
+			rgb_color color = *(const rgb_color*)data;
+			gradient.AddColor(color, offset);
+		} else
+			break;
+	}
+
+	_RestoreTransformable(&gradient, archive);
+
+	Paint* paint = new(std::nothrow) Paint(
+		GradientRef(new(std::nothrow) Gradient(gradient), true)
+	);
+
+	return BaseObjectRef(paint, true);
+}
+
+// ImportEraseRenderer
+BaseObjectRef
+WonderBrush2Importer::ImportEraseRenderer(const BMessage& archive) const
+{
+	Paint* paint = new(std::nothrow) Paint();
+	if (paint != NULL)
+		paint->SetType(Paint::ERASE);
+	return BaseObjectRef(paint, true);
 }
 
 // #pragma mark -
@@ -700,10 +590,9 @@ WonderBrush2Importer::_RestoreStyleable(Styleable* styleable,
 	if (archive.FindMessage("renderer", &rendererArchive) != B_OK)
 		return;
 	
-	BaseObjectRef styleRef = ImportObject(rendererArchive);
-	Style* style = dynamic_cast<Style*>(styleRef.Get());
-	if (style != NULL)
-		styleable->SetStyle(style);
+	StyleRef styleRef = _ImportStyle(rendererArchive);
+	if (styleRef.Get() != NULL)
+		styleable->SetStyle(styleRef.Get());
 }
 
 // _RestoreBoundedObject
@@ -769,4 +658,22 @@ WonderBrush2Importer::_RestoreTransformable(Transformable* transformable,
 		
 		transformable->SetTransformable(t);
 	}
+}
+
+// _ImportStyle
+StyleRef
+WonderBrush2Importer::_ImportStyle(const BMessage& rendererArchive) const
+{
+	Style* style = new(std::nothrow) Style();
+	if (style != NULL) {
+		BaseObjectRef ref = ImportObject(rendererArchive);
+		Paint* paint = dynamic_cast<Paint*>(ref.Get());
+		if (paint != NULL) {
+			style->SetFillPaint(PaintRef(paint));
+			style->SetStrokePaint(PaintRef(new(std::nothrow)Paint(*paint),
+				true));
+		}
+	}
+
+	return StyleRef(style, true);
 }

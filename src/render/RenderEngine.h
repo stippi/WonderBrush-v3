@@ -134,7 +134,9 @@ private:
 			// Rendering rasterizer contents or cached scanlines
 			void				_RenderScanlines(bool fillPaint,
 									const ScanlineContainer* scanlines = NULL);
+			template<class BaseRenderer>
 			void				_RenderScanlines(agg::rgba16 color,
+									BaseRenderer& renderer,
 									const ScanlineContainer* scanlines = NULL);
 			template<class SpanAllocator, class SpanGenerator,
 				class BaseRenderer>
