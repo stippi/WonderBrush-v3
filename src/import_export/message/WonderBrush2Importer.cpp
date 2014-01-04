@@ -116,10 +116,10 @@ WonderBrush2Importer::ImportObject(const BMessage& archive) const
 	if (type == "BrushStroke")
 		return ImportBrushStroke(archive);
 
-	if (type == "FilterGaussianBlur")
+	if (type == "GaussianBlur")
 		return ImportFilterGaussianBlur(archive);
 		
-	if (type == "FilterDropShadow")
+	if (type == "DropShadow")
 		return ImportFilterDropShadow(archive);
 
 	if (type == "FilterSaturation")
@@ -216,7 +216,7 @@ WonderBrush2Importer::ImportFilterGaussianBlur(const BMessage& archive) const
 	Filter* filter = new(std::nothrow) Filter();
 	if (filter != NULL) {
 		float radius;
-		if (archive.FindFloat("radius", &radius) == B_OK)
+		if (archive.FindFloat("blur radius", &radius) == B_OK)
 			filter->SetFilterRadius(radius);
 		
 		_RestoreObject(filter, archive);
@@ -230,22 +230,27 @@ WonderBrush2Importer::ImportFilterDropShadow(const BMessage& archive) const
 {
 	FilterDropShadow* filter = new(std::nothrow) FilterDropShadow();
 	if (filter != NULL) {
-		float value;
-		if (archive.FindFloat("radius", &value) == B_OK)
-			filter->SetFilterRadius(value);
-		if (archive.FindFloat("offset-x", &value) == B_OK)
-			filter->SetOffsetX(value);
-		if (archive.FindFloat("offset-y", &value) == B_OK)
-			filter->SetOffsetY(value);
-		if (archive.FindFloat("opacity", &value) == B_OK)
-			filter->SetOpacity(value);
+		float radius;
+		if (archive.FindFloat("radius", &radius) == B_OK)
+			filter->SetFilterRadius(radius);
+		
+		BPoint offset;
+		if (archive.FindPoint("offset", &offset) == B_OK) {
+			filter->SetOffsetX(offset.x);
+			filter->SetOffsetY(offset.y);
+		}
+		int32 opacity;
+		if (archive.FindInt32("opacity", &opacity) == B_OK)
+			filter->SetOpacity(opacity);
 
-		BMessage colorArchive;
-		if (archive.FindMessage("color", &colorArchive) == B_OK) {
-			BaseObjectRef colorRef = ImportObject(colorArchive);
-			ColorProvider* color = dynamic_cast<ColorProvider*>(colorRef.Get());
+		const void* data;
+		ssize_t size;
+		if (archive.FindData("RGBColor", B_RGB_COLOR_TYPE, &data,
+				&size) == B_OK && size == sizeof(rgb_color)) {
+			rgb_color rgba = *(const rgb_color*)data;
+			Color* color = new(std::nothrow) Color(rgba);
 			if (color != NULL)
-				filter->SetColor(ColorProviderRef(color));
+				filter->SetColor(ColorProviderRef(color, true));
 		}
 
 		_RestoreObject(filter, archive);
