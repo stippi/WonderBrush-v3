@@ -559,16 +559,21 @@ Gradient::MakeGradient(Color* colors, int32 count) const
 					RenderEngine::GammaToLinear(from->color.green),
 					RenderEngine::GammaToLinear(from->color.blue),
 					(from->color.alpha << 8) | from->color.alpha);
-//				a.premultiply();
 
 				agg::rgba16 b(
 					RenderEngine::GammaToLinear(to->color.red),
 					RenderEngine::GammaToLinear(to->color.green),
 					RenderEngine::GammaToLinear(to->color.blue),
 					(to->color.alpha << 8) | to->color.alpha);
-//				b.premultiply();
-				
+
 				colors[i] = a.gradient(b, 1.0 - f).premultiply();
+// Theoretically more correct would be to pre-multiply a and b before
+// calculating the mix. The difference is that if a or b is fully transparent,
+// its color would be irrelevant when premultiplying first, but is relevant
+// when doing it afterwards. The latter gives more artistic freedom. 
+//				a.premultiply();
+//				b.premultiply();
+//				colors[i] = a.gradient(b, 1.0 - f);
 			}
 		}
 		index = offset + 1;
