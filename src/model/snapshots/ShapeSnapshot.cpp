@@ -108,6 +108,7 @@ ShapeSnapshot::Render(RenderEngine& engine, RenderBuffer* bitmap,
 	BRect area) const
 {
 	PrepareRenderEngine(engine);
+	engine.SetTransformation(LayoutedState().Matrix);
 
 	engine.RenderScanlines(fFillScanlines, true);
 	engine.RenderScanlines(fStrokeScanlines, false);
