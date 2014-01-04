@@ -87,7 +87,8 @@ WonderBrush2Importer::ImportDocument(const BMessage& archive) const
 			break;
 		BaseObjectRef ref = ImportLayer(layerArchive);
 		Layer* layer = dynamic_cast<Layer*>(ref.Get());
-		if (layer == NULL || !fDocument->RootLayer()->AddObject(layer))
+		// Add layers in reverse order
+		if (layer == NULL || !fDocument->RootLayer()->AddObject(layer, 0))
 			return B_NO_MEMORY;
 	}
 
@@ -360,6 +361,29 @@ WonderBrush2Importer::ImportShape(const BMessage& archive) const
 		}
 		
 		_RestoreStyleable(shape, archive);
+
+		Style* style = shape->Style();
+
+		bool outline;
+		if (archive.FindBool("outline", &outline) != B_OK)
+			outline = false;
+		
+		if (outline) {
+			style->FillPaint()->SetType(Paint::NONE);
+			
+			StrokeProperties* strokeProperties = style->StrokeProperties();
+			int32 capMode;
+			if (archive.FindInt32("cap mode", &capMode) == B_OK)
+				strokeProperties->SetCapMode((CapMode)capMode);
+			int32 joinMode;
+			if (archive.FindInt32("join mode", &joinMode) == B_OK)
+				strokeProperties->SetJoinMode((JoinMode)joinMode);
+			float width;
+			if (archive.FindFloat("outline width", &width) == B_OK)
+				strokeProperties->SetWidth(width);
+		} else {
+			style->StrokePaint()->SetType(Paint::NONE);
+		}
 	}
 	return BaseObjectRef(shape, true);
 }
