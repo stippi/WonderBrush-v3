@@ -10,7 +10,7 @@
 ObjectSnapshot::ObjectSnapshot(const Object* object)
 	: Transformable(object->LocalTransformation())
 	, fChangeCounter(object->ChangeCounter())
-	, fName(object->GivenName())
+	, fIsVisible(object->IsVisible())
 {
 }
 
@@ -30,7 +30,7 @@ ObjectSnapshot::Sync()
 
 	SetTransformable(Original()->LocalTransformation());
 	fChangeCounter = Original()->ChangeCounter();
-	fName = Original()->GivenName();
+	fIsVisible = Original()->IsVisible();
 	return true;
 }
 

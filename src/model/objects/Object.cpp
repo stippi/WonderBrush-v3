@@ -15,7 +15,8 @@ Object::Object()
 	Transformable(),
 	BaseObject(),
 	fChangeCounter(0),
-	fParent(NULL)
+	fParent(NULL),
+	fIsVisible(true)
 {
 }
 
@@ -25,7 +26,8 @@ Object::Object(const Object& other)
 	Transformable(other),
 	BaseObject(other),
 	fChangeCounter(0),
-	fParent(NULL)
+	fParent(NULL),
+	fIsVisible(other.fIsVisible)
 {
 }
 
@@ -51,6 +53,18 @@ Object::Level() const
 	if (fParent == NULL)
 		return 0;
 	return fParent->Level() + 1;
+}
+
+// SetVisible
+void
+Object::SetVisible(bool visible)
+{
+	if (fIsVisible != visible) {
+		fIsVisible = visible;
+		NotifyListeners();
+		UpdateChangeCounter();
+		InvalidateParent();
+	}
 }
 
 // Assets

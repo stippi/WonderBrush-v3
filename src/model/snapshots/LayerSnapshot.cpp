@@ -154,7 +154,8 @@ LayerSnapshot::Render(RenderEngine& engine, BRect area, RenderBuffer* bitmap,
 	for (int32 i = count - 1; i >= 0; i--) {
 		dirtyAreas[i] = rebuildArea;
 		ObjectSnapshot* object = ObjectAtFast(i);
-		object->RebuildAreaForDirtyArea(rebuildArea);
+		if (object->IsVisible())
+			object->RebuildAreaForDirtyArea(rebuildArea);
 	}
 
 	// begin rendering
@@ -183,6 +184,8 @@ LayerSnapshot::Render(RenderEngine& engine, BRect area, RenderBuffer* bitmap,
 
 	for (int32 i = 0; i < count; i++) {
 		ObjectSnapshot* object = ObjectAtFast(i);
+		if (!object->IsVisible())
+			continue;
 		object->PrepareRendering(layerBounds);
 
 		engine.SetClipping(dirtyAreas[i]);

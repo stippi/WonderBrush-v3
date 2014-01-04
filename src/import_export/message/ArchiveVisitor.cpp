@@ -249,6 +249,9 @@ ArchiveVisitor::_StoreObject(Object* object, BMessage* archive) const
 	if (name.Length() > 0)
 		ret = archive->AddString("name", name);
 
+	if (!object->IsVisible())
+		ret = archive->AddBool("visible", false);
+
 	if (ret == B_OK && !object->IsIdentity()) {
 		double matrix[Transformable::MatrixSize];
 		object->StoreTo(matrix);

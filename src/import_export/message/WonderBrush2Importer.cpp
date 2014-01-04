@@ -318,7 +318,11 @@ WonderBrush2Importer::ImportLayer(const BMessage& archive) const
 		ImportObjects(archive, layer);
 
 		// TODO: int32 "mode" (blending mode)
-		// TODO: int32 "flags" (??)
+		int32 flags;
+		if (archive.FindInt32("flags", &flags) == B_OK) {
+			if ((flags & 0x01) != 0)
+				layer->SetVisible(false);
+		}
 
 		_RestoreObject(layer, archive);
 	}

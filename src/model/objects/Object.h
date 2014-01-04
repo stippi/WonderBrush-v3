@@ -33,6 +33,10 @@ public:
 									{ return fParent; }
 			int32				Level() const;
 
+			void				SetVisible(bool visible);
+	inline	bool				IsVisible() const
+									{ return fIsVisible; }
+
 	// Returns the assets that can be published as global resources
 	virtual	AssetList			Assets() const;
 
@@ -64,6 +68,7 @@ protected:
 private:
 			uint32				fChangeCounter;
 			Layer*				fParent;
+			bool				fIsVisible;
 };
 
 #endif // OBJECT_H

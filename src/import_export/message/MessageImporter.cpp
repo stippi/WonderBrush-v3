@@ -723,6 +723,10 @@ MessageImporter::_RestoreObject(Object* object, const BMessage& archive) const
 		object->LoadFrom(matrix);
 	}
 
+	bool visible;
+	if (archive.FindBool("visible", &visible) == B_OK)
+		object->SetVisible(visible);
+
 	_RestoreBaseObject(object, archive);
 }
 
