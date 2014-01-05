@@ -80,6 +80,11 @@ bool
 ArchiveVisitor::VisitBoundedObject(BoundedObject* boundedObject,
 	BMessage* context)
 {
+	if (boundedObject->Opacity() < 255) {
+		status = context->AddUInt8("opacity", boundedObject->Opacity());
+		if (status != B_OK)
+			return false;
+	}
 	return inherited::VisitBoundedObject(boundedObject, context);
 }
 

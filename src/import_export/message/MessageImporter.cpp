@@ -710,6 +710,10 @@ void
 MessageImporter::_RestoreBoundedObject(BoundedObject* object,
 	const BMessage& archive) const
 {
+	uint8 opacity;
+	if (archive.FindUInt8("opacity", &opacity) == B_OK)
+		object->SetOpacity(opacity);
+
 	_RestoreObject(object, archive);
 }
 
