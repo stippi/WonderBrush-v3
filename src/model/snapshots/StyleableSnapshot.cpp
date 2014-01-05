@@ -15,7 +15,7 @@
 
 // constructor
 StyleableSnapshot::StyleableSnapshot(const Styleable* styleable)
-	: ObjectSnapshot(styleable)
+	: BoundedObjectSnapshot(styleable)
 	, fOriginal(styleable)
 	, fFillPaint(NULL)
 	, fStrokePaint(NULL)
@@ -41,7 +41,7 @@ StyleableSnapshot::~StyleableSnapshot()
 bool
 StyleableSnapshot::Sync()
 {
-	if (ObjectSnapshot::Sync()) {
+	if (BoundedObjectSnapshot::Sync()) {
 		_SyncStyle();
 		return true;
 	}

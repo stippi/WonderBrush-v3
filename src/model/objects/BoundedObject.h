@@ -21,9 +21,14 @@ public:
 			void				InitBounds();
 			void				UpdateBounds();
 
+			void				SetOpacity(float opacity);
+	inline	float				Opacity() const
+									{ return fOpacity; }
+
 			void				NotifyAndUpdate();
 
 private:
+			float				fOpacity;
 			BRect				fTransformedBounds;
 };
 

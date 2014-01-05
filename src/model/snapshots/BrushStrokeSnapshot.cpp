@@ -11,7 +11,7 @@
 
 // constructor
 BrushStrokeSnapshot::BrushStrokeSnapshot(const BrushStroke* stroke)
-	: ObjectSnapshot(stroke)
+	: BoundedObjectSnapshot(stroke)
 	, fOriginal(stroke)
 	, fBrush()
 	, fPaint(NULL)
@@ -41,7 +41,7 @@ BrushStrokeSnapshot::Original() const
 bool
 BrushStrokeSnapshot::Sync()
 {
-	if (ObjectSnapshot::Sync()) {
+	if (BoundedObjectSnapshot::Sync()) {
 		_Sync();
 		return true;
 	}

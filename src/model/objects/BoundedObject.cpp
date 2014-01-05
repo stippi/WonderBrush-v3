@@ -7,6 +7,7 @@
 // constructor
 BoundedObject::BoundedObject()
 	: Object()
+	, fOpacity(255.0)
 	, fTransformedBounds(0, 0, -1, -1)
 {
 }
@@ -14,6 +15,7 @@ BoundedObject::BoundedObject()
 // constructor
 BoundedObject::BoundedObject(const BoundedObject& other)
 	: Object(other)
+	, fOpacity(other.fOpacity)
 	, fTransformedBounds(other.fTransformedBounds)
 {
 }
@@ -68,6 +70,18 @@ BoundedObject::UpdateBounds()
 	fTransformedBounds = newTransformedBounds;
 
 	// TODO: Notification would be nice?
+}
+
+// SetOpacity
+void
+BoundedObject::SetOpacity(float opacity)
+{
+	if (fOpacity != opacity) {
+		fOpacity = opacity;
+		UpdateChangeCounter();
+		NotifyListeners();
+		InvalidateParent(fTransformedBounds);
+	}
 }
 
 // NotifyAndUpdate

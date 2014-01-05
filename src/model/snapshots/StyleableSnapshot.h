@@ -7,7 +7,7 @@
 
 #include <GraphicsDefs.h>
 
-#include "ObjectSnapshot.h"
+#include "BoundedObjectSnapshot.h"
 #include "Referenceable.h"
 #include "RenderEngine.h"
 
@@ -15,7 +15,7 @@ class Styleable;
 class Style;
 
 
-class StyleableSnapshot : public ObjectSnapshot {
+class StyleableSnapshot : public BoundedObjectSnapshot {
 public:
 								StyleableSnapshot(const Styleable* styleable);
 	virtual						~StyleableSnapshot();

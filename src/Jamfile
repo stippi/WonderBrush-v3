@@ -193,6 +193,7 @@ Application WonderBrush :
 
 	# model/objects/snapshots
 	BoundedObject.cpp
+	BoundedObjectSnapshot.cpp
 	BrushStroke.cpp
 	BrushStrokeSnapshot.cpp
 	Filter.cpp

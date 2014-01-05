@@ -6,9 +6,9 @@
 #define BRUSH_STROKE_SNAPSHOT_H
 
 #include "BrushStroke.h"
-#include "ObjectSnapshot.h"
+#include "BoundedObjectSnapshot.h"
 
-class BrushStrokeSnapshot : public ObjectSnapshot {
+class BrushStrokeSnapshot : public BoundedObjectSnapshot {
 public:
 								BrushStrokeSnapshot(const BrushStroke* stroke);
 	virtual						~BrushStrokeSnapshot();
