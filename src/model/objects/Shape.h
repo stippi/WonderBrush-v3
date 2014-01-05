@@ -19,6 +19,12 @@ typedef List<PathRef, false> PathList;
 
 class Shape : public Styleable {
 public:
+	enum FillMode {
+		FILL_MODE_NON_ZERO = 0,
+		FILL_MODE_EVEN_ODD,
+	};
+
+public:
 								Shape();
 								Shape(const PathRef& path,
 									const rgb_color& color);
@@ -47,6 +53,10 @@ public:
 			void				AddPath(const PathRef& path);
 			const PathList&		Paths() const;
 
+			void				SetFillMode(uint32 fillMode);
+	inline	uint32				FillMode() const
+									{ return fFillMode; }
+
 	virtual	BRect				Bounds();
 
 			void				GetPath(PathStorage& path) const;
@@ -54,6 +64,7 @@ public:
 private:
 			PathList			fPaths;
 			Path::Listener*		fPathListener;
+			uint32				fFillMode;
 };
 
 #endif // SHAPE_H

@@ -30,7 +30,7 @@ ShapeSnapshot::ShapeSnapshot(const Shape* shape)
 	, fSpanAllocator()
 {
 	shape->GetPath(fPathStorage);
-	fRasterizer.filling_rule(agg::fill_non_zero);
+	fRasterizer.filling_rule((agg::filling_rule_e)shape->FillMode());
 }
 
 // destructor
@@ -55,6 +55,7 @@ ShapeSnapshot::Sync()
 	if (StyleableSnapshot::Sync()) {
 		fPathStorage.remove_all();
 		fOriginal->GetPath(fPathStorage);
+		fRasterizer.filling_rule((agg::filling_rule_e)fOriginal->FillMode());
 
 		fNeedsRasterizing = true;
 		return true;

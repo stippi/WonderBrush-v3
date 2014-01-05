@@ -58,6 +58,7 @@ private:
 Shape::Shape()
 	: Styleable()
 	, fPathListener(new(std::nothrow) PathListener(this))
+	, fFillMode(FILL_MODE_NON_ZERO)
 {
 	InitBounds();
 }
@@ -66,6 +67,7 @@ Shape::Shape()
 Shape::Shape(const PathRef& path, const rgb_color& color)
 	: Styleable(color)
 	, fPathListener(new(std::nothrow) PathListener(this))
+	, fFillMode(FILL_MODE_NON_ZERO)
 {
 	AddPath(path);
 	InitBounds();
@@ -75,6 +77,7 @@ Shape::Shape(const PathRef& path, const rgb_color& color)
 Shape::Shape(const Shape& other, CloneContext& context)
 	: Styleable(other, context)
 	, fPathListener(new(std::nothrow) PathListener(this))
+	, fFillMode(other.fFillMode)
 {
 	int32 count = other.Paths().CountItems();
 	for (int32 i = 0; i < count; i++) {
@@ -140,12 +143,14 @@ void
 Shape::AddProperties(PropertyObject* object, uint32 flags) const
 {
 	Styleable::AddProperties(object, flags);
+	// TODO: fFillMode
 }
 
 // SetToPropertyObject
 bool
 Shape::SetToPropertyObject(const PropertyObject* object, uint32 flags)
 {
+	// TODO: fFillMode
 	return Styleable::SetToPropertyObject(object, flags);
 }
 
@@ -156,10 +161,21 @@ Shape::HitTest(const BPoint& canvasPoint)
 	PathStorage path;
 	GetPath(path);
 	RenderEngine engine(Transformation());
+	// TODO: fFillMode
 	return engine.HitTest(path, canvasPoint);
 }
 
 // #pragma mark -
+
+// SetFillMode
+void
+Shape::SetFillMode(uint32 fillMode)
+{
+	if (fFillMode != fillMode) {
+		fFillMode = fillMode;
+		NotifyAndUpdate();
+	}
+}
 
 // AddPath
 void

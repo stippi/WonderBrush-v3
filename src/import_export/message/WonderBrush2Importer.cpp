@@ -340,6 +340,10 @@ WonderBrush2Importer::ImportShape(const BMessage& archive) const
 
 		Style* style = shape->Style();
 
+		int32 fillingRule;
+		if (archive.FindInt32("filling rule", &fillingRule) == B_OK)
+			shape->SetFillMode(fillingRule);
+
 		bool outline;
 		if (archive.FindBool("outline", &outline) != B_OK)
 			outline = false;
