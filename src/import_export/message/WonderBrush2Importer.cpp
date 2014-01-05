@@ -604,6 +604,14 @@ void
 WonderBrush2Importer::_RestoreBoundedObject(BoundedObject* object,
 	const BMessage& archive) const
 {
+	uint8 opacity;
+	if (archive.FindInt8("opacity", (int8*)&opacity) == B_OK)
+		object->SetOpacity(opacity);
+
+	int32 alpha;
+	if (archive.FindInt32("alpha", &alpha) == B_OK)
+		object->SetOpacity(alpha);
+	
 	_RestoreObject(object, archive);
 }
 

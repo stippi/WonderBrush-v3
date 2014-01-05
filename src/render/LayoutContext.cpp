@@ -61,3 +61,10 @@ LayoutContext::SetTransformation(const Transformable& matrix)
 	fCurrentState->Matrix.Multiply(fCurrentState->Previous->Matrix);
 }
 
+// SetOpacity
+void
+LayoutContext::SetOpacity(uint8 opacity)
+{
+	fCurrentState->Opacity = opacity;
+}
+

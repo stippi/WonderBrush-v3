@@ -84,7 +84,7 @@ public:
 									StrokeProperties* properties);
 
 			void				AttachTo(RenderBuffer* bitmap);
-			void				SetClipping(const BRect& area);
+			void				SetClipping(BRect area);
 
 			const RenderingBuffer& AlphaBuffer() const
 									{ return fAlphaBuffer; }
@@ -93,12 +93,14 @@ public:
 									const Transformable& transformation);
 			const Transformable& Transformation() const;
 
+			void				SetOpacity(uint8 opacity);
+
 			// Drawing methods
 			void				BlendArea(const RenderBuffer* source,
 									BRect area, uint8 opacity = 255,
 									BlendingMode blendingMode = CompOpSrcOver);
 
-			void				DrawRectangle(const BRect& rect,
+			void				DrawRectangle(BRect rect,
 									BRect area, double xRadius, double yRadius);
 			void				DrawImage(const RenderBuffer* buffer,
 									BRect area);
@@ -114,10 +116,8 @@ public:
 	static	uint16				GammaToLinear(uint8 value);
 	static	uint8				LinearToGamma(uint16 value);
 
-			bool				HitTest(const BRect& rect,
-									const BPoint& point);
-			bool				HitTest(PathStorage& path,
-									const BPoint& point);
+			bool				HitTest(BRect rect, BPoint point);
+			bool				HitTest(PathStorage& path, BPoint point);
 
 			status_t			Denoise(const RenderBuffer* buffer,
 									const float amplitude,

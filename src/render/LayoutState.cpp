@@ -11,6 +11,7 @@
 LayoutState::LayoutState()
 	: Previous(NULL)
 	, Matrix()
+	, Opacity(255)
 	// TODO: Default to global Null paints! (black/white or whatever)
 	, fFillPaint(NULL)
 	, fStrokePaint(NULL)
@@ -25,6 +26,7 @@ LayoutState::LayoutState()
 LayoutState::LayoutState(LayoutState* previous)
 	: Previous(previous)
 	, Matrix(previous->Matrix)
+	, Opacity(255)
 	, fFillPaint(NULL)
 	, fStrokePaint(NULL)
 	, fStrokeProperties(NULL)
@@ -124,20 +126,6 @@ void
 LayoutState::_SetMember(MemberType*& member, const ValueType& newValue,
 	CacheType& cache)
 {
-//	// The theory here is that the objects held by a LayoutState are
-//	// always only additional references to existing objects that never
-//	// change through the LayoutState. So all the LayoutState needs to do
-//	// is to add/remove references.
-//	if (member == newMember)
-//		return;
-//
-//	if (newMember != NULL)
-//		newMember->AddReference();
-//
-//	if (member != NULL)
-//		member->RemoveReference();
-//
-//	member = newMember;
 	if (member == NULL) {
 		member = cache.Get(newValue);
 		return;

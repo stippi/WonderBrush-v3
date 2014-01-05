@@ -12,23 +12,30 @@ public:
 								BoundedObject(const BoundedObject& other);
 	virtual						~BoundedObject();
 
+	// Object interface
+	virtual	void				AddProperties(PropertyObject* object,
+									uint32 flags = 0) const;
+	virtual	bool				SetToPropertyObject(
+									const PropertyObject* object,
+									uint32 flags = 0);
+	virtual	void				TransformationChanged();
+
+	// BoundedObject
 	virtual	BRect				Bounds() = 0;
 	inline	BRect				TransformedBounds() const
 									{ return fTransformedBounds; }
 
-	virtual	void				TransformationChanged();
-
 			void				InitBounds();
 			void				UpdateBounds();
 
-			void				SetOpacity(float opacity);
-	inline	float				Opacity() const
+			void				SetOpacity(uint8 opacity);
+	inline	uint8				Opacity() const
 									{ return fOpacity; }
 
 			void				NotifyAndUpdate();
 
 private:
-			float				fOpacity;
+			uint8				fOpacity;
 			BRect				fTransformedBounds;
 };
 

@@ -134,7 +134,7 @@ RenderEngine::AttachTo(RenderBuffer* bitmap)
 
 // SetClipping
 void
-RenderEngine::SetClipping(const BRect& area)
+RenderEngine::SetClipping(BRect area)
 {
 	BRect clipping(0, 0,
 		fRenderingBuffer.width() - 1, fRenderingBuffer.height() - 1);
@@ -164,6 +164,13 @@ const Transformable&
 RenderEngine::Transformation() const
 {
 	return fState.Matrix;
+}
+
+// SetOpacity
+void
+RenderEngine::SetOpacity(uint8 opacity)
+{
+	fState.Opacity = opacity;
 }
 
 // BlendArea
@@ -206,7 +213,7 @@ RenderEngine::BlendArea(const RenderBuffer* source, BRect area, uint8 opacity,
 
 // DrawRectangle
 void
-RenderEngine::DrawRectangle(const BRect& rect, BRect area,
+RenderEngine::DrawRectangle(BRect rect, BRect area,
 	double xRadius, double yRadius)
 {
 	if (!fState.Matrix.TransformBounds(rect).Intersects(area))
@@ -483,7 +490,7 @@ RenderEngine::LinearToGamma(uint16 value)
 // #pragma mark - hit testing
 
 bool
-RenderEngine::HitTest(const BRect& rect, const BPoint& point)
+RenderEngine::HitTest(BRect rect, BPoint point)
 {
 	fRasterizer.reset();
 	fRasterizer.clip_box(point.x, point.y, point.x + 1, point.y + 1);
@@ -498,7 +505,7 @@ RenderEngine::HitTest(const BRect& rect, const BPoint& point)
 }
 
 bool
-RenderEngine::HitTest(PathStorage& path, const BPoint& point)
+RenderEngine::HitTest(PathStorage& path, BPoint point)
 {
 	fRasterizer.reset();
 	fRasterizer.clip_box(point.x, point.y, point.x + 1, point.y + 1);
@@ -582,6 +589,9 @@ void
 RenderEngine::_RenderScanlines(bool fillPaint,
 	const ScanlineContainer* scanlineContainer)
 {
+	if (fState.Opacity == 0)
+		return;
+
 	const Paint* paint = fillPaint ? fState.FillPaint() : fState.StrokePaint();
 	if (paint == NULL) {
 		printf("RenderEngine::_RenderScanlines() - invalid paint\n");
@@ -592,17 +602,19 @@ RenderEngine::_RenderScanlines(bool fillPaint,
 		case Paint::COLOR:
 		{
 			rgb_color c = paint->Color();
+			uint8 alpha = c.alpha * fState.Opacity / 255;
 			agg::rgba16 color(
 				GammaToLinear(c.red),
 				GammaToLinear(c.green),
 				GammaToLinear(c.blue),
-				(c.alpha << 8) | c.alpha);
+				(alpha << 8) | alpha);
 			color.premultiply();
 			_RenderScanlines(color, fBaseRenderer, scanlineContainer);
 			break;
 		}
 		case Paint::GRADIENT:
 		{
+			// TODO: fState.Opacity!
 			const agg::rgba16* gradientArray = paint->Colors();
 
 			const GradientRef& gradient = paint->Gradient();
@@ -665,7 +677,8 @@ RenderEngine::_RenderScanlines(bool fillPaint,
 
 		case Paint::ERASE:
 		{
-			agg::rgba16 color(255, 255, 255, (255 << 8) | 255);
+			int alpha = (fState.Opacity << 8) | fState.Opacity;
+			agg::rgba16 color(alpha, alpha, alpha, alpha);
 			fCompOpPixelFormat.comp_op(agg::comp_op_dst_out);
 			_RenderScanlines(color, fCompOpBaseRenderer, scanlineContainer);
 			break;

@@ -7,7 +7,7 @@
 // constructor
 BoundedObject::BoundedObject()
 	: Object()
-	, fOpacity(255.0)
+	, fOpacity(255)
 	, fTransformedBounds(0, 0, -1, -1)
 {
 }
@@ -23,6 +23,33 @@ BoundedObject::BoundedObject(const BoundedObject& other)
 // destructor
 BoundedObject::~BoundedObject()
 {
+}
+
+// AddProperties
+void
+BoundedObject::AddProperties(PropertyObject* object, uint32 flags) const
+{
+	Object::AddProperties(object, flags);
+
+	IntProperty* opacity = new(std::nothrow) IntProperty(
+		PROPERTY_OPACITY, fOpacity, 0, 255);
+	if (opacity == NULL || !object->AddProperty(opacity)) {
+		delete opacity;
+		return;
+	}
+}
+
+// SetToPropertyObject
+bool
+BoundedObject::SetToPropertyObject(const PropertyObject* object, uint32 flags)
+{
+	AutoNotificationSuspender _(this);
+
+	Object::SetToPropertyObject(object, flags);
+
+	SetOpacity(object->Value(PROPERTY_OPACITY, (int32)fOpacity));
+
+	return HasPendingNotifications();
 }
 
 // TransformationChanged
@@ -74,7 +101,7 @@ BoundedObject::UpdateBounds()
 
 // SetOpacity
 void
-BoundedObject::SetOpacity(float opacity)
+BoundedObject::SetOpacity(uint8 opacity)
 {
 	if (fOpacity != opacity) {
 		fOpacity = opacity;

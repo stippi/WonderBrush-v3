@@ -26,6 +26,7 @@ public:
 									{ return fCurrentState; }
 
 			void				SetTransformation(const Transformable& matrix);
+			void				SetOpacity(uint8 opacity);
 
 	inline	double				ZoomLevel() const
 									{ return fZoomLevel; }

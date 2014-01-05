@@ -5,6 +5,7 @@
 #include "BoundedObjectSnapshot.h"
 
 #include "BoundedObject.h"
+#include "RenderEngine.h"
 
 // constructor
 BoundedObjectSnapshot::BoundedObjectSnapshot(const BoundedObject* object)
@@ -36,8 +37,13 @@ BoundedObjectSnapshot::Sync()
 void
 BoundedObjectSnapshot::Layout(LayoutContext& context, uint32 flags)
 {
-	// TODO: Opacity
 	ObjectSnapshot::Layout(context, flags);
+	context.SetOpacity(fOpacity);
 }
 
-
+// PrepareRenderEngine
+void
+BoundedObjectSnapshot::PrepareRenderEngine(RenderEngine& engine) const
+{
+	engine.SetOpacity(fOpacity);
+}

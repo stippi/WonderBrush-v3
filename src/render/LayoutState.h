@@ -23,6 +23,8 @@ public:
 
 			Transformable		Matrix;
 
+			uint8				Opacity;
+
 			void				SetFillPaint(Paint* paint);
 			void				SetStrokePaint(Paint* paint);
 			void				SetStrokeProperties(

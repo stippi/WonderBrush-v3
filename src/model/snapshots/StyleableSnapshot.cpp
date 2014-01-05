@@ -48,14 +48,18 @@ StyleableSnapshot::Sync()
 	return false;
 }
 
-// Render
+// PrepareRenderEngine
 void
 StyleableSnapshot::PrepareRenderEngine(RenderEngine& engine) const
 {
+	BoundedObjectSnapshot::PrepareRenderEngine(engine);
+
 	engine.SetFillPaint(fFillPaint);
 	engine.SetStrokePaint(fStrokePaint);
 	engine.SetStrokeProperties(fStrokeProperties);
 }
+
+// #pragma mark -
 
 // _SyncStyle
 void
