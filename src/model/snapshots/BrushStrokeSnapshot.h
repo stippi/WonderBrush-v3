@@ -7,6 +7,7 @@
 
 #include "BrushStroke.h"
 #include "BoundedObjectSnapshot.h"
+#include "RenderEngine.h"
 
 class BrushStrokeSnapshot : public BoundedObjectSnapshot {
 public:
@@ -36,6 +37,10 @@ private:
 			// TODO: Move this into Brush?
 			float				fMaxSpacing;
 //			float				fStepDistLeftOver;
+
+			ScanlineContainer	fScanlines;
+			CoverAllocator		fCoverAllocator;
+			SpanAllocator		fSpanAllocator;
 };
 
 #endif // BRUSH_STROKE_SNAPSHOT_H
