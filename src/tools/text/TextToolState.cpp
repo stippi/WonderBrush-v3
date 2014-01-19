@@ -1178,8 +1178,14 @@ TextToolState::_LineDown(bool select)
 void
 TextToolState::_MoveToLine(TextLayout& layout, int32 lineIndex, bool select)
 {
-	if (lineIndex < 0 || lineIndex >= layout.getLineCount())
+	if (lineIndex < 0) {
+		_SetCaretOffset(0, false, select, true);
 		return;
+	}
+	if (lineIndex >= layout.getLineCount()) {
+		_SetCaretOffset(layout.getGlyphCount(), false, select, true);
+		return;
+	}
 
 	double x1;
 	double y1;
