@@ -22,7 +22,7 @@ public:
 			int32				CountReferences() const;
 
 protected:
-			vint32				fReferenceCount;
+			int32				fReferenceCount;
 			bool				fDeleteWhenUnreferenced;
 };
 

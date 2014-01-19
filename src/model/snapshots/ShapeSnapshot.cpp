@@ -19,7 +19,7 @@ ShapeSnapshot::ShapeSnapshot(const Shape* shape)
 	, fPathStorage()
 
 	, fRasterizerLock("shape lock")
-	, fNeedsRasterizing(true)
+	, fNeedsRasterizing(1)
 
 	, fRasterizer()
 
@@ -57,7 +57,7 @@ ShapeSnapshot::Sync()
 		fOriginal->GetPath(fPathStorage);
 		fRasterizer.filling_rule((agg::filling_rule_e)fOriginal->FillMode());
 
-		fNeedsRasterizing = true;
+		atomic_set(&fNeedsRasterizing, 1);
 		return true;
 	}
 	return false;
@@ -70,7 +70,7 @@ ShapeSnapshot::Layout(LayoutContext& context, uint32 flags)
 	Transformable previous = LayoutedState().Matrix;
 	StyleableSnapshot::Layout(context, flags);
 	if (previous != LayoutedState().Matrix)
-		fNeedsRasterizing = true;
+		atomic_set(&fNeedsRasterizing, 1);
 }
 
 #define PRINT_TIMING 0
@@ -79,11 +79,14 @@ ShapeSnapshot::Layout(LayoutContext& context, uint32 flags)
 void
 ShapeSnapshot::PrepareRendering(BRect documentBounds)
 {
+	if (atomic_get(&fNeedsRasterizing) == 0)
+		return;
+
 	AutoLocker<BLocker> lock(fRasterizerLock);
 	if (!lock.IsLocked())
 		return;
 
-	if (!fNeedsRasterizing) {
+	if (atomic_get(&fNeedsRasterizing) == 0) {
 #if PRINT_TIMING
 printf("PrepareRendering(): already prepared\n");
 #endif
@@ -100,7 +103,7 @@ bigtime_t now = system_time();
 printf("PrepareRendering(): %lld\n", system_time() - now);
 #endif
 
-	fNeedsRasterizing = false;
+	atomic_set(&fNeedsRasterizing, 0);
 }
 
 // Render

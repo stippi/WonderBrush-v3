@@ -61,7 +61,7 @@ public:
 
 private:
 	struct Data {
-		vint32	refCount;
+		int32	refCount;
 		char	data[1];
 	};
 

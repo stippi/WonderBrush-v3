@@ -46,7 +46,7 @@ private:
 			PathStorage			fPathStorage;
 
 			BLocker				fRasterizerLock;
-	volatile bool				fNeedsRasterizing;
+			int32				fNeedsRasterizing;
 
 			Rasterizer			fRasterizer;
 
