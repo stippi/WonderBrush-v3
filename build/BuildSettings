@@ -28,7 +28,6 @@ if $(OSPLAT) = X86 {
 		}
 		NETWORK_LIBS += network ;
 		PLATFORM = haiku ;
-		COMMON_FOLDER = /boot/common ;
 		SYSHDRS += /boot/system/develop/headers/freetype2 ;
 	}
 	# check for BONE...
