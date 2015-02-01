@@ -154,6 +154,7 @@ Application WonderBrush :
 
 	# gui/<platform>
 	ObjectTreeView.cpp
+	ResizeImagePanel.cpp
 	ResourceTreeView.cpp
 	SavePanel.cpp
 	Window.cpp

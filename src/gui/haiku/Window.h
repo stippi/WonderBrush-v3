@@ -63,6 +63,8 @@ private:
 									int32 filterID) const;
 			BMenu*				_CreateObjectMenu() const;
 
+			void				_RunResizeImageDialog();
+
 			bool				_GetInsertionPosition(Layer** _layer,
 									int32* _index) const;
 			void				_AddLayer();

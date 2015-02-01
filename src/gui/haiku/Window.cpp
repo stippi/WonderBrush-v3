@@ -45,6 +45,7 @@
 #include "ObjectTreeView.h"
 #include "PathTool.h"
 #include "RectangleTool.h"
+#include "ResizeImagePanel.h"
 #include "TextTool.h"
 #include "ToolConfigView.h"
 #include "ToolListener.h"
@@ -622,7 +623,7 @@ Window::MessageReceived(BMessage* message)
 		}
 		
 		case MSG_IMAGE_RESIZE:
-			printf("MSG_IMAGE_RESIZE\n");
+			_RunResizeImageDialog();
 			break;
 
 		case MSG_ADD_LAYER:
@@ -924,6 +925,15 @@ Window::_CreateObjectMenu() const
 	menu->AddItem(fRemoveMI);
 
 	return menu;
+}
+
+// _RunResizeImageDialog
+void
+Window::_RunResizeImageDialog()
+{
+	ResizeImagePanel* panel = new ResizeImagePanel(this,
+		BRect(0, 0, 250, 200));
+	panel->Show();
 }
 
 // _GetInsertionPosition
