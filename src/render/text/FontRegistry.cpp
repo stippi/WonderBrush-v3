@@ -13,7 +13,7 @@
 
 #include <ft2build.h>
 #include FT_SFNT_NAMES_H
-#include <freetype/ttnameid.h>
+#include <freetype2/ttnameid.h>
 
 #include <Directory.h>
 //#include <Menu.h>
