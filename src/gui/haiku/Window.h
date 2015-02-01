@@ -57,6 +57,7 @@ private:
 
 			void				_ObjectChanged(const Notifier* object);
 
+			BMenu*				_CreateImageMenu() const;
 			void				_AddFilterMenuItem(BMenu* menu,
 									const char* label,
 									int32 filterID) const;
@@ -99,6 +100,7 @@ private:
 
 			BMenu*				fFileMenu;
 			BMenu*				fEditMenu;
+			BMenu*				fImageMenu;
 			BMenu*				fObjectMenu;
 			BMenu*				fResourceMenu;
 			BMenu*				fPropertyMenu;

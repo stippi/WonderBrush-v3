@@ -66,6 +66,7 @@ enum {
 	MSG_CONFIRM						= 'cnfm',
 	MSG_CANCEL						= 'cncl',
 	MSG_SET_TOOL					= 'sltl',
+	MSG_IMAGE_RESIZE				= 'imgr',
 	MSG_ADD_LAYER					= 'addl',
 	MSG_ADD_FILTER					= 'addf',
 	MSG_RESET_TRANSFORMATION		= 'rttr',
@@ -210,6 +211,9 @@ Window::Window(BRect frame, const char* title, Document* document,
 	fRemoveMI = new BMenuItem("Remove",
 		new BMessage(MSG_REMOVE));
 	fRemoveMI->SetEnabled(false);
+
+	fImageMenu = _CreateImageMenu();
+	menuBar->AddItem(fImageMenu);
 
 	fObjectMenu = _CreateObjectMenu();
 	menuBar->AddItem(fObjectMenu);
@@ -616,6 +620,10 @@ Window::MessageReceived(BMessage* message)
 				_SetTool(index);
 			break;
 		}
+		
+		case MSG_IMAGE_RESIZE:
+			printf("MSG_IMAGE_RESIZE\n");
+			break;
 
 		case MSG_ADD_LAYER:
 			_AddLayer();
@@ -861,6 +869,19 @@ Window::_ObjectChanged(const Notifier* object)
 		fRedoMI->SetLabel(label.String());
 		fRedoIcon->SetToolTip(label.String());
 	}
+}
+
+// _CreateImageMenu
+BMenu*
+Window::_CreateImageMenu() const
+{
+	BMenu* menu = new BMenu("Image");
+
+	BMenuItem* item = new BMenuItem("Resize" B_UTF8_ELLIPSIS,
+		new BMessage(MSG_IMAGE_RESIZE));
+	menu->AddItem(item);
+
+	return menu;
 }
 
 // _AddFilterMenuItem
