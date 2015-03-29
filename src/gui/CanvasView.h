@@ -3,12 +3,12 @@
 
 
 #include "BuildSupport.h"
+#include "Document.h"
 #include "StateView.h"
 #include "Scrollable.h"
 
 
 class BMessageRunner;
-class Document;
 class RenderManager;
 
 
@@ -109,6 +109,7 @@ protected:
 
 private:
 			class PlatformDelegate;
+			friend class DocumentListener;
 
 	//CanvasView
 private:
@@ -123,6 +124,7 @@ private:
 			PlatformDelegate*	fPlatformDelegate;
 
 			Document*			fDocument;
+			Document::Listener*	fDocumentListener;
 			RenderManager*		fRenderManager;
 
 			double				fZoomLevel;

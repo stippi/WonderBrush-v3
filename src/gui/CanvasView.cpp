@@ -17,12 +17,28 @@
 #include "ui_defines.h"
 #include "support.h"
 
-#include "Document.h"
 #include "RenderManager.h"
 
 
 enum {
 	MSG_AUTO_SCROLL	= 'ascr'
+};
+
+class DocumentListener : public Document::Listener {
+public:
+	DocumentListener(CanvasView* canvasView)
+		: fCanvasView(canvasView)
+	{
+	}
+
+	virtual void BoundsChanged(const Document* document)
+	{
+		fCanvasView->Invalidate();
+		fCanvasView->SetDataRect(fCanvasView->_LayoutCanvas());
+	}
+
+private:
+	CanvasView*	fCanvasView;
 };
 
 // constructor
@@ -32,6 +48,7 @@ CanvasView::CanvasView(BRect frame, Document* document, EditContext& editContext
 		B_WILL_DRAW | B_FRAME_EVENTS)
 	, fPlatformDelegate(new PlatformDelegate(this))
 	, fDocument(document)
+	, fDocumentListener(new DocumentListener(this))
 	, fRenderManager(manager)
 
 	, fZoomLevel(1.0)
@@ -46,6 +63,7 @@ CanvasView::CanvasView(BRect frame, Document* document, EditContext& editContext
 	, fAutoScroller(NULL)
 {
 	SetLocker(fDocument);
+	fDocument->AddListener(fDocumentListener);
 }
 
 
@@ -55,6 +73,7 @@ CanvasView::CanvasView(Document* document, EditContext& editContext,
 	: StateView(editContext, "canvas view", B_WILL_DRAW | B_FRAME_EVENTS)
 	, fPlatformDelegate(new PlatformDelegate(this))
 	, fDocument(document)
+	, fDocumentListener(new DocumentListener(this))
 	, fRenderManager(manager)
 
 	, fZoomLevel(1.0)
@@ -69,12 +88,15 @@ CanvasView::CanvasView(Document* document, EditContext& editContext,
 	, fAutoScroller(NULL)
 {
 	SetLocker(fDocument);
+	fDocument->AddListener(fDocumentListener);
 }
 
 
 // destructor
 CanvasView::~CanvasView()
 {
+	fDocument->RemoveListener(fDocumentListener);
+	delete fDocumentListener;
 	delete fAutoScroller;
 	delete fPlatformDelegate;
 }
