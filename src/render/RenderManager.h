@@ -42,7 +42,7 @@ enum {
 
 
 // RenderManager
-class RenderManager : Layer::Listener {
+class RenderManager : Layer::Listener, Document::Listener {
 public:
 								RenderManager(Document* document);
 	virtual						~RenderManager();
@@ -60,6 +60,9 @@ public:
 	virtual	void				AllAreasInvalidated();
 
 	virtual	void				ListenerAttached(Layer* layer);
+
+	// Document::Listener interface
+	virtual	void				BoundsChanged(const Document* document);
 
 	// RenderManager
 			LayerSnapshot*		Snapshot() const

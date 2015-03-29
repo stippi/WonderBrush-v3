@@ -231,6 +231,8 @@ RenderManager::Init()
 
 	Layer::AddListenerRecursive(fDocument->RootLayer(), this);
 
+	fDocument->AddListener(this);
+
 	return B_OK;
 }
 
@@ -255,6 +257,8 @@ RenderManager::~RenderManager()
 	}
 
 	Layer::RemoveListenerRecursive(fDocument->RootLayer(), this);
+
+	fDocument->RemoveListener(this);
 
 	_ClearDirtyMap(fDocumentDirtyMap);
 	_ClearDirtyMap(fSnapshotDirtyMap);
@@ -320,6 +324,14 @@ void
 RenderManager::ListenerAttached(Layer* layer)
 {
 	AreaInvalidated(layer, layer->Bounds());
+}
+
+// #pragma mark -
+
+void
+RenderManager::BoundsChanged(const Document* document)
+{
+	_CreateDisplayBitmaps(fZoomLevel);
 }
 
 // #pragma mark -
@@ -424,8 +436,14 @@ RenderManager::TransferClean(const RenderBuffer* bitmap, const BRect& area)
 	// it is ok to copy bitmap contents without holding the
 	// lock, since "flipping" is only done by which ever thread
 	// happens to be the *last* thread getting hold of the lock
-if (bitmap->Bounds() != fRenderBuffer->Bounds())
-debugger("RenderManager::TransferClean() - mismatching bitmap sizes!");
+	if (bitmap->Bounds() != fRenderBuffer->Bounds()) {
+		// This means the RenderManager is waiting for the render-threads
+		// to finish before it resizes the fRenderBuffer and the
+		// layers already have the new size.
+		printf("RenderManager::TransferClean() - mismatching bitmap sizes!");
+		return;
+	}
+
 	fRenderBuffer->Clear(area, (rgb_color){ 255, 255, 255, 255 });
 	bitmap->BlendTo(fRenderBuffer, area);
 
