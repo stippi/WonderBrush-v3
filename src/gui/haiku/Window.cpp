@@ -53,6 +53,7 @@
 #include "TransformTool.h"
 #include "RemoveObjectsEdit.h"
 #include "RenderManager.h"
+#include "ResizeImageEdit.h"
 #include "ResourceTreeView.h"
 #include "ScrollView.h"
 #include "SimpleFileSaver.h"
@@ -68,6 +69,7 @@ enum {
 	MSG_CANCEL						= 'cncl',
 	MSG_SET_TOOL					= 'sltl',
 	MSG_IMAGE_RESIZE				= 'imgr',
+	MSG_IMAGE_RESIZE_PARAMS			= 'igrp',
 	MSG_ADD_LAYER					= 'addl',
 	MSG_ADD_FILTER					= 'addf',
 	MSG_RESET_TRANSFORMATION		= 'rttr',
@@ -625,6 +627,9 @@ Window::MessageReceived(BMessage* message)
 		case MSG_IMAGE_RESIZE:
 			_RunResizeImageDialog();
 			break;
+		case MSG_IMAGE_RESIZE_PARAMS:
+			_ResizeImage(message);
+			break;
 
 		case MSG_ADD_LAYER:
 			_AddLayer();
@@ -927,14 +932,38 @@ Window::_CreateObjectMenu() const
 	return menu;
 }
 
+// #pragma mark -
+
 // _RunResizeImageDialog
 void
 Window::_RunResizeImageDialog()
 {
 	ResizeImagePanel* panel = new ResizeImagePanel(this,
 		BRect(0, 0, 250, 200));
+	panel->SetDocument(fDocument);
+	BMessage message(MSG_IMAGE_RESIZE_PARAMS);
+	panel->SetMessage(BMessenger(this), message);
 	panel->Show();
 }
+
+// _ResizeImage
+void
+Window::_ResizeImage(const BMessage* message)
+{
+	int32 width;
+	int32 height;
+	if (message->FindInt32("width", &width) == B_OK
+		&& message->FindInt32("height", &height) == B_OK) {
+
+		fDocument->EditManager()->Perform(
+			new(std::nothrow) ResizeImageEdit(fDocument, width, height),
+			fEditContext);
+	}
+	
+	// TODO: Store "pane frame" BRect for next resize panel
+}
+
+// #pragma mark -
 
 // _GetInsertionPosition
 bool

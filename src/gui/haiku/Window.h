@@ -64,6 +64,7 @@ private:
 			BMenu*				_CreateObjectMenu() const;
 
 			void				_RunResizeImageDialog();
+			void				_ResizeImage(const BMessage* message);
 
 			bool				_GetInsertionPosition(Layer** _layer,
 									int32* _index) const;
