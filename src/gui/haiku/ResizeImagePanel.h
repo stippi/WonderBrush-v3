@@ -9,9 +9,12 @@
 #include <Messenger.h>
 #include <Window.h>
 
+#include "Document.h"
+
 
 class BButton;
 class BCheckBox;
+class BMenu;
 class BMenuField;
 class BTextControl;
 
@@ -23,17 +26,28 @@ public:
 
 	virtual	void				MessageReceived(BMessage* message);
 
-			void				SetOnSuccessMessage(
+			void				SetMessage(
 									const BMessenger& messenger,
 									const BMessage& message);
 
+			void				SetDocument(const DocumentRef& document);
+
 private:
-			void				_FillCommonSizes();
+			void				_FillCommonSizes(BMenu* menu) const;
+			void				_PrepareNumberTextControl(BTextControl* control);
+			void				_AdoptValuesToControls();
+			void				_AdoptControlsToValues(bool widthChanged);
+			void				_LockAspectRatio(bool adjustWidth);
+			void				_Quit(bool success);
 
 
 private:
-			BMessenger			fOnSuccessTarget;
-			BMessage			fOnSuccessMessage;
+			BMessenger			fTarget;
+			BMessage			fMessage;
+
+			DocumentRef			fDocument;
+			int32				fWidth;
+			int32				fHeight;
 
 			BTextControl*		fWidthField;
 			BTextControl*		fHeightField;
