@@ -27,6 +27,8 @@ public:
 	 public:
 								Listener();
 		virtual					~Listener();
+
+		virtual	void			BoundsChanged(const Document* document);
 	};
 
 

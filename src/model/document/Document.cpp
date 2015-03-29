@@ -28,6 +28,12 @@ Document::Listener::~Listener()
 {
 }
 
+// BoundsChanged
+void
+Document::Listener::BoundsChanged(const Document* document)
+{
+}
+
 // #pragma mark -
 
 static const char* kLockName = "document rw lock";
@@ -129,6 +135,10 @@ void
 Document::SetBounds(const BRect& bounds)
 {
 	fRootLayer->SetBounds(bounds);
+	for (int32 i = fListeners.CountItems() - 1; i >= 0; i--) {
+		Listener* listener = (Listener*)fListeners.ItemAt(i);
+		listener->BoundsChanged(this);
+	}
 }
 
 // Bounds
