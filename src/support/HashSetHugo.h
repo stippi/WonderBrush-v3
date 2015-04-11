@@ -281,7 +281,8 @@ HashSet<Key>::operator==(const HashSet<Key>& other) const
 	if (Size() != other.Size())
 		return false;
 	
-	HashSet<Key>::Iterator thisIterator = GetIterator();
+	HashSet<Key>::Iterator thisIterator
+		= const_cast<HashSet&>(*this).GetIterator();
 	HashSet<Key>::Iterator otherIterator
 		= const_cast<HashSet&>(other).GetIterator();
 	while (thisIterator.HasNext() && otherIterator.HasNext()) {
