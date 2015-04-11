@@ -2,7 +2,7 @@
 #define _PATHTOOLSTATE_CPP_
 
 /*
- * Copyright 2012-2013 Stephan Aßmus <superstippi@gmx.de>
+ * Copyright 2012-2015 Stephan Aßmus <superstippi@gmx.de>
  * All rights reserved. Distributed under the terms of the MIT license.
  */
 
@@ -25,6 +25,7 @@
 #include "Layer.h"
 #include "ObjectAddedEdit.h"
 #include "PathAddPointEdit.h"
+#include "PathMoveSelectionEdit.h"
 #include "PathMovePointEdit.h"
 #include "PathToggleClosedEdit.h"
 #include "PathToggleSharpEdit.h"
@@ -292,14 +293,10 @@ public:
 		BPoint offset = current - fOrigin;
 		fOrigin = current;
 
-		// TODO: Stop Path notifications until all points are modified
-
-		PointSelection::Iterator iterator
-			= fParent->fPointSelection.GetIterator();
-		while (iterator.HasNext()) {
-			PathPoint pathPoint = iterator.Next();
-			pathPoint.OffsetBy(offset);
-		}
+		fParent->View()->PerformEdit(
+			new(std::nothrow) PathMoveSelectionEdit(fParent->fShape,
+				fParent->fPointSelection, offset, fParent->fSelection)
+		);
 	}
 
 	virtual BCursor ViewCursor(BPoint current) const
@@ -1637,7 +1634,7 @@ PathToolState::_SetSelectionRect(const BRect& rect,
 
 // _SelectPoint
 void
-PathToolState::_SelectPoint(const PathToolState::PathPoint& point, bool extend)
+PathToolState::_SelectPoint(const PathPoint& point, bool extend)
 {
 	if (!extend)
 		_DeselectPoints();
@@ -1651,7 +1648,7 @@ PathToolState::_SelectPoint(const PathToolState::PathPoint& point, bool extend)
 
 // _DeselectPoint
 void
-PathToolState::_DeselectPoint(const PathToolState::PathPoint& point)
+PathToolState::_DeselectPoint(const PathPoint& point)
 {
 	if (!fPointSelection.Contains(point))
 		return;
