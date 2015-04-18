@@ -21,7 +21,8 @@
 
 
 enum {
-	MSG_AUTO_SCROLL	= 'ascr'
+	MSG_AUTO_SCROLL				= 'ascr',
+	MSG_DOCUMENT_BOUNDS_CHANGED	= 'dbch',
 };
 
 class DocumentListener : public Document::Listener {
@@ -33,8 +34,7 @@ public:
 
 	virtual void BoundsChanged(const Document* document)
 	{
-		fCanvasView->Invalidate();
-		fCanvasView->SetDataRect(fCanvasView->_LayoutCanvas());
+		fCanvasView->Window()->PostMessage(MSG_DOCUMENT_BOUNDS_CHANGED, fCanvasView);
 	}
 
 private:
@@ -206,6 +206,10 @@ CanvasView::MessageReceived(BMessage* message)
 				BPoint(canvasRect.Width() / 2, canvasRect.Height() / 2));
 			break;
 		}
+		case MSG_DOCUMENT_BOUNDS_CHANGED:
+			Invalidate();
+			SetDataRect(_LayoutCanvas());
+			break;
 
 		default:
 			StateView::MessageReceived(message);
@@ -739,6 +743,7 @@ CanvasView::_HandleKeyUp(const StateView::KeyEvent& event,
 BRect
 CanvasView::_CanvasRect() const
 {
+	AutoReadLocker _(fDocument);
 	BRect r(fDocument->Bounds());
 	ConvertFromCanvas(&r);
 	return r;
