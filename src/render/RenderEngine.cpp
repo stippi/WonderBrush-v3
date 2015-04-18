@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2010, Stephan Aßmus <superstippi@gmx.de>.
+ * Copyright 2009-2015, Stephan Aßmus <superstippi@gmx.de>.
  * All rights reserved.
  */
 #include "RenderEngine.h"
@@ -20,6 +20,7 @@
 #include <CImg.h>
 
 #include "Gradient.h"
+#include "Interpolation.h"
 #include "RenderBuffer.h"
 #include "SetProperty.h"
 
@@ -280,6 +281,14 @@ RenderEngine::DrawRectangle(BRect rect, BRect area,
 void
 RenderEngine::DrawImage(const RenderBuffer* buffer, BRect area)
 {
+	DrawImage(buffer, area, INTERPOLATION_RESAMPLE, 255);
+}
+
+// DrawImage
+void
+RenderEngine::DrawImage(const RenderBuffer* buffer, BRect area,
+	uint32 interpolation, uint8 opacity)
+{
 	if (!fState.Matrix.TransformBounds(buffer->Bounds())
 			.Intersects(area)) {
 		return;
@@ -310,83 +319,14 @@ RenderEngine::DrawImage(const RenderBuffer* buffer, BRect area)
 	fRasterizer.add_path(transformedRoundRect);
 
 //bigtime_t now = system_time();
-	if (fState.Matrix.IsPerspective()) {
-//printf("Perspective\n");
-		typedef agg::span_interpolator_persp_exact<> Interpolator;
-		Interpolator interpolator(imgMatrix);
-		if (!interpolator.is_valid())
-			return;
 	
-		typedef agg::image_accessor_clone<PixelFormat> ImageAccessor;
-		ImageAccessor imageAccessor(srcPixelFormat);
+	if (interpolation == INTERPOLATION_NEAREST_NEIGHBOR)
+		_DrawImageNearestNeighbor(srcPixelFormat, imgMatrix, opacity);
+	else if (interpolation == INTERPOLATION_BILINEAR)
+		_DrawImageBilinear(srcPixelFormat, imgMatrix, opacity);
+	else
+		_DrawImageResample(srcPixelFormat, imgMatrix, opacity);
 	
-		typedef agg::span_subdiv_adaptor<Interpolator> SubdivAdaptor;
-		SubdivAdaptor subdivAdaptor(interpolator);
-	
-		typedef agg::span_image_resample_rgba<ImageAccessor,
-			SubdivAdaptor> SpanGenerator;
-		
-		agg::image_filter_hanning filterKernel;
-		agg::image_filter_lut filter(filterKernel, true);
-	
-		SpanGenerator spanGenerator(imageAccessor, subdivAdaptor, filter);
-//		spanGenerator.blur(...);
-	
-		agg::render_scanlines_aa(fRasterizer, fScanline, fBaseRenderer,
-			fSpanAllocator, spanGenerator);
-	} else {
-		double xScale;
-		double yScale;
-		fState.Matrix.GetScale(&xScale, &yScale);
-		if (xScale >= 1.0 && yScale >= 1.0) {
-//printf("Bilinear\n");
-			typedef agg::span_interpolator_trans<Transformable> Interpolator;
-			Interpolator interpolator(imgMatrix);
-		
-			typedef agg::span_image_filter_rgba_bilinear_clip<PixelFormat,
-				Interpolator> SpanGenerator;
-			SpanGenerator spanGenerator(srcPixelFormat,
-				agg::rgba_pre(0, 0, 0, 0), interpolator);
-		
-			agg::render_scanlines_aa(fRasterizer, fScanline, fBaseRenderer,
-				fSpanAllocator, spanGenerator);
-		} else {
-//printf("Resampling\n");
-			// NOTE: This is only slightly faster (~8%) than the full blown
-			// perspective case above, despite having a much simpler
-			// transformer and no sub-division adapter. However, it preserves
-			// a little more sharpness as well.
-			typedef agg::span_interpolator_linear<agg::trans_affine>
-				Interpolator;
-			agg::trans_affine imgMatrixAffine(
-				imgMatrix.sx,
-				imgMatrix.shy,
-				imgMatrix.shx,
-				imgMatrix.sy,
-				imgMatrix.tx,
-				imgMatrix.ty);
-			Interpolator interpolator(imgMatrixAffine);
-
-			typedef agg::image_accessor_clone<PixelFormat> ImageAccessor;
-			ImageAccessor imageAccessor(srcPixelFormat);
-
-			typedef agg::span_image_resample_rgba_affine<ImageAccessor>
-				SpanGenerator;
-
-//			agg::image_filter_bilinear filterKernel;
-			agg::image_filter_hanning filterKernel;
-				// almost as fast as bilinear, but slightly crisper
-//			agg::image_filter_blackman filterKernel(3.0);
-				// 6.81 times slower than hanning, much crisper
-			agg::image_filter_lut filter(filterKernel, true);
-
-			SpanGenerator spanGenerator(imageAccessor, interpolator, filter);
-//			spanGenerator.blur(...);
-
-			agg::render_scanlines_aa(fRasterizer, fScanline, fBaseRenderer,
-				fSpanAllocator, spanGenerator);
-		}
-	}
 //printf("DrawImage(%u, %u): %lldµs\n", fRenderingBuffer.width(),
 //	fRenderingBuffer.height(), system_time() - now);
 }
@@ -877,5 +817,187 @@ RenderEngine::_ResizeAlphaBuffer()
 			fRenderingBuffer.width(),
 			fRenderingBuffer.height(),
 			fRenderingBuffer.width());
+	}
+}
+
+// _DrawImageNearestNeighbor
+void
+RenderEngine::_DrawImageNearestNeighbor(PixelFormat srcPixelFormat,
+	Transformable imgMatrix, uint8 opacity)
+{
+	if (fState.Matrix.IsPerspective()) {
+		typedef agg::span_interpolator_persp_exact<> Interpolator;
+		Interpolator interpolator(imgMatrix);
+		if (!interpolator.is_valid())
+			return;
+
+//		typedef agg::span_image_filter_rgba_nn<PixelFormat,
+//			Interpolator> SpanGenerator;
+//		SpanGenerator spanGenerator(srcPixelFormat, interpolator);
+		typedef agg::span_image_filter_rgba_bilinear_clip<PixelFormat,
+			Interpolator> SpanGenerator;
+		SpanGenerator spanGenerator(srcPixelFormat,
+			agg::rgba_pre(0, 0, 0, 0), interpolator);
+//		spanGenerator.set_opacity(opacity);
+	
+		agg::render_scanlines_aa(fRasterizer, fScanline, fBaseRenderer,
+			fSpanAllocator, spanGenerator);
+	} else {
+		agg::trans_affine imgMatrixAffine(
+			imgMatrix.sx,
+			imgMatrix.shy,
+			imgMatrix.shx,
+			imgMatrix.sy,
+			imgMatrix.tx,
+			imgMatrix.ty);
+
+		typedef agg::span_interpolator_linear<agg::trans_affine>
+			Interpolator;
+		Interpolator interpolator(imgMatrixAffine);
+
+//		typedef agg::span_image_filter_rgba_nn<PixelFormat,
+//			Interpolator> SpanGenerator;
+//		SpanGenerator spanGenerator(srcPixelFormat, interpolator);
+		typedef agg::span_image_filter_rgba_bilinear_clip<PixelFormat,
+			Interpolator> SpanGenerator;
+		SpanGenerator spanGenerator(srcPixelFormat,
+			agg::rgba_pre(0, 0, 0, 0), interpolator);
+//		spanGenerator.set_opacity(opacity);
+	
+		agg::render_scanlines_aa(fRasterizer, fScanline, fBaseRenderer,
+			fSpanAllocator, spanGenerator);
+	}
+}
+
+// _DrawImageBilinear
+void
+RenderEngine::_DrawImageBilinear(PixelFormat srcPixelFormat,
+	Transformable imgMatrix, uint8 opacity)
+{
+	if (fState.Matrix.IsPerspective()) {
+		typedef agg::span_interpolator_persp_exact<> Interpolator;
+		Interpolator interpolator(imgMatrix);
+		if (!interpolator.is_valid())
+			return;
+
+		typedef agg::span_image_filter_rgba_bilinear_clip<PixelFormat,
+			Interpolator> SpanGenerator;
+		SpanGenerator spanGenerator(srcPixelFormat,
+			agg::rgba_pre(0, 0, 0, 0), interpolator);
+//		spanGenerator.set_opacity(opacity);
+	
+		agg::render_scanlines_aa(fRasterizer, fScanline, fBaseRenderer,
+			fSpanAllocator, spanGenerator);
+	} else {
+		// NOTE: This is only slightly faster (~8%) than the full blown
+		// perspective case above, despite having a much simpler
+		// transformer and no sub-division adapter. However, it preserves
+		// a little more sharpness as well.
+		agg::trans_affine imgMatrixAffine(
+			imgMatrix.sx,
+			imgMatrix.shy,
+			imgMatrix.shx,
+			imgMatrix.sy,
+			imgMatrix.tx,
+			imgMatrix.ty);
+
+		typedef agg::span_interpolator_linear<agg::trans_affine>
+			Interpolator;
+		Interpolator interpolator(imgMatrixAffine);
+
+		typedef agg::span_image_filter_rgba_bilinear_clip<PixelFormat,
+			Interpolator> SpanGenerator;
+		SpanGenerator spanGenerator(srcPixelFormat,
+			agg::rgba_pre(0, 0, 0, 0), interpolator);
+//		spanGenerator.set_opacity(opacity);
+	
+		agg::render_scanlines_aa(fRasterizer, fScanline, fBaseRenderer,
+			fSpanAllocator, spanGenerator);
+	}
+}
+
+// _DrawImageResample
+void
+RenderEngine::_DrawImageResample(PixelFormat srcPixelFormat,
+	Transformable imgMatrix, uint8 opacity)
+{
+	if (fState.Matrix.IsPerspective()) {
+//printf("Perspective\n");
+		typedef agg::span_interpolator_persp_exact<> Interpolator;
+		Interpolator interpolator(imgMatrix);
+		if (!interpolator.is_valid())
+			return;
+	
+		typedef agg::image_accessor_clone<PixelFormat> ImageAccessor;
+		ImageAccessor imageAccessor(srcPixelFormat);
+	
+		typedef agg::span_subdiv_adaptor<Interpolator> SubdivAdaptor;
+		SubdivAdaptor subdivAdaptor(interpolator);
+	
+		typedef agg::span_image_resample_rgba<ImageAccessor,
+			SubdivAdaptor> SpanGenerator;
+		
+		agg::image_filter_hanning filterKernel;
+		agg::image_filter_lut filter(filterKernel, true);
+	
+		SpanGenerator spanGenerator(imageAccessor, subdivAdaptor, filter);
+//		spanGenerator.set_opacity(opacity);
+//		spanGenerator.blur(...);
+	
+		agg::render_scanlines_aa(fRasterizer, fScanline, fBaseRenderer,
+			fSpanAllocator, spanGenerator);
+	} else {
+		double xScale;
+		double yScale;
+		fState.Matrix.GetScale(&xScale, &yScale);
+
+		// NOTE: This is only slightly faster (~8%) than the full blown
+		// perspective case above, despite having a much simpler
+		// transformer and no sub-division adapter. However, it preserves
+		// a little more sharpness as well.
+		agg::trans_affine imgMatrixAffine(
+			imgMatrix.sx,
+			imgMatrix.shy,
+			imgMatrix.shx,
+			imgMatrix.sy,
+			imgMatrix.tx,
+			imgMatrix.ty);
+
+		typedef agg::span_interpolator_linear<agg::trans_affine>
+			Interpolator;
+		Interpolator interpolator(imgMatrixAffine);
+
+		if (xScale >= 1.0 && yScale >= 1.0) {
+//printf("Bilinear\n");
+			typedef agg::span_image_filter_rgba_bilinear_clip<PixelFormat,
+				Interpolator> SpanGenerator;
+			SpanGenerator spanGenerator(srcPixelFormat,
+				agg::rgba_pre(0, 0, 0, 0), interpolator);
+//			spanGenerator.set_opacity(opacity);
+		
+			agg::render_scanlines_aa(fRasterizer, fScanline, fBaseRenderer,
+				fSpanAllocator, spanGenerator);
+		} else {
+//printf("Resampling\n");
+			typedef agg::image_accessor_clone<PixelFormat> ImageAccessor;
+			ImageAccessor imageAccessor(srcPixelFormat);
+
+			typedef agg::span_image_resample_rgba_affine<ImageAccessor>
+				SpanGenerator;
+
+//			agg::image_filter_bilinear filterKernel;
+			agg::image_filter_hanning filterKernel;
+				// almost as fast as bilinear, but slightly crisper
+//			agg::image_filter_blackman filterKernel(3.0);
+				// 6.81 times slower than hanning, much crisper
+			agg::image_filter_lut filter(filterKernel, true);
+
+			SpanGenerator spanGenerator(imageAccessor, interpolator, filter);
+//			spanGenerator.set_opacity(opacity);
+//			spanGenerator.blur(...);
+
+			agg::render_scanlines_aa(fRasterizer, fScanline, fBaseRenderer,
+				fSpanAllocator, spanGenerator);
+		}
 	}
 }

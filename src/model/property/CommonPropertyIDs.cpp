@@ -141,6 +141,10 @@ name_for_id(int32 id)
 			name = "Pattern";
 			break;
 
+		case PROPERTY_INTERPOLATION:
+			name = "Interpolation";
+			break;
+
 		default:
 			name = "<unkown property>";
 			break;

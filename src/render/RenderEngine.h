@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2010, Stephan Aßmus <superstippi@gmx.de>.
+ * Copyright 2009-2015, Stephan Aßmus <superstippi@gmx.de>.
  * All rights reserved.
  */
 #ifndef RENDER_ENGINE_H
@@ -104,6 +104,9 @@ public:
 									BRect area, double xRadius, double yRadius);
 			void				DrawImage(const RenderBuffer* buffer,
 									BRect area);
+			void				DrawImage(const RenderBuffer* buffer,
+									BRect area, uint32 interpolation,
+									uint8 opacity);
 
 			void				RenderScanlines(
 									const ScanlineContainer& scanlines,
@@ -163,6 +166,14 @@ private:
 			bool				_HitTest(const BPoint& point);
 
 			void				_ResizeAlphaBuffer();
+
+			void				_DrawImageNearestNeighbor(
+									PixelFormat srcPixelFormat,
+									Transformable imgMatrix, uint8 opacity);
+			void				_DrawImageBilinear(PixelFormat srcPixelFormat,
+									Transformable imgMatrix, uint8 opacity);
+			void				_DrawImageResample(PixelFormat srcPixelFormat,
+									Transformable imgMatrix, uint8 opacity);
 
 private:
 			LayoutState			fState;

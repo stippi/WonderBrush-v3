@@ -1,5 +1,5 @@
 /*
- * Copyright 2010, Stephan Aßmus <superstippi@gmx.de>.
+ * Copyright 2010-2015, Stephan Aßmus <superstippi@gmx.de>.
  * All rights reserved.
  */
 #include "ImageSnapshot.h"
@@ -12,9 +12,10 @@
 
 // constructor
 ImageSnapshot::ImageSnapshot(const Image* image)
-	: ObjectSnapshot(image)
+	: BoundedObjectSnapshot(image)
 	, fOriginal(image)
 	, fBuffer(image->Buffer())
+	, fInterpolation(image->Interpolation())
 {
 	if (fBuffer != NULL)
 		fBuffer->AddReference();
@@ -40,7 +41,11 @@ ImageSnapshot::Original() const
 bool
 ImageSnapshot::Sync()
 {
-	return ObjectSnapshot::Sync();
+	if (BoundedObjectSnapshot::Sync()) {
+		fInterpolation = fOriginal->Interpolation();
+		return true;
+	}
+	return false;
 }
 
 // Render
@@ -50,7 +55,7 @@ ImageSnapshot::Render(RenderEngine& engine, RenderBuffer* bitmap,
 {
 	if (fBuffer != NULL) {
 		engine.SetTransformation(LayoutedState().Matrix);
-		engine.DrawImage(fBuffer, area);
+		engine.DrawImage(fBuffer, area, fInterpolation, Opacity());
 	}
 }
 

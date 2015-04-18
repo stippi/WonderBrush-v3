@@ -1,5 +1,5 @@
 /*
- * Copyright 2010, Stephan Aßmus <superstippi@gmx.de>.
+ * Copyright 2010-2015, Stephan Aßmus <superstippi@gmx.de>.
  * All rights reserved.
  */
 #ifndef IMAGE_SNAPSHOT_H
@@ -7,11 +7,11 @@
 
 #include <GraphicsDefs.h>
 
-#include "ObjectSnapshot.h"
+#include "BoundedObjectSnapshot.h"
 
 class Image;
 
-class ImageSnapshot : public ObjectSnapshot {
+class ImageSnapshot : public BoundedObjectSnapshot {
 public:
 								ImageSnapshot(const Image* image);
 	virtual						~ImageSnapshot();
@@ -25,6 +25,7 @@ public:
 private:
 			const Image*		fOriginal;
 			RenderBuffer*		fBuffer;
+			uint32				fInterpolation;
 };
 
 #endif // IMAGE_SNAPSHOT_H

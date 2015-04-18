@@ -60,6 +60,8 @@ enum {
 	PROPERTY_FILL_PAINT_COLOR			= 'ptfc',
 	PROPERTY_FILL_PAINT_GRADIENT		= 'ptfg',
 	PROPERTY_FILL_PAINT_PATTERN			= 'ptfp',
+
+	PROPERTY_INTERPOLATION				= 'intp',
 };
 
 

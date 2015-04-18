@@ -6,7 +6,9 @@
 #include "Image.h"
 
 #include "ImageSnapshot.h"
+#include "Interpolation.h"
 #include "RenderBuffer.h"
+#include "OptionProperty.h"
 #include "RenderEngine.h"
 
 // constructor
@@ -31,6 +33,7 @@ ImageListener::Deleted(Image* rect)
 Image::Image()
 	: BoundedObject()
 	, fBuffer()
+	, fInterpolation(INTERPOLATION_RESAMPLE)
 	, fListeners(4)
 {
 }
@@ -39,6 +42,7 @@ Image::Image()
 Image::Image(RenderBuffer* buffer)
 	: BoundedObject()
 	, fBuffer(buffer)
+	, fInterpolation(INTERPOLATION_RESAMPLE)
 	, fListeners(4)
 {
 }
@@ -47,6 +51,7 @@ Image::Image(RenderBuffer* buffer)
 Image::Image(const Image& other)
 	: BoundedObject(other)
 	, fBuffer(other.fBuffer)
+	, fInterpolation(INTERPOLATION_RESAMPLE)
 	, fListeners(4)
 {
 }
@@ -66,18 +71,56 @@ Image::Clone(CloneContext& context) const
 	return new(std::nothrow) Image(*this);
 }
 
-// Snapshot
-ObjectSnapshot*
-Image::Snapshot() const
-{
-	return new ImageSnapshot(this);
-}
-
 // DefaultName
 const char*
 Image::DefaultName() const
 {
 	return "Image";
+}
+
+// AddProperties
+void
+Image::AddProperties(PropertyObject* object, uint32 flags) const
+{
+	BoundedObject::AddProperties(object, flags);
+
+	OptionProperty* interpolationProperty = new(std::nothrow) OptionProperty(
+		PROPERTY_INTERPOLATION);
+	if (interpolationProperty != NULL) {
+		interpolationProperty->AddOption(
+			INTERPOLATION_NEAREST_NEIGHBOR, "Nearest neighbor");
+		interpolationProperty->AddOption(
+			INTERPOLATION_BILINEAR, "Bilinear");
+		interpolationProperty->AddOption(
+			INTERPOLATION_RESAMPLE, "Resample");
+
+		interpolationProperty->SetCurrentOptionID(fInterpolation);
+	
+		object->AddProperty(interpolationProperty);
+	}
+}
+
+// SetToPropertyObject
+bool
+Image::SetToPropertyObject(const PropertyObject* object, uint32 flags)
+{
+	AutoNotificationSuspender _(this);
+	BoundedObject::SetToPropertyObject(object, flags);
+
+	// interpolation
+	OptionProperty* interpolationProperty = dynamic_cast<OptionProperty*>(
+		object->FindProperty(PROPERTY_INTERPOLATION));
+	if (interpolationProperty != NULL)
+		SetInterpolation(interpolationProperty->CurrentOptionID());
+
+	return HasPendingNotifications();
+}
+
+// Snapshot
+ObjectSnapshot*
+Image::Snapshot() const
+{
+	return new ImageSnapshot(this);
 }
 
 // HitTest
@@ -109,6 +152,18 @@ Image::SetBuffer(const RenderBufferRef& buffer)
 		return;
 
 	fBuffer = buffer;
+
+	NotifyAndUpdate();
+}
+
+// SetInterpolation
+void
+Image::SetInterpolation(uint32 interpolation)
+{
+	if (fInterpolation == interpolation)
+		return;
+
+	fInterpolation = interpolation;
 
 	NotifyAndUpdate();
 }
