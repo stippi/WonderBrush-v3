@@ -21,7 +21,7 @@ public:
 	virtual	void				PrepareRenderEngine(RenderEngine& engine) const;
 
 	// BoundedObjectSnapshot
-	inline	uint8				Opactiy() const
+	inline	uint8				Opacity() const
 									{ return fOpacity; }
 
 private:
