@@ -589,6 +589,10 @@ Window::MessageReceived(BMessage* message)
 			break;
 
 		case B_SIMPLE_DATA:
+			if ((modifiers() & B_SHIFT_KEY) != 0) {
+				message->AddBool("append", true);
+				message->AddPointer("document", fDocument.Get());
+			}
 			be_app->PostMessage(message);
 			break;
 
