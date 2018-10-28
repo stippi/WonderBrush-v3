@@ -749,8 +749,7 @@ store_split_weights(BMessage& message, const char* name, BSplitView* view)
 		status_t ret = message.AddFloat(name, view->ItemWeight(i));
 		if (ret != B_OK)
 			return ret;
-		ret = message.AddBool(collapsedName.String(),
-			view->IsItemCollapsed(i));
+		ret = message.AddBool(collapsedName, view->IsItemCollapsed(i));
 		if (ret != B_OK)
 			return ret;
 	}
