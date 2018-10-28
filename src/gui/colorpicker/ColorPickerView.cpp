@@ -58,7 +58,8 @@ ColorPickerView::~ColorPickerView()
 void
 ColorPickerView::AttachedToWindow()
 {
-	rgb_color	color = { (int)(r * 255), (int)(g * 255), (int)(b * 255), 255 };
+	rgb_color	color = { (uint8)(r * 255), (uint8)(g * 255),
+		(uint8)(b * 255), 255 };
 
 	BView::AttachedToWindow();
 
@@ -182,7 +183,8 @@ ColorPickerView::MessageReceived(BMessage *message)
 				HSV_to_RGB(h, s, v, r, g, b);
 			}
 
-			rgb_color color = { round(r*255), round(g*255), round(b*255), 255 };
+			rgb_color color = { (uint8)round(r * 255), (uint8)round(g * 255),
+				(uint8)round(b * 255), 255 };
 
 			SetColor(color);
 
@@ -191,8 +193,8 @@ ColorPickerView::MessageReceived(BMessage *message)
 		case MSG_HEXTEXTCONTROL: {
 			BString string = fPlatformDelegate->HexTextControlString();
 			if (string.Length() == 6) {
-				rgb_color color = { hexdec(string, 0), hexdec(string, 2),
-					hexdec(string, 4), 255 };
+				rgb_color color = { (uint8)hexdec(string, 0),
+					(uint8)hexdec(string, 2), (uint8)hexdec(string, 4), 255 };
 				SetColor(color);
 			}
 		} break;
@@ -318,8 +320,7 @@ ColorPickerView::_UpdateColor(float value, float value1, float value2)
 	if (value!=-1) {
 		fColorField->SetFixedValue(value);
 		*p = value;
-	}
-	else if (value1!=-1 && value2!=-1) {
+	} else if (value1!=-1 && value2!=-1) {
 		fColorSlider->SetOtherValues(value1, value2);
 		*p1 = value1; *p2 = value2;
 	}
@@ -329,7 +330,8 @@ ColorPickerView::_UpdateColor(float value, float value1, float value2)
 	else
 		HSV_to_RGB(h, s, v, r, g, b);
 
-	rgb_color color = { (int)(r*255), (int)(g*255), (int)(b*255), 255 };
+	rgb_color color = { (uint8)(r * 255), (uint8)(g * 255), (uint8)(b * 255),
+		255 };
 	fColorPreview->SetColor(color);
 }
 
