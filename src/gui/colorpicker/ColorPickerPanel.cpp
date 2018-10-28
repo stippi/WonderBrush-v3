@@ -101,8 +101,10 @@ ColorPickerPanel::SetColor(rgb_color color)
 void
 ColorPickerPanel::SetMessage(BMessage* message)
 {
-	delete fMessage;
-	fMessage = message;
+	if (message != fMessage) {
+		delete fMessage;
+		fMessage = message;
+	}
 }
 
 // SetTarget
