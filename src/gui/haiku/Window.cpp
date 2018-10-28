@@ -764,17 +764,51 @@ restore_split_weights(const BMessage& message, const char* name,
 	BString collapsedName(name);
 	collapsedName.Append("_collapsed");
 
+	int32 count = view->GetLayout()->CountItems();
+	int32 weightsCount = 0;
+	type_code weightsType;
+	if (message.GetInfo(name, &weightsType, &weightsCount) != B_OK
+		|| weightsType != B_FLOAT_TYPE || weightsCount != count) {
+		// Data cannot be used. For example, the settings may be from
+		// an older version of WonderBrush which had a different number
+		// of child views in this split-view.
+		printf("Ignoring incompatible split view settings for '%s'.\n", name);
+		return;
+	}
+	
+
+	float expectedWeightSum = 0.0f;
+	for (int32 i = 0; i < count; i++) {
+		expectedWeightSum += view->ItemWeight(i);
+	}
+
+	float summedWeight = 0.0f;
+
 	float weight;
 	for (int32 i = 0; message.FindFloat(name, i, &weight) == B_OK; i++) {
-		if (i >= view->GetLayout()->CountItems())
+		summedWeight += weight;
+	}
+	if (summedWeight < expectedWeightSum) {
+		printf("Ignoring split view settings for '%s' because "
+			"expected sum: %.1f, stored sum: %.1f\n", name, expectedWeightSum,
+			summedWeight);
+		return;
+	}
+
+	for (int32 i = 0; message.FindFloat(name, i, &weight) == B_OK; i++) {
+		if (i >= count)
 			break;
 
 		view->SetItemWeight(i, weight, false);
 
+		summedWeight += weight;
+
 		bool collapsed;
-		if (message.FindBool(collapsedName.String(), i, &collapsed) == B_OK)
+		if (message.FindBool(collapsedName, i, &collapsed) == B_OK)
 			view->SetItemCollapsed(i, collapsed);
 	}
+	
+	
 	view->InvalidateLayout(true);
 }
 
