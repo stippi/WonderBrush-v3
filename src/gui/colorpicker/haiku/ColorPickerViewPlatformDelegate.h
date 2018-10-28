@@ -9,7 +9,6 @@
 #define COLOR_PICKER_VIEW_PLATFORM_DELEGATE_H
 
 #include <ControlLook.h>
-#include <Font.h>
 #include <GroupLayout.h>
 #include <LayoutBuilder.h>
 #include <Message.h>
