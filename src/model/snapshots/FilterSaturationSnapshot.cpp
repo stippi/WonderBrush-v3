@@ -58,6 +58,8 @@ FilterSaturationSnapshot::Render(RenderEngine& engine,
 	if (fSaturation == 1.0f)
 		return;
 
+	area = bitmap->Bounds() & area;
+
 	const int top = (int)area.top;
 	const int bottom = (int)area.bottom;
 	const int left = (int)area.left;

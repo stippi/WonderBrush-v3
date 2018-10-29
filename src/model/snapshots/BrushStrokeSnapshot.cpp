@@ -57,6 +57,8 @@ BrushStrokeSnapshot::Render(RenderEngine& engine, RenderBuffer* bitmap,
 		return;
 	engine.SetTransformation(LayoutedState().Matrix);
 
+	area = bitmap->Bounds() & area;
+
 	// TODO: Move actual Brush drawing into RenderEngine.
 	uint8* dest = (uint8*)engine.AlphaBuffer().buf();
 	uint32 bpr = engine.AlphaBuffer().stride();
