@@ -32,6 +32,7 @@
 #include "DocumentSaver.h"
 #include "EditManager.h"
 #include "Filter.h"
+#include "FilterBrightness.h"
 #include "FilterDropShadow.h"
 #include "FilterSaturation.h"
 #include "IconButton.h"
@@ -80,6 +81,7 @@ enum {
 	FILTER_DROP_SHADOW				= 'drps',
 	FILTER_GAUSSIAN_BLUR			= 'gblr',
 	FILTER_SATURATION				= 'srtn',
+	FILTER_BRIGHTNESS				= 'brtn',
 };
 
 class Window::SelectionListener : public Selection::Listener {
@@ -953,6 +955,7 @@ Window::_CreateObjectMenu() const
 	_AddFilterMenuItem(filterMenu, "Drop shadow", FILTER_DROP_SHADOW);
 	_AddFilterMenuItem(filterMenu, "Gaussian blur", FILTER_GAUSSIAN_BLUR);
 	_AddFilterMenuItem(filterMenu, "Saturation", FILTER_SATURATION);
+	_AddFilterMenuItem(filterMenu, "Brightness", FILTER_BRIGHTNESS);
 
 	menu->AddItem(filterMenu);
 
@@ -1088,6 +1091,9 @@ Window::_AddFilter(int32 filterID)
 			break;
 		case FILTER_SATURATION:
 			filter = new(std::nothrow) FilterSaturation();
+			break;
+		case FILTER_BRIGHTNESS:
+			filter = new(std::nothrow) FilterBrightness();
 			break;
 	};
 

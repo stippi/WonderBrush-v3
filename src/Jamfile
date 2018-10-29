@@ -199,6 +199,8 @@ Application WonderBrush :
 	BrushStrokeSnapshot.cpp
 	Filter.cpp
 	FilterSnapshot.cpp
+	FilterBrightness.cpp
+	FilterBrightnessSnapshot.cpp
 	FilterDropShadow.cpp
 	FilterDropShadowSnapshot.cpp
 	FilterSaturation.cpp

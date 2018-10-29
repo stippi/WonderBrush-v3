@@ -107,6 +107,12 @@ name_for_id(int32 id)
 		case PROPERTY_HSV_VALUE:
 			name = "Value";
 			break;
+		case PROPERTY_BRIGHTNESS_OFFSET:
+			name = "Offset";
+			break;
+		case PROPERTY_BRIGHTNESS_FACTOR:
+			name = "Factor";
+			break;
 
 		case PROPERTY_GROUP_STROKE_PAINT:
 			name = "Stroke";
