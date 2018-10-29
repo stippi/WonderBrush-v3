@@ -19,6 +19,7 @@
 #include "ColorShade.h"
 #include "Document.h"
 #include "Filter.h"
+#include "FilterBrightness.h"
 #include "FilterDropShadow.h"
 #include "FilterSaturation.h"
 #include "Font.h"
@@ -143,6 +144,9 @@ MessageImporter::ImportObject(const BMessage& archive) const
 	if (type == "BrushStroke")
 		return ImportBrushStroke(archive);
 
+	if (type == "FilterBrightness")
+		return ImportFilterBrightness(archive);
+		
 	if (type == "FilterGaussianBlur")
 		return ImportFilterGaussianBlur(archive);
 		
@@ -243,6 +247,24 @@ MessageImporter::ImportBrushStroke(const BMessage& archive) const
 		_RestoreBoundedObject(brushStroke, archive);
 	}
 	return BaseObjectRef(brushStroke, true);
+}
+
+// ImportFilterBrightness
+BaseObjectRef
+MessageImporter::ImportFilterBrightness(const BMessage& archive) const
+{
+	FilterBrightness* filter = new(std::nothrow) FilterBrightness();
+	if (filter != NULL) {
+		int32 offset;
+		if (archive.FindInt32("offset", &offset) == B_OK)
+			filter->SetOffset(offset);
+		float factor;
+		if (archive.FindFloat("factor", &factor) == B_OK)
+			filter->SetFactor(factor);
+		
+		_RestoreObject(filter, archive);
+	}
+	return BaseObjectRef(filter, true);
 }
 
 // ImportFilterGaussianBlur

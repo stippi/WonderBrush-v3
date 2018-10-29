@@ -98,6 +98,18 @@ ArchiveVisitor::VisitFilter(Filter* filter, BMessage* context)
 }
 
 bool
+ArchiveVisitor::VisitFilterBrightness(FilterBrightness* brightness,
+	BMessage* context)
+{
+	status = context->AddString(kType, "FilterBrightness");
+	if (status == B_OK)
+		status = context->AddInt32("offset", brightness->Offset());
+	if (status == B_OK)
+		status = context->AddFloat("factor", brightness->Factor());
+	return status == B_OK;
+}
+
+bool
 ArchiveVisitor::VisitFilterDropShadow(FilterDropShadow* dropShadow,
 	BMessage* context)
 {

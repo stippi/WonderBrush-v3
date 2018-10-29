@@ -9,6 +9,7 @@
 #include "BrushStroke.h"
 #include "Document.h"
 #include "Filter.h"
+#include "FilterBrightness.h"
 #include "FilterDropShadow.h"
 #include "FilterSaturation.h"
 #include "Image.h"
@@ -55,6 +56,10 @@ public:
 		if (filter != NULL)
 			return VisitFilter(filter, context);
 		
+		FilterBrightness* brightness = dynamic_cast<FilterBrightness*>(object);
+		if (brightness != NULL)
+			return VisitFilterBrightness(brightness, context);
+	
 		FilterDropShadow* dropShadow = dynamic_cast<FilterDropShadow*>(object);
 		if (dropShadow != NULL)
 			return VisitFilterDropShadow(dropShadow, context);
@@ -86,6 +91,12 @@ public:
 	}
 
 	virtual bool VisitFilter(Filter* filter, Context* context)
+	{
+		return true;
+	}
+
+	virtual bool VisitFilterBrightness(FilterBrightness* brightness,
+		Context* context)
 	{
 		return true;
 	}

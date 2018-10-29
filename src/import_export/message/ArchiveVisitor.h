@@ -31,6 +31,10 @@ public:
 
 	virtual	bool				VisitFilter(Filter* filter, BMessage* context);
 
+	virtual	bool				VisitFilterBrightness(
+									FilterBrightness* brightness,
+									BMessage* context);
+
 	virtual	bool				VisitFilterDropShadow(
 									FilterDropShadow* dropShadow,
 									BMessage* context);
