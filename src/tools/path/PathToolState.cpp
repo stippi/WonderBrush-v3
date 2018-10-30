@@ -966,12 +966,16 @@ PathToolState::HandleKeyDown(const StateView::KeyEvent& event,
 
 		switch (event.key) {
 			case B_UP_ARROW:
+				handled = _NudgeSelection(0, -1);
 				break;
 			case B_DOWN_ARROW:
+				handled = _NudgeSelection(0, 1);
 				break;
 			case B_LEFT_ARROW:
+				handled = _NudgeSelection(-1, 0);
 				break;
 			case B_RIGHT_ARROW:
+				handled = _NudgeSelection(1, 0);
 				break;
 
 			default:
@@ -1681,6 +1685,35 @@ PathToolState::_AdoptShapePaint()
 		fCurrentColor->SetColor(fillPaint->Color());
 		fIgnoreColorNotifiactions = false;
 	}
+}
+
+// _NudgeSelection
+bool
+PathToolState::_NudgeSelection(float xOffset, float yOffset)
+{
+	if (fShape == NULL)
+		return false;
+
+	// Convert the offset into a delta in object coordinate space.
+	BPoint origin(0, 0);
+	BPoint offset(xOffset, yOffset);
+
+	TransformCanvasToObject(&origin);
+	TransformCanvasToObject(&offset);
+	
+	offset.x -= origin.x;
+	offset.y -= origin.y;
+
+	if (fPointSelection.Size() > 0) {
+		View()->PerformEdit(
+			new(std::nothrow) PathMoveSelectionEdit(fShape, fPointSelection,
+				offset, fSelection)
+		);
+	} else {
+		// TODO: Transform shape
+	}
+	
+	return true;
 }
 
 #endif	// _PATHTOOLSTATE_CPP_

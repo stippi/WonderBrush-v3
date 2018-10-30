@@ -127,6 +127,8 @@ private:
 									const PointSelection& previousSelection);
 
 			void				_AdoptShapePaint();
+			
+			bool				_NudgeSelection(float xOffset, float yOffset);
 
 private:
 			PathTool*			fTool;
