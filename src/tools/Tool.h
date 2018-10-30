@@ -22,7 +22,7 @@ class ViewState;
 
 // NOTE: A Tool object is added to the MainWindow,
 // which switches between tools. Each tool is also
-// added to the BWindows handlers, so that BMessages
+// added to the BWindow's handlers, so that BMessages
 // can be sent to it.
 
 class Tool : public BHandler {
