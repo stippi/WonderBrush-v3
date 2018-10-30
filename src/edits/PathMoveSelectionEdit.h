@@ -57,7 +57,7 @@ public:
 			= dynamic_cast<const PathMoveSelectionEdit*>(_next);
 
 		if (next == NULL || next->fPointSelection != fPointSelection
-			|| next->fTimeStamp - fTimeStamp > 500000) {
+			|| next->fTimeStamp - fTimeStamp > 250000) {
 			return false;
 		}
 
