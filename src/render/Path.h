@@ -116,7 +116,7 @@ public:
 								// this function can be used to get a point
 								// directly on the segment indicated by "index"
 								// "scale" is on [0..1] indicating the distance
-								// other the start of the segment to the end
+								// from the start of the segment to the end
 			bool				GetPoint(int32 index, double scale,
 									BPoint& point) const;
 
