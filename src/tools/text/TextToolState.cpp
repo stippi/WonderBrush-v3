@@ -2,7 +2,7 @@
 #define _TEXTTOOLSTATE_CPP_
 
 /*
- * Copyright 2012-2013 Stephan Aßmus <superstippi@gmx.de>
+ * Copyright 2012-2018 Stephan Aßmus <superstippi@gmx.de>
  * All rights reserved. Distributed under the terms of the MIT license.
  */
 
@@ -249,6 +249,39 @@ private:
 };
 
 
+// DeselectTextState
+class TextToolState::DeselectTextState : public DragStateViewState::DragState {
+public:
+	DeselectTextState(TextToolState* parent)
+		: DragState(parent)
+		, fParent(parent)
+	{
+	}
+
+	virtual void SetOrigin(BPoint origin)
+	{
+		fParent->SetText(NULL, true);
+	}
+
+	virtual void DragTo(BPoint current, uint32 modifiers)
+	{
+	}
+
+	virtual BCursor ViewCursor(BPoint current) const
+	{
+		return BCursor(B_CURSOR_ID_SYSTEM_DEFAULT);
+	}
+
+	virtual const char* CommandName() const
+	{
+		return "Deselect text";
+	}
+
+private:
+	TextToolState*		fParent;
+};
+
+
 // #pragma mark -
 
 
@@ -266,6 +299,7 @@ TextToolState::TextToolState(StateView* view, Document* document,
 
 	, fPickTextState(new(std::nothrow) PickTextState(this))
 	, fCreateTextState(new(std::nothrow) CreateTextState(this))
+	, fDeselectTextState(new(std::nothrow) DeselectTextState(this))
 	, fDragLeftTopState(new(std::nothrow) DragLeftTopState(this))
 	, fDragWidthState(new(std::nothrow) DragWidthState(this))
 	, fDragCaretState(new(std::nothrow) DragCaretState(this))
@@ -315,6 +349,7 @@ TextToolState::~TextToolState()
 
 	delete fPickTextState;
 	delete fCreateTextState;
+	delete fDeselectTextState;
 	delete fDragLeftTopState;
 	delete fDragWidthState;
 	delete fDragCaretState;
@@ -591,6 +626,9 @@ TextToolState::DragStateFor(BPoint canvasWhere, float zoomLevel) const
 		fPickTextState->SetText(pickedText);
 		return fPickTextState;
 	}
+	
+	if (fText != NULL)
+		return fDeselectTextState;
 
 	return fCreateTextState;
 }

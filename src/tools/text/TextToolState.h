@@ -1,5 +1,5 @@
 /*
- * Copyright 2012-2013 Stephan Aßmus <superstippi@gmx.de>
+ * Copyright 2012-2018 Stephan Aßmus <superstippi@gmx.de>
  * All rights reserved. Distributed under the terms of the MIT license.
  */
 
@@ -146,6 +146,7 @@ private:
 
 			class PickTextState;
 			class CreateTextState;
+			class DeselectTextState;
 			class DragLeftTopState;
 			class DragWidthState;
 			class DragCaretState;
@@ -156,6 +157,7 @@ private:
 
 			PickTextState*		fPickTextState;
 			CreateTextState*	fCreateTextState;
+			DeselectTextState*	fDeselectTextState;
 			DragLeftTopState*	fDragLeftTopState;
 			DragWidthState*		fDragWidthState;
 			DragCaretState*		fDragCaretState;
