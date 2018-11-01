@@ -14,6 +14,8 @@ This code currently builds on Haiku for the "x86" architecture. If this is not a
 "-q" is for stopping the build on the first error, "-j" is to build using two concurrent jobs. If you have more CPU cores
 available, adjust the parameter as needed.
 
+If you get any missing header or missing libraries errors, you need to solve them by installing the respective development packages in HaikuDepot. I am sure at least libfreetype2 is needed. No fiddling or any cludges should be necessary aport from simply installing development packages (those that come with headers).
+
 The build artifacts are placed in a folder "generated". By default, you do a release build, so the WonderBrush executable 
 is placed in sub-folder "distro-haiku". You can launch WonderBrush by executing
 
@@ -54,4 +56,12 @@ address these problems by being properly designed. In terms of features, here ar
  * Global resources. Objects in WonderBrush 3 can share esources, such as colors or vector paths. Manipulating
  the shared resources will affect all objects which use them at the same time.
 
+Some of the more recent work has been to provide the capability to load WonderBrush v2 documents. This is incomplete in that WonderBrush v3 does not include all the features of v2, and it will also reveal some current shortcommings of the new code. The most important one is that no caching exists and some operations are not yet optimized enough. The effect is that loading some documents will appear to lock up the new WonderBrush, and once it finally renders something, actually manipulating the document will prove hopeless.
 
+## What's included
+
+This code also contains an incomplete (and currently broken) port to Qt. The Qt port could be fixed by providing platform delegate code to the new tool UI which has been written since the Qt port was last compiled.
+
+Also included is some code which is currently not used and not compiled. For example the ALM layout code. The plan was to allow optional layouts to be used in documents, which will place objects within a layout (instead of at absolute global positions).
+
+There might be more code included which is currently not used.
