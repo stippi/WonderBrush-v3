@@ -58,6 +58,12 @@ address these problems by being properly designed. In terms of features, here ar
 
 Some of the more recent work has been to provide the capability to load WonderBrush v2 documents. This is incomplete in that WonderBrush v3 does not include all the features of v2, and it will also reveal some current shortcommings of the new code. The most important one is that no caching exists and some operations are not yet optimized enough. The effect is that loading some documents will appear to lock up the new WonderBrush, and once it finally renders something, actually manipulating the document will prove hopeless.
 
+Here is an old blog post about WonderBrush v3: https://www.haiku-os.org/blog/stippi/2012-10-25_new_wonderbrush/
+
+And here is the original website of WonderBrush v2: http://yellowbites.com/wonderbrush.html
+
+(Please don't try to purchase WonderBrush, it is no longer available on Kagi. Instead, it comes for free with every Haiku installation.)
+
 ## What's included
 
 This code also contains an incomplete (and currently broken) port to Qt. The Qt port could be fixed by providing platform delegate code to the new tool UI which has been written since the Qt port was last compiled.
