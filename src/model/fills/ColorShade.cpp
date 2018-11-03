@@ -14,7 +14,7 @@
 #include "CommonPropertyIDs.h"
 #include "Property.h"
 #include "Paint.h"
-#include "rgb_hsv.h"
+#include "rgb_hsl.h"
 #include "ui_defines.h"
 
 // constructor
@@ -76,21 +76,13 @@ ColorShade::GetColor() const
 		float g = color.green / 255.0f;
 		float b = color.blue / 255.0f;
 
-		float h;
-		float s;
-		float v;
+		HSL hsl = RGB_to_HSL(r, g, b);
 
-		RGB_to_HSV(r, g, b, h, s, v);
+		hsl.h = fmod(hsl.h + fHue, 360.0f);
+		hsl.s = std::max(0.0f, std::min(1.0f, hsl.s + fSaturation));
+		hsl.l = std::max(0.0f, std::min(1.0f, hsl.l + fValue));
 
-		h = fmod(h + fHue, 6.0f);
-		s = std::max(0.0f, std::min(1.0f, s + fSaturation));
-		v = std::max(0.0f, std::min(1.0f, v + fValue));
-
-		HSV_to_RGB(h, s, v, r, g, b);
-
-		color.red = r * 255.0f;
-		color.green = g * 255.0f;
-		color.blue = b * 255.0f;
+		HSL_to_RGB(hsl, color.red, color.green, color.blue);
 	}
 
 	return color;
@@ -112,11 +104,11 @@ ColorShade::AddProperties(PropertyObject* object, uint32 flags) const
 	ColorProvider::AddProperties(object, flags);
 
 	object->AddProperty(new (std::nothrow) FloatProperty(
-		PROPERTY_HSV_HUE, fHue, -6.0f, 6.0f));
+		PROPERTY_HSV_HUE, fHue, -360.0f, 360.0f));
 	object->AddProperty(new (std::nothrow) FloatProperty(
-		PROPERTY_SATURATION, fSaturation, -1.0f, 1.0f));
+		PROPERTY_SATURATION, fSaturation * 100.0f, -100.0f, 100.0f));
 	object->AddProperty(new (std::nothrow) FloatProperty(
-		PROPERTY_HSV_VALUE, fValue, -1.0f, 1.0f));
+		PROPERTY_HSV_VALUE, fValue * 100.0f, -100.0f, 100.0f));
 }
 
 // SetToPropertyObject
@@ -135,12 +127,12 @@ ColorShade::SetToPropertyObject(const PropertyObject* object, uint32 flags)
 	FloatProperty* saturationProperty = dynamic_cast<FloatProperty*>(
 		object->FindProperty(PROPERTY_SATURATION));
 	if (saturationProperty != NULL)
-		SetSaturation(saturationProperty->Value());
+		SetSaturation(saturationProperty->Value() / 100.0f);
 
 	FloatProperty* valueProperty = dynamic_cast<FloatProperty*>(
 		object->FindProperty(PROPERTY_HSV_VALUE));
 	if (valueProperty != NULL)
-		SetValue(valueProperty->Value());
+		SetValue(valueProperty->Value() / 100.0f);
 
 	return HasPendingNotifications();
 }
