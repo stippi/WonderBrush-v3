@@ -1,10 +1,11 @@
 /*
- * Copyright 2007-2009, Stephan Aßmus <superstippi@gmx.de>.
+ * Copyright 2007-2018, Stephan Aßmus <superstippi@gmx.de>.
  * All rights reserved. Distributed under the terms of the MIT License.
  */
 
 #include "Shape.h"
 
+#include "PathInstance.h"
 #include "ShapeSnapshot.h"
 
 class PathListener : public Path::Listener {
@@ -52,6 +53,11 @@ private:
 	Shape*	fShape;
 };
 
+
+Shape::Listener::Listener() {}
+Shape::Listener::~Listener() {}
+
+
 // #pragma mark -
 
 // constructor
@@ -59,6 +65,7 @@ Shape::Shape()
 	: Styleable()
 	, fPathListener(new(std::nothrow) PathListener(this))
 	, fFillMode(FILL_MODE_NON_ZERO)
+	, fListeners()
 {
 	InitBounds();
 }
@@ -68,6 +75,7 @@ Shape::Shape(const PathRef& path, const rgb_color& color)
 	: Styleable(color)
 	, fPathListener(new(std::nothrow) PathListener(this))
 	, fFillMode(FILL_MODE_NON_ZERO)
+	, fListeners()
 {
 	AddPath(path);
 	InitBounds();
@@ -78,10 +86,11 @@ Shape::Shape(const Shape& other, CloneContext& context)
 	: Styleable(other, context)
 	, fPathListener(new(std::nothrow) PathListener(this))
 	, fFillMode(other.fFillMode)
+	, fListeners()
 {
 	int32 count = other.Paths().CountItems();
 	for (int32 i = 0; i < count; i++) {
-		const PathRef& path = other.Paths().ItemAtFast(i);
+		const PathRef& path = other.Paths().ItemAtFast(i)->Path();
 		PathRef clonedPath;
 		context.Clone(path.Get(), clonedPath);
 		if (clonedPath.Get() != NULL)
@@ -95,7 +104,7 @@ Shape::~Shape()
 {
 	int32 count = fPaths.CountItems();
 	for (int32 i = 0; i < count; i++) {
-		const PathRef& path = fPaths.ItemAtFast(i);
+		const PathRef& path = fPaths.ItemAtFast(i)->Path();
 		path->RemoveListener(fPathListener);
 	}
 	delete fPathListener;
@@ -132,7 +141,7 @@ Shape::Assets() const
 {
 	AssetList list = Styleable::Assets();
 	for (int32 i = 0; i < fPaths.CountItems(); i++) {
-		const PathRef& ref = fPaths.ItemAtFast(i);
+		const PathRef& ref = fPaths.ItemAtFast(i)->Path();
 		list.Add(BaseObjectRef(ref.Get()));
 	}
 	return list;
@@ -178,16 +187,22 @@ Shape::SetFillMode(uint32 fillMode)
 }
 
 // AddPath
-void
+PathInstance*
 Shape::AddPath(const PathRef& path)
 {
-	if (path.Get() == NULL || !fPaths.Add(path))
-		return;
+	if (path.Get() == NULL)
+		return NULL;
+	PathInstance* pathInstance = new(std::nothrow) PathInstance(path.Get(),
+		this);
+	if (pathInstance == NULL || !fPaths.Add(PathInstanceRef(pathInstance)))
+		return NULL; 
 	
 	if (fPathListener != NULL)
 		path->AddListener(fPathListener);
 
 	NotifyAndUpdate();
+	_NotifyPathAdded(pathInstance, fPaths.CountItems() - 1);
+	return pathInstance;
 }
 
 // Paths
@@ -203,7 +218,7 @@ Shape::Bounds()
 {
 	BRect bounds(LONG_MAX, LONG_MAX, -LONG_MAX, -LONG_MAX);
 	for (int32 i = fPaths.CountItems() - 1; i >= 0; i--) {
-		const PathRef& path = fPaths.ItemAtFast(i);
+		const PathRef& path = fPaths.ItemAtFast(i)->Path();
 		bounds = bounds | path->Bounds();
 	}
 	if (bounds.IsValid())
@@ -216,8 +231,43 @@ void
 Shape::GetPath(PathStorage& pathStorage) const
 {
 	for (int32 i = fPaths.CountItems() - 1; i >= 0; i--) {
-		const PathRef& path = fPaths.ItemAtFast(i);
+		const PathRef& path = fPaths.ItemAtFast(i)->Path();
 		path->GetAGGPathStorage(pathStorage);
 	}
 }
 
+// AddShapeListener
+void
+Shape::AddShapeListener(Listener* listener)
+{
+	fListeners.Add(listener);
+}
+
+// RemoveShapeListener
+void
+Shape::RemoveShapeListener(Listener* listener)
+{
+	fListeners.Remove(listener);
+}
+
+// _NotifyPathAdded
+void
+Shape::_NotifyPathAdded(const PathInstanceRef& path, int32 index) const
+{
+	List<Listener*, false> listeners(fListeners);
+	int32 count = listeners.CountItems();
+	for (int32 i = 0; i < count; i++) {
+		listeners.ItemAtFast(i)->PathAdded(this, path, index);
+	}
+}
+
+// _NotifyPathRemoved
+void
+Shape::_NotifyPathRemoved(const PathInstanceRef& path, int32 index) const
+{
+	List<Listener*, false> listeners(fListeners);
+	int32 count = listeners.CountItems();
+	for (int32 i = 0; i < count; i++) {
+		listeners.ItemAtFast(i)->PathRemoved(this, path, index);
+	}
+}

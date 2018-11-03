@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2009, Stephan Aßmus <superstippi@gmx.de>.
+ * Copyright 2006-2018, Stephan Aßmus <superstippi@gmx.de>.
  * Distributed under the terms of the MIT License.
  */
 
@@ -14,6 +14,7 @@
 #include "PropertyObject.h"
 #include "Referenceable.h"
 
+class BBitmap;
 class BMessage;
 class CloneContext;
 
@@ -48,6 +49,8 @@ public:
 			void				SetName(const char* name);
 			const char*			Name() const;
 			const BString&		GivenName() const;
+
+	virtual	bool				GetIcon(const BBitmap* bitmap) const;
 
 private:
 			BString				fName;

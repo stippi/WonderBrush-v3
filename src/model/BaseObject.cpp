@@ -1,5 +1,5 @@
 /*
- * Copyright 2006, Haiku.
+ * Copyright 2006-2018, Haiku.
  * Distributed under the terms of the MIT License.
  *
  * Authors:
@@ -150,3 +150,11 @@ BaseObject::GivenName() const
 {
 	return fName;
 }
+
+// GetIcon
+bool
+BaseObject::GetIcon(const BBitmap* bitmap) const
+{
+	return false;
+}
+

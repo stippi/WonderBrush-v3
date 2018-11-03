@@ -17,6 +17,7 @@
 #include "ColorShade.h"
 #include "Font.h"
 #include "Gradient.h"
+#include "PathInstance.h"
 #include "StyleRun.h"
 #include "StyleRunList.h"
 
@@ -226,9 +227,11 @@ ArchiveVisitor::VisitShape(Shape* shape, BMessage* context)
 	int32 pathCount = paths.CountItems();
 	for (int32 i = 0; i < pathCount; i++) {
 		BMessage pathArchive;
-		const PathRef& path = paths.ItemAtFast(i);
-		printf("path: %p\n", path.Get());
-		status = _StoreResourceOrIndex(path.Get(), &pathArchive);
+		const PathInstanceRef& path = paths.ItemAtFast(i);
+		if (path.Get() == NULL || path->Path() == NULL)
+			continue;
+		printf("path: %p\n", path->Path().Get());
+		status = _StoreResourceOrIndex(path->Path().Get(), &pathArchive);
 		if (status != B_OK)
 			break;
 		status = context->AddMessage("path", &pathArchive);

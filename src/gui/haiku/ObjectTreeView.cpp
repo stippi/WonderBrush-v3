@@ -18,23 +18,37 @@
 #include "Document.h"
 #include "MoveObjectsEdit.h"
 #include "Object.h"
+#include "PathInstance.h"
 #include "RenameObjectEdit.h"
 #include "TextViewPopup.h"
 
 using std::nothrow;
 
 
-ObjectColumnTreeItem::ObjectColumnTreeItem(float height, Object* object)
+ObjectColumnTreeItem::ObjectColumnTreeItem(float height, BaseObject* object)
 	: EasyColumnTreeItem(height)
 	, object(object)
 {
+	// If "object" is of type Object, we will get notified of changes
+	// via BMessages from the LayerObserver. For other types of
+	// BaseObject, we need to register our own listener.
+	if (dynamic_cast<Object*>(object) == NULL)
+		object->AddListener(this);
 }
 
 
 ObjectColumnTreeItem::~ObjectColumnTreeItem()
 {
+	if (dynamic_cast<Object*>(object) == NULL)
+		object->RemoveListener(this);
 }
 
+void
+ObjectColumnTreeItem::ObjectChanged(const Notifier* object)
+{
+	if (object == this->object)
+		Update();
+}
 
 void
 ObjectColumnTreeItem::Update()
@@ -66,6 +80,7 @@ ObjectTreeView::ObjectTreeView(BRect frame, Document* document,
 	fSelection(selection),
 	fEditContext(editContext),
 	fLayerObserver(this),
+	fShapeObserver(this),
 	fIgnoreSelectionChanged(false)
 {
 	_Init();
@@ -82,6 +97,7 @@ ObjectTreeView::ObjectTreeView(Document* document, Selection* selection,
 	fSelection(selection),
 	fEditContext(editContext),
 	fLayerObserver(this),
+	fShapeObserver(this),
 	fIgnoreSelectionChanged(false)
 {
 	_Init();
@@ -200,7 +216,7 @@ ObjectTreeView::MessageReceived(BMessage* message)
 
 		case MSG_OBJECT_SELECTED:
 		{
-			Object* object;
+			BaseObject* object;
 			bool selected;
 			if (message->FindPointer("object", (void**)&object) == B_OK
 				&& message->FindBool("selected", &selected) == B_OK) {
@@ -370,6 +386,7 @@ ObjectTreeView::HandleDrop(const BMessage& dragMessage, ColumnTreeItem* super,
 	int32 subItemIndex, int32 itemIndex)
 {
 	Layer* insertionLayer = fDocument->RootLayer();
+	Shape* insertionShape = NULL;
 	if (super != NULL) {
 		ObjectColumnTreeItem* item
 			= dynamic_cast<ObjectColumnTreeItem*>(super);
@@ -377,37 +394,22 @@ ObjectTreeView::HandleDrop(const BMessage& dragMessage, ColumnTreeItem* super,
 			return;
 
 		insertionLayer = dynamic_cast<Layer*>(item->object);
-		if (insertionLayer == NULL)
-			return;
+		insertionShape = dynamic_cast<Shape*>(item->object);
 	}
 
 	type_code type;
 	int32 count;
-	if (dragMessage.GetInfo("object", &type, &count) != B_OK
-		|| type != B_POINTER_TYPE) {
-		return;
+	if (dragMessage.GetInfo("object", &type, &count) == B_OK
+		&& type == B_POINTER_TYPE && insertionLayer != NULL) {
+		
+		_DropObjects(dragMessage, count, insertionLayer, subItemIndex,
+			itemIndex);
+	} else if (dragMessage.GetInfo("path", &type, &count) == B_OK
+		&& type == B_POINTER_TYPE && insertionShape != NULL) {
+	
+		_DropPaths(dragMessage, count, insertionShape, subItemIndex,
+			itemIndex);
 	}
-
-	Object** objects = new(std::nothrow) Object*[count];
-	if (objects == NULL)
-		return;
-
-	for (int32 i = 0; i < count; i++) {
-		if (dragMessage.FindPointer("object", i, (void**)&objects[i])
-			!= B_OK) {
-			delete[] objects;
-			return;
-		}
-	}
-
-	MoveObjectsEdit* command = new(std::nothrow) MoveObjectsEdit(
-		objects, count, insertionLayer, subItemIndex, fSelection);
-	if (command == NULL) {
-		delete[] objects;
-		return;
-	}
-
-	fDocument->EditManager()->Perform(command, fEditContext);
 }
 
 // SelectionChanged
@@ -497,7 +499,7 @@ ObjectTreeView::ObjectDeselected(const Selectable& selectable,
 
 // SelectItem
 void
-ObjectTreeView::SelectItem(Object* object)
+ObjectTreeView::SelectItem(BaseObject* object)
 {
 printf("ObjectTreeView::SelectItem(%p)\n", object);
 	ColumnTreeItem* item = _FindLayerTreeViewItem(object);
@@ -566,7 +568,7 @@ ObjectTreeView::_HandleRenameItem(int32 index)
 void
 ObjectTreeView::_HandleRenameObject(BMessage* message)
 {
-	Object* object;
+	BaseObject* object;
 	if (message->FindPointer("object", (void**)&object) != B_OK)
 		return;
 
@@ -675,7 +677,7 @@ ObjectTreeView::_ObjectChanged(Layer* layer, Object* object, int32 index)
 //
 // _ObjectSelected
 void
-ObjectTreeView::_ObjectSelected(Object* object, bool selected)
+ObjectTreeView::_ObjectSelected(BaseObject* object, bool selected)
 {
 	fIgnoreSelectionChanged = true;
 
@@ -698,7 +700,7 @@ ObjectTreeView::_ObjectSelected(Object* object, bool selected)
 
 // _FindLayerTreeViewItem
 ObjectColumnTreeItem*
-ObjectTreeView::_FindLayerTreeViewItem(const Object* object)
+ObjectTreeView::_FindLayerTreeViewItem(const BaseObject* object)
 {
 	int32 count = CountItems();
 	for (int32 i = 0; i < count; i++) {
@@ -724,7 +726,7 @@ ObjectTreeView::_RecursiveAddItems(Layer* layer,
 		ObjectColumnTreeItem* item = new ObjectColumnTreeItem(20, object);
 		item->Update();
 
-		if (layerItem)
+		if (layerItem != NULL)
 			AddSubItem(layerItem, item, i);
 		else
 			AddItem(item, i);
@@ -733,5 +735,87 @@ ObjectTreeView::_RecursiveAddItems(Layer* layer,
 		Layer* subLayer = dynamic_cast<Layer*>(object);
 		if (subLayer != NULL)
 			_RecursiveAddItems(subLayer, item);
+		
+		Shape* shape = dynamic_cast<Shape*>(object);
+		if (shape != NULL)
+			_AddPathItems(shape, item);
 	}
 }
+
+// _AddPathItems
+void
+ObjectTreeView::_AddPathItems(Shape* shape,
+	ObjectColumnTreeItem* layerItem)
+{
+	shape->AddShapeListener(&fShapeObserver);
+
+	const PathList& paths = shape->Paths();
+
+	int32 count = paths.CountItems();
+	for (int32 i = 0; i < count; i++) {
+		const PathInstanceRef& path = paths.ItemAtFast(i);
+
+		ObjectColumnTreeItem* item = new ObjectColumnTreeItem(20, path.Get());
+		item->Update();
+
+		if (layerItem != NULL)
+			AddSubItem(layerItem, item, i);
+		else
+			AddItem(item, i);
+	}
+}
+
+// _DropObjects
+void
+ObjectTreeView::_DropObjects(const BMessage& dragMessage, int32 count,
+	Layer* insertionLayer, int32 subItemIndex, int32 itemIndex)
+{
+	Object** objects = new(std::nothrow) Object*[count];
+	if (objects == NULL)
+		return;
+
+	for (int32 i = 0; i < count; i++) {
+		if (dragMessage.FindPointer("object", i, (void**)&objects[i])
+			!= B_OK) {
+			delete[] objects;
+			return;
+		}
+	}
+
+	MoveObjectsEdit* command = new(std::nothrow) MoveObjectsEdit(
+		objects, count, insertionLayer, subItemIndex, fSelection);
+	if (command == NULL) {
+		delete[] objects;
+		return;
+	}
+
+	fDocument->EditManager()->Perform(command, fEditContext);
+}
+
+// _DropPaths
+void
+ObjectTreeView::_DropPaths(const BMessage& dragMessage, int32 count,
+	Shape* insertionShape, int32 subItemIndex, int32 itemIndex)
+{
+//	Object** objects = new(std::nothrow) Object*[count];
+//	if (objects == NULL)
+//		return;
+//
+//	for (int32 i = 0; i < count; i++) {
+//		if (dragMessage.FindPointer("object", i, (void**)&objects[i])
+//			!= B_OK) {
+//			delete[] objects;
+//			return;
+//		}
+//	}
+//
+//	MoveObjectsEdit* command = new(std::nothrow) MoveObjectsEdit(
+//		objects, count, insertionLayer, subItemIndex, fSelection);
+//	if (command == NULL) {
+//		delete[] objects;
+//		return;
+//	}
+//
+//	fDocument->EditManager()->Perform(command, fEditContext);
+}
+

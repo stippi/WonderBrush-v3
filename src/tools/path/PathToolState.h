@@ -87,6 +87,8 @@ public:
 			void				SetShape(Shape* shape,
 									bool modifySelection = false);
 
+			void				AddPath(PathInstance* path);
+
 			void				Confirm();
 			void				Cancel();
 
@@ -158,7 +160,7 @@ private:
 			Shape*				fShape;
 
 			PathList			fPaths;
-			PathRef				fCurrentPath;
+			PathInstanceRef		fCurrentPath;
 	mutable	PathPoint			fHoverPathPoint;
 			PointSelection		fPointSelection;
 			BRect				fSelectionRect;

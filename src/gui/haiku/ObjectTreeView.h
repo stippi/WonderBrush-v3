@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2010, Stephan Aßmus <superstippi@gmx.de>.
+ * Copyright 2009-2018, Stephan Aßmus <superstippi@gmx.de>.
  * All rights reserved.
  */
 #ifndef OBJECT_TREE_VIEW_H
@@ -10,20 +10,25 @@
 #include "LayerObserver.h"
 #include "ListenerAdapter.h"
 #include "Selection.h"
+#include "ShapeObserver.h"
 
 
+class BaseObject;
 class Document;
 class EditContext;
-class Object;
+class Shape;
 
 
-class ObjectColumnTreeItem : public EasyColumnTreeItem {
+class ObjectColumnTreeItem : public EasyColumnTreeItem, private Listener {
 public:
-			Object*				object;
+			BaseObject*			object;
 
 								ObjectColumnTreeItem(float height,
-									Object* object);
+									BaseObject* object);
 	virtual						~ObjectColumnTreeItem();
+
+	// Listener interface
+	virtual	void				ObjectChanged(const Notifier* object);
 
 			void				Update();
 };
@@ -71,7 +76,7 @@ public:
 									const Selection::Controller* controller);
 
 	// ObjectTreeView
-			void				SelectItem(Object* object);
+			void				SelectItem(BaseObject* object);
 
 private:
 			void				_Init();
@@ -86,21 +91,33 @@ private:
 									int32 index);
 			void				_ObjectChanged(Layer* layer, Object* object,
 									int32 index);
-			void				_ObjectSelected(Object* object,
+			
+			void				_ObjectSelected(BaseObject* object,
 									bool selected);
 
-			ObjectColumnTreeItem* _FindLayerTreeViewItem(const Object* object);
+			ObjectColumnTreeItem* _FindLayerTreeViewItem(
+									const BaseObject* object);
 
 			void				_RecursiveAddItems(Layer* layer,
 									ObjectColumnTreeItem* item);
 			void				_RecursiveRemoveItems(Layer* layer,
 									ObjectColumnTreeItem* item);
+			void				_AddPathItems(Shape* shape,
+									ObjectColumnTreeItem* layerItem);
+
+			void				_DropObjects(const BMessage& dragMessage,
+									int32 count, Layer* insertionLayer,
+									int32 subItemIndex, int32 itemIndex);
+			void				_DropPaths(const BMessage& dragMessage,
+									int32 count, Shape* insertionShape,
+									int32 subItemIndex, int32 itemIndex);
 
 private:
 			Document*			fDocument;
 			Selection*			fSelection;
 			EditContext&		fEditContext;
 			LayerObserver		fLayerObserver;
+			ShapeObserver		fShapeObserver;
 			bool				fIgnoreSelectionChanged;
 };
 

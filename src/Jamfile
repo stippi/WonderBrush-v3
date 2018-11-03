@@ -212,9 +212,11 @@ Application WonderBrush :
 	LayerSnapshot.cpp
 	Object.cpp
 	ObjectSnapshot.cpp
+	PathInstance.cpp
 	Rect.cpp
 	RectSnapshot.cpp
 	Shape.cpp
+	ShapeObserver.cpp
 	ShapeSnapshot.cpp
 	Styleable.cpp
 	StyleableSnapshot.cpp

@@ -25,6 +25,7 @@
 #include "Layer.h"
 #include "ObjectAddedEdit.h"
 #include "PathAddPointEdit.h"
+#include "PathInstance.h"
 #include "PathMoveSelectionEdit.h"
 #include "PathMovePointEdit.h"
 #include "PathToggleClosedEdit.h"
@@ -780,7 +781,7 @@ public:
 			return;
 
 		// Switch to drag path point state
-		PathRef pathRef = fParent->fPaths.LastItem();
+		PathRef pathRef = fParent->fPaths.LastItem()->Path();
 		fParent->fDragPathPointState->SetPathPoint(
 			PathPoint(pathRef.Get(), 0, POINT_OUT));
 		fParent->fDragPathPointState->SetDragMode(
@@ -1049,7 +1050,7 @@ PathToolState::Bounds() const
 	BoundsIterator iterator(bounds);
 
 	for (int32 i = 0; i < fPaths.CountItems(); i++) {
-		Path* path = fPaths.ItemAtFast(i).Get();
+		Path* path = fPaths.ItemAtFast(i)->Path().Get();
 		path->Iterate(&iterator, 1.0);
 		bounds = bounds | path->ControlPointBounds();
 	}
@@ -1090,7 +1091,7 @@ PathToolState::DragStateFor(BPoint canvasWhere, float zoomLevel) const
 	PathPoint closestPathPoint;
 
 	for (int32 i = fPaths.CountItems() - 1; i >= 0; i--) {
-		Path* path = fPaths.ItemAtFast(i).Get();
+		Path* path = fPaths.ItemAtFast(i)->Path().Get();
 		for (int32 j = path->CountPoints() - 1; j >= 0; j--) {
 			BPoint point;
 			BPoint pointIn;
@@ -1219,7 +1220,7 @@ PathToolState::DragStateFor(BPoint canvasWhere, float zoomLevel) const
 	inset = 7.0 / zoomLevel;
 	closestDistance = LONG_MAX;
 	for (int32 i = fPaths.CountItems() - 1; i >= 0; i--) {
-		Path* path = fPaths.ItemAtFast(i).Get();
+		Path* path = fPaths.ItemAtFast(i)->Path().Get();
 
 		float distance;
 		int32 index;
@@ -1250,8 +1251,8 @@ PathToolState::DragStateFor(BPoint canvasWhere, float zoomLevel) const
 	}
 
 	if (fCurrentPath.Get() != NULL) {
-		if (!fCurrentPath->IsClosed()) {
-			fAddPathPointState->SetPath(fCurrentPath);
+		if (!fCurrentPath->Path()->IsClosed()) {
+			fAddPathPointState->SetPath(PathRef(fCurrentPath->Path()));
 			return fAddPathPointState;
 		} else {
 			fSelectPointsState->SetPathPoint(PathPoint());
@@ -1276,6 +1277,10 @@ PathToolState::ObjectSelected(const Selectable& selectable,
 
 	Shape* shape = dynamic_cast<Shape*>(selectable.Get());
 	SetShape(shape);
+
+	PathInstance* path = dynamic_cast<PathInstance*>(selectable.Get());
+	if (path != NULL)
+		AddPath(path);
 }
 
 // ObjectDeselected
@@ -1299,7 +1304,8 @@ PathToolState::ObjectDeselected(const Selectable& selectable,
 void
 PathToolState::ObjectChanged(const Notifier* object)
 {
-	if (dynamic_cast<const Path*>(object) != NULL) {
+	if (dynamic_cast<const Path*>(object) != NULL
+		|| dynamic_cast<const PathInstance*>(object) != NULL) {
 		// Update asynchronously, since the notification may arrive on
 		// the wrong thread.
 		View()->PostMessage(MSG_UPDATE_BOUNDS);
@@ -1468,16 +1474,21 @@ PathToolState::CreatePath(BPoint canvasLocation)
 		return false;
 	}
 
-	if (!fPaths.Add(pathRef)) {
-		fprintf(stderr, "PathToolState::CreatePath(): Failed to add "
-			"path to list. Out of memory\n");
-		return false;
+	PathInstance* pathInstance;
+	if (fShape != NULL) {
+		pathInstance = fShape->AddPath(pathRef);
+		fCurrentPath.SetTo(pathInstance);
+	} else {
+		pathInstance = new(std::nothrow) PathInstance(path);
+		fCurrentPath.SetTo(pathInstance, true);
 	}
 
-	fCurrentPath.SetTo(path);
-
-	if (fShape != NULL)
-		fShape->AddPath(pathRef);
+	if (!fPaths.Add(fCurrentPath)) {
+		fprintf(stderr, "PathToolState::CreatePath(): Failed to add "
+			"path to list. Out of memory\n");
+		fCurrentPath.SetTo(NULL);
+		return false;
+	}
 
 //	View()->PerformEdit(new(std::nothrow) ObjectAddedEdit(shape,
 //		fSelection));
@@ -1496,7 +1507,7 @@ PathToolState::SetShape(Shape* shape, bool modifySelection)
 		return;
 
 	for (int32 i = fPaths.CountItems() - 1; i >= 0; i--)
-		fPaths.ItemAtFast(i)->RemoveListener(this);
+		fPaths.ItemAtFast(i)->Path()->RemoveListener(this);
 	fPaths.Clear();
 	fCurrentPath.SetTo(NULL);
 
@@ -1520,7 +1531,7 @@ PathToolState::SetShape(Shape* shape, bool modifySelection)
 
 		fPaths = shape->Paths();
 		for (int32 i = fPaths.CountItems() - 1; i >= 0; i--)
-			fPaths.ItemAtFast(i)->AddListener(this);
+			fPaths.ItemAtFast(i)->Path()->AddListener(this);
 
 		fCurrentPath = fPaths.ItemAt(0);
 
@@ -1534,6 +1545,25 @@ PathToolState::SetShape(Shape* shape, bool modifySelection)
 			fSelection->DeselectAll(this);
 		UpdateBounds();
 	}
+}
+
+// AddPath
+void
+PathToolState::AddPath(PathInstance* path)
+{
+	for (int32 i = fPaths.CountItems() - 1; i >= 0; i--)
+		fPaths.ItemAtFast(i)->RemoveListener(this);
+	fPaths.Clear();
+	fCurrentPath.SetTo(NULL);
+
+	fPaths.Add(path);
+	path->AddListener(this);
+	fCurrentPath = path;
+
+	SetObjectToCanvasTransformation(path->Transformation());
+	ObjectChanged(fCurrentPath.Get());
+
+	UpdateBounds();
 }
 
 // Confirm
@@ -1558,7 +1588,7 @@ void
 PathToolState::_DrawControls(PlatformDrawContext& drawContext)
 {
 	for (int32 i = 0; i < fPaths.CountItems(); i++) {
-		Path* path = fPaths.ItemAtFast(i).Get();
+		Path* path = fPaths.ItemAtFast(i)->Path().Get();
 		fPlatformDelegate->DrawPath(path, drawContext, *this, fPointSelection,
 			fHoverPathPoint, fView->ZoomLevel());
 	}
@@ -1608,7 +1638,7 @@ PathToolState::_SetSelectionRect(const BRect& rect,
 	if (rect.IsValid()) {
 		PointSelection selection(previousSelection);
 		for (int32 i = fPaths.CountItems() - 1; i >= 0; i--) {
-			Path* path = fPaths.ItemAtFast(i).Get();
+			Path* path = fPaths.ItemAtFast(i)->Path().Get();
 			for (int32 j = path->CountPoints() - 1; j >= 0; j--) {
 				BPoint point;
 				BPoint pointIn;
