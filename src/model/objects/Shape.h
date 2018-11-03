@@ -68,7 +68,10 @@ public:
 
 	// Shape
 			PathInstance*		AddPath(const PathRef& path);
+			PathInstance*		AddPath(const PathRef& path, int32 index);
+			bool				RemovePath(const PathRef& path);
 			const PathList&		Paths() const;
+			bool				ContainsPath(const PathRef& path) const;
 
 			void				SetFillMode(uint32 fillMode);
 	inline	uint32				FillMode() const

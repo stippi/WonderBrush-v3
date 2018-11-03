@@ -95,6 +95,11 @@ private:
 			void				_ObjectSelected(BaseObject* object,
 									bool selected);
 
+			void				_PathAdded(Shape* shape, PathInstance* path,
+									int32 index);
+			void				_PathRemoved(Shape* shape, PathInstance* path,
+									int32 index);
+
 			ObjectColumnTreeItem* _FindLayerTreeViewItem(
 									const BaseObject* object);
 

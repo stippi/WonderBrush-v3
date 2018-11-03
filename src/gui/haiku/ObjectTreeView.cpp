@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2010, Stephan Aßmus <superstippi@gmx.de>.
+ * Copyright 2009-2018, Stephan Aßmus <superstippi@gmx.de>.
  * All rights reserved.
  */
 
@@ -17,6 +17,7 @@
 #include "EditManager.h"
 #include "Document.h"
 #include "MoveObjectsEdit.h"
+#include "MovePathsEdit.h"
 #include "Object.h"
 #include "PathInstance.h"
 #include "RenameObjectEdit.h"
@@ -29,6 +30,7 @@ ObjectColumnTreeItem::ObjectColumnTreeItem(float height, BaseObject* object)
 	: EasyColumnTreeItem(height)
 	, object(object)
 {
+	object->AddReference();
 	// If "object" is of type Object, we will get notified of changes
 	// via BMessages from the LayerObserver. For other types of
 	// BaseObject, we need to register our own listener.
@@ -41,6 +43,7 @@ ObjectColumnTreeItem::~ObjectColumnTreeItem()
 {
 	if (dynamic_cast<Object*>(object) == NULL)
 		object->RemoveListener(this);
+	object->RemoveReference();
 }
 
 void
@@ -214,6 +217,26 @@ ObjectTreeView::MessageReceived(BMessage* message)
 			// not interested
 			break;
 
+		case ShapeObserver::MSG_PATH_ADDED:
+		case ShapeObserver::MSG_PATH_REMOVED:
+		{
+			if (fDocument->WriteLock()) {
+				Shape* shape;
+				PathInstance* path;
+				int32 index;
+				if (message->FindPointer("shape", (void**)&shape) == B_OK
+					&& message->FindPointer("path", (void**)&path) == B_OK
+					&& message->FindInt32("index", &index) == B_OK) {
+					if (message->what == ShapeObserver::MSG_PATH_ADDED)
+						_PathAdded(shape, path, index);
+					else if (message->what == ShapeObserver::MSG_PATH_REMOVED)
+						_PathRemoved(shape, path, index);
+				}
+				fDocument->WriteUnlock();
+			}
+			break;
+		}
+
 		case MSG_OBJECT_SELECTED:
 		{
 			BaseObject* object;
@@ -251,8 +274,14 @@ ObjectTreeView::InitiateDrag(BPoint point, int32 index, bool wasSelected,
 				ItemAt(CurrentSelection(i)));
 			if (item == NULL || item->object == NULL)
 				continue;
-			if (dragMessage.AddPointer("object", item->object) != B_OK)
-				return false;
+			PathInstance* path = dynamic_cast<PathInstance*>(item->object);
+			if (path != NULL) {
+				if (dragMessage.AddPointer("path", path) != B_OK)
+					return false;
+			} else {
+				if (dragMessage.AddPointer("object", item->object) != B_OK)
+					return false;
+			}
 			addedItems++;
 			if (!fadeOutAtBottom) {
 				totalHeight += item->Height() + 1.0;
@@ -344,6 +373,23 @@ bool
 ObjectTreeView::GetDropInfo(BPoint point, const BMessage& dragMessage,
 	ColumnTreeItem** _super, int32* _subItemIndex, int32* _itemIndex)
 {
+	type_code typeFound;
+
+	int32 pathsFound;
+	if (dragMessage.GetInfo("path", &typeFound, &pathsFound) != B_OK
+		|| typeFound != B_POINTER_TYPE) {
+		pathsFound = 0;
+	}
+
+	int32 objectsFound;
+	if (dragMessage.GetInfo("object", &typeFound, &objectsFound) != B_OK
+		|| typeFound != B_POINTER_TYPE) {
+		objectsFound = 0;
+	}
+
+	if (pathsFound == 0 && objectsFound == 0)
+		return false;
+
 	// Check the situation that a Layer does not have any children yet.
 	// In that case we must make it possible to drop items as children,
 	// but the ColumnTreeView does not know about this situation.
@@ -354,6 +400,7 @@ ObjectTreeView::GetDropInfo(BPoint point, const BMessage& dragMessage,
 
 		int32 subItemCount = CountSubItems(item);
 		if (dynamic_cast<Layer*>(item->object) != NULL
+			&& objectsFound > 0
 			&& (subItemCount == 0 || !item->IsExpanded())) {
 
 			BRect frame = ItemFrame(index);
@@ -365,6 +412,28 @@ ObjectTreeView::GetDropInfo(BPoint point, const BMessage& dragMessage,
 				*_itemIndex = index + 1;
 				return true;
 			}
+		}
+		if (dynamic_cast<Shape*>(item->object) != NULL
+			&& pathsFound > 0
+			&& (subItemCount == 0 || !item->IsExpanded())) {
+
+			BRect frame = ItemFrame(index);
+			if (point.y > frame.top + frame.Height() / 4
+				&& point.y < frame.bottom - frame.Height() / 4) {
+				// Drop will add items as new children.
+				*_super = item;
+				*_subItemIndex = subItemCount;
+				*_itemIndex = index + 1;
+				return true;
+			}
+		}
+		
+		if (dynamic_cast<PathInstance*>(item->object) != NULL) {
+			if (pathsFound == 0)
+				return false;
+		} else {
+			if (objectsFound == 0)
+				return false;
 		}
 	}
 
@@ -698,6 +767,45 @@ ObjectTreeView::_ObjectSelected(BaseObject* object, bool selected)
 	fIgnoreSelectionChanged = false;
 }
 
+// _PathAdded
+void
+ObjectTreeView::_PathAdded(Shape* shape, PathInstance* path, int32 index)
+{
+	PathInstanceRef ref(path);
+//printf("ObjectTreeView::_ObjectAdded(%p, %p, %ld)\n", layer, object, index);
+	if (!shape->Paths().Contains(ref))
+		return;
+
+	fIgnoreSelectionChanged = true;
+
+	ObjectColumnTreeItem* parentItem = _FindLayerTreeViewItem(shape);
+
+	ObjectColumnTreeItem* item = new ObjectColumnTreeItem(20, path);
+	item->Update();
+
+	AddSubItem(parentItem, item, index);
+
+	fIgnoreSelectionChanged = false;
+}
+
+// _PathRemoved
+void
+ObjectTreeView::_PathRemoved(Shape* shape, PathInstance* path, int32 index)
+{
+//printf("ObjectTreeView::_ObjectRemoved(%p, %p, %ld)\n", layer, object, index);
+	ObjectColumnTreeItem* parentItem = _FindLayerTreeViewItem(shape);
+//	ObjectColumnTreeItem* item = dynamic_cast<ObjectColumnTreeItem*>(
+//		SubItemAt(parentItem, index));
+
+	fIgnoreSelectionChanged = true;
+
+	// TODO: A bug in DefaultColumnTreeModel already deleted the returned
+	// item:
+	RemoveSubItem(parentItem, index);
+
+	fIgnoreSelectionChanged = false;
+}
+
 // _FindLayerTreeViewItem
 ObjectColumnTreeItem*
 ObjectTreeView::_FindLayerTreeViewItem(const BaseObject* object)
@@ -788,8 +896,9 @@ ObjectTreeView::_DropObjects(const BMessage& dragMessage, int32 count,
 			objects[index++] = object; 
 	}
 
+	count = index;
 	MoveObjectsEdit* command = new(std::nothrow) MoveObjectsEdit(
-		objects, index, insertionLayer, subItemIndex, fSelection);
+		objects, count, insertionLayer, subItemIndex, fSelection);
 	if (command == NULL) {
 		delete[] objects;
 		return;
@@ -803,25 +912,31 @@ void
 ObjectTreeView::_DropPaths(const BMessage& dragMessage, int32 count,
 	Shape* insertionShape, int32 subItemIndex, int32 itemIndex)
 {
-//	Object** objects = new(std::nothrow) Object*[count];
-//	if (objects == NULL)
-//		return;
-//
-//	for (int32 i = 0; i < count; i++) {
-//		if (dragMessage.FindPointer("object", i, (void**)&objects[i])
-//			!= B_OK) {
-//			delete[] objects;
-//			return;
-//		}
-//	}
-//
-//	MoveObjectsEdit* command = new(std::nothrow) MoveObjectsEdit(
-//		objects, count, insertionLayer, subItemIndex, fSelection);
-//	if (command == NULL) {
-//		delete[] objects;
-//		return;
-//	}
-//
-//	fDocument->EditManager()->Perform(command, fEditContext);
+	PathInstance** paths = new(std::nothrow) PathInstance*[count];
+	if (paths == NULL)
+		return;
+
+	int32 index = 0;
+	for (int32 i = 0; i < count; i++) {
+		BaseObject* baseObject;
+		if (dragMessage.FindPointer("path", i,
+				(void**)&baseObject) != B_OK) {
+			delete[] paths;
+			return;
+		}
+		PathInstance* path = dynamic_cast<PathInstance*>(baseObject);
+		if (path != NULL)
+			paths[index++] = path; 
+	}
+
+	count = index;
+	MovePathsEdit* command = new(std::nothrow) MovePathsEdit(
+		paths, count, insertionShape, subItemIndex, fSelection);
+	if (command == NULL) {
+		delete[] paths;
+		return;
+	}
+
+	fDocument->EditManager()->Perform(command, fEditContext);
 }
 

@@ -1503,13 +1503,18 @@ PathToolState::CreatePath(BPoint canvasLocation)
 void
 PathToolState::SetShape(Shape* shape, bool modifySelection)
 {
+	if (fShape == NULL || fShape != shape) {
+		if (fCurrentPath.Get() != NULL) {
+			for (int32 i = fPaths.CountItems() - 1; i >= 0; i--)
+				fPaths.ItemAtFast(i)->Path()->RemoveListener(this);
+			fPaths.Clear();
+			fCurrentPath.SetTo(NULL);
+			UpdateBounds();
+		}
+	}
+
 	if (fShape == shape)
 		return;
-
-	for (int32 i = fPaths.CountItems() - 1; i >= 0; i--)
-		fPaths.ItemAtFast(i)->Path()->RemoveListener(this);
-	fPaths.Clear();
-	fCurrentPath.SetTo(NULL);
 
 	if (fShape != NULL) {
 		fShape->RemoveListener(this);

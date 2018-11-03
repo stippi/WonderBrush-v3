@@ -25,6 +25,8 @@ public:
 
 			const PathRef&		Path() const
 									{ return fPath; }
+			::Shape*			Shape() const
+									{ return fShape; }
 			Transformable		Transformation() const;
 
 private:

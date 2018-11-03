@@ -120,6 +120,7 @@ Application WonderBrush :
 
 	# edits
 	MoveObjectsEdit.cpp
+	MovePathsEdit.cpp
 	RemoveObjectsEdit.cpp
 
 	# gui/misc

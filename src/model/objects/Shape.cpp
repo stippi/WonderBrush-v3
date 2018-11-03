@@ -190,19 +190,57 @@ Shape::SetFillMode(uint32 fillMode)
 PathInstance*
 Shape::AddPath(const PathRef& path)
 {
+	return AddPath(path, fPaths.CountItems());
+}
+
+// AddPath
+PathInstance*
+Shape::AddPath(const PathRef& path, int32 index)
+{
+	if (index < 0 || index > fPaths.CountItems())
+		return NULL;
 	if (path.Get() == NULL)
 		return NULL;
 	PathInstance* pathInstance = new(std::nothrow) PathInstance(path.Get(),
 		this);
-	if (pathInstance == NULL || !fPaths.Add(PathInstanceRef(pathInstance)))
-		return NULL; 
+	PathInstanceRef ref(pathInstance, true);
+	if (pathInstance == NULL || !fPaths.Add(ref, index))
+		return NULL;
 	
 	if (fPathListener != NULL)
 		path->AddListener(fPathListener);
 
 	NotifyAndUpdate();
-	_NotifyPathAdded(pathInstance, fPaths.CountItems() - 1);
+	_NotifyPathAdded(pathInstance, index);
 	return pathInstance;
+}
+
+// RemovePath
+bool
+Shape::RemovePath(const PathRef& path)
+{
+	for (int32 i = fPaths.CountItems() - 1; i >= 0; i--) {
+		PathInstanceRef pathInstance = fPaths.ItemAtFast(i);
+		if (pathInstance->Path() == path.Get()) {
+			pathInstance->Path()->RemoveListener(fPathListener);
+			fPaths.Remove(i);
+			_NotifyPathRemoved(pathInstance, i);
+			return true;
+		}
+	}
+	return false;
+}
+
+// ContainsPath
+bool
+Shape::ContainsPath(const PathRef& path) const
+{
+	for (int32 i = fPaths.CountItems() - 1; i >= 0; i--) {
+		PathInstanceRef pathInstance = fPaths.ItemAtFast(i);
+		if (pathInstance->Path() == path.Get())
+			return true;
+	}
+	return false;
 }
 
 // Paths
