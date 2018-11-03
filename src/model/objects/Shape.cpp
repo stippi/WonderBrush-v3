@@ -224,6 +224,7 @@ Shape::RemovePath(const PathRef& path)
 		if (pathInstance->Path() == path.Get()) {
 			pathInstance->Path()->RemoveListener(fPathListener);
 			fPaths.Remove(i);
+			NotifyAndUpdate();
 			_NotifyPathRemoved(pathInstance, i);
 			return true;
 		}
