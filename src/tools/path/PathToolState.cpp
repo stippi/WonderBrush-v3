@@ -1157,10 +1157,15 @@ PathToolState::DragStateFor(BPoint canvasWhere, float zoomLevel) const
 				double distanceOut = point_point_distance(pointOut,
 					objectWhere);
 
+//if (distance < inset && distance < closestDistance) {
+//	printf("[%ld]\n"
+//		"   distance: %.2f\n"
+//		" distanceIn: %.2f\n"
+//		"distanceOut: %.2f\n", j, distance, distanceIn, distanceOut);
+//}
+
 				if (distance < inset
-					&& distance < closestDistance
-					&& distance <= distanceIn
-					&& distance <= distanceOut) {
+					&& distance < closestDistance) {
 					closestPathPoint = PathPoint(path, j, POINT);
 					closestDistance = distance;
 				}
@@ -1171,14 +1176,14 @@ PathToolState::DragStateFor(BPoint canvasWhere, float zoomLevel) const
 				if (pointIn != point
 					&& distanceIn < inset
 					&& distanceIn < closestDistance
-					&& distanceIn < distance
+					&& distanceIn + 1 < distance
 					&& distanceIn < distanceOut) {
 					closestPathPoint = PathPoint(path, j, POINT_IN);
 					closestDistance = distanceIn;
 				} else if (pointOut != point
 					&& distanceOut < inset
 					&& distanceOut < closestDistance
-					&& distanceOut < distance) {
+					&& distanceOut + 1 < distance) {
 					closestPathPoint = PathPoint(path, j, POINT_OUT);
 					closestDistance = distanceOut;
 				}
