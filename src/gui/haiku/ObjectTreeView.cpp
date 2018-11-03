@@ -730,11 +730,12 @@ ObjectTreeView::_RecursiveAddItems(Layer* layer,
 			AddSubItem(layerItem, item, i);
 		else
 			AddItem(item, i);
-		ExpandItem(item);
 
 		Layer* subLayer = dynamic_cast<Layer*>(object);
-		if (subLayer != NULL)
+		if (subLayer != NULL) {
+			ExpandItem(item);
 			_RecursiveAddItems(subLayer, item);
+		}
 		
 		Shape* shape = dynamic_cast<Shape*>(object);
 		if (shape != NULL)
@@ -774,16 +775,21 @@ ObjectTreeView::_DropObjects(const BMessage& dragMessage, int32 count,
 	if (objects == NULL)
 		return;
 
+	int32 index = 0;
 	for (int32 i = 0; i < count; i++) {
-		if (dragMessage.FindPointer("object", i, (void**)&objects[i])
-			!= B_OK) {
+		BaseObject* baseObject;
+		if (dragMessage.FindPointer("object", i,
+				(void**)&baseObject) != B_OK) {
 			delete[] objects;
 			return;
 		}
+		Object* object = dynamic_cast<Object*>(baseObject);
+		if (object != NULL)
+			objects[index++] = object; 
 	}
 
 	MoveObjectsEdit* command = new(std::nothrow) MoveObjectsEdit(
-		objects, count, insertionLayer, subItemIndex, fSelection);
+		objects, index, insertionLayer, subItemIndex, fSelection);
 	if (command == NULL) {
 		delete[] objects;
 		return;
