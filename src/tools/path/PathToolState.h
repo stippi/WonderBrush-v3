@@ -82,7 +82,8 @@ public:
 	// PathToolState
 			void				SetInsertionInfo(Layer* layer, int32 index);
 			bool				CreateShape(BPoint canvasLocation);
-			bool				CreatePath(BPoint canvasLocation);
+			bool				CreatePath(BPoint canvasLocation,
+									bool createEdit);
 
 			void				SetShape(Shape* shape,
 									bool modifySelection = false);
@@ -108,6 +109,7 @@ private:
 			class RemovePathPointState;
 			class ClosePathState;
 			class CreateShapeState;
+			class CreatePathState;
 
 			friend class PickShapeState;
 			friend class SelectPointsState;
@@ -147,6 +149,7 @@ private:
 			RemovePathPointState* fRemovePathPointState;
 			ClosePathState*		fClosePathState;
 			CreateShapeState*	fCreateShapeState;
+			CreatePathState*	fCreatePathState;
 
 			Document*			fDocument;
 			Selection*			fSelection;

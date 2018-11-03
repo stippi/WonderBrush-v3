@@ -774,10 +774,14 @@ public:
 		if (!fParent->CreateShape(origin))
 			return;
 
+		// TODO: Could switch to CreatePathState right here
+		// Difficulty is perhaps that we don't want to trigger
+		// an undoable edit in addition to the one which created
+		// the new Shape.
 		fParent->TransformCanvasToObject(&origin);
 
 		// Create path with initial point
-		if (!fParent->CreatePath(origin))
+		if (!fParent->CreatePath(origin, false))
 			return;
 
 		// Switch to drag path point state
@@ -808,6 +812,53 @@ private:
 	PathToolState*		fParent;
 };
 
+// CreatePathState
+class PathToolState::CreatePathState : public DragStateViewState::DragState {
+public:
+	CreatePathState(PathToolState* parent)
+		: DragState(parent)
+		, fParent(parent)
+	{
+	}
+
+	virtual void SetOrigin(BPoint origin)
+	{
+		BPoint originalOrigin(origin);
+
+		fParent->TransformCanvasToObject(&origin);
+
+		// Create path with initial point
+		if (!fParent->CreatePath(origin, true))
+			return;
+
+		// Switch to drag path point state
+		PathRef pathRef = fParent->fPaths.LastItem()->Path();
+		fParent->fDragPathPointState->SetPathPoint(
+			PathPoint(pathRef.Get(), 0, POINT_OUT));
+		fParent->fDragPathPointState->SetDragMode(
+			DRAG_MODE_MOVE_POINT_OUT_MIRROR_IN);
+		fParent->SetDragState(fParent->fDragPathPointState);
+		fParent->fDragPathPointState->SetOrigin(originalOrigin);
+	}
+
+	virtual void DragTo(BPoint current, uint32 modifiers)
+	{
+	}
+
+	virtual BCursor ViewCursor(BPoint current) const
+	{
+		return BCursor(kPathNewCursor);
+	}
+
+	virtual const char* CommandName() const
+	{
+		return "Create path";
+	}
+
+private:
+	PathToolState*		fParent;
+};
+
 // #pragma mark -
 
 // constructor
@@ -830,6 +881,7 @@ PathToolState::PathToolState(StateView* view, PathTool* tool,
 	, fRemovePathPointState(new(std::nothrow) RemovePathPointState(this))
 	, fClosePathState(new(std::nothrow) ClosePathState(this))
 	, fCreateShapeState(new(std::nothrow) CreateShapeState(this))
+	, fCreatePathState(new(std::nothrow) CreatePathState(this))
 
 	, fDocument(document)
 	, fSelection(selection)
@@ -871,6 +923,7 @@ PathToolState::~PathToolState()
 	delete fRemovePathPointState;
 	delete fClosePathState;
 	delete fCreateShapeState;
+	delete fCreatePathState;
 
 	SetInsertionInfo(NULL, -1);
 
@@ -1254,6 +1307,8 @@ PathToolState::DragStateFor(BPoint canvasWhere, float zoomLevel) const
 		if (!fCurrentPath->Path()->IsClosed()) {
 			fAddPathPointState->SetPath(PathRef(fCurrentPath->Path()));
 			return fAddPathPointState;
+		} else if (fShape != NULL && (Modifiers() & B_OPTION_KEY) != 0) {
+			return fCreatePathState;
 		} else {
 			fSelectPointsState->SetPathPoint(PathPoint());
 			return fSelectPointsState;
@@ -1451,7 +1506,7 @@ PathToolState::CreateShape(BPoint canvasLocation)
 
 // CreatePath
 bool
-PathToolState::CreatePath(BPoint canvasLocation)
+PathToolState::CreatePath(BPoint canvasLocation, bool createEdit)
 {
 	Path* path = new(std::nothrow) Path();
 	if (path == NULL) {
