@@ -1197,7 +1197,13 @@ PathToolState::DragStateFor(BPoint canvasWhere, float zoomLevel) const
 		if (closestPathPoint.GetWhich() == POINT
 			&& !closestPathPoint.GetPath()->IsClosed()
 			&& closestPathPoint.GetIndex() == 0
-			&& closestPathPoint.GetPath()->CountPoints() > 1) {
+			&& closestPathPoint.GetPath()->CountPoints() > 1
+			&& !fPointSelection.Contains(
+				PathPoint(
+					closestPathPoint.GetPath(),
+					closestPathPoint.GetIndex(),
+					POINT_ALL))
+			&& (Modifiers() & B_SHIFT_KEY) == 0) {
 			// Pointer over first path point of open path
 			fClosePathState->SetPath(PathRef(closestPathPoint.GetPath()));
 			return fClosePathState;
