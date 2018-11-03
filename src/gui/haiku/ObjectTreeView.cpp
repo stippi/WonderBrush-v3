@@ -525,7 +525,7 @@ ObjectTreeView::ObjectSelected(const Selectable& selectable,
 		return;
 	}
 
-	Object* object = dynamic_cast<Object*>(selectable.Get());
+	BaseObject* object = dynamic_cast<BaseObject*>(selectable.Get());
 	if (object == NULL || Window() == NULL)
 		return;
 
@@ -552,7 +552,7 @@ ObjectTreeView::ObjectDeselected(const Selectable& selectable,
 		return;
 	}
 
-	Object* object = dynamic_cast<Object*>(selectable.Get());
+	BaseObject* object = dynamic_cast<BaseObject*>(selectable.Get());
 	if (object == NULL || Window() == NULL)
 		return;
 
@@ -710,6 +710,8 @@ ObjectTreeView::_ObjectAdded(Layer* layer, Object* object, int32 index)
 
 	if (Layer* subLayer = dynamic_cast<Layer*>(object))
 		_RecursiveAddItems(subLayer, item);
+	else if (Shape* shape = dynamic_cast<Shape*>(object))
+		_AddPathItems(shape, item);
 
 	fIgnoreSelectionChanged = false;
 }
