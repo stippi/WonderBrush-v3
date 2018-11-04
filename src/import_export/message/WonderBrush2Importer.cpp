@@ -19,6 +19,8 @@
 #include "ColorShade.h"
 #include "Document.h"
 #include "Filter.h"
+#include "FilterBrightness.h"
+#include "FilterContrast.h"
 #include "FilterDropShadow.h"
 #include "FilterSaturation.h"
 #include "Font.h"
@@ -122,7 +124,13 @@ WonderBrush2Importer::ImportObject(const BMessage& archive) const
 	if (type == "DropShadow")
 		return ImportFilterDropShadow(archive);
 
-	if (type == "FilterSaturation")
+	if (type == "SimpleBrightness")
+		return ImportFilterBrightness(archive);
+
+	if (type == "Contrast")
+		return ImportFilterContrast(archive);
+
+	if (type == "Saturation")
 		return ImportFilterSaturation(archive);
 
 	if (type == "BitmapStroke")
@@ -264,6 +272,36 @@ WonderBrush2Importer::ImportFilterDropShadow(const BMessage& archive) const
 	return BaseObjectRef(filter, true);
 }
 
+// ImportFilterBrightness
+BaseObjectRef
+WonderBrush2Importer::ImportFilterBrightness(const BMessage& archive) const
+{
+	FilterBrightness* filter = new(std::nothrow) FilterBrightness();
+	if (filter != NULL) {
+		float brightness;
+		if (archive.FindFloat("brightness", &brightness) == B_OK)
+			filter->SetFactor(brightness);
+		
+		_RestoreObject(filter, archive);
+	}
+	return BaseObjectRef(filter, true);
+}
+
+// ImportFilterContrast
+BaseObjectRef
+WonderBrush2Importer::ImportFilterContrast(const BMessage& archive) const
+{
+	FilterContrast* filter = new(std::nothrow) FilterContrast();
+	if (filter != NULL) {
+		float contrast;
+		if (archive.FindFloat("contrast", &contrast) == B_OK)
+			filter->SetContrast(contrast);
+		
+		_RestoreObject(filter, archive);
+	}
+	return BaseObjectRef(filter, true);
+}
+
 // ImportFilterSaturation
 BaseObjectRef
 WonderBrush2Importer::ImportFilterSaturation(const BMessage& archive) const
@@ -308,7 +346,60 @@ WonderBrush2Importer::ImportLayer(const BMessage& archive) const
 	if (layer != NULL) {
 		ImportObjects(archive, layer);
 
-		// TODO: int32 "mode" (blending mode)
+		int32 mode;
+		if (archive.FindInt32("mode", &mode) == B_OK) {
+			switch (mode) {
+				case 0:
+					// Normal
+					break;
+				case 1:
+					// Multiply
+					layer->SetBlendingMode(CompOpMultiply);
+					break;
+				case 2:
+					// Inverse multiply
+					// TODO
+					break;
+				case 9:
+					// Darken
+					layer->SetBlendingMode(CompOpDarken);
+					break;
+				case 10:
+					// Lighten
+					layer->SetBlendingMode(CompOpLighten);
+					break;
+				case 3:
+					// Luminance
+					// TODO
+					break;
+				case 4:
+					// Alpha
+					// TODO
+					break;
+				case 5:
+					// Inverse alpha
+					// TODO
+					break;
+				case 6:
+					// Replace red
+					// TODO
+					break;
+				case 7:
+					// Replace green
+					// TODO
+					break;
+				case 8:
+					// Replace blue
+					// TODO
+					break;
+				default:
+					fprintf(stderr, "WonderBrush2Importer::ImportLayer() - "
+						"unknown blending mode '%ld' for layer '%s'.\n",
+						mode, archive.FindString("name"));
+					break;
+			}
+		}
+
 		int32 flags;
 		if (archive.FindInt32("flags", &flags) == B_OK) {
 			if ((flags & 0x01) != 0)
