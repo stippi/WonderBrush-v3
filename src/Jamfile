@@ -176,6 +176,7 @@ Application WonderBrush :
 	# model
 	BaseObject.cpp
 	CloneContext.cpp
+	CopyCloneContext.cpp
 	CurrentColor.cpp
 	Selectable.cpp
 	Selection.cpp
