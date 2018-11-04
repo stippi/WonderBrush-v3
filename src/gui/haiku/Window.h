@@ -18,6 +18,7 @@ class BMenu;
 class BSplitView;
 class CanvasView;
 class ColumnTreeModel;
+class CloneContext;
 class Document;
 class DocumentSaver;
 class Exporter;
@@ -28,6 +29,7 @@ class Layer;
 class Object;
 class ObjectColumnTreeItem;
 class ObjectTreeView;
+class PathInstance;
 class RenderManager;
 class ResourceTreeView;
 class SwatchGroup;
@@ -70,6 +72,15 @@ private:
 									int32* _index) const;
 			void				_AddLayer();
 			void				_AddFilter(int32 filterID);
+			
+			void				_CloneSelectedObjects(bool linked);
+			void				_CloneBaseObject(BaseObject* baseObject,
+									CloneContext& cloneContext);
+			void				_CloneObject(Object* object,
+									CloneContext& cloneContext);
+			void				_ClonePathInstance(PathInstance* path,
+									CloneContext& cloneContext);
+			
 			void				_AddObject(Layer* parentLayer,
 									int32 insertIndex, Object* object);
 			void				_RemoveObjects();
@@ -110,6 +121,8 @@ private:
 
 			BMenuItem*			fUndoMI;
 			BMenuItem*			fRedoMI;
+			BMenuItem*			fDuplicateMI;
+			BMenuItem*			fDuplicateLinkedMI;
 			BMenuItem*			fRemoveMI;
 
 			IconOptionsControl*	fToolIconControl;

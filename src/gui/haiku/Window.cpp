@@ -27,6 +27,8 @@
 #include "BrushTool.h"
 #include "CanvasView.h"
 #include "CompoundEdit.h"
+#include "CloneContext.h"
+#include "CopyCloneContext.h"
 #include "DefaultColumnTreeModel.h"
 #include "Document.h"
 #include "DocumentSaver.h"
@@ -44,9 +46,11 @@
 #include "NavigatorView.h"
 #include "ObjectAddedEdit.h"
 #include "ObjectTreeView.h"
+#include "PathInstance.h"
 #include "PathTool.h"
 #include "RectangleTool.h"
 #include "ResizeImagePanel.h"
+#include "Shape.h"
 #include "TextTool.h"
 #include "ToolConfigView.h"
 #include "ToolListener.h"
@@ -73,6 +77,8 @@ enum {
 	MSG_IMAGE_RESIZE_PARAMS			= 'igrp',
 	MSG_ADD_LAYER					= 'addl',
 	MSG_ADD_FILTER					= 'addf',
+	MSG_DUPLICATE					= 'dupl',
+	MSG_DUPLICATE_LINKED			= 'dpln',
 	MSG_RESET_TRANSFORMATION		= 'rttr',
 	MSG_REMOVE						= 'rmvo',
 };
@@ -86,8 +92,11 @@ enum {
 
 class Window::SelectionListener : public Selection::Listener {
 public:
-	SelectionListener(BMenuItem* removeItem, Selection* selection)
+	SelectionListener(BMenuItem* removeItem, BMenuItem* duplicateItem,
+			BMenuItem* duplicateLinkedItem, Selection* selection)
 		: fRemoveMI(removeItem)
+		, fDuplicateMI(duplicateItem)
+		, fDuplicateLinkedMI(duplicateLinkedItem)
 		, fSelection(selection)
 	{
 	}
@@ -99,16 +108,23 @@ public:
 	virtual	void ObjectSelected(const Selectable& object,
 		const Selection::Controller* controller)
 	{
-		fRemoveMI->SetEnabled(_CountRemovableObjects() > 0);
+		updateItems();
 	}
 
 	virtual	void ObjectDeselected(const Selectable& object,
 		const Selection::Controller* controller)
 	{
-		fRemoveMI->SetEnabled(_CountRemovableObjects() > 0);
+		updateItems();
 	}
 
 private:
+
+	void updateItems() const
+	{
+		fRemoveMI->SetEnabled(_CountRemovableObjects() > 0);
+		fDuplicateMI->SetEnabled(fSelection->CountSelected() > 0);
+		fDuplicateLinkedMI->SetEnabled(fSelection->CountSelected() > 0);
+	}
 
 	int32 _CountRemovableObjects() const
 	{
@@ -125,6 +141,8 @@ private:
 
 private:
 	BMenuItem*	fRemoveMI;
+	BMenuItem*	fDuplicateMI;
+	BMenuItem*	fDuplicateLinkedMI;
 	Selection*	fSelection;
 };
 
@@ -212,6 +230,13 @@ Window::Window(BRect frame, const char* title, Document* document,
 	message = new BMessage(MSG_REDO);
 	fRedoMI = new BMenuItem("Redo", message, 'Y', B_SHIFT_KEY);
 	fEditMenu->AddItem(fRedoMI);
+
+	fDuplicateMI = new BMenuItem("Duplicate",
+		new BMessage(MSG_DUPLICATE));
+	fDuplicateMI->SetEnabled(false);
+	fDuplicateLinkedMI = new BMenuItem("Duplicate linked",
+		new BMessage(MSG_DUPLICATE_LINKED));
+	fDuplicateLinkedMI->SetEnabled(false);
 
 	fRemoveMI = new BMenuItem("Remove",
 		new BMessage(MSG_REMOVE));
@@ -467,6 +492,8 @@ Window::Window(BRect frame, const char* title, Document* document,
 	zoomOutButton->SetTarget(fView);
 	zoomOriginalButton->SetTarget(fView);
 	zoomToFit->SetTarget(fView);
+	fDuplicateMI->SetTarget(this);
+	fDuplicateLinkedMI->SetTarget(this);
 	fRemoveMI->SetTarget(this);
 
 	_InitTools();
@@ -477,7 +504,8 @@ Window::Window(BRect frame, const char* title, Document* document,
 	_ObjectChanged(fDocument->EditManager());
 
 	fSelectionListener = new(std::nothrow)
-		SelectionListener(fRemoveMI, &fSelection);
+		SelectionListener(fRemoveMI, fDuplicateMI, fDuplicateLinkedMI,
+		&fSelection);
 
 	fSelection.AddListener(fSelectionListener);
 
@@ -648,6 +676,13 @@ Window::MessageReceived(BMessage* message)
 				_AddFilter(filterID);
 			break;
 		}
+
+		case MSG_DUPLICATE:
+			_CloneSelectedObjects(false);
+			break;
+		case MSG_DUPLICATE_LINKED:
+			_CloneSelectedObjects(true);
+			break;
 
 		case MSG_RESET_TRANSFORMATION:
 			_ResetTransformation();
@@ -959,6 +994,9 @@ Window::_CreateObjectMenu() const
 
 	menu->AddItem(filterMenu);
 
+	menu->AddItem(fDuplicateMI);
+	menu->AddItem(fDuplicateLinkedMI);
+
 	menu->AddItem(new BSeparatorItem());
 
 	item = new BMenuItem("Reset transformation",
@@ -1098,6 +1136,65 @@ Window::_AddFilter(int32 filterID)
 	};
 
 	_AddObject(parentLayer, insertIndex, filter);
+}
+
+// _CloneSelectedObjects
+void
+Window::_CloneSelectedObjects(bool linked)
+{
+	CloneContext cloneContext;
+	CopyCloneContext copyCloneContext;
+
+	CloneContext& usedCloneContext = linked ? cloneContext : copyCloneContext;
+
+	for (int32 i = fSelection.CountSelected() - 1; i >= 0; i--) {
+		const Selectable& selectable = fSelection.SelectableAtFast(i);
+		_CloneBaseObject(selectable.Get(), usedCloneContext);
+	}
+}
+
+// _CloneBaseObject
+void
+Window::_CloneBaseObject(BaseObject* baseObject, CloneContext& cloneContext)
+{
+	if (baseObject == NULL)
+		return;
+
+	Object* object = dynamic_cast<Object*>(baseObject);
+	if (object != NULL) {
+		_CloneObject(object, cloneContext);
+		return;
+	}
+
+	PathInstance* path = dynamic_cast<PathInstance*>(baseObject);
+	if (path != NULL) {
+		_ClonePathInstance(path, cloneContext);
+		return;
+	}
+}
+
+// _CloneObject
+void
+Window::_CloneObject(Object* object, CloneContext& cloneContext)
+{
+	Layer* parent = object->Parent();
+	if (parent == NULL)
+		return;
+	
+	Object* clone = dynamic_cast<Object*>(object->Clone(cloneContext));
+	_AddObject(parent, parent->IndexOf(object) + 1, clone);
+}
+
+// _ClonePathInstance
+void
+Window::_ClonePathInstance(PathInstance* path, CloneContext& cloneContext)
+{
+//	Shape* parent = path->Shape();
+//	if (parent == NULL)
+//		return;
+//	PathInstance* clone = dynamic_cast<PathInstance*>(
+//		path->Clone(cloneContext));
+//	
 }
 
 // _AddObject
