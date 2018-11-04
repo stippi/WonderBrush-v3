@@ -35,6 +35,8 @@ public:
 									const BMessage& archive) const;
 			BaseObjectRef		ImportFilterBrightness(
 									const BMessage& archive) const;
+			BaseObjectRef		ImportFilterContrast(
+									const BMessage& archive) const;
 			BaseObjectRef		ImportFilterGaussianBlur(
 									const BMessage& archive) const;
 			BaseObjectRef		ImportFilterDropShadow(

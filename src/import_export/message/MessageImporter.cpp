@@ -20,6 +20,7 @@
 #include "Document.h"
 #include "Filter.h"
 #include "FilterBrightness.h"
+#include "FilterContrast.h"
 #include "FilterDropShadow.h"
 #include "FilterSaturation.h"
 #include "Font.h"
@@ -147,6 +148,9 @@ MessageImporter::ImportObject(const BMessage& archive) const
 	if (type == "FilterBrightness")
 		return ImportFilterBrightness(archive);
 		
+	if (type == "FilterContrast")
+		return ImportFilterContrast(archive);
+		
 	if (type == "FilterGaussianBlur")
 		return ImportFilterGaussianBlur(archive);
 		
@@ -261,6 +265,24 @@ MessageImporter::ImportFilterBrightness(const BMessage& archive) const
 		float factor;
 		if (archive.FindFloat("factor", &factor) == B_OK)
 			filter->SetFactor(factor);
+		
+		_RestoreObject(filter, archive);
+	}
+	return BaseObjectRef(filter, true);
+}
+
+// ImportFilterBrightness
+BaseObjectRef
+MessageImporter::ImportFilterContrast(const BMessage& archive) const
+{
+	FilterContrast* filter = new(std::nothrow) FilterContrast();
+	if (filter != NULL) {
+		float contrast;
+		if (archive.FindFloat("contrast", &contrast) == B_OK)
+			filter->SetContrast(contrast);
+		int32 center;
+		if (archive.FindInt32("center", &center) == B_OK)
+			filter->SetCenter(center);
 		
 		_RestoreObject(filter, archive);
 	}

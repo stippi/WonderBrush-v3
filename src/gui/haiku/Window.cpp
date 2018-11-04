@@ -35,6 +35,7 @@
 #include "EditManager.h"
 #include "Filter.h"
 #include "FilterBrightness.h"
+#include "FilterContrast.h"
 #include "FilterDropShadow.h"
 #include "FilterSaturation.h"
 #include "IconButton.h"
@@ -88,6 +89,7 @@ enum {
 	FILTER_GAUSSIAN_BLUR			= 'gblr',
 	FILTER_SATURATION				= 'srtn',
 	FILTER_BRIGHTNESS				= 'brtn',
+	FILTER_CONTRAST					= 'crst',
 };
 
 class Window::SelectionListener : public Selection::Listener {
@@ -991,8 +993,11 @@ Window::_CreateObjectMenu() const
 	_AddFilterMenuItem(filterMenu, "Gaussian blur", FILTER_GAUSSIAN_BLUR);
 	_AddFilterMenuItem(filterMenu, "Saturation", FILTER_SATURATION);
 	_AddFilterMenuItem(filterMenu, "Brightness", FILTER_BRIGHTNESS);
+	_AddFilterMenuItem(filterMenu, "Contrast", FILTER_CONTRAST);
 
 	menu->AddItem(filterMenu);
+
+	menu->AddItem(new BSeparatorItem());
 
 	menu->AddItem(fDuplicateMI);
 	menu->AddItem(fDuplicateLinkedMI);
@@ -1132,6 +1137,9 @@ Window::_AddFilter(int32 filterID)
 			break;
 		case FILTER_BRIGHTNESS:
 			filter = new(std::nothrow) FilterBrightness();
+			break;
+		case FILTER_CONTRAST:
+			filter = new(std::nothrow) FilterContrast();
 			break;
 	};
 

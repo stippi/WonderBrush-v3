@@ -111,6 +111,18 @@ ArchiveVisitor::VisitFilterBrightness(FilterBrightness* brightness,
 }
 
 bool
+ArchiveVisitor::VisitFilterContrast(FilterContrast* contrast,
+	BMessage* context)
+{
+	status = context->AddString(kType, "FilterContrast");
+	if (status == B_OK)
+		status = context->AddFloat("contrast", contrast->Contrast());
+	if (status == B_OK)
+		status = context->AddInt32("center", contrast->Center());
+	return status == B_OK;
+}
+
+bool
 ArchiveVisitor::VisitFilterDropShadow(FilterDropShadow* dropShadow,
 	BMessage* context)
 {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2013, Stephan Aßmus <superstippi@gmx.de>.
+ * Copyright 2006-2018, Stephan Aßmus <superstippi@gmx.de>.
  * All rights reserved.
  */
 
@@ -49,6 +49,8 @@ enum {
 	PROPERTY_HSV_VALUE					= 'vlue',
 	PROPERTY_BRIGHTNESS_OFFSET			= 'brto',
 	PROPERTY_BRIGHTNESS_FACTOR			= 'brtf',
+	PROPERTY_CONTRAST					= 'ctst',
+	PROPERTY_CENTER						= 'cntr',
 
 	PROPERTY_GROUP_STROKE_PAINT			= 'strk',
 	PROPERTY_GROUP_FILL_PAINT			= 'fill',

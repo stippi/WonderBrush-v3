@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2013, Stephan Aßmus <superstippi@gmx.de>.
+ * Copyright 2006-2018, Stephan Aßmus <superstippi@gmx.de>.
  * All rights reserved.
  */
 
@@ -112,6 +112,12 @@ name_for_id(int32 id)
 			break;
 		case PROPERTY_BRIGHTNESS_FACTOR:
 			name = "Factor";
+			break;
+		case PROPERTY_CONTRAST:
+			name = "Contrast";
+			break;
+		case PROPERTY_CENTER:
+			name = "Center";
 			break;
 
 		case PROPERTY_GROUP_STROKE_PAINT:
