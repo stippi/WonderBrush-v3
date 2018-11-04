@@ -36,6 +36,7 @@ Styleable::Styleable(const Styleable& other, CloneContext& context)
 	, fStyle()
 {
 	context.Clone(other.fStyle.Get(), fStyle);
+	fStyle->AddListener(this);
 }
 
 // destructor
