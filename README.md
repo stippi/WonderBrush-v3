@@ -52,9 +52,11 @@ address these problems by being properly designed. In terms of features, here ar
  * 16-bit linear and pre-multiplied RGB internal color space. 8 bit sRGB is designed to preserve details in dark and 
  bright colors at the same time so humans can perceive about the same change in brightness going from one value to the next.
  This is achieved by using a non-uniform distribution of brightness. Non-uniform color values mean you cannot really do any
- calculations, or if you do, you will get weird artifacts. This is why a liniar RGB color space is used internally, which has
- a linear change in brightness. To preserve detail, 16 bits are used instead of 8. The colors are also pre-multiplied with the
- alpha channel. When alpha is zero at a given pixel, the color channels are meaningless when combining with other pixels, and that is what pre-multiplying achieves. This is important in all sorts of calculations, especially filters.
+ calculations, or if you do, you will get weird artifacts. This is why an RGB color space is used internally, which has
+ a linear change in brightness. To preserve detail, 16 bits per channel are used instead of 8. The colors are also 
+ pre-multiplied with the alpha channel. When alpha is zero at a given pixel, the color channels are meaningless when 
+ combining with other pixels, and that is what pre-multiplying achieves. This is important in all sorts of calculations,
+ especially filters.
  
  * Global resources. Objects in WonderBrush 3 can share resources, such as colors or vector paths. Manipulating
  the shared resources will affect all objects which use them at the same time.
