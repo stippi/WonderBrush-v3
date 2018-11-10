@@ -189,7 +189,7 @@ struct TransformToolState::DrawParameters {
 
 	BPoint pivot;
 
-	static const float pivotSize = 3;
+	static constexpr float pivotSize = 3;
 
 	DrawParameters(TransformToolState* state, const BRect & modifiedBox,
 		float scaleX, float scaleY, const BPoint & pivot, bool subpixelPrecise)
