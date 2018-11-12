@@ -176,7 +176,7 @@ private:
 		const Color& selectionFG, const Color& underlineColor);
 
 public:
-	static const double		AUTO_HINT_SCALE = 100.0;
+	static constexpr double	AUTO_HINT_SCALE = 100.0;
 
 private:
 	RenderingBuffer			fBuffer;
