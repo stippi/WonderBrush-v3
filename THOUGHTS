@@ -1,14 +1,23 @@
 Resourcen
 
-Noch mehr Dinge als jetzt schon (Fill, Path) könnten Resourcen sein, zum Beispiel auch einfache Farben. Im Eigenschaften Feld könnte man diese Resourcen "veröffentlichen" können, was sie in die globale Resourcen Liste einträgt. Von dort könnte man Resourcen anderen Objekten zuweisen oder Resourcen erzeugen, die ableiten von anderen Resourcen, wie beispielsweise "Shades" was eine Color-Resource ist, welche auf einer anderen Color-Resource basiert und Parameter abändern kann (Sättigung, Helligkeit, ...). Resourcen könnten dann an beliebiger Stelle referenziert werden. Eine Color-Resource in einem Gradient-Step uswusf.
+Many more things than now (Fill, Path) could be "Resources", for example also simple colors. In the Properties field,
+one could make these Resources "public", which will insert them in the global "Resources" list. From there one could
+assign Resources to other Objects or Resources which are derived from other Resources, such as "Shades", which is a
+Color-Resource that takes another Color-Resource and changes parameters (saturation, brightness, hue, ...). Resources
+could then be referenced anywhere. In a Color-Resource of a Gradient-Step and so on.
 
+Decorations
 
-Dekorationen
-
-Gegenwärtig ist es bei Shape und Rect Objekten möglich, einen "Fill" und einen "Stroke" Paint zu definieren. Besonders flexibel ist das noch nicht. So ähnlich wie in Icon-O-Matic könnte man das Konzept der "Decorations" erfinden, wo man bestimmte Typen von Objekten (Shape, Rect, Text) erst einmal als Vektorform auffasst. Vielleicht leiten diese Objekte alle von einer Basisklasse ab, welche eine agg::path_storage liefert.
-Standardmäßig würden diese Formen mit einem bestimmten "Paint" gefüllt. Zusätzlich kann man dann beliebig viele Dekorationen hinzufügen, die jeweils einen eigenen Paint und sogar eine zum Objekt relative Transformation haben. Die Dekorations basieren auf der Vektorform des Mutterobjekts und verändern diese entsprechend ihres Typs und ihrer Parameter. Diese Form der Dekorations könnte als Unterobjekt des Mutterobjekts dargestellt werden. Das hätte den Vorteil, dass man sie einklappen kann und das gesamte Gebilde als einzelnes Objekt im Layertree funktioniert.
-Gleichzeitig wäre es aber auch noch flexibler, wenn man die Dekorations optional von ihrem Mutterobjekt abkoppeln und an beliebiger Stelle im Layertree einsetzen könnte. Als eigenständige Objekte dürfen Decorations natürlich selbst wieder als Mutterobjekt für weitere Decorations fungieren.
-
+At the moment it is possible to define a "Fill" and "Stroke" Paint for Shapes and Rect Objects. That is not yet very
+flexible. A bit like in Icon-O-Matic, there could be the concept of "Decorations", where certain types of Objects are
+at first vector shapes. Perhaps all of these objects inherit from a base-cass which provides an agg::path_storage.
+By default, these objects would be fill by a certain "Paint". On top of that one could add any number of Decorations
+which have their own Paint and perhaps even their own Transformation relative to the Object. These decorations are based
+on the vector shape of their parent object and change it according to their type and parameters. This type of Decoration
+could be visualized as a child-object of the parent-object. This would have the advantage making the Decorations 
+individually accessible within the layer-tree and treat the collapsed composition as a single object at the same time.
+It would be even more flexible to be able to detach Decorations and place them anywhere in the layer-tree. As self-contained
+Objects, Decorations can function as parent-object of other Decorations.
 
 FontManager
 
