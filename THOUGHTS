@@ -1,4 +1,4 @@
-Resourcen
+Resources
 
 Many more things than now (Fill, Path) could be "Resources", for example also simple colors. In the Properties field,
 one could make these Resources "public", which will insert them in the global "Resources" list. From there one could
@@ -21,8 +21,14 @@ Objects, Decorations can function as parent-object of other Decorations.
 
 FontManager
 
-In einem GlyphCache Eintrag werden entweder Bitmap- oder Pfad-Daten komprimiert in einem Puffer abgelegt. WonderBrush braucht quasi nur Glyphen als Vektorpfade, die Optimierung der Bitmap-Glyphen lohnt kaum. Es funktioniert allerdings nicht, gleich fertige Pfade zu cachen, weil agg::path_storage nicht thread-safe ist. Mehrere Threads würden sich gegenseitig den internen Iterator-Mechanismus durcheinander bringen. Vielleicht lohnt es, einen Iterator für path_storage zu implementieren und in jedem Thread eine Instanz zu verwenden. Ansonsten kann es nicht funktionieren, FontEngine::init_embedded_adaptors() so wie jetzt aufzurufen, wenn dadurch der Puffer aus dem GlyphCache in ein path_storage Objekt der FontEngine entpackt wird. Das ist noch viel weniger thread-safe. Stattdessen sollte es eine Art GlyphCacheExtractor Klasse geben, in welche die "Adapter" von FontEngine
-verschoben werden.
+A GlyphCache entry stores either compressed bitmap or vector path data in a buffer. WonderBrush actually only ever needs
+vector paths, the optimization for bitmap-glyphs is rather unnecessary. It is however not possible to cache complete
+paths, since agg::path_storage is not thread-safe. Multiple threads would mess up each the internal iterator mechanism for
+each other. Perhaps it would be beneficial to implement a separate iterator for path_storage and attach a separate instance
+of that in each thread. Otherwise it cannot work to call FontEngine::init_embedded_adaptors() as is done now, when that
+means the buffer of a GlyphCache is decompressed into a path_storage object belonging to the FontEngine. That is even less
+thread-safe. Instead there should be some sort of GlyphCacheExtractor class into which the "adapters" of the FontEngine
+are moved.
 
 
 Rendern mit Zoomstufe
