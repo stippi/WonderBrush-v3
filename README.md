@@ -1,40 +1,63 @@
 # WonderBrush-v3
 WonderBrush is a graphics application for Haiku.
 
+## Pre-requesits
+
+The libfreetype header files don't come standard with Haiku.
+
+```bash
+pkgman install freetype_x86_devel
+```
+
 ## How to build
 
-This code currently builds on Haiku for the "x86" architecture. If this is not already your primary architecture, you need to
+This code currently builds on Haiku for the "x86" architecture.
+If this is not already your primary architecture, you need to switch to it using:
 
-  *setarch x86*
+```bash
+setarch x86
+```
 
-... in a Haiku Terminal. Then you can build with
+To build WonderBrush, execute:
 
-  *jam -q -j2*
+```bash
+jam -q -j2
+```
 
-"-q" is for stopping the build on the first error, "-j" is to build using two concurrent jobs. If you have more CPU cores
-available, adjust the parameter as needed.
+`-q` is for stopping the build on the first error, `-j` is to build using two concurrent jobs.
+If you have more CPU cores available, adjust the parameter as needed.
 
-If you get any missing header or missing libraries errors, you need to solve them by installing the respective development packages in HaikuDepot. I am sure at least libfreetype2 is needed. No fiddling or any cludges should be necessary apart from simply installing development packages (those that come with headers).
+The build artifacts are placed in a folder "generated".
+By default, you do a release build, so the WonderBrush executable is placed in a sub-folder "distro-haiku".
+You can launch WonderBrush by executing
 
-The build artifacts are placed in a folder "generated". By default, you do a release build, so the WonderBrush executable 
-is placed in a sub-folder "distro-haiku". You can launch WonderBrush by executing
+```bash
+generated/distro-haiku/WonderBrush --fonts data/fonts
+```
 
-  *generated/distro-haiku/WonderBrush --fonts data/fonts*
+The `--fonts` parameters is to tell WonderBrush were to look for some additional fonts.
+At the moment, WonderBrush directly creates a "demo" document which uses some of these fonts.
+The document will look wrong when you forget this parameter.
 
-The "--fonts" parameters is to tell WonderBrush were to look for some additional fonts. At the moment, WonderBrush directly 
-creates a "demo" document which uses some of these fonts. The document will look wrong when you forget this parameter.
+You can also do a debug-build.
+For this, simply define a `DEBUG` environment variable while doing the build.
+Such as this:
 
-You can also do a debug-build. For this, simply define a "DEBUG" environment variable while doing the build. Such as this:
-
-  *DEBUG=1 jam -q -j2*
+```bash
+DEBUG=1 jam -q -j2
+```
 
 This will automatically place the object files into a different sub-folder in "generated", so you launch WonderBrush like this:
 
-  *generated/distro-debug-haiku/WonderBrush --fonts data/fonts*
+```bash
+generated/distro-debug-haiku/WonderBrush --fonts data/fonts
+```
 
 or like this:
 
-  *Debugger generated/distro-debug-haiku/WonderBrush --fonts data/fonts*
+```bash
+Debugger generated/distro-debug-haiku/WonderBrush --fonts data/fonts
+```
 
 ... to launch it directly in the Haiku source level debugger.
 
