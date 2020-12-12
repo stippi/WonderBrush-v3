@@ -63,9 +63,9 @@ Debugger generated/distro-debug-haiku/WonderBrush --fonts data/fonts
 
 ## What this is
 
-This is completely new code. There are some painful shortcommings in the "old" WonderBrush, not only in its overall 
-capabilities and its tools, but also in the way the code was written. The new code is supposed to 
-address these problems by being properly designed. In terms of features, here are the most important highlights:
+This is a not well maintained work-in-progress rewrite of [WonderBrush](https://github.com/stippi/WonderBrush-v2).
+There are some painful shortcommings in the "old" WonderBrush, not only in its overall capabilities and its tools, but also in the way the code was written.
+The new code is supposed to address these problems by being properly designed. In terms of features, here are the most important highlights:
 
  * Fully multi-threaded and asynchronous rendering pipeline. The main objective was to keep the UI responsive at all 
  times, also and especially while manipulating objects on the canvas.
@@ -84,18 +84,24 @@ address these problems by being properly designed. In terms of features, here ar
  * Global resources. Objects in WonderBrush 3 can share resources, such as colors or vector paths. Manipulating
  the shared resources will affect all objects which use them at the same time.
 
-Some of the more recent work has been to provide the capability to load WonderBrush v2 documents. This is incomplete in that WonderBrush v3 does not include all the features of v2, and it will also reveal some current shortcommings of the new code. The most important one is that almost no caching exists and some operations are not yet optimized enough. The effect is that loading some documents will appear to lock up the new WonderBrush, and once it finally renders something, actually manipulating the document will prove hopeless.
+Some of the more recent work has been to provide the capability to load WonderBrush v2 documents.
+This is incomplete in that WonderBrush v3 does not include all the features of v2, and it will also reveal some current shortcommings of the new code.
+The most important one is that almost no caching exists and some operations are not yet optimized enough. The effect is that loading some documents will appear to lock up the new WonderBrush, and once it finally renders something, actually manipulating the document will prove hopeless.
 
-Here is an old blog post about WonderBrush v3: https://www.haiku-os.org/blog/stippi/2012-10-25_new_wonderbrush/
+Here is an [old blog post](https://www.haiku-os.org/blog/stippi/2012-10-25_new_wonderbrush/) about WonderBrush v3.
 
-And here is the original website of WonderBrush v2: http://yellowbites.com/wonderbrush.html
+And here is the original [website of WonderBrush v2](http://yellowbites.com/wonderbrush.html).
 
-(Please don't try to purchase WonderBrush, it is no longer available on Kagi or Mensys. Instead, it comes for free with every Haiku installation.)
+:warning: Please don't try to purchase WonderBrush, it is no longer available on Kagi or Mensys.
+Instead, it comes for free with every Haiku installation.
 
 ## What's included
 
-This code also contains an incomplete (and currently broken) port to Qt. The Qt port could be fixed by providing platform delegate code to the new tool UI which has been written since the Qt port was last maintained.
+This code also contains an incomplete (and currently broken) port to Qt.
+The Qt port could be fixed by providing platform delegate code to the new tool UI which has been written since the Qt port was last maintained.
 
-Also included is some code which is currently not used and not compiled. For example the ALM layout code. The plan was to allow optional layouts to be used in documents, which would place objects within a layout (instead of at absolute positions on a given layer).
+Also included is some code which is currently not used and not compiled.
+For example the ALM layout code.
+The plan was to allow optional layouts to be used in documents, which would place objects within a layout (instead of at absolute positions on a given layer).
 
 There might be more code included which is currently not used.
