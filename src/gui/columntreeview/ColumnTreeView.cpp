@@ -132,7 +132,8 @@ ColumnTreeView::ColumnTreeView(BRect frame)
 	fColumns(20),
 	fVisibleColumns(20),
 //	fItems(100),
-	fSelectedItems(100)
+	fSelectedItems(100),
+	fDefaultItemHeight(0.0f)
 {
 	_Init();
 }
@@ -149,7 +150,8 @@ ColumnTreeView::ColumnTreeView()
 	fColumns(20),
 	fVisibleColumns(20),
 //	fItems(100),
-	fSelectedItems(100)
+	fSelectedItems(100),
+	fDefaultItemHeight(0.0f)
 {
 	_Init();
 }
@@ -1555,6 +1557,18 @@ ColumnTreeView::SetSecondarySortVisibleColumn(int32 index, bool inverse)
 {
 	_SetSecondarySortOrderedColumn(
 		OrderedColumnIndexOf(_VisibleColumnAt(index)), inverse);
+}
+
+// DefaultItemHeight
+float
+ColumnTreeView::DefaultItemHeight()
+{
+	if (fDefaultItemHeight == 0.0f) {
+		BFont font;
+		GetFont(&font);
+		fDefaultItemHeight = ceilf(font.Size() * 1.5);
+	}
+	return fDefaultItemHeight;
 }
 
 // ItemsAdded

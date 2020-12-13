@@ -409,7 +409,7 @@ ResourceTreeView::_ObjectAdded(const ResourceList* list, BaseObject* object,
 		return;
 
 	ResourceColumnTreeItem* item
-		= new(std::nothrow) ResourceColumnTreeItem(20, object);
+		= new(std::nothrow) ResourceColumnTreeItem(DefaultItemHeight(), object);
 	if (item == NULL)
 		return;
 	item->Update();
@@ -498,7 +498,7 @@ ResourceTreeView::_AddItems(const ResourceList& list,
 	for (int32 i = 0; i < count; i++) {
 		BaseObject* object = list.ObjectAtFast(i);
 
-		ResourceColumnTreeItem* item = new ResourceColumnTreeItem(20, object);
+		ResourceColumnTreeItem* item = new ResourceColumnTreeItem(DefaultItemHeight(), object);
 		item->Update();
 
 		if (parentItem)

@@ -200,17 +200,20 @@ public:
 	// private in principle, but called by the header view
 			void				ResizeVisibleColumn(int32 index, float width);
 			void				MoveVisibleColumn(int32 oldIndex,
-												  int32 newIndex);
+									int32 newIndex);
 			void				MoveVisibleColumns(int32 index, int32 dest,
-												   int32 count);
+									int32 count);
 
 			void				DisableScrolling();
 			void				EnableScrolling();
 
 			void				SetPrimarySortVisibleColumn(int32 index,
-															bool inverse);
+									bool inverse);
 			void				SetSecondarySortVisibleColumn(int32 index,
-															  bool inverse);
+									bool inverse);
+	// utility
+			float				DefaultItemHeight();
+
  private:
  	// ColumnTreeModelListener implementation
 	virtual	void				ItemsAdded(ColumnTreeModel* model,
@@ -348,6 +351,7 @@ private:
 			int32				fLastClickedIndex;
 			bigtime_t			fLastClickTime;
 			bigtime_t			fDoubleClickTime;
+			float				fDefaultItemHeight;
 };
 
 #endif	// COLUMN_TREE_VIEW_H

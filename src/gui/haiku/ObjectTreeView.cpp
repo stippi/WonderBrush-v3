@@ -702,7 +702,7 @@ ObjectTreeView::_ObjectAdded(Layer* layer, Object* object, int32 index)
 
 	ObjectColumnTreeItem* parentItem = _FindLayerTreeViewItem(layer);
 
-	ObjectColumnTreeItem* item = new ObjectColumnTreeItem(20, object);
+	ObjectColumnTreeItem* item = new ObjectColumnTreeItem(DefaultItemHeight(), object);
 	item->Update();
 
 	AddSubItem(parentItem, item, index);
@@ -782,7 +782,7 @@ ObjectTreeView::_PathAdded(Shape* shape, PathInstance* path, int32 index)
 
 	ObjectColumnTreeItem* parentItem = _FindLayerTreeViewItem(shape);
 
-	ObjectColumnTreeItem* item = new ObjectColumnTreeItem(20, path);
+	ObjectColumnTreeItem* item = new ObjectColumnTreeItem(DefaultItemHeight(), path);
 	item->Update();
 
 	AddSubItem(parentItem, item, index);
@@ -829,11 +829,13 @@ ObjectTreeView::_RecursiveAddItems(Layer* layer,
 {
 	layer->AddListener(&fLayerObserver);
 
+	float itemHeight = DefaultItemHeight();
+
 	int32 count = layer->CountObjects();
 	for (int32 i = 0; i < count; i++) {
 		Object* object = layer->ObjectAtFast(i);
 
-		ObjectColumnTreeItem* item = new ObjectColumnTreeItem(20, object);
+		ObjectColumnTreeItem* item = new ObjectColumnTreeItem(itemHeight, object);
 		item->Update();
 
 		if (layerItem != NULL)
@@ -861,12 +863,13 @@ ObjectTreeView::_AddPathItems(Shape* shape,
 	shape->AddShapeListener(&fShapeObserver);
 
 	const PathList& paths = shape->Paths();
+	float itemHeight = DefaultItemHeight();
 
 	int32 count = paths.CountItems();
 	for (int32 i = 0; i < count; i++) {
 		const PathInstanceRef& path = paths.ItemAtFast(i);
 
-		ObjectColumnTreeItem* item = new ObjectColumnTreeItem(20, path.Get());
+		ObjectColumnTreeItem* item = new ObjectColumnTreeItem(itemHeight, path.Get());
 		item->Update();
 
 		if (layerItem != NULL)
@@ -941,4 +944,3 @@ ObjectTreeView::_DropPaths(const BMessage& dragMessage, int32 count,
 
 	fDocument->EditManager()->Perform(command, fEditContext);
 }
-
