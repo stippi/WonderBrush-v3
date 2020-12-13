@@ -1,5 +1,5 @@
 /*
- * Copyright 2013, Stephan Aßmus <superstippi@gmx.de>
+ * Copyright 2013-2020, Stephan Aßmus <superstippi@gmx.de>
  * All rights reserved.
  */
 
@@ -88,8 +88,8 @@ IconButton*
 RectangleTool::MakeIcon()
 {
 	IconButton* button = new IconButton("rectangle", 0);
-	button->SetIcon(505, 32);
-	button->TrimIcon(BRect(0, 0, 21, 21));
+	button->SetIcon(505, IconSize());
+	button->TrimIcon(IconTrimRect());
 	return button;
 }
 

@@ -66,6 +66,8 @@
 #include "SwatchGroup.h"
 #include "WonderBrush.h"
 
+#include "support_ui.h"
+
 #define B_TRANSLATION_CONTEXT "Window"
 
 enum {
@@ -284,9 +286,9 @@ Window::Window(BRect frame, const char* title, Document* document,
 		| SCROLL_VISIBLE_RECT_IS_CHILD_BOUNDS, "canvas",
 		B_WILL_DRAW | B_FRAME_EVENTS, B_NO_BORDER);
 
-	const int iconSize = 16;
-	const BRect toolIconBounds(0, 0, 15, 15);
-	float iconGroupInset = 3.0f;
+	int iconSize = icon_size();
+	BRect toolIconBounds(0, 0, iconSize - 1, iconSize - 1);
+	float iconGroupInset = 3.0f * ui_scale();
 
 	// File icon group
 	IconButton* newButton = new IconButton("new", 0, NULL,
@@ -482,7 +484,7 @@ Window::Window(BRect frame, const char* title, Document* document,
 	;
 
 	objectResourceTabView->SetExplicitMinSize(BSize(170, B_SIZE_UNSET));
-	objectResourceTabView->SetExplicitMaxSize(BSize(250, B_SIZE_UNSET));
+	objectResourceTabView->SetExplicitMaxSize(BSize(500, B_SIZE_UNSET));
 
 	fView->MakeFocus(true);
 

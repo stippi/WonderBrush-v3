@@ -1,5 +1,5 @@
 /*
- * Copyright 2010 Stephan Aßmus <superstippi@gmx.de>
+ * Copyright 2010-2020 Stephan Aßmus <superstippi@gmx.de>
  * All rights reserved.
  */
 
@@ -16,6 +16,7 @@
 #include <Messenger.h>
 #include <Region.h>
 
+#include "support_ui.h"
 #include "ui_defines.h"
 
 #include "Document.h"
@@ -284,7 +285,8 @@ NavigatorView::MouseMoved(BPoint where, uint32 transit,
 BSize
 NavigatorView::MinSize()
 {
-	return BLayoutUtils::ComposeSize(ExplicitMinSize(), BSize(31, 31));
+	return BLayoutUtils::ComposeSize(ExplicitMinSize(),
+		scaled_ui_size(BSize(31, 31)));
 }
 
 // MaxSize
@@ -299,7 +301,8 @@ NavigatorView::MaxSize()
 BSize
 NavigatorView::PreferredSize()
 {
-	return BLayoutUtils::ComposeSize(ExplicitPreferredSize(), BSize(63, 63));
+	return BLayoutUtils::ComposeSize(ExplicitPreferredSize(),
+		scaled_ui_size(BSize(63, 63)));
 }
 
 // HasHeightForWidth

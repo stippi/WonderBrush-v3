@@ -1,5 +1,5 @@
 /*
- * Copyright 20012, Stephan Aßmus <superstippi@gmx.de>
+ * Copyright 2012-2020, Stephan Aßmus <superstippi@gmx.de>
  * All rights reserved.
  */
 
@@ -88,8 +88,8 @@ IconButton*
 PathTool::MakeIcon()
 {
 	IconButton* button = new IconButton("path", 0);
-	button->SetIcon(504, 32);
-	button->TrimIcon(BRect(0, 0, 21, 21));
+	button->SetIcon(504, IconSize());
+	button->TrimIcon(IconTrimRect());
 	return button;
 }
 

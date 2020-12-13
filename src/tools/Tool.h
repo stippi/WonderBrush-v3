@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2013, Stephan Aßmus <superstippi@gmx.de>
+ * Copyright 2006-2020, Stephan Aßmus <superstippi@gmx.de>
  * All rights reserved.
  */
 
@@ -68,6 +68,9 @@ protected:
 									CurrentColor* color) = 0;
 	virtual	ToolConfigView*		MakeConfigView() = 0;
 	virtual	IconButton*			MakeIcon() = 0;
+
+			int					IconSize() const;
+			BRect				IconTrimRect() const;
 
 protected:
 			ViewState*			fViewState;

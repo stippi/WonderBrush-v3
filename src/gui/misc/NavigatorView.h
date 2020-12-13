@@ -1,5 +1,5 @@
 /*
- * Copyright 2010 Stephan Aßmus <superstippi@gmx.de>
+ * Copyright 2010-2020 Stephan Aßmus <superstippi@gmx.de>
  * All rights reserved.
  */
 #ifndef NAVIGATOR_VIEW_H

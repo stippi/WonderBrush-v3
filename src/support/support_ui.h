@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2013, Stephan Aßmus <superstippi@gmx.de>.
+ * Copyright 2006-2020, Stephan Aßmus <superstippi@gmx.de>.
  * All rights reserved. Distributed under the terms of the MIT License.
  */
 
@@ -81,5 +81,9 @@ float get_text_control_float_value(BTextControl* control);
 void stroke_frame(PlatformDrawContext& drawContext, BRect frame,
 	rgb_color left, rgb_color top, rgb_color right, rgb_color bottom);
 
+
+float ui_scale();
+int icon_size();
+BSize scaled_ui_size(BSize size);
 
 #endif // SUPPORT_UI_H

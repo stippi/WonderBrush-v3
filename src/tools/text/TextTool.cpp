@@ -70,8 +70,8 @@ IconButton*
 TextTool::MakeIcon()
 {
 	IconButton* button = new IconButton("text", 0);
-	button->SetIcon(503, 32);
-	button->TrimIcon(BRect(0, 0, 21, 21));
+	button->SetIcon(503, IconSize());
+	button->TrimIcon(IconTrimRect());
 	return button;
 }
 

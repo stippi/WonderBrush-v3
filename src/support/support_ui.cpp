@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2013, Stephan Aßmus <superstippi@gmx.de>.
+ * Copyright 2006-2020, Stephan Aßmus <superstippi@gmx.de>.
  * All rights reserved. Distributed under the terms of the MIT License.
  */
 
@@ -353,4 +353,25 @@ get_text_control_float_value(BTextControl* control)
 	return atof(control->Text());
 }
 
+// ui_scale
+float
+ui_scale()
+{
+	return be_plain_font->Size() > 16 ? 2.0f : 1.0f;
+}
 
+// icon_size
+int
+icon_size()
+{
+	return (int)(16 * ui_scale());
+}
+
+BSize
+scaled_ui_size(BSize size)
+{
+	float scale = ui_scale();
+	size.width *= scale;
+	size.height *= scale;
+	return size;
+}

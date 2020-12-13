@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2013, Stephan Aßmus <superstippi@gmx.de>
+ * Copyright 2006-2020, Stephan Aßmus <superstippi@gmx.de>
  * All rights reserved.
  */
 
@@ -9,6 +9,8 @@
 
 #include "ToolListener.h"
 #include "ViewState.h"
+
+#include "support_ui.h"
 
 // constructor
 Tool::Tool(const char* name)
@@ -157,6 +159,21 @@ Tool::NotifyConfirmableEditFinished()
 	int count = fToolListeners.CountItems();
 	for (int i = 0; i < count; i++)
 		fToolListeners.ItemAtFast(i)->ConfirmableEditFinished();
+}
+
+// IconSize
+int
+Tool::IconSize() const
+{
+	return (int)(32 * ui_scale());
+}
+
+// IconTrimRect
+BRect
+Tool::IconTrimRect() const
+{
+	float uiScale = ui_scale();
+	return BRect(0, 0, 22 * uiScale - 1, 22 * uiScale - 1);
 }
 
 
