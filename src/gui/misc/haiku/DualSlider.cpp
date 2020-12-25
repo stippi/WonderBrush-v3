@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2010 Stephan Aßmus <superstippi@gmx.de>
+ * Copyright 2002-2020 Stephan Aßmus <superstippi@gmx.de>
  * All rights reserved. Distributed under the terms of the MIT license.
  */
 
@@ -18,6 +18,7 @@
 #include <Window.h>
 
 #include "support.h"
+#include "support_ui.h"
 
 enum {
 	MIN_ENABLED			= 0x01,
@@ -99,11 +100,12 @@ DualSlider::Draw(BRect updateRect)
 		black = tint_color(background, B_DARKEN_3_TINT);
 	}
 	uint32 flags = 0;
+	float uiScale = ui_scale();
 	if (!IsEnabled())
 		flags |= BControlLook::B_DISABLED;
 	BRect r(Bounds());
 	// label
-	float labelHeight = _LabelHeight();
+	float labelHeight = _LabelHeight(uiScale);
 	if (labelHeight > 0.0) {
 		r.bottom = r.top + labelHeight;
 		FillRect(r, B_SOLID_LOW);
@@ -114,7 +116,7 @@ DualSlider::Draw(BRect updateRect)
 		DrawString(fLabel.String(), BPoint(r.left, r.top + fh.ascent + 1.0));
 	}
 	// pressure check mark
-	r = _PressureBoxFrame();
+	r = _PressureBoxFrame(uiScale);
 	if (updateRect.Intersects(r) && fControlMessage) {
 		uint32 pressureFlags = flags;
 		if ((fFlags & PRESSURE_PRESSED) != 0
@@ -129,8 +131,8 @@ DualSlider::Draw(BRect updateRect)
 		PopState();
 	}
 	// slider background
-	r = _SliderFrame();
-	BRect barFrame = _BarFrame();
+	r = _SliderFrame(uiScale);
+	BRect barFrame = _BarFrame(uiScale);
 	BRect top(r.left, r.top, r.right, barFrame.top - 1.0);
 	BRect left(r.left, barFrame.top,
 			   barFrame.left - 1.0, barFrame.bottom);
@@ -190,13 +192,19 @@ DualSlider::Draw(BRect updateRect)
 	// arrows
 	BRect arrowRect;
 	if (IsMinEnabled()) {
-		arrowRect.Set(minPos - 5.0, barFrame.top - 6.0, minPos + 6.0,
+		arrowRect.Set(
+			minPos - 5.0 * uiScale,
+			barFrame.top - 6.0 * uiScale,
+			minPos + 6.0 * uiScale,
 			barFrame.top + 1);
 		_DrawSliderTriangleDownward(this, arrowRect, updateRect, background,
 			background, flags);
 	}
-	arrowRect.Set(maxPos - 6.0, barFrame.bottom - 1.0, maxPos + 7.0,
-		barFrame.bottom + 7.0);
+	arrowRect.Set(
+		maxPos - 6.0 * uiScale,
+		barFrame.bottom - 1.0,
+		maxPos + 7.0 * uiScale,
+		barFrame.bottom + 7.0 * uiScale);
 	be_control_look->DrawSliderTriangle(this, arrowRect, updateRect,
 		background, flags, B_HORIZONTAL);
 }
@@ -205,37 +213,39 @@ DualSlider::Draw(BRect updateRect)
 void
 DualSlider::MouseDown(BPoint where)
 {
-	if (IsEnabled()) {
-		BRect r(_SliderFrame());
-		BRect minFrame(r);
-		if (IsMaxEnabled() && IsMinEnabled())
-			minFrame.bottom = r.top + floorf(r.Height() / 2.0);
-		BRect maxFrame(r);
-		if (IsMaxEnabled() && IsMinEnabled())
-			maxFrame.top = minFrame.bottom + 1.0;
-		float value = _ValueFor(where);
-		if (IsMinEnabled() && minFrame.Contains(where)) {
-			fFlags |= DRAGGING_MIN;
-			fFlags &= ~DRAGGING_MAX;
-			fLastFactor = fMaxValue / fMinValue;
-			SetMinValue(value);
-			if (fLastFactor < 1.0)
-				SetMaxValue(fLastFactor * fMinValue);
-			SetMouseEventMask(B_POINTER_EVENTS, B_LOCK_WINDOW_FOCUS);
-		} else if (IsMaxEnabled() && maxFrame.Contains(where)) {
-			fFlags |= DRAGGING_MAX;
-			fFlags &= ~DRAGGING_MIN;
-			fLastFactor = fMinValue / fMaxValue;
-			SetMaxValue(value);
-			if (fLastFactor < 1.0)
-				SetMinValue(fLastFactor * fMaxValue);
-			SetMouseEventMask(B_POINTER_EVENTS, B_LOCK_WINDOW_FOCUS);
-		}
-		r = _PressureBoxFrame();
-		if (fControlMessage && r.Contains(where)) {
-			fFlags |= PRESSURE_PRESSED;
-			Invalidate(r);
-		}
+	if (!IsEnabled())
+		return;
+
+	float uiScale = ui_scale();
+	BRect r(_SliderFrame(uiScale));
+	BRect minFrame(r);
+	if (IsMaxEnabled() && IsMinEnabled())
+		minFrame.bottom = r.top + floorf(r.Height() / 2.0);
+	BRect maxFrame(r);
+	if (IsMaxEnabled() && IsMinEnabled())
+		maxFrame.top = minFrame.bottom + 1.0;
+	float value = _ValueFor(where);
+	if (IsMinEnabled() && minFrame.Contains(where)) {
+		fFlags |= DRAGGING_MIN;
+		fFlags &= ~DRAGGING_MAX;
+		fLastFactor = fMaxValue / fMinValue;
+		SetMinValue(value);
+		if (fLastFactor < 1.0)
+			SetMaxValue(fLastFactor * fMinValue);
+		SetMouseEventMask(B_POINTER_EVENTS, B_LOCK_WINDOW_FOCUS);
+	} else if (IsMaxEnabled() && maxFrame.Contains(where)) {
+		fFlags |= DRAGGING_MAX;
+		fFlags &= ~DRAGGING_MIN;
+		fLastFactor = fMinValue / fMaxValue;
+		SetMaxValue(value);
+		if (fLastFactor < 1.0)
+			SetMinValue(fLastFactor * fMaxValue);
+		SetMouseEventMask(B_POINTER_EVENTS, B_LOCK_WINDOW_FOCUS);
+	}
+	r = _PressureBoxFrame(uiScale);
+	if (fControlMessage && r.Contains(where)) {
+		fFlags |= PRESSURE_PRESSED;
+		Invalidate(r);
 	}
 }
 
@@ -244,7 +254,7 @@ void
 DualSlider::MouseUp(BPoint where)
 {
 	if ((fFlags & PRESSURE_PRESSED) != 0) {
-		BRect r(_PressureBoxFrame());
+		BRect r(_PressureBoxFrame(ui_scale()));
 		if (r.Contains(where))
 			SetMinEnabled(!IsMinEnabled(), true);
 		Invalidate(r);
@@ -272,7 +282,7 @@ DualSlider::MouseMoved(BPoint where, uint32 transit,
 				SetMinValue(fLastFactor * fMaxValue);
 		}
 	}
-	BRect r(_PressureBoxFrame());
+	BRect r(_PressureBoxFrame(ui_scale()));
 	if (r.Contains(where)) {
 		if ((fFlags & PRESSURE_INSIDE) == 0) {
 			fFlags |= PRESSURE_INSIDE;
@@ -294,17 +304,18 @@ DualSlider::MouseMoved(BPoint where, uint32 transit,
 BSize
 DualSlider::MinSize()
 {
-	BSize size(0.0, 18.0);
+	float uiScale = ui_scale();
+	BSize size(0.0, 18.0 * uiScale);
 	if (fLabel.Length() > 0) {
 		font_height fh;
 		GetFontHeight(&fh);
 		size.height += ceilf(fh.ascent) + ceilf(fh.descent) + LABEL_SPACING;
 		size.width = StringWidth(fLabel.String());
 		if (fControlMessage != NULL)
-			size.width += 20.0;
+			size.width += 20.0 * uiScale;
 	}
 	if (size.width == 0.0)
-		size.width = 60.0;
+		size.width = 60.0 * uiScale;
 
 	return BLayoutUtils::ComposeSize(ExplicitMinSize(), size);
 }
@@ -402,10 +413,11 @@ DualSlider::IsEnabled() const
 void
 DualSlider::SetMinEnabled(bool enable, bool sendMessage)
 {
+	float uiScale = ui_scale();
 	if (enable) {
 		if (!(fFlags & MIN_ENABLED)) {
 			fFlags |= MIN_ENABLED;
-			Invalidate(_PressureBoxFrame());
+			Invalidate(_PressureBoxFrame(uiScale));
 			_InvalidateSlider();
 			if (sendMessage)
 				_Invoke(fControlMessage);
@@ -413,7 +425,7 @@ DualSlider::SetMinEnabled(bool enable, bool sendMessage)
 	} else {
 		if (fFlags & MIN_ENABLED) {
 			fFlags &= ~MIN_ENABLED;
-			Invalidate(_PressureBoxFrame());
+			Invalidate(_PressureBoxFrame(uiScale));
 			_InvalidateSlider();
 			if (sendMessage)
 				_Invoke(fControlMessage);
@@ -489,7 +501,7 @@ DualSlider::_Invoke(BMessage* fromMessage)
 void
 DualSlider::_InvalidateSlider()
 {
-	Invalidate(_SliderFrame());
+	Invalidate(_SliderFrame(ui_scale()));
 }
 
 void
@@ -631,50 +643,50 @@ DualSlider::_MakeGlossyGradient(BGradientLinear& gradient, const BRect& rect,
 float
 DualSlider::_ValueFor(BPoint where) const
 {
-	BRect r(_BarFrame());
+	BRect r(_BarFrame(ui_scale()));
 	return (where.x - r.left) / r.Width();
 }
 
 
 // _BarFrame
 BRect
-DualSlider::_BarFrame() const
+DualSlider::_BarFrame(float uiScale) const
 {
-	BRect r(_SliderFrame());
-	r.InsetBy(6.0, 5.0);
-	r.bottom = r.top + 6.0;
+	BRect r(_SliderFrame(uiScale));
+	r.InsetBy(6.0 * uiScale, 5.0 * uiScale);
+	r.bottom = r.top + 6.0 * uiScale;
 	return r;
 }
 
 // _SliderFrame
 BRect
-DualSlider::_SliderFrame() const
+DualSlider::_SliderFrame(float uiScale) const
 {
 	BRect r(Bounds());
-	r.top += _LabelHeight();
+	r.top += _LabelHeight(uiScale);
 	return r;
 }
 
 // _PressureBoxFrame
 BRect
-DualSlider::_PressureBoxFrame() const
+DualSlider::_PressureBoxFrame(float uiScale) const
 {
 	BRect r(Bounds());
-	r.right -= 6.0;
-	r.left = r.right - 12.0;
-	r.bottom = r.top + 12.0;
+	r.right -= 6.0 * uiScale;
+	r.left = r.right - 12.0 * uiScale;
+	r.bottom = r.top + 12.0 * uiScale;
 	return r;
 }
 
 // _LabelHeight
 float
-DualSlider::_LabelHeight() const
+DualSlider::_LabelHeight(float uiScale) const
 {
 	float height = 0.0;
 	if (fLabel.CountChars() > 0) {
 		font_height fh;
 		GetFontHeight(&fh);
-		height = ceilf(fh.ascent + fh.descent) + LABEL_SPACING;
+		height = ceilf(fh.ascent + fh.descent) + LABEL_SPACING * uiScale;
 	}
 	return height;
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2010 Stephan Aßmus <superstippi@gmx.de>
+ * Copyright 2002-2020 Stephan Aßmus <superstippi@gmx.de>
  * All rights reserved. Distributed under the terms of the MIT license.
  */
 
@@ -82,10 +82,10 @@ private:
 										= B_HORIZONTAL) const;
 
 			float				_ValueFor(BPoint where) const;
-			BRect				_BarFrame() const;
-			BRect				_SliderFrame() const;
-			BRect				_PressureBoxFrame() const;
-			float				_LabelHeight() const;
+			BRect				_BarFrame(float uiScale) const;
+			BRect				_SliderFrame(float uiScale) const;
+			BRect				_PressureBoxFrame(float uiScale) const;
+			float				_LabelHeight(float uiScale) const;
 
 private:
 			float				fMinValue;
