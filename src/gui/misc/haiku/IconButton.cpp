@@ -31,6 +31,7 @@
 #include "IconUtils.h"
 
 #include "support.h"
+#include "support_ui.h"
 
 using std::nothrow;
 
@@ -299,8 +300,9 @@ IconButton::GetPreferredSize(float* width, float* height)
 	if (minHeight < MIN_SPACE)
 		minHeight = MIN_SPACE;
 
-	float hPadding = max_c(10.0, ceilf(minHeight / 4.0));
-	float vPadding = max_c(10.0, ceilf(minWidth / 4.0));
+	float uiScale = ui_scale();
+	float hPadding = max_c(10.0 * uiScale, ceilf(minHeight / 4.0));
+	float vPadding = max_c(10.0 * uiScale, ceilf(minWidth / 4.0));
 
 	if (fLabel.CountChars() > 0) {
 		font_height fh;

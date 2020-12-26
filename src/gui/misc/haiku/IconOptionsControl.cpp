@@ -147,7 +147,7 @@ public:
 	virtual BSize BaseMinSize()
 	{
 		fParent->_ValidateLayoutData();
-		return fParent->fLayoutData->icon_bar_min;;
+		return fParent->fLayoutData->icon_bar_min;
 	}
 
 	virtual BSize BaseMaxSize()
@@ -311,7 +311,8 @@ BLayoutItem*
 IconOptionsControl::CreateIconBarLayoutItem()
 {
 	if (fLayoutData->icon_bar_layout_item == NULL) {
-		fLayoutData->icon_bar_layout_item = new IconBarLayoutItem(this);
+		fLayoutData->icon_bar_layout_item
+			= new(std::nothrow) IconBarLayoutItem(this);
 	}
 	return fLayoutData->icon_bar_layout_item;
 }
