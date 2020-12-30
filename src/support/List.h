@@ -104,6 +104,11 @@ public:
 	{
 		return fCount;
 	}
+	
+	inline bool IsEmpty() const
+	{
+		return fCount == 0;
+	}
 
 	inline bool Add(const ItemType& copyFrom)
 	{
@@ -164,6 +169,15 @@ public:
 		}
 
 		fCount--;
+	}
+	
+	inline void Remove(int32 index, int32 count)
+	{
+		// TODO: Optimize
+		while (count > 0) {
+			Remove(index);
+			count--;
+		}
 	}
 
 	inline void Remove(const ItemType& item)
