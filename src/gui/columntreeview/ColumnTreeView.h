@@ -9,6 +9,7 @@
 
 #include "ColumnTreeModelListener.h"
 #include "ColumnTreeViewStates.h"
+#include "List.h"
 #include "Scrollable.h"
 
 class Column;
@@ -332,7 +333,7 @@ private:
 			BList				fColumns;
 			BList				fVisibleColumns;
 			ColumnTreeModel*	fModel;
-			BList				fSelectedItems;
+			List<uint32, true>	fSelectedItems;
 			ColumnHeaderView*	fHeaderView;
 			ColumnTreeItemHandle*	fItemHandle;
 			BPoint				fCurrentScrollOffset;

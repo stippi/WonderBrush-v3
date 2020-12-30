@@ -132,7 +132,7 @@ ColumnTreeView::ColumnTreeView(BRect frame)
 	fColumns(20),
 	fVisibleColumns(20),
 //	fItems(100),
-	fSelectedItems(100),
+	fSelectedItems(),
 	fDefaultItemHeight(0.0f)
 {
 	_Init();
@@ -150,7 +150,7 @@ ColumnTreeView::ColumnTreeView()
 	fColumns(20),
 	fVisibleColumns(20),
 //	fItems(100),
-	fSelectedItems(100),
+	fSelectedItems(),
 	fDefaultItemHeight(0.0f)
 {
 	_Init();
@@ -1140,7 +1140,7 @@ ColumnTreeView::SetSelectionMode(selection_mode mode)
 int32
 ColumnTreeView::CurrentSelection(int32 index) const
 {
-	return (int32)fSelectedItems.ItemAt(index) - 1;
+	return fSelectedItems.ItemAt(index) - 1;
 }
 
 // Deselect
@@ -1150,7 +1150,7 @@ ColumnTreeView::Deselect(int32 index)
 	ColumnTreeItem* item = ItemAt(index);
 	if (item && item->IsSelected()) {
 		item->SetSelected(false);
-		fSelectedItems.RemoveItem(_FindSelectedItem(index));
+		fSelectedItems.Remove(_FindSelectedItem(index));
 		InvalidateItem(index);
 		_InternalSelectionChanged();
 	}
@@ -1166,7 +1166,7 @@ ColumnTreeView::DeselectAll()
 			 i++) {
 			item->SetSelected(false);
 		}
-		fSelectedItems.MakeEmpty();
+		fSelectedItems.Clear();
 		Invalidate();
 		_InternalSelectionChanged();
 	}
@@ -1183,7 +1183,7 @@ ColumnTreeView::DeselectExcept(int32 start, int32 finish)
 			if (index < start || index > finish) {
 				ColumnTreeItem* item = ItemAt(index);
 				item->SetSelected(false);
-				fSelectedItems.RemoveItem(i);
+				fSelectedItems.Remove(i);
 				changed = true;
 			}
 		}
@@ -1222,7 +1222,7 @@ ColumnTreeView::Select(int32 index, bool extend)
 		}
 		if (!item->IsSelected()) {
 			int32 insertionIndex = _FindSelectionInsertionIndex(index);
-			fSelectedItems.AddItem((void*)(index + 1), insertionIndex);
+			fSelectedItems.Add(index + 1, insertionIndex);
 			item->SetSelected(true);
 			InvalidateItem(item);
 			_InternalSelectionChanged();
@@ -1245,7 +1245,7 @@ ColumnTreeView::Select(int32 start, int32 finish, bool extend)
 		for (int32 i = start; i <= finish; i++) {
 			ColumnTreeItem* item = ItemAt(i);
 			if (!item->IsSelected()) {
-				fSelectedItems.AddItem((void*)(i + 1), insertionIndex);
+				fSelectedItems.Add(i + 1, insertionIndex);
 				item->SetSelected(true);
 			}
 			insertionIndex++;
@@ -1631,7 +1631,7 @@ ColumnTreeView::ItemsHidden(ColumnTreeModel* model, int32 index, int32 count,
 				if (ColumnTreeItem* item = ItemAt(CurrentSelection(i)))
 					item->SetSelected(false);
 			}
-			fSelectedItems.RemoveItems(first, last - first);
+			fSelectedItems.Remove(first, last - first);
 			_InternalSelectionChanged();
 		}
 	} else {
@@ -2201,8 +2201,8 @@ ColumnTreeView::_ReindexSelectedItems(int32 index, int32 offset)
 	for (int32 i = 0; i < count; i++) {
 		int32 item = CurrentSelection(i);
 		if (item >= index) {
-			fSelectedItems.RemoveItem(i);
-			fSelectedItems.AddItem((void*)(item + offset + 1), i);
+			fSelectedItems.Remove(i);
+			fSelectedItems.Add(item + offset + 1, i);
 		}
 	}
 }
@@ -2214,10 +2214,10 @@ ColumnTreeView::_ReindexSelectedItems(int32 index, int32 offset)
 void
 ColumnTreeView::_RebuildSelectionList()
 {
-	fSelectedItems.MakeEmpty();
+	fSelectedItems.Clear();
 	for (int32 i = 0; ColumnTreeItem* item = ItemAt(i); i++) {
 		if (item->IsSelected())
-			fSelectedItems.AddItem((void*)(i + 1));
+			fSelectedItems.Add(i + 1);
 	}
 }
 
