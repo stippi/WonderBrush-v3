@@ -5,7 +5,7 @@ GENERATED_DIR		= [ FDirName $(TOP) generated ] ;
 DISTRO_DIR			= [ FDirName $(TOP) generated distro ] ;
 
 # First find out which gcc version the platform uses.
-IS_GCC_4_PLATFORM = ;
+IS_GCC_4_PLATFORM = 1 ;
 if $(OS) = HAIKU {
 	# Only Haiku might use gcc 4. We use the existence of a libstdc++.r4.so in
 	# /boot/develop/lib/x86 to judge whether this is a BeOS compatible and thus
