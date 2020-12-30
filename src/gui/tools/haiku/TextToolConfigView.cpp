@@ -528,7 +528,7 @@ TextToolConfigView::_PopulateFontMenu(BMenu* menu, BHandler* target,
 		return;
 
 	while (menu->CountItems() > 0) {
-		delete menu->RemoveItem(0L);
+		delete menu->RemoveItem(int32(0));
 	}
 
 	BMenu* fontMenu = NULL;
