@@ -27,6 +27,7 @@
 #include "BrushTool.h"
 #include "CanvasView.h"
 #include "CompoundEdit.h"
+#include "Column.h"
 #include "CloneContext.h"
 #include "CopyCloneContext.h"
 #include "DefaultColumnTreeModel.h"
@@ -853,6 +854,65 @@ restore_split_weights(const BMessage& message, const char* name,
 	view->InvalidateLayout(true);
 }
 
+
+// store_columns
+status_t
+store_columns(BMessage& message, const char* name, ColumnTreeView* view)
+{
+	BString hiddenName(name);
+	hiddenName.Append("_hidden");
+
+	message.RemoveName(name);
+	message.RemoveName(hiddenName.String());
+
+	int32 count = view->CountColumns();
+	for (int32 i = 0; i < count; i++) {
+		Column* column = view->ColumnAt(i);
+		status_t ret = message.AddFloat(name, column->Width());
+		if (ret != B_OK)
+			return ret;
+		ret = message.AddBool(hiddenName, column->IsVisible());
+		if (ret != B_OK)
+			return ret;
+	}
+	return B_OK;
+}
+
+// restore_columns
+void
+restore_columns(const BMessage& message, const char* name, ColumnTreeView* view)
+{
+	BString hiddenName(name);
+	hiddenName.Append("_hidden");
+
+	int32 count = view->CountColumns();
+	int32 widthsCount = 0;
+	type_code widthsType;
+	if (message.GetInfo(name, &widthsType, &widthsCount) != B_OK
+		|| widthsType != B_FLOAT_TYPE || widthsCount != count) {
+		// Data cannot be used. For example, the settings may be from
+		// an older version of WonderBrush which had a different number
+		// of columns in the view.
+		printf("Ignoring incompatible column settings for '%s'.\n", name);
+		return;
+	}
+
+	float width;
+	for (int32 i = 0; message.FindFloat(name, i, &width) == B_OK; i++) {
+		if (i >= count)
+			break;
+
+		Column* column = view->ColumnAt(i);
+		view->ResizeColumn(column, width);
+
+		bool hidden;
+		if (message.FindBool(hiddenName, i, &hidden) == B_OK)
+			column->SetVisible(hidden);
+	}
+	
+	view->InvalidateLayout(true);
+}
+
 // StoreSettings
 status_t
 Window::StoreSettings(BMessage& settings) const
@@ -867,6 +927,12 @@ Window::StoreSettings(BMessage& settings) const
 			fVerticalSplit);
 	}
 	if (ret == B_OK) {
+		ret = store_columns(settings, "layer view", fLayerTreeView);
+	}
+	if (ret == B_OK) {
+		ret = store_columns(settings, "resource view", fResourceTreeView);
+	}
+	if (ret == B_OK) {
 		settings.RemoveName("current tool index");
 		ret = settings.AddInt32("current tool index", fCurrentToolIndex);
 	}
@@ -879,6 +945,8 @@ Window::RestoreSettings(const BMessage& settings)
 {
 	restore_split_weights(settings, "horizontal split", fHorizontalSplit);
 	restore_split_weights(settings, "vertical split", fVerticalSplit);
+	restore_columns(settings, "layer view", fLayerTreeView);
+	restore_columns(settings, "resource view", fResourceTreeView);
 
 	int32 toolIndex;
 	if (settings.FindInt32("current tool index", &toolIndex) == B_OK)
