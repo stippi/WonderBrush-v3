@@ -108,7 +108,7 @@ public:
 			link = new LinkType(key, value);
 			if (HashTableType::Insert(link) == B_OK)
 				return B_OK;
-		} catch (std::bad_alloc) {
+		} catch (std::bad_alloc&) {
 		}
 
 		delete link;
