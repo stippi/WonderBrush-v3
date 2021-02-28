@@ -4,6 +4,7 @@ SEARCH_SOURCE += [ FDirName $(SUBDIR) haiku ] ;
 
 # <pe-inc>
 SubDirHdrs $(TOP) src gui scrollview ;
+SubDirHdrs $(TOP) src support ;
 # </pe-inc>
 
 # <pe-src>

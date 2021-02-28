@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2009, Stephan Aßmus <superstippi@gmx.de>
+ * Copyright 2006-2021, Stephan Aßmus <superstippi@gmx.de>
  * Copyright 2006-2007, Ingo Weinhold <ingo_weinhold@gmx.de>
  * All rights reserved. Distributed under the terms of the MIT license.
  */
@@ -12,11 +12,14 @@
 
 #include <Bitmap.h>
 #ifdef __HAIKU__
-#  include <LayoutUtils.h>
+#	include <ControlLook.h>
+#	include <LayoutUtils.h>
 #endif
 #include <Message.h>
 #include <ScrollBar.h>
 #include <Window.h>
+
+#include "support_ui.h"
 
 #include "Scrollable.h"
 #include "ScrollCornerBitmaps.h"
@@ -128,7 +131,9 @@ class ScrollCorner : public BView {
 
 // constructor
 ScrollCorner::ScrollCorner(ScrollView* scrollView)
-	: BView(BRect(0.0, 0.0, B_V_SCROLL_BAR_WIDTH - 1.0f, B_H_SCROLL_BAR_HEIGHT - 1.0f), NULL,
+	: BView(BRect(0.0, 0.0,
+				B_V_SCROLL_BAR_WIDTH * ui_scale() - 1.0f,
+				B_H_SCROLL_BAR_HEIGHT * ui_scale() - 1.0f), NULL,
 			0, B_WILL_DRAW),
 	  fScrollView(scrollView),
 	  fState(0),
@@ -137,6 +142,12 @@ ScrollCorner::ScrollCorner(ScrollView* scrollView)
 {
 //printf("ScrollCorner::ScrollCorner(%p)\n", scrollView);
 	SetViewColor(B_TRANSPARENT_32_BIT);
+	if (be_control_look != NULL) {
+		SetLowColor(ui_color(B_PANEL_BACKGROUND_COLOR));
+		for (int i = 0; i < 3; i++)
+			fBitmaps[i] = NULL;
+		return;
+	}
 //printf("setting up bitmap 0\n");
 	fBitmaps[0] = new BBitmap(BRect(0.0f, 0.0f, sBitmapWidth, sBitmapHeight), sColorSpace);
 //	fBitmaps[0]->SetBits((void *)sScrollCornerNormalBits, fBitmaps[0]->BitsLength(), 0L, sColorSpace);
@@ -224,6 +235,18 @@ ScrollCorner::MouseMoved(BPoint point, uint32 transit, const BMessage* message)
 void
 ScrollCorner::Draw(BRect updateRect)
 {
+	if (be_control_look != NULL) {
+		uint32 flags = IsDragging() ? BControlLook::B_ACTIVATED : 0;
+		const rgb_color& color = LowColor();
+		BRect bounds = Bounds();
+		uint32 borders = BControlLook::B_BOTTOM_BORDER;
+		be_control_look->DrawButtonFrame(this, bounds, updateRect, color, color,
+			flags, borders);
+		borders = BControlLook::B_ALL_BORDERS;
+		be_control_look->DrawButtonBackground(this, bounds, updateRect, color,
+			flags, borders, B_VERTICAL);
+		return;
+	}
 	if (IsEnabled()) {
 		if (IsDragging())
 			DrawBitmap(fBitmaps[1], BPoint(0.0f, 0.0f));
@@ -626,12 +649,12 @@ ScrollView::_Init(BView* child, uint32 scrollingFlags, uint32 borderStyle,
 	// create scroll bars
 	if (fScrollingFlags & (SCROLL_HORIZONTAL | SCROLL_HORIZONTAL_MAGIC)) {
 		fHScrollBar = new InternalScrollBar(this,
-				BRect(0.0, 0.0, 100.0, B_H_SCROLL_BAR_HEIGHT), B_HORIZONTAL);
+				BRect(0.0, 0.0, 100.0, B_H_SCROLL_BAR_HEIGHT * ui_scale()), B_HORIZONTAL);
 		AddChild(fHScrollBar);
 	}
 	if (fScrollingFlags & (SCROLL_VERTICAL | SCROLL_VERTICAL_MAGIC)) {
 		fVScrollBar = new InternalScrollBar(this,
-				BRect(0.0, 0.0, B_V_SCROLL_BAR_WIDTH, 100.0), B_VERTICAL);
+				BRect(0.0, 0.0, B_V_SCROLL_BAR_WIDTH * ui_scale(), 100.0), B_VERTICAL);
 		AddChild(fVScrollBar);
 	}
 	// Create a scroll corner, if we can scroll into both direction.
@@ -702,20 +725,24 @@ ScrollView::_Layout(uint32 flags)
 
 	BPoint scrollRB(childRect.RightBottom() + BPoint(1.0f, 1.0f));
 
+	float scrollBarWidth = B_V_SCROLL_BAR_WIDTH * ui_scale();
+	float scrollBarHeight = B_H_SCROLL_BAR_HEIGHT * ui_scale();
+
 	// layout scroll bars and scroll corner
 	if (corner) {
 		// In this case the scrollbars overlap one pixel.
 		fHScrollBar->MoveTo(scrollLT.x, scrollRB.y);
-		fHScrollBar->ResizeTo(innerWidth + 2.0, B_H_SCROLL_BAR_HEIGHT);
+		fHScrollBar->ResizeTo(innerWidth + 2.0, scrollBarHeight);
 		fVScrollBar->MoveTo(scrollRB.x, scrollLT.y);
-		fVScrollBar->ResizeTo(B_V_SCROLL_BAR_WIDTH, innerHeight + 2.0);
+		fVScrollBar->ResizeTo(scrollBarWidth, innerHeight + 2.0);
 		fScrollCorner->MoveTo(childRect.right + 2.0, childRect.bottom + 2.0);
+		fScrollCorner->ResizeTo(scrollBarWidth, scrollBarHeight);
 	} else if (hbar) {
 		fHScrollBar->MoveTo(scrollLT.x, scrollRB.y);
-		fHScrollBar->ResizeTo(innerWidth + 2.0, B_H_SCROLL_BAR_HEIGHT);
+		fHScrollBar->ResizeTo(innerWidth + 2.0, scrollBarHeight);
 	} else if (vbar) {
 		fVScrollBar->MoveTo(scrollRB.x, scrollLT.y);
-		fVScrollBar->ResizeTo(B_V_SCROLL_BAR_WIDTH, innerHeight + 2.0);
+		fVScrollBar->ResizeTo(scrollBarWidth, innerHeight + 2.0);
 	}
 	// layout child
 	if (fChild) {
@@ -933,9 +960,9 @@ ScrollView::_ChildRect(bool hbar, bool vbar) const
 {
 	BRect rect(_InnerRect());
 	if (vbar)
-		rect.right -= B_V_SCROLL_BAR_WIDTH;
+		rect.right -= ceilf(B_V_SCROLL_BAR_WIDTH * ui_scale());
 	if (hbar)
-		rect.bottom -= B_H_SCROLL_BAR_HEIGHT;
+		rect.bottom -= ceilf(B_H_SCROLL_BAR_HEIGHT * ui_scale());
 
 	return rect;
 }
@@ -978,9 +1005,9 @@ ScrollView::_Size(BSize size)
 			& (SCROLL_VERTICAL | SCROLL_VERTICAL_MAGIC)) != 0;
 
 	if (hScrollbar)
-		size.width += B_V_SCROLL_BAR_WIDTH;
+		size.width += B_V_SCROLL_BAR_WIDTH * ui_scale();
 	if (vScrollbar)
-		size.height += B_H_SCROLL_BAR_HEIGHT;
+		size.height += B_H_SCROLL_BAR_HEIGHT * ui_scale();
 
 	switch (fBorderStyle) {
 		case B_NO_BORDER:
