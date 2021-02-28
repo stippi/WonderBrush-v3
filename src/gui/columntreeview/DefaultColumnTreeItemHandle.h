@@ -22,6 +22,15 @@ public:
 
 private:
 			BRect				_GetHandleRect(BRect frame, int32 level);
+
+			int32				fInItemIndentation;
+			int32				fHandleTriangleWidth;
+			int32				fHandleTriangleHeight;
+			int32				fHandleTriangleHeightDiff1;
+			int32				fHandleTriangleHeightDiff2;
+			int32				fHandleTriangleInset;
+			int32				fHandleWidth;
+			int32				fIndentationPerLevel;
 };
 
 #endif	// DEFAULT_COLUMN_TREE_ITEM_HANDLE_H
