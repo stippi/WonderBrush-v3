@@ -20,8 +20,8 @@ DefaultColumnTreeItemHandle::DefaultColumnTreeItemHandle()
 	: ColumnTreeItemHandle()
 {
 	int32 uiScale = ui_scale();
-	fInItemIndentation = 8 * uiScale;
-	fHandleTriangleWidth = 11 * uiScale;
+	fInItemIndentation = 2 * uiScale;
+	fHandleTriangleWidth = 8 * uiScale;
 	fHandleTriangleHeight = 7 * uiScale;
 	fHandleTriangleHeightDiff1 = (fHandleTriangleWidth - fHandleTriangleHeight) / 2;
 	fHandleTriangleHeightDiff2 = (fHandleTriangleWidth - fHandleTriangleHeight)
