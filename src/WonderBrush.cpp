@@ -31,6 +31,7 @@
 #include "Window.h"
 #include "WonderBrush2Importer.h"
 
+#include "support_ui.h"
 
 static BString sFontsDirectory;
 
@@ -43,10 +44,15 @@ static BString sFontsDirectory;
 // constructor
 WonderBrushBase::WonderBrushBase(BRect bounds)
 	:
-	fDocument(new Document(bounds)),
 	fWindowFrame(bounds.OffsetToCopy(50, 50)),
 	fWindowCount(0)
 {
+	float s = ui_scale();
+	bounds.right *= s;
+	bounds.bottom *= s;
+
+	fDocument = new Document(bounds);
+
 	if (sFontsDirectory.Length() == 0) {
 		app_info info;
 		be_app->GetAppInfo(&info);
@@ -57,21 +63,21 @@ WonderBrushBase::WonderBrushBase(BRect bounds)
 	}
 
 	// create dummy contents for document
-	fDocument->RootLayer()->AddObject(new Rect(BRect(50, 100, 110, 130),
+	fDocument->RootLayer()->AddObject(new Rect(BRect(50 * s, 100 * s, 110 * s, 130 * s),
 		(rgb_color){ 255, 120, 0, 120 }));
-	fDocument->RootLayer()->AddObject(new Rect(BRect(10, 10, 80, 60),
+	fDocument->RootLayer()->AddObject(new Rect(BRect(10 * s, 10 * s, 80 * s, 60 * s),
 		(rgb_color){ 200, 20, 80, 180 }));
-	fDocument->RootLayer()->AddObject(new Filter(10.0));
-	fDocument->RootLayer()->AddObject(new Rect(BRect(30, 40, 120, 200),
+	fDocument->RootLayer()->AddObject(new Filter(10.0 * s));
+	fDocument->RootLayer()->AddObject(new Rect(BRect(30 * s, 40 * s, 120 * s, 200 * s),
 		(rgb_color){ 97, 215, 255, 255 }));
 
 	Layer* subLayer = new Layer(bounds);
 	fDocument->RootLayer()->AddObject(subLayer);
 
-	fDocument->RootLayer()->AddObject(new Filter(5.0));
+	fDocument->RootLayer()->AddObject(new Filter(5.0 * s));
 
 	PathRef path(new Path(), true);
-	BRect shapeArea(180, 40, 320, 170);
+	BRect shapeArea(180 * s, 40 * s, 320 * s, 170 * s);
 	path->AddPoint(BPoint(shapeArea.left, shapeArea.top));
 	path->AddPoint(BPoint((shapeArea.left + shapeArea.right) / 2,
 		shapeArea.top + shapeArea.Height() / 3));
@@ -93,17 +99,17 @@ WonderBrushBase::WonderBrushBase(BRect bounds)
 
 	Shape* shape = new Shape(path,
 		(rgb_color){ 255, 100, 50, 210 });
-	shape->RotateBy(BPoint(250, 105), 5);
+	shape->RotateBy(BPoint(250 * s, 105 * s), 5);
 	fDocument->RootLayer()->AddObject(shape);
-	fDocument->RootLayer()->AddObject(new Rect(BRect(200, 10, 280, 70),
+	fDocument->RootLayer()->AddObject(new Rect(BRect(200 * s, 10 * s, 280 * s, 70 * s),
 		(rgb_color){ 255, 200, 50, 80 }));
 
 	Layer* shadowLayer = new Layer(bounds);
 	fDocument->RootLayer()->AddObject(shadowLayer);
 
-	Rect* rect = new Rect(BRect(100, 140, 220, 170),
+	Rect* rect = new Rect(BRect(100 * s, 140 * s, 220 * s, 170 * s),
 		(rgb_color){ 255, 215, 20, 100 });
-	rect->SetRoundCornerRadius(10.0);
+	rect->SetRoundCornerRadius(10.0 * s);
 
 	Style* rectStyle = rect->Style();
 
@@ -120,7 +126,7 @@ WonderBrushBase::WonderBrushBase(BRect bounds)
 	rectStyle->SetStrokePaint(
 		PaintRef(new Paint(ColorProviderRef(shade, true)), true));
 	rectStyle->SetStrokeProperties(
-		StrokePropertiesRef(new StrokeProperties(8.0f, RoundJoin), true));
+		StrokePropertiesRef(new StrokeProperties(8.0f * s, RoundJoin), true));
 
 	fDocument->RootLayer()->AddObject(rect);
 
@@ -136,8 +142,8 @@ WonderBrushBase::WonderBrushBase(BRect bounds)
 	if (bitmap != NULL) {
 		RenderBuffer* buffer = new RenderBuffer(bitmap);
 		Image* image = new Image(buffer);
-		image->ScaleBy(BPoint(buffer->Width() / 2, buffer->Height() / 2),
-			0.5, 0.5);
+		image->ScaleBy(BPoint(0, 0), 0.5 * s, 0.5 * s);
+		image->TranslateBy(BPoint(buffer->Width() / 2, buffer->Height() / 2));
 //		image->RotateBy(BPoint(buffer->Width() / 2, buffer->Height() / 2),
 //			2);
 		shadowLayer->AddObject(image);
@@ -148,60 +154,60 @@ WonderBrushBase::WonderBrushBase(BRect bounds)
 		printf("Test bitmap file not found or failed to load.\n");
 
 	Text* text = new Text((rgb_color){ 0, 0, 0, 255 });
-	text->TranslateBy(BPoint(522, 31));
-	text->SetWidth(200.0);
+	text->TranslateBy(BPoint(522 * s, 31 * s));
+	text->SetWidth(200.0 * s);
 	text->SetAlignment(TEXT_ALIGNMENT_JUSTIFY);
 
 	text->Append("There are only ",
-		Font("DejaVu Serif", "Book", 24.0), (rgb_color) { 0, 0, 0, 255 });
+		Font("DejaVu Serif", "Book", 24.0 * s), (rgb_color) { 0, 0, 0, 255 });
 	text->Append("three",
-		Font("Source Sans Pro", "Regular", 46.0),
+		Font("Source Sans Pro", "Regular", 46.0 * s),
 		(rgb_color) { 0, 170, 255, 255 });
 	text->Append(" kind of people in this ",
-		Font("DejaVu Serif", "Book", 24.0), (rgb_color) { 0, 0, 0, 255 });
+		Font("DejaVu Serif", "Book", 24.0 * s), (rgb_color) { 0, 0, 0, 255 });
 	text->Append("world",
-		Font("DejaVu Serif", "Book", 24.0),
+		Font("DejaVu Serif", "Book", 24.0 * s),
 		(rgb_color) { 169, 255, 0, 255 });
 	text->Append(".\n",
-		Font("DejaVu Serif", "Book", 24.0), (rgb_color) { 0, 0, 0, 255 });
+		Font("DejaVu Serif", "Book", 24.0 * s), (rgb_color) { 0, 0, 0, 255 });
 	text->Append("Those who ",
-		Font("Courier Prime", "Regular", 24.0), (rgb_color) { 0, 0, 0, 255 });
+		Font("Courier Prime", "Regular", 24.0 * s), (rgb_color) { 0, 0, 0, 255 });
 	text->Append("can",
-		Font("Courier Prime", "Italic", 32.0), (rgb_color) { 0, 0, 0, 255 });
+		Font("Courier Prime", "Italic", 32.0 * s), (rgb_color) { 0, 0, 0, 255 });
 	text->Append(" count and those who ",
-		Font("Courier Prime", "Regular", 24.0), (rgb_color) { 0, 0, 0, 255 });
+		Font("Courier Prime", "Regular", 24.0 * s), (rgb_color) { 0, 0, 0, 255 });
 	text->Append("can't",
-		Font("Courier Prime", "Italic", 24.0),
+		Font("Courier Prime", "Italic", 24.0 * s),
 		(rgb_color) { 255, 80, 40, 232 });
 	text->Append(".",
-		Font("Courier Prime", "Regular", 24.0),
+		Font("Courier Prime", "Regular", 24.0 * s),
 		(rgb_color) { 0, 0, 0, 255 });
 
 	shadowLayer->AddObject(text);
 
-	FilterDropShadow* dropShadow = new FilterDropShadow(2.0f);
+	FilterDropShadow* dropShadow = new FilterDropShadow(2.0f * s);
 	dropShadow->SetOpacity(200.0f);
-	dropShadow->SetOffsetY(1.0f);
+	dropShadow->SetOffsetY(1.0f * s);
 
 	shadowLayer->AddObject(dropShadow);
 
-	Rect* transformedRect = new Rect(BRect(150, 200, 210, 330),
+	Rect* transformedRect = new Rect(BRect(150 * s, 200 * s, 210 * s, 330 * s),
 		(rgb_color){ 55, 120, 80, 120 });
-	transformedRect->ScaleBy(BPoint(180, 265), 1.0, 0.5);
+	transformedRect->ScaleBy(BPoint(180 * s, 265 * s), 1.0, 0.5);
 	subLayer->AddObject(transformedRect);
-	subLayer->AddObject(new Filter(20.0));
+	subLayer->AddObject(new Filter(20.0 * s));
 
-	subLayer->AddObject(new Rect(BRect(120, 100, 510, 530),
+	subLayer->AddObject(new Rect(BRect(120 * s, 100 * s, 510 * s, 530 * s),
 		(rgb_color){ 110, 127, 0, 255 }));
 
-	subLayer->RotateBy(BPoint(400, 300), -30);
+	subLayer->RotateBy(BPoint(400 * s, 300 * s), -30);
 
 	Layer* subSubLayer = new Layer(bounds);
 	subLayer->AddObject(subSubLayer);
 
-	subSubLayer->RotateBy(BPoint(400, 300), -15);
+	subSubLayer->RotateBy(BPoint(400 * s, 300 * s), -15);
 
-	subSubLayer->AddObject(new Rect(BRect(420, 320, 650, 390),
+	subSubLayer->AddObject(new Rect(BRect(420 * s, 320 * s, 650 * s, 390 * s),
 		(rgb_color){ 0, 255, 0, 240 }));
 
 	subSubLayer->AddObject(new Shape(path,
@@ -217,7 +223,7 @@ WonderBrushBase::WonderBrushBase(BRect bounds)
 	style->SetStrokePaint(
 		PaintRef(new Paint((rgb_color){ 20, 60, 255, 150 }), true));
 	style->SetStrokeProperties(
-		StrokePropertiesRef(new StrokeProperties(5.0f, ButtCap, RoundJoin,
+		StrokePropertiesRef(new StrokeProperties(5.0f * s, ButtCap, RoundJoin,
 			4.0f), true));
 	fDocument->GlobalResources().AddObject(style);
 
@@ -227,7 +233,7 @@ WonderBrushBase::WonderBrushBase(BRect bounds)
 	subSubSubLayer->AddObject(shapeWidthGlobalStyle);
 
 	Rect* rectWidthGlobalStyle = new Rect();
-	rectWidthGlobalStyle->SetArea(BRect(150, 330, 240, 420));
+	rectWidthGlobalStyle->SetArea(BRect(150 * s, 330 * s, 240 * s, 420 * s));
 	rectWidthGlobalStyle->SetStyle(style);
 	subLayer->AddObject(rectWidthGlobalStyle);
 
@@ -240,13 +246,13 @@ WonderBrushBase::WonderBrushBase(BRect bounds)
 	brushStroke->SetBrush(brush);
 	brush->RemoveReference();
 	brushStroke->Stroke().AppendObject(
-		StrokePoint(BPoint(150, 50), 0.2f, 0.0f, 0.0f));
+		StrokePoint(BPoint(150 * s, 50 * s), 0.2f, 0.0f, 0.0f));
 	brushStroke->Stroke().AppendObject(
-		StrokePoint(BPoint(200, 20), 1.0f, 0.0f, 0.0f));
+		StrokePoint(BPoint(200 * s, 20 * s), 1.0f, 0.0f, 0.0f));
 	brushStroke->Stroke().AppendObject(
-		StrokePoint(BPoint(250, 80), 0.8f, 0.0f, 0.0f));
+		StrokePoint(BPoint(250 * s, 80 * s), 0.8f, 0.0f, 0.0f));
 	brushStroke->Stroke().AppendObject(
-		StrokePoint(BPoint(300, 50), 0.1f, 0.0f, 0.0f));
+		StrokePoint(BPoint(300 * s, 50 * s), 0.1f, 0.0f, 0.0f));
 	subLayer->AddObject(brushStroke);
 
 	fEditLayer = fDocument->RootLayer();
