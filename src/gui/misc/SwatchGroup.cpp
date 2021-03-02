@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2012 Stephan Aßmus <superstippi@gmx.de>
+ * Copyright 2006-2021 Stephan Aßmus <superstippi@gmx.de>
  * Distributed under the terms of the MIT License.
  */
 
@@ -27,10 +27,6 @@ enum {
 };
 
 
-#define SWATCH_VIEW_WIDTH 20
-#define SWATCH_VIEW_HEIGHT 15
-
-
 SwatchGroup::SwatchGroup(const char* name)
 	: BView(name, 0)
 	, fPlatformDelegate(new PlatformDelegate(this))
@@ -50,6 +46,11 @@ SwatchGroup::SwatchGroup(const char* name)
 	float r = 0.0f;
 	float g = 0.0f;
 	float b = 0.0f;
+	
+	float swatchViewWidth = 16 * ui_scale();
+	float swatchViewHeight = 12 * ui_scale();
+	float currentSwatchSize = 28 * ui_scale();
+	
 	for (int32 i = 0; i < 20; i++) {
 		if (i < 10) {
 			h = ((float)i / 9.0) * 6.0;
@@ -63,13 +64,15 @@ SwatchGroup::SwatchGroup(const char* name)
 		color.green = (uint8)(255.0 * g);
 		color.blue = (uint8)(255.0 * b);
 		fSwatchViews[i] = new SwatchView("swatch", new BMessage(MSG_SET_COLOR),
-			this, color, SWATCH_VIEW_WIDTH, SWATCH_VIEW_HEIGHT);
+			this, color, swatchViewWidth, swatchViewHeight);
+		fSwatchViews[i]->SetExplicitMaxSize(
+			BSize(B_SIZE_UNSET, B_SIZE_UNLIMITED));
 	}
 
 	// create current color swatch view
 	fCurrentColorSV = new SwatchView("current swatch",
-		new BMessage(MSG_COLOR_PICKER), this, color, 28.0, 28.0,
-		B_NO_BORDER);
+		new BMessage(MSG_COLOR_PICKER), this, color,
+		currentSwatchSize, currentSwatchSize, B_NO_BORDER);
 
 	// When the color of this swatch changes via drag&drop, we want to
 	// adopt it as current color.
@@ -77,7 +80,7 @@ SwatchGroup::SwatchGroup(const char* name)
 
 	// create color field and slider
 	fColorField = new ColorField(H_SELECTED, 1.0, B_HORIZONTAL, B_NO_BORDER);
-	fColorField->SetExplicitMinSize(BSize(B_SIZE_UNSET, 48));
+	fColorField->SetExplicitMinSize(BSize(B_SIZE_UNSET, 48 * ui_scale()));
 	fColorSlider = new ColorSlider(H_SELECTED, 1.0, 1.0, B_HORIZONTAL,
 		B_NO_BORDER);
 	fAlphaSlider = new AlphaSlider(B_HORIZONTAL,

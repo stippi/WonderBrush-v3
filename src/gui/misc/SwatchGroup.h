@@ -55,7 +55,7 @@ private:
 			bool				fIgnoreNotifications;
 
 			ColorPickerPanel*	fColorPickerPanel;
-			SelectedColorMode fColorPickerMode;
+			SelectedColorMode	fColorPickerMode;
 			BRect				fColorPickerFrame;
 };
 

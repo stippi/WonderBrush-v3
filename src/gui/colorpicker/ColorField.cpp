@@ -1,7 +1,7 @@
 /*
  * Copyright 2001 Werner Freytag - please read to the LICENSE file
  *
- * Copyright 2002-2012, Stephan Aßmus <superstippi@gmx.de>
+ * Copyright 2002-2021, Stephan Aßmus <superstippi@gmx.de>
  * All rights reserved.
  *
  */
@@ -82,10 +82,8 @@ ColorField::PreferredSize()
 BSize
 ColorField::MaxSize()
 {
-	BSize maxSize(4 + MAX_X, 4 + MAX_Y);
-	return BLayoutUtils::ComposeSize(ExplicitMaxSize(), maxSize);
-//	return BLayoutUtils::ComposeSize(ExplicitMaxSize(),
-//		BSize(B_SIZE_UNLIMITED, B_SIZE_UNLIMITED));
+	return BLayoutUtils::ComposeSize(ExplicitMaxSize(),
+		BSize(B_SIZE_UNLIMITED, B_SIZE_UNLIMITED));
 }
 
 // Invoke

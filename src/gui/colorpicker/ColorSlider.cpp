@@ -64,9 +64,9 @@ ColorSlider::MinSize()
 {
 	BSize minSize;
 	if (fOrientation == B_VERTICAL)
-		minSize = BSize(36, 10 + MAX_Y / 17);
+		minSize = BSize(36 * ui_scale(), 10 + MAX_Y * ui_scale() / 17);
 	else
-		minSize = BSize(10 + MAX_X / 17, 10);
+		minSize = BSize(10 + MAX_X * ui_scale() / 17, 10 * ui_scale());
 	return BLayoutUtils::ComposeSize(ExplicitMinSize(), minSize);
 }
 
@@ -83,9 +83,9 @@ ColorSlider::MaxSize()
 {
 	BSize maxSize;
 	if (fOrientation == B_VERTICAL)
-		maxSize = BSize(36, 10 + MAX_Y);
+		maxSize = BSize(36 * ui_scale(), B_SIZE_UNLIMITED);
 	else
-		maxSize = BSize(10 + MAX_X, 18);
+		maxSize = BSize(B_SIZE_UNLIMITED, 18 * ui_scale());
 	return BLayoutUtils::ComposeSize(ExplicitMaxSize(), maxSize);
 }
 

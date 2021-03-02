@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2012 Stephan Aßmus <superstippi@gmx.de>
+ * Copyright 2006-2021 Stephan Aßmus <superstippi@gmx.de>
  * Distributed under the terms of the MIT License.
  */
 
@@ -15,6 +15,7 @@
 #include <Message.h>
 #include <Window.h>
 
+#include "support_ui.h"
 #include "ui_defines.h"
 
 // constructor
@@ -65,9 +66,9 @@ AlphaSlider::MinSize()
 {
 	BSize minSize;
 	if (fOrientation == B_HORIZONTAL)
-		minSize = BSize(255 + 4, 7 + 4);
+		minSize = BSize(64 * ui_scale() + 4, 7 * ui_scale() + 4);
 	else
-		minSize = BSize(7 + 4, 255 + 4);
+		minSize = BSize(7 * ui_scale() + 4, 64 * ui_scale() + 4);
 	return BLayoutUtils::ComposeSize(ExplicitMinSize(), minSize);
 }
 
@@ -84,9 +85,9 @@ AlphaSlider::MaxSize()
 {
 	BSize minSize;
 	if (fOrientation == B_HORIZONTAL)
-		minSize = BSize(B_SIZE_UNLIMITED, 16 + 4);
+		minSize = BSize(B_SIZE_UNLIMITED, 16 * ui_scale() + 4);
 	else
-		minSize = BSize(16 + 4, B_SIZE_UNLIMITED);
+		minSize = BSize(16 * ui_scale() + 4, B_SIZE_UNLIMITED);
 	return BLayoutUtils::ComposeSize(ExplicitMinSize(), minSize);
 }
 

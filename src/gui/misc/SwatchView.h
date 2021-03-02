@@ -27,6 +27,10 @@ public:
 	virtual	void				PlatformDraw(PlatformDrawContext& drawContext);
 	virtual	void				MessageReceived(BMessage* message);
 
+	virtual	BSize				MinSize();
+	virtual	BSize				PreferredSize();
+	virtual	BSize				MaxSize();
+
 	virtual	void				MouseDown(BPoint where);
 	virtual	void				MouseUp(BPoint where);
 	virtual	void				MouseMoved(BPoint where, uint32 transit,

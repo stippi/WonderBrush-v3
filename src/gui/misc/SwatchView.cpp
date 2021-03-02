@@ -13,6 +13,7 @@
 
 #include <Bitmap.h>
 #include <Cursor.h>
+#include <LayoutUtils.h>
 #include <Looper.h>
 #include <Message.h>
 #include <TypeConstants.h>
@@ -29,8 +30,7 @@
 SwatchView::SwatchView(const char* name, BMessage* message,
 	BHandler* target, rgb_color color, float width, float height,
 	border_style border)
-	: PlatformViewMixin<BView>(BRect(0.0, 0.0, width, height), name,
-			B_FOLLOW_NONE, B_WILL_DRAW),
+	: PlatformViewMixin<BView>(name, B_WILL_DRAW),
 	  fPlatformDelegate(new PlatformDelegate(this)),
 	  fColor(color),
 	  fTrackingStart(-1.0, -1.0),
@@ -87,6 +87,29 @@ SwatchView::MessageReceived(BMessage* message)
 			BView::MessageReceived(message);
 			break;
 	}
+}
+
+// MinSize
+BSize
+SwatchView::MinSize()
+{
+	return BLayoutUtils::ComposeSize(ExplicitMinSize(),
+		BSize(fWidth, fHeight));
+}
+
+// PreferredSize
+BSize
+SwatchView::PreferredSize()
+{
+	return BLayoutUtils::ComposeSize(ExplicitPreferredSize(), MinSize());
+}
+
+// MaxSize
+BSize
+SwatchView::MaxSize()
+{
+	return BLayoutUtils::ComposeSize(ExplicitMaxSize(),
+		BSize(fWidth, fHeight));
 }
 
 // MouseDown
