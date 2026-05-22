@@ -1,0 +1,7 @@
+#ifndef WB_TEST_STUB_LAYOUT_CONTEXT_H
+#define WB_TEST_STUB_LAYOUT_CONTEXT_H
+
+class LayoutContext {
+};
+
+#endif // WB_TEST_STUB_LAYOUT_CONTEXT_H

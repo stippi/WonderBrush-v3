@@ -1,0 +1,7 @@
+#ifndef WB_TEST_STUB_LAYOUT_STATE_H
+#define WB_TEST_STUB_LAYOUT_STATE_H
+
+class LayoutState {
+};
+
+#endif // WB_TEST_STUB_LAYOUT_STATE_H

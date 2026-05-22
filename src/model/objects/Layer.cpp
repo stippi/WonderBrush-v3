@@ -389,10 +389,13 @@ Layer::CloneObjects(Layer* target, CloneContext& context) const
 	for (int32 i = 0; i < count; i++) {
 		Object* object = ObjectAtFast(i);
 		Object* clone = (Object*)object->Clone(context);
-		if (clone == NULL || !target->AddObject(clone)) {
-			delete clone;
+		if (clone == NULL)
+			break;
+		if (!target->AddObject(clone)) {
+			clone->RemoveReference();
 			break;
 		}
+		clone->RemoveReference();
 	}
 }
 

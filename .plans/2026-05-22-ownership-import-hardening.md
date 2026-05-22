@@ -123,6 +123,8 @@ GREEN:
 
 Commit: `fix: release creator reference after cloning layer objects`
 
+Status: done in commit `fix: release creator reference after cloning layer objects`.
+
 ### Task 1.3: Prove `Document::Clone()` does not leak global resource clones
 
 Objective: catch the same AddObject/initial-reference mismatch for global resources.
