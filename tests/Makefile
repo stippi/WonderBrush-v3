@@ -13,9 +13,9 @@ COMMON_INCLUDES := \
 SUPPORT_SOURCES := \
 	$(ROOT)/src/support/Referenceable.cpp
 
-.PHONY: all ownership-referenceable clean
+.PHONY: all ownership-referenceable ownership-copy-clone-context clean
 
-all: ownership-referenceable
+all: ownership-referenceable ownership-copy-clone-context
 
 build:
 	mkdir -p build/ownership
@@ -26,6 +26,17 @@ ownership-referenceable: build
 		$(SUPPORT_SOURCES) \
 		-o build/ownership/referenceable_lifecycle
 	./build/ownership/referenceable_lifecycle
+
+ownership-copy-clone-context: build
+	$(CXX) $(CXXFLAGS) $(COMMON_INCLUDES) \
+		-I$(ROOT)/src/model \
+		-I$(ROOT)/src/model/property \
+		$(ROOT)/tests/ownership/CopyCloneContextTest.cpp \
+		$(ROOT)/src/model/CloneContext.cpp \
+		$(ROOT)/src/model/CopyCloneContext.cpp \
+		$(SUPPORT_SOURCES) \
+		-o build/ownership/copy_clone_context
+	./build/ownership/copy_clone_context
 
 clean:
 	rm -rf build

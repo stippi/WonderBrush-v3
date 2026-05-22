@@ -1,0 +1,7 @@
+#ifndef WB_TEST_STUB_PROPERTY_OBJECT_H
+#define WB_TEST_STUB_PROPERTY_OBJECT_H
+
+class PropertyObject {
+};
+
+#endif // WB_TEST_STUB_PROPERTY_OBJECT_H

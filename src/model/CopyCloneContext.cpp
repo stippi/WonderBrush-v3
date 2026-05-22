@@ -20,5 +20,5 @@ CopyCloneContext::~CopyCloneContext()
 BaseObjectRef
 CopyCloneContext::Clone(BaseObject* object)
 {
-	return BaseObjectRef(object->Clone(*this));
+	return BaseObjectRef(object->Clone(*this), true);
 }
