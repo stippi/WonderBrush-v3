@@ -1,8 +1,11 @@
 #include "Test.h"
 
 #include "Layer.h"
+#include "NotifyingList.h"
 
 #include <Message.h>
+#include <type_traits>
+#include <utility>
 
 // Focused ownership seam: provide the BaseObject/Notifier methods needed by
 // Object/Layer without pulling in the full UI/property stack.
@@ -118,10 +121,53 @@ TestCloneObjectsReleasesFreshCloneReferenceAfterInsertion()
 	ASSERT_EQ(1, originalDestructorCount);
 }
 
+static void
+TestRemoveObjectIndexAPIsDoNotReturnReleasedPointers()
+{
+	static_assert(std::is_same<decltype(std::declval<Layer&>().RemoveObject(0)),
+		Reference<Object> >::value,
+		"Layer::RemoveObject(index) must return a reference that keeps the removed object alive");
+	static_assert(std::is_same<decltype(std::declval<NotifyingList<CountedObject>&>().RemoveObject(0)),
+		Reference<CountedObject> >::value,
+		"NotifyingList::RemoveObject(index) must return a reference that keeps the removed object alive");
+
+	int layerDestructorCount = 0;
+	int listDestructorCount = 0;
+	int cloneDestructorCount = 0;
+	{
+		Layer layer(BRect(0, 0, 10, 10));
+		CountedObject* object = new CountedObject(&layerDestructorCount,
+			&cloneDestructorCount);
+		ASSERT_TRUE(layer.AddObject(object));
+		ASSERT_TRUE(!object->RemoveReference());
+		Reference<Object> removed = layer.RemoveObject(0);
+		ASSERT_TRUE(removed.Get() == object);
+		ASSERT_EQ(0, layerDestructorCount);
+		removed.Unset();
+		ASSERT_EQ(1, layerDestructorCount);
+	}
+	ASSERT_EQ(1, layerDestructorCount);
+
+	{
+		NotifyingList<CountedObject> list;
+		CountedObject* object = new CountedObject(&listDestructorCount,
+			&cloneDestructorCount);
+		ASSERT_TRUE(list.AddObject(object));
+		ASSERT_TRUE(!object->RemoveReference());
+		Reference<CountedObject> removed = list.RemoveObject(0);
+		ASSERT_TRUE(removed.Get() == object);
+		ASSERT_EQ(0, listDestructorCount);
+		removed.Unset();
+		ASSERT_EQ(1, listDestructorCount);
+	}
+	ASSERT_EQ(1, listDestructorCount);
+}
+
 int
 main()
 {
 	TestCloneObjectsReleasesFreshCloneReferenceAfterInsertion();
+	TestRemoveObjectIndexAPIsDoNotReturnReleasedPointers();
 	printf("ownership-layer-clone-objects: PASS\n");
 	return 0;
 }

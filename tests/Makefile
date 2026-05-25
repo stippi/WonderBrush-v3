@@ -40,8 +40,9 @@ ownership-copy-clone-context: build
 	./build/ownership/copy_clone_context
 
 ownership-layer-clone-objects: build
-	$(CXX) $(CXXFLAGS) -Wno-unused-parameter -include $(ROOT)/tests/stubs/TestCompat.h $(COMMON_INCLUDES) \
+	$(CXX) $(CXXFLAGS) -Wno-unused-parameter -Wno-multichar -include $(ROOT)/tests/stubs/TestCompat.h $(COMMON_INCLUDES) \
 		-I$(ROOT)/src/model \
+		-I$(ROOT)/src/model/document \
 		-I$(ROOT)/src/model/objects \
 		-I$(ROOT)/src/model/fills \
 		-I$(ROOT)/src/model/property \

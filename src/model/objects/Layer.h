@@ -65,7 +65,7 @@ public:
 	// Layer
 			bool				AddObject(Object* object);
 			bool				AddObject(Object* object, int32 index);
-			Object*				RemoveObject(int32 index);
+			Reference<Object>	RemoveObject(int32 index);
 			bool				RemoveObject(Object* object);
 			Object*				ObjectAt(int32 index) const;
 			Object*				ObjectAtFast(int32 index) const;

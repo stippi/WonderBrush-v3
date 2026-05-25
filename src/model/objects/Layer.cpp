@@ -304,7 +304,7 @@ Layer::AddObject(Object* object, int32 index)
 }
 
 // RemoveObject
-Object*
+Reference<Object>
 Layer::RemoveObject(int32 index)
 {
 	Object* object = ObjectAt(index);
@@ -323,7 +323,7 @@ Layer::RemoveObject(int32 index)
 		if (fObjects.RemoveItem(index) == NULL) {
 			// Should not happen, but roll back in any case.
 			object->SetParent(this);
-			return NULL;
+			return Reference<Object>();
 		}
 
 		BList listeners(fListeners);
@@ -334,16 +334,16 @@ Layer::RemoveObject(int32 index)
 		}
 
 		Invalidate(invalidArea, index);
-		object->RemoveReference();
+		return Reference<Object>(object, true);
 	}
-	return object;
+	return Reference<Object>();
 }
 
 // RemoveObject
 bool
 Layer::RemoveObject(Object* object)
 {
-	return RemoveObject(IndexOf(object)) != NULL;
+	return RemoveObject(IndexOf(object)).Get() != NULL;
 }
 
 // ObjectAt
