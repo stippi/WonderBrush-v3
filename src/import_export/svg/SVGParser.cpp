@@ -263,26 +263,31 @@ parse_double(const char* str)
 }
 
 // parse_url
-char*
-parse_url(const char* str)
+bool
+parse_url(const char* str, BString& url)
 {
-	const char* begin = str;
-	while (*begin != '#')
-		begin++;
+	if (str == NULL)
+		return false;
 
+	const char* begin = strchr(str, '#');
+	if (begin == NULL)
+		return false;
 	begin++;
-	const char* end = begin;
-	while (*end != ')')
-		end++;
 
-	end--;
+	const char* end = strchr(begin, ')');
+	if (end == NULL || end <= begin)
+		return false;
 
-	int32 length = end - begin + 2;
-	char* result = new char[length];
-	memcpy(result, begin, length - 1);
-	result[length - 1] = 0;
+	// Trim optional whitespace before the closing parenthesis.
+	while (end > begin && (*(end - 1) == ' ' || *(end - 1) == '\t'
+			|| *(end - 1) == '\n' || *(end - 1) == '\r')) {
+		end--;
+	}
+	if (end <= begin)
+		return false;
 
-	return result;
+	url.SetTo(begin, end - begin);
+	return true;
 }
 
 
@@ -606,9 +611,9 @@ Parser::parse_attr(const char* name, const char* value)
 		if(strcmp(value, "none") == 0) {
 			fBuilder.fill_none();
 		} else if (strncmp(value, "url", 3) == 0) {
-			char* url = parse_url(value);
-			fBuilder.fill_url(url);
-			delete[] url;
+			BString url;
+			if (parse_url(value, url))
+				fBuilder.fill_url(url.String());
 		} else {
 			fBuilder.fill(parse_color(value));
 		}
@@ -623,9 +628,9 @@ Parser::parse_attr(const char* name, const char* value)
 		if(strcmp(value, "none") == 0) {
 			fBuilder.stroke_none();
 		} else if (strncmp(value, "url", 3) == 0) {
-			char* url = parse_url(value);
-			fBuilder.stroke_url(url);
-			delete[] url;
+			BString url;
+			if (parse_url(value, url))
+				fBuilder.stroke_url(url.String());
 		} else {
 			fBuilder.stroke(parse_color(value));
 		}

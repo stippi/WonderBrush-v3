@@ -14,9 +14,9 @@ COMMON_INCLUDES := \
 SUPPORT_SOURCES := \
 	$(ROOT)/src/support/Referenceable.cpp
 
-.PHONY: all build ownership-referenceable ownership-copy-clone-context ownership-layer-clone-objects ownership-document-clone-resources edits-move-objects import-export-svg-error-formatting clean
+.PHONY: all build ownership-referenceable ownership-copy-clone-context ownership-layer-clone-objects ownership-document-clone-resources edits-move-objects import-export-svg-error-formatting import-export-svg-url-parsing clean
 
-all: ownership-referenceable ownership-copy-clone-context ownership-layer-clone-objects ownership-document-clone-resources edits-move-objects import-export-svg-error-formatting
+all: ownership-referenceable ownership-copy-clone-context ownership-layer-clone-objects ownership-document-clone-resources edits-move-objects import-export-svg-error-formatting import-export-svg-url-parsing
 
 build:
 	mkdir -p build/ownership build/edits build/import_export
@@ -111,6 +111,12 @@ import-export-svg-error-formatting: build
 		$(ROOT)/tests/import_export/SVGErrorFormattingTest.cpp \
 		-o build/import_export/svg_error_formatting
 	./build/import_export/svg_error_formatting
+
+import-export-svg-url-parsing: build
+	$(CXX) $(CXXFLAGS) $(COMMON_INCLUDES) \
+		$(ROOT)/tests/import_export/SVGUrlParsingTest.cpp \
+		-o build/import_export/svg_url_parsing
+	./build/import_export/svg_url_parsing
 
 clean:
 	rm -rf build

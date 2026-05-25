@@ -291,7 +291,9 @@ DocumentBuilder::fill_none()
 void
 DocumentBuilder::fill_url(const char* url)
 {
-	sprintf(cur_attr().fill_url, "%s", url);
+	snprintf(cur_attr().fill_url, sizeof(cur_attr().fill_url), "%s",
+		url != NULL ? url : "");
+	cur_attr().fill_url[sizeof(cur_attr().fill_url) - 1] = 0;
 }
 
 // stroke_none
@@ -305,7 +307,9 @@ DocumentBuilder::stroke_none()
 void
 DocumentBuilder::stroke_url(const char* url)
 {
-	sprintf(cur_attr().stroke_url, "%s", url);
+	snprintf(cur_attr().stroke_url, sizeof(cur_attr().stroke_url), "%s",
+		url != NULL ? url : "");
+	cur_attr().stroke_url[sizeof(cur_attr().stroke_url) - 1] = 0;
 }
 
 // opacity
