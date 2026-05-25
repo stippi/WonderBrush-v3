@@ -19,7 +19,7 @@ MoveObjectsEdit::MoveObjectsEdit(Object** objects,
 	, fObjects(objects)
 	, fObjectCount(objectCount)
 
-	, fOldPositions(new(std::nothrow) PositionInfo[objectCount])
+	, fOldPositions(new(std::nothrow) PositionInfo[objectCount]())
 
 	, fInsertionLayer(insertionLayer)
 	, fInsertionIndex(insertionIndex)
@@ -100,13 +100,19 @@ MoveObjectsEdit::InitCheck()
 	}
 
 	// Check if object tree changes.
-	PositionInfo newPositions[fObjectCount];
+	bool positionsChanged = false;
 	int32 index = fInsertionIndex;
 	for (int32 i = 0; i < fObjectCount; i++) {
-		newPositions[i].parent = fInsertionLayer;
-		newPositions[i].index = index++;
+		if (fObjects[i] == NULL)
+			continue;
+		if (fOldPositions[i].parent != fInsertionLayer
+			|| fOldPositions[i].index != index) {
+			positionsChanged = true;
+			break;
+		}
+		index++;
 	}
-	if (memcmp(newPositions, fOldPositions, sizeof(newPositions)) == 0) {
+	if (!positionsChanged) {
 //printf("MoveObjectsEdit::InitCheck(): no changes!\n");
 		return B_BAD_VALUE;
 	}

@@ -14,12 +14,12 @@ COMMON_INCLUDES := \
 SUPPORT_SOURCES := \
 	$(ROOT)/src/support/Referenceable.cpp
 
-.PHONY: all ownership-referenceable ownership-copy-clone-context ownership-layer-clone-objects ownership-document-clone-resources clean
+.PHONY: all build ownership-referenceable ownership-copy-clone-context ownership-layer-clone-objects ownership-document-clone-resources edits-move-objects clean
 
-all: ownership-referenceable ownership-copy-clone-context ownership-layer-clone-objects ownership-document-clone-resources
+all: ownership-referenceable ownership-copy-clone-context ownership-layer-clone-objects ownership-document-clone-resources edits-move-objects
 
 build:
-	mkdir -p build/ownership
+	mkdir -p build/ownership build/edits
 
 ownership-referenceable: build
 	$(CXX) $(CXXFLAGS) $(COMMON_INCLUDES) \
@@ -81,6 +81,29 @@ ownership-document-clone-resources: build
 		$(SUPPORT_SOURCES) \
 		-o build/ownership/document_clone_resources
 	./build/ownership/document_clone_resources
+
+edits-move-objects: build
+	$(CXX) $(CXXFLAGS) -Wno-unused-parameter -Wno-multichar -include $(ROOT)/tests/stubs/TestCompat.h $(COMMON_INCLUDES) \
+		-I$(ROOT)/src/model \
+		-I$(ROOT)/src/model/document \
+		-I$(ROOT)/src/model/objects \
+		-I$(ROOT)/src/model/fills \
+		-I$(ROOT)/src/model/property \
+		-I$(ROOT)/src/model/property/specific_properties \
+		-I$(ROOT)/src/model/rendering \
+		-I$(ROOT)/src/model/snapshots \
+		-I$(ROOT)/src/edits \
+		-I$(ROOT)/src/edits/base \
+		$(ROOT)/tests/edits/MoveObjectsEditTest.cpp \
+		$(ROOT)/src/model/CloneContext.cpp \
+		$(ROOT)/src/model/objects/Object.cpp \
+		$(ROOT)/src/model/objects/Layer.cpp \
+		$(ROOT)/src/edits/MoveObjectsEdit.cpp \
+		$(ROOT)/tests/support/TransformableStubs.cpp \
+		$(ROOT)/tests/support/LayerDependencyStubs.cpp \
+		$(SUPPORT_SOURCES) \
+		-o build/edits/move_objects
+	./build/edits/move_objects
 
 clean:
 	rm -rf build

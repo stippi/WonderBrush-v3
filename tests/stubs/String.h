@@ -24,6 +24,11 @@ public:
 		fString = other.fString;
 		return *this;
 	}
+	BString& operator<<(const char* string)
+	{
+		fString += string != 0 ? string : "";
+		return *this;
+	}
 	bool operator==(const char* string) const
 	{
 		return fString == (string != 0 ? string : "");
