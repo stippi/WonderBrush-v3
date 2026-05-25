@@ -279,7 +279,10 @@ bool
 Layer::AddObject(Object* object, int32 index)
 {
 //printf("%p->Layer::AddObject(%p, %ld)\n", this, object, index);
-	if (object && fObjects.AddItem(object, index)) {
+	if (object == NULL || fObjects.HasItem(object))
+		return false;
+
+	if (fObjects.AddItem(object, index)) {
 		object->AddReference();
 
 		BList listeners(fListeners);

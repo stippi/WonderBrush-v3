@@ -122,6 +122,30 @@ TestCloneObjectsReleasesFreshCloneReferenceAfterInsertion()
 }
 
 static void
+TestLayerRejectsDuplicateObjectInsertion()
+{
+	int destructorCount = 0;
+	int cloneDestructorCount = 0;
+
+	{
+		Layer layer(BRect(0, 0, 10, 10));
+		CountedObject* object = new CountedObject(&destructorCount,
+			&cloneDestructorCount);
+
+		ASSERT_TRUE(layer.AddObject(object));
+		ASSERT_EQ(1, layer.CountObjects());
+		ASSERT_TRUE(!object->RemoveReference());
+		ASSERT_EQ(1, object->CountReferences());
+
+		ASSERT_TRUE(!layer.AddObject(object));
+		ASSERT_EQ(1, layer.CountObjects());
+		ASSERT_EQ(1, object->CountReferences());
+	}
+
+	ASSERT_EQ(1, destructorCount);
+}
+
+static void
 TestRemoveObjectIndexAPIsDoNotReturnReleasedPointers()
 {
 	static_assert(std::is_same<decltype(std::declval<Layer&>().RemoveObject(0)),
@@ -167,6 +191,7 @@ int
 main()
 {
 	TestCloneObjectsReleasesFreshCloneReferenceAfterInsertion();
+	TestLayerRejectsDuplicateObjectInsertion();
 	TestRemoveObjectIndexAPIsDoNotReturnReleasedPointers();
 	printf("ownership-layer-clone-objects: PASS\n");
 	return 0;
