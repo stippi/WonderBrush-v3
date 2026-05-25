@@ -67,6 +67,12 @@ public:
 			if (fObjects[i] == NULL)
 				continue;
 			if (!fInsertionLayer->AddObject(fObjects[i], index)) {
+				for (int32 j = 0; j < i; j++) {
+					if (fObjects[j] != NULL)
+						fInsertionLayer->RemoveObject(fObjects[j]);
+				}
+				if (fSelection != NULL)
+					fSelection->DeselectAll(this);
 				fInsertionLayer->SuspendUpdates(false);
 				return B_NO_MEMORY;
 			}

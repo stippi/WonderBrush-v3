@@ -1,6 +1,7 @@
 #include "Test.h"
 
 #include "Layer.h"
+#include "AddObjectsEdit.h"
 #include "MoveObjectsEdit.h"
 
 #include <Message.h>
@@ -95,6 +96,9 @@ Selectable::Selectable(const Selectable& other)
 
 Selectable::~Selectable() {}
 
+class EditContext {
+};
+
 class CountedObject : public Object {
 public:
 	CountedObject(int* destructorCount)
@@ -128,6 +132,61 @@ private:
 };
 
 static void
+TestAddObjectsEditRollsBackPartialInsertionFailure()
+{
+	int destructorCount = 0;
+
+	{
+		Layer layer(BRect(0, 0, 100, 100));
+		CountedObject* object = new CountedObject(&destructorCount);
+
+		Object** objects = new Object*[2];
+		objects[0] = object;
+		objects[1] = object;
+
+		{
+			AddObjectsEdit edit(objects, 2, &layer, 0, 0);
+			ASSERT_TRUE(!object->RemoveReference());
+
+			EditContext context;
+			ASSERT_EQ(B_NO_MEMORY, edit.Perform(context));
+			ASSERT_EQ(0, layer.CountObjects());
+		}
+
+		ASSERT_EQ(1, destructorCount);
+	}
+}
+
+static void
+TestMoveObjectsEditRestoresSourceOnPartialInsertionFailure()
+{
+	int destructorCount = 0;
+
+	{
+		Layer source(BRect(0, 0, 100, 100));
+		Layer target(BRect(0, 0, 100, 100));
+		CountedObject* object = new CountedObject(&destructorCount);
+		ASSERT_TRUE(source.AddObject(object));
+		ASSERT_TRUE(!object->RemoveReference());
+
+		Object** objects = new Object*[2];
+		objects[0] = object;
+		objects[1] = object;
+
+		{
+			MoveObjectsEdit edit(objects, 2, &target, 0, 0);
+			EditContext context;
+			ASSERT_EQ(B_NO_MEMORY, edit.Perform(context));
+			ASSERT_EQ(1, source.CountObjects());
+			ASSERT_TRUE(source.ObjectAt(0) == object);
+			ASSERT_EQ(0, target.CountObjects());
+		}
+	}
+
+	ASSERT_EQ(1, destructorCount);
+}
+
+static void
 TestNestedSelectionNoOpMoveIsRejected()
 {
 	int childDestructorCount = 0;
@@ -156,6 +215,8 @@ TestNestedSelectionNoOpMoveIsRejected()
 int
 main()
 {
+	TestAddObjectsEditRollsBackPartialInsertionFailure();
+	TestMoveObjectsEditRestoresSourceOnPartialInsertionFailure();
 	TestNestedSelectionNoOpMoveIsRejected();
 	printf("edits-move-objects: PASS\n");
 	return 0;
