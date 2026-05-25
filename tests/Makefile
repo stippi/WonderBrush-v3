@@ -14,9 +14,9 @@ COMMON_INCLUDES := \
 SUPPORT_SOURCES := \
 	$(ROOT)/src/support/Referenceable.cpp
 
-.PHONY: all ownership-referenceable ownership-copy-clone-context ownership-layer-clone-objects clean
+.PHONY: all ownership-referenceable ownership-copy-clone-context ownership-layer-clone-objects ownership-document-clone-resources clean
 
-all: ownership-referenceable ownership-copy-clone-context ownership-layer-clone-objects
+all: ownership-referenceable ownership-copy-clone-context ownership-layer-clone-objects ownership-document-clone-resources
 
 build:
 	mkdir -p build/ownership
@@ -57,6 +57,29 @@ ownership-layer-clone-objects: build
 		$(SUPPORT_SOURCES) \
 		-o build/ownership/layer_clone_objects
 	./build/ownership/layer_clone_objects
+
+ownership-document-clone-resources: build
+	$(CXX) $(CXXFLAGS) -Wno-unused-parameter -Wno-multichar -DWB_DOCUMENT_MINIMAL_TEST -include $(ROOT)/tests/stubs/TestCompat.h $(COMMON_INCLUDES) \
+		-I$(ROOT)/src/model \
+		-I$(ROOT)/src/model/document \
+		-I$(ROOT)/src/savers \
+		-I$(ROOT)/src/model/objects \
+		-I$(ROOT)/src/model/fills \
+		-I$(ROOT)/src/model/property \
+		-I$(ROOT)/src/model/property/specific_properties \
+		-I$(ROOT)/src/model/rendering \
+		-I$(ROOT)/src/model/snapshots \
+		-I$(ROOT)/src/edits/base \
+		$(ROOT)/tests/ownership/DocumentCloneResourcesTest.cpp \
+		$(ROOT)/src/model/CloneContext.cpp \
+		$(ROOT)/src/model/document/Document.cpp \
+		$(ROOT)/src/model/objects/Object.cpp \
+		$(ROOT)/src/model/objects/Layer.cpp \
+		$(ROOT)/tests/support/TransformableStubs.cpp \
+		$(ROOT)/tests/support/LayerDependencyStubs.cpp \
+		$(SUPPORT_SOURCES) \
+		-o build/ownership/document_clone_resources
+	./build/ownership/document_clone_resources
 
 clean:
 	rm -rf build

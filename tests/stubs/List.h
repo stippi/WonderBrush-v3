@@ -74,6 +74,7 @@ public:
 
 	void* ItemAtFast(int32 index) const { return fItems[index]; }
 	int32 CountItems() const { return (int32)fItems.size(); }
+	void MakeEmpty() { fItems.clear(); }
 
 private:
 	std::vector<void*> fItems;

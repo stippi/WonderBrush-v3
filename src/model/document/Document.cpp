@@ -10,12 +10,16 @@
 #include <new>
 
 #include "DocumentSaver.h"
+#ifndef WB_DOCUMENT_MINIMAL_TEST
 #include "DocumentVisitor.h"
+#endif
 #include "EditManager.h"
 #include "Layer.h"
 #include "Object.h"
+#ifndef WB_DOCUMENT_MINIMAL_TEST
 #include "Path.h"
 #include "Style.h"
+#endif
 
 
 // constructor
@@ -72,11 +76,14 @@ Document::Clone(CloneContext&) const
 	int32 count = source.CountObjects();
 	for (int32 i = 0; i < count; i++) {
 		BaseObject* object = source.ObjectAtFast(i);
-		BaseObject* clone = object->Clone();
-		if (clone == NULL || !target.AddObject(clone)) {
-			delete clone;
+		BaseObject* resourceClone = object->Clone();
+		if (resourceClone == NULL)
+			break;
+		if (!target.AddObject(resourceClone)) {
+			resourceClone->RemoveReference();
 			break;
 		}
+		resourceClone->RemoveReference();
 	}
 
 	// Implement a ResourceResolver that will mapped from the
@@ -208,6 +215,7 @@ Document::SetExportSaver(DocumentSaver* saver)
 
 // #pragma mark -
 
+#ifndef WB_DOCUMENT_MINIMAL_TEST
 class Indentation {
 public:
 	Indentation()
@@ -316,6 +324,12 @@ Document::PrintToStream()
 {
 	PrintVisitor visitor(this);
 }
+#else
+void
+Document::PrintToStream()
+{
+}
+#endif
 
 // #pragma mark -
 
