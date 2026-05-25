@@ -14,12 +14,12 @@ COMMON_INCLUDES := \
 SUPPORT_SOURCES := \
 	$(ROOT)/src/support/Referenceable.cpp
 
-.PHONY: all build ownership-referenceable ownership-copy-clone-context ownership-layer-clone-objects ownership-document-clone-resources edits-move-objects clean
+.PHONY: all build ownership-referenceable ownership-copy-clone-context ownership-layer-clone-objects ownership-document-clone-resources edits-move-objects import-export-svg-error-formatting clean
 
-all: ownership-referenceable ownership-copy-clone-context ownership-layer-clone-objects ownership-document-clone-resources edits-move-objects
+all: ownership-referenceable ownership-copy-clone-context ownership-layer-clone-objects ownership-document-clone-resources edits-move-objects import-export-svg-error-formatting
 
 build:
-	mkdir -p build/ownership build/edits
+	mkdir -p build/ownership build/edits build/import_export
 
 ownership-referenceable: build
 	$(CXX) $(CXXFLAGS) $(COMMON_INCLUDES) \
@@ -104,6 +104,13 @@ edits-move-objects: build
 		$(SUPPORT_SOURCES) \
 		-o build/edits/move_objects
 	./build/edits/move_objects
+
+import-export-svg-error-formatting: build
+	$(CXX) $(CXXFLAGS) -fsanitize=address $(COMMON_INCLUDES) \
+		-I$(ROOT)/src/import_export/svg \
+		$(ROOT)/tests/import_export/SVGErrorFormattingTest.cpp \
+		-o build/import_export/svg_error_formatting
+	./build/import_export/svg_error_formatting
 
 clean:
 	rm -rf build
