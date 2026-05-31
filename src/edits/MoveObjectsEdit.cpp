@@ -19,7 +19,7 @@ MoveObjectsEdit::MoveObjectsEdit(Object** objects,
 	, fObjects(objects)
 	, fObjectCount(objectCount)
 
-	, fOldPositions(new(std::nothrow) PositionInfo[objectCount])
+	, fOldPositions(new(std::nothrow) PositionInfo[objectCount]())
 
 	, fInsertionLayer(insertionLayer)
 	, fInsertionIndex(insertionIndex)
@@ -100,13 +100,19 @@ MoveObjectsEdit::InitCheck()
 	}
 
 	// Check if object tree changes.
-	PositionInfo newPositions[fObjectCount];
+	bool positionsChanged = false;
 	int32 index = fInsertionIndex;
 	for (int32 i = 0; i < fObjectCount; i++) {
-		newPositions[i].parent = fInsertionLayer;
-		newPositions[i].index = index++;
+		if (fObjects[i] == NULL)
+			continue;
+		if (fOldPositions[i].parent != fInsertionLayer
+			|| fOldPositions[i].index != index) {
+			positionsChanged = true;
+			break;
+		}
+		index++;
 	}
-	if (memcmp(newPositions, fOldPositions, sizeof(newPositions)) == 0) {
+	if (!positionsChanged) {
 //printf("MoveObjectsEdit::InitCheck(): no changes!\n");
 		return B_BAD_VALUE;
 	}
@@ -151,6 +157,20 @@ MoveObjectsEdit::Perform(EditContext& context)
 		if (fObjects[i] == NULL)
 			continue;
 		if (!fInsertionLayer->AddObject(fObjects[i], index)) {
+			for (int32 j = 0; j < i; j++) {
+				if (fObjects[j] != NULL && fInsertionLayer->HasObject(fObjects[j]))
+					fInsertionLayer->RemoveObject(fObjects[j]);
+			}
+			for (int32 j = 0; j < fObjectCount; j++) {
+				if (fObjects[j] == NULL || fOldPositions[j].parent == NULL)
+					continue;
+				if (!fOldPositions[j].parent->HasObject(fObjects[j])) {
+					fOldPositions[j].parent->AddObject(fObjects[j],
+						fOldPositions[j].index);
+				}
+			}
+			if (fSelection != NULL)
+				fSelection->DeselectAll(this);
 			fInsertionLayer->SuspendUpdates(false);
 			return B_NO_MEMORY;
 		}

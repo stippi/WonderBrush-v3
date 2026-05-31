@@ -122,16 +122,16 @@ public:
 		return false;
 	}
 
-	ObjectType* RemoveObject(int32 index)
+	Reference<ObjectType> RemoveObject(int32 index)
 	{
 		ObjectType* object = reinterpret_cast<ObjectType*>(
 			fObjects.RemoveItem(index));
 		if (object) {
 			_NotifyObjectRemoved(object, index);
-			object->RemoveReference();
+			return Reference<ObjectType>(object, true);
 		}
 
-		return object;
+		return Reference<ObjectType>();
 	}
 
 	void MakeEmpty()

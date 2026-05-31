@@ -279,7 +279,10 @@ bool
 Layer::AddObject(Object* object, int32 index)
 {
 //printf("%p->Layer::AddObject(%p, %ld)\n", this, object, index);
-	if (object && fObjects.AddItem(object, index)) {
+	if (object == NULL || fObjects.HasItem(object))
+		return false;
+
+	if (fObjects.AddItem(object, index)) {
 		object->AddReference();
 
 		BList listeners(fListeners);
@@ -304,7 +307,7 @@ Layer::AddObject(Object* object, int32 index)
 }
 
 // RemoveObject
-Object*
+Reference<Object>
 Layer::RemoveObject(int32 index)
 {
 	Object* object = ObjectAt(index);
@@ -323,7 +326,7 @@ Layer::RemoveObject(int32 index)
 		if (fObjects.RemoveItem(index) == NULL) {
 			// Should not happen, but roll back in any case.
 			object->SetParent(this);
-			return NULL;
+			return Reference<Object>();
 		}
 
 		BList listeners(fListeners);
@@ -334,16 +337,16 @@ Layer::RemoveObject(int32 index)
 		}
 
 		Invalidate(invalidArea, index);
-		object->RemoveReference();
+		return Reference<Object>(object, true);
 	}
-	return object;
+	return Reference<Object>();
 }
 
 // RemoveObject
 bool
 Layer::RemoveObject(Object* object)
 {
-	return RemoveObject(IndexOf(object)) != NULL;
+	return RemoveObject(IndexOf(object)).Get() != NULL;
 }
 
 // ObjectAt
@@ -389,10 +392,13 @@ Layer::CloneObjects(Layer* target, CloneContext& context) const
 	for (int32 i = 0; i < count; i++) {
 		Object* object = ObjectAtFast(i);
 		Object* clone = (Object*)object->Clone(context);
-		if (clone == NULL || !target->AddObject(clone)) {
-			delete clone;
+		if (clone == NULL)
+			break;
+		if (!target->AddObject(clone)) {
+			clone->RemoveReference();
 			break;
 		}
+		clone->RemoveReference();
 	}
 }
 

@@ -45,8 +45,9 @@ class exception {
 			m_msg = new char [4096];
 			va_list arg;
 			va_start(arg, fmt);
-			vsprintf(m_msg, fmt, arg);
+			vsnprintf(m_msg, 4096, fmt, arg);
 			va_end(arg);
+			m_msg[4095] = 0;
 		}
 	}
 

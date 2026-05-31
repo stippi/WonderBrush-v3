@@ -74,9 +74,10 @@ SVGImporter::Import(Icon* icon, const entry_ref* ref)
 		ret = builder.GetIcon(icon, this, ref->name);
 	} catch(agg::svg::exception& e) {
 		char error[1024];
-		sprintf(error, B_TRANSLATE("Failed to open the file '%s' as "
+		snprintf(error, sizeof(error), B_TRANSLATE("Failed to open the file '%s' as "
 					   "an SVG document.\n\n"
 					   "Error: %s"), ref->name, e.msg());
+		error[sizeof(error) - 1] = 0;
 		BAlert* alert = new BAlert(B_TRANSLATE("load error"),
 								   error, B_TRANSLATE("OK"), NULL, NULL,
 								   B_WIDTH_AS_USUAL, B_WARNING_ALERT);

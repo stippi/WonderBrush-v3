@@ -110,8 +110,10 @@ struct path_attributes {
 		stroke_width	(attr.stroke_width),
 		transform		(attr.transform)
 	{
-		sprintf(stroke_url, "%s", attr.stroke_url);
-		sprintf(fill_url, "%s", attr.fill_url);
+		snprintf(stroke_url, sizeof(stroke_url), "%s", attr.stroke_url);
+		snprintf(fill_url, sizeof(fill_url), "%s", attr.fill_url);
+		stroke_url[sizeof(stroke_url) - 1] = 0;
+		fill_url[sizeof(fill_url) - 1] = 0;
 	}
 
 	// Copy constructor with new index value
@@ -128,8 +130,10 @@ struct path_attributes {
 		stroke_width	(attr.stroke_width),
 		transform		(attr.transform)
 	{
-		sprintf(stroke_url, "%s", attr.stroke_url);
-		sprintf(fill_url, "%s", attr.fill_url);
+		snprintf(stroke_url, sizeof(stroke_url), "%s", attr.stroke_url);
+		snprintf(fill_url, sizeof(fill_url), "%s", attr.fill_url);
+		stroke_url[sizeof(stroke_url) - 1] = 0;
+		fill_url[sizeof(fill_url) - 1] = 0;
 	}
 };
 
