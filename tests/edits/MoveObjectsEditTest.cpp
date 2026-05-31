@@ -7,57 +7,7 @@
 #include <Message.h>
 #include <String.h>
 
-// Focused edit seam: provide the BaseObject/Notifier/UndoableEdit/Selection
-// methods needed by Object/Layer/MoveObjectsEdit without pulling in the full UI.
-Notifier::Notifier()
-	: fListeners(2)
-	, fSuspended(0)
-	, fPendingNotifications(false)
-{
-}
-
-Notifier::~Notifier() {}
-bool Notifier::AddListener(Listener*) { return false; }
-bool Notifier::RemoveListener(Listener*) { return false; }
-int32 Notifier::CountListeners() const { return 0; }
-Listener* Notifier::ListenerAtFast(int32) const { return 0; }
-void Notifier::Notify() {}
-void Notifier::SuspendNotifications(bool) {}
-void Notifier::NotifyListeners() {}
-
-BaseObject::BaseObject()
-	: Notifier()
-	, Referenceable()
-	, fName()
-{
-}
-
-BaseObject::BaseObject(const BaseObject&)
-	: Notifier()
-	, Referenceable()
-	, fName()
-{
-}
-
-BaseObject::BaseObject(const BMessage*)
-	: Notifier()
-	, Referenceable()
-	, fName()
-{
-}
-
-BaseObject::~BaseObject() {}
-BaseObject* BaseObject::Clone() const { CloneContext context; return Clone(context); }
-status_t BaseObject::Unarchive(const BMessage*) { return B_OK; }
-status_t BaseObject::Archive(BMessage*, bool) const { return B_OK; }
-PropertyObject* BaseObject::MakePropertyObject() const { return 0; }
-void BaseObject::AddProperties(PropertyObject*, uint32) const {}
-bool BaseObject::SetToPropertyObject(const PropertyObject*, uint32) { return false; }
-void BaseObject::SetName(const char*) {}
-const char* BaseObject::Name() const { return DefaultName(); }
-const BString& BaseObject::GivenName() const { return fName; }
-bool BaseObject::GetIcon(const BBitmap*) const { return false; }
-
+// Edit-specific test seams that are not provided by the shared model stubs.
 UndoableEdit::UndoableEdit()
 	: Referenceable()
 	, fTimeStamp(0)
@@ -73,28 +23,6 @@ void UndoableEdit::GetName(BString&) {}
 bool UndoableEdit::UndoesPrevious(const UndoableEdit*) { return false; }
 bool UndoableEdit::CombineWithNext(const UndoableEdit*) { return false; }
 bool UndoableEdit::CombineWithPrevious(const UndoableEdit*) { return false; }
-
-Selection::Controller::Controller() {}
-Selection::Controller::~Controller() {}
-bool Selection::Select(const Selectable&, const Controller*, bool) { return true; }
-void Selection::DeselectAll(const Controller*) {}
-
-Selectable::Selectable()
-	: Reference<BaseObject>()
-{
-}
-
-Selectable::Selectable(BaseObject* object)
-	: Reference<BaseObject>(object)
-{
-}
-
-Selectable::Selectable(const Selectable& other)
-	: Reference<BaseObject>(other)
-{
-}
-
-Selectable::~Selectable() {}
 
 class EditContext {
 };

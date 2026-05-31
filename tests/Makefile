@@ -14,6 +14,10 @@ COMMON_INCLUDES := \
 SUPPORT_SOURCES := \
 	$(ROOT)/src/support/Referenceable.cpp
 
+BASE_OBJECT_STUB_SOURCES := \
+	$(ROOT)/tests/support/BaseObjectStubs.cpp \
+	$(SUPPORT_SOURCES)
+
 .PHONY: all build ownership-referenceable ownership-copy-clone-context ownership-layer-clone-objects ownership-document-clone-resources edits-move-objects import-export-svg-error-formatting import-export-svg-url-parsing clean
 
 all: ownership-referenceable ownership-copy-clone-context ownership-layer-clone-objects ownership-document-clone-resources edits-move-objects import-export-svg-error-formatting import-export-svg-url-parsing
@@ -35,7 +39,7 @@ ownership-copy-clone-context: build
 		$(ROOT)/tests/ownership/CopyCloneContextTest.cpp \
 		$(ROOT)/src/model/CloneContext.cpp \
 		$(ROOT)/src/model/CopyCloneContext.cpp \
-		$(SUPPORT_SOURCES) \
+		$(BASE_OBJECT_STUB_SOURCES) \
 		-o build/ownership/copy_clone_context
 	./build/ownership/copy_clone_context
 
@@ -55,7 +59,7 @@ ownership-layer-clone-objects: build
 		$(ROOT)/src/model/objects/Layer.cpp \
 		$(ROOT)/tests/support/TransformableStubs.cpp \
 		$(ROOT)/tests/support/LayerDependencyStubs.cpp \
-		$(SUPPORT_SOURCES) \
+		$(BASE_OBJECT_STUB_SOURCES) \
 		-o build/ownership/layer_clone_objects
 	./build/ownership/layer_clone_objects
 
@@ -78,7 +82,7 @@ ownership-document-clone-resources: build
 		$(ROOT)/src/model/objects/Layer.cpp \
 		$(ROOT)/tests/support/TransformableStubs.cpp \
 		$(ROOT)/tests/support/LayerDependencyStubs.cpp \
-		$(SUPPORT_SOURCES) \
+		$(BASE_OBJECT_STUB_SOURCES) \
 		-o build/ownership/document_clone_resources
 	./build/ownership/document_clone_resources
 
@@ -99,9 +103,11 @@ edits-move-objects: build
 		$(ROOT)/src/model/objects/Object.cpp \
 		$(ROOT)/src/model/objects/Layer.cpp \
 		$(ROOT)/src/edits/MoveObjectsEdit.cpp \
+		$(ROOT)/src/model/Selection.cpp \
+		$(ROOT)/src/model/Selectable.cpp \
 		$(ROOT)/tests/support/TransformableStubs.cpp \
 		$(ROOT)/tests/support/LayerDependencyStubs.cpp \
-		$(SUPPORT_SOURCES) \
+		$(BASE_OBJECT_STUB_SOURCES) \
 		-o build/edits/move_objects
 	./build/edits/move_objects
 
